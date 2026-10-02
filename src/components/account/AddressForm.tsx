@@ -1,5 +1,6 @@
 "use client";
 
+import { ActionForm } from "@/components/ui/ActionForm";
 import { useActionState, useState } from "react";
 import { addAddressAction } from "@/app/actions/account";
 import { Field, FormMessage } from "@/components/ui/Field";
@@ -9,7 +10,7 @@ export function AddressForm({ defaultName, defaultPhone }: { defaultName: string
   const [method, setMethod] = useState("NP_WAREHOUSE");
   const fe = state?.fieldErrors ?? {};
   return (
-    <form action={action} className="card space-y-4 p-6">
+    <ActionForm action={action} className="card space-y-4 p-6">
       <h2 className="text-xl font-black">Нова адреса</h2>
       <FormMessage error={state?.error} success={state?.success} />
       <div className="grid gap-4 sm:grid-cols-2">
@@ -39,6 +40,6 @@ export function AddressForm({ defaultName, defaultPhone }: { defaultName: string
         {method === "NP_COURIER" && <Field label="Квартира" name="apartment" error={fe.apartment} />}
       </div>
       <button className="btn-primary" disabled={pending}>{pending ? "Зберігаємо…" : "Зберегти адресу"}</button>
-    </form>
+    </ActionForm>
   );
 }

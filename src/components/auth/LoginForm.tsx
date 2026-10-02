@@ -1,5 +1,6 @@
 "use client";
 
+import { ActionForm } from "@/components/ui/ActionForm";
 import Link from "next/link";
 import { useActionState } from "react";
 import { loginAction } from "@/app/actions/auth";
@@ -8,7 +9,7 @@ import { Field, FormMessage } from "@/components/ui/Field";
 export function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
   const [state, action, pending] = useActionState(loginAction, undefined);
   return (
-    <form action={action} className="space-y-4" noValidate>
+    <ActionForm action={action} className="space-y-4" noValidate>
       <input type="hidden" name="callbackUrl" value={callbackUrl ?? ""} />
       <FormMessage error={state?.error} />
       <Field label="Email" name="email" type="email" autoComplete="email" required error={state?.fieldErrors?.email} />
@@ -21,6 +22,6 @@ export function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
         Немає акаунта?{" "}
         <Link href={`/register${callbackUrl ? `?callbackUrl=${encodeURIComponent(callbackUrl)}` : ""}`} className="font-bold text-sky-brand hover:underline">Зареєструватися</Link>
       </p>
-    </form>
+    </ActionForm>
   );
 }
