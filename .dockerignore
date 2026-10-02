@@ -1,0 +1,11 @@
+node_modules
+.next
+.git
+.idea
+.env
+.env.*
+!.env.example
+uploads
+coverage
+*.log
+babay.py

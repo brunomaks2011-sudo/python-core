@@ -29,7 +29,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       title: product.name,
       description,
       url: `/product/${product.slug}`,
-      images: product.images.slice(0, 1).map((url) => ({ url, alt: product.name })),
+      // Соцмережі не показують SVG, тож для заглушок використовуємо загальне зображення
+      images: product.images
+        .filter((url) => !url.endsWith(".svg"))
+        .slice(0, 1)
+        .map((url) => ({ url, alt: product.name }))
+        .concat(product.images.some((u) => !u.endsWith(".svg")) ? [] : [{ url: "/og.png", alt: product.name }]),
     },
   };
 }

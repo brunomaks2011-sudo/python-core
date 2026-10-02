@@ -36,3 +36,8 @@ export function clientIp(headers: Headers): string {
   if (fwd) return fwd.split(",")[0].trim();
   return headers.get("x-real-ip") ?? "unknown";
 }
+
+/** Повертає одну спробу (наприклад, успішний вхід не має витрачати ліміт IP). */
+export async function releaseRateLimit(key: string) {
+  await prisma.rateLimit.updateMany({ where: { key, count: { gt: 0 } }, data: { count: { decrement: 1 } } }).catch(() => {});
+}

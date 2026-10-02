@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import { authConfig } from "@/auth.config";
 import { prisma } from "@/lib/prisma";
 import { loginSchema } from "@/lib/validation";
-import { clientIp, rateLimit, resetRateLimit } from "@/lib/rate-limit";
+import { clientIp, rateLimit, releaseRateLimit, resetRateLimit } from "@/lib/rate-limit";
 
 export class RateLimitedError extends CredentialsSignin {
   code = "rate_limited";
@@ -30,9 +30,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         const ip = request ? clientIp(request.headers) : "unknown";
         const accountKey = `login:${ip}:${email}`;
+        const ipKey = `login-ip:${ip}`;
         const [perAccount, perIp] = await Promise.all([
           rateLimit(accountKey, LOGIN_LIMIT_PER_ACCOUNT, LOGIN_WINDOW_MS),
-          rateLimit(`login-ip:${ip}`, LOGIN_LIMIT_PER_IP, LOGIN_WINDOW_MS),
+          rateLimit(ipKey, LOGIN_LIMIT_PER_IP, LOGIN_WINDOW_MS),
         ]);
         if (!perAccount.ok || !perIp.ok) throw new RateLimitedError();
 
@@ -40,7 +41,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const valid = await bcrypt.compare(password, user?.passwordHash ?? DUMMY_HASH);
         if (!user || !valid) return null;
 
-        await resetRateLimit(accountKey);
+        // Успішний вхід не витрачає ліміти
+        await Promise.all([resetRateLimit(accountKey), releaseRateLimit(ipKey)]);
         return { id: user.id, email: user.email, name: user.name, role: user.role };
       },
     }),
