@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-50: #fff8e6;
+  --color-brand-100: #ffefc2;
+  --color-brand-300: #ffd166;
+  --color-brand-400: #ffc233;
+  --color-brand-500: #f5a300;
+  --color-brand-600: #d98800;
+  --color-tomato-500: #ef4444;
+  --color-tomato-600: #dc2626;
+  --color-sky-brand: #2463eb;
+  --color-ink: #1d2433;
+  --font-sans: "Nunito", ui-rounded, "SF Pro Rounded", "Segoe UI", system-ui, -apple-system, Roboto, "Helvetica Neue", Arial, sans-serif;
+  --radius-brick: 1.25rem;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    @apply bg-[#fffdf7] text-ink antialiased;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-sky-brand;
+  }
+}
+
+@utility container-page {
+  @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+}
+
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold transition
+    disabled:cursor-not-allowed disabled:opacity-50;
+}
+
+@utility btn-primary {
+  @apply btn bg-tomato-500 text-white shadow-[0_4px_0_#b91c1c] hover:bg-tomato-600 active:translate-y-0.5 active:shadow-[0_2px_0_#b91c1c];
+}
+
+@utility btn-secondary {
+  @apply btn bg-brand-400 text-ink shadow-[0_4px_0_#c98a00] hover:bg-brand-300 active:translate-y-0.5 active:shadow-[0_2px_0_#c98a00];
+}
+
+@utility btn-ghost {
+  @apply btn border-2 border-ink/10 bg-white text-ink hover:border-ink/30;
+}
+
+@utility input {
+  @apply w-full rounded-xl border-2 border-ink/10 bg-white px-3.5 py-2.5 text-sm outline-none transition
+    placeholder:text-ink/40 focus:border-sky-brand;
+}
+
+@utility label {
+  @apply mb-1 block text-sm font-semibold text-ink/80;
+}
+
+@utility card {
+  @apply rounded-[var(--radius-brick)] border-2 border-ink/5 bg-white shadow-sm;
+}
+
+@utility field-error {
+  @apply mt-1 text-xs font-semibold text-tomato-600;
+}
