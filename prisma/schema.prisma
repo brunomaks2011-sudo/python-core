@@ -132,6 +132,8 @@ model CartItem {
 model Order {
   id                String         @id @default(cuid())
   number            String         @unique
+  /// Секретний токен для перегляду замовлення гостем (у посиланні)
+  accessToken       String         @unique
   userId            String?
   user              User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
   contactName       String
