@@ -1,0 +1,83 @@
+# Розгортання на VPS: Next.js + PostgreSQL + Caddy (автоматичний HTTPS від Let's Encrypt).
+#   docker compose -f docker-compose.prod.yml up -d --build
+# Змінні беруться з файлу .env поруч (див. .env.example).
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    # Порт БД назовні НЕ відкривається
+
+  # Застосовує міграції перед стартом застосунку (одноразовий контейнер)
+  migrate:
+    build:
+      context: .
+      target: tools
+      args:
+        NEXT_PUBLIC_SITE_URL: https://${DOMAIN}
+    env_file: .env
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: "no"
+
+  app:
+    build:
+      context: .
+      target: runner
+      args:
+        NEXT_PUBLIC_SITE_URL: https://${DOMAIN}
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      NODE_ENV: production
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}?schema=public
+      NEXT_PUBLIC_SITE_URL: https://${DOMAIN}
+      AUTH_URL: https://${DOMAIN}
+      AUTH_TRUST_HOST: "true"
+      UPLOAD_DIR: /app/uploads
+    volumes:
+      - uploads:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+    # Доступ лише через Caddy (внутрішня мережа)
+    expose:
+      - "3000"
+
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"
+    environment:
+      DOMAIN: ${DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL}
+    volumes:
+      - ./deploy/Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    depends_on:
+      - app
+
+volumes:
+  pgdata:
+  uploads:
+  caddy_data:
+  caddy_config:

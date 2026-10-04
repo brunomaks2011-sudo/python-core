@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 800" width="800" height="800" role="img" aria-label="Ілюстрація: plane">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffe5ec"/><stop offset="1" stop-color="#ffafcc"/></linearGradient></defs>
+<rect width="800" height="800" fill="url(#bg)"/>
+<g opacity=".18" fill="#fff"><circle cx="80" cy="90" r="14"/><circle cx="175" cy="120" r="18"/><circle cx="270" cy="150" r="22"/><circle cx="365" cy="90" r="26"/><circle cx="460" cy="120" r="14"/><circle cx="555" cy="150" r="18"/><circle cx="650" cy="90" r="22"/><circle cx="745" cy="120" r="26"/></g>
+<ellipse cx="400" cy="660" rx="300" ry="34" fill="#000" opacity=".1"/>
+<rect x="150" y="360" width="500" height="90" rx="45" fill="#ff9f1c"/><polygon points="330,400 470,400 360,600 300,600" fill="#8338ec"/><polygon points="330,410 470,410 360,220 300,220" fill="#8338ec"/><polygon points="160,370 220,370 170,270 140,270" fill="#22a06b"/><rect x="520" y="380" width="30" height="30" rx="4" fill="#cfeaff" stroke="#2b3a55" stroke-width="4"/><rect x="470" y="380" width="30" height="30" rx="4" fill="#cfeaff" stroke="#2b3a55" stroke-width="4"/><rect x="420" y="380" width="30" height="30" rx="4" fill="#cfeaff" stroke="#2b3a55" stroke-width="4"/>
+</svg>

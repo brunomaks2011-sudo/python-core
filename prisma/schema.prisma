@@ -1,0 +1,226 @@
+// Схема бази даних інтернет-магазину «Цеглинка».
+// Усі грошові значення зберігаються в копійках як цілі числа (Int).
+
+generator client {
+  provider = "prisma-client-js"
+  // linux-musl потрібен для Docker-образу на Alpine
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum OrderStatus {
+  NEW
+  PAID
+  SHIPPED
+  DELIVERED
+  CANCELLED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  LIQPAY
+  COD
+}
+
+enum DeliveryMethod {
+  NP_WAREHOUSE
+  NP_POSTOMAT
+  NP_COURIER
+  UKRPOSHTA
+  PICKUP
+}
+
+model User {
+  id           String   @id @default(cuid())
+  name         String
+  email        String   @unique
+  phone        String?
+  passwordHash String
+  role         Role     @default(USER)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  cart        Cart?
+  orders      Order[]
+  addresses   Address[]
+  resetTokens PasswordResetToken[]
+}
+
+model Category {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  image       String?
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  products Product[]
+}
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  sku         String   @unique
+  description String
+  /// Ціна в копійках
+  price       Int
+  /// Стара ціна (до знижки) в копійках
+  oldPrice    Int?
+  stock       Int      @default(0)
+  pieces      Int
+  /// Рекомендований вік «від», років
+  ageMin      Int
+  /// Вага упаковки в грамах (для розрахунку доставки)
+  weightGrams Int      @default(500)
+  images      String[]
+  isActive    Boolean  @default(true)
+  isFeatured  Boolean  @default(false)
+  /// Кількість проданих одиниць — для сортування «за популярністю»
+  salesCount  Int      @default(0)
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+
+  @@index([categoryId])
+  @@index([isActive, createdAt])
+}
+
+model Cart {
+  id         String     @id @default(cuid())
+  userId     String?    @unique
+  user       User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  /// Токен гостьового кошика (зберігається в httpOnly cookie)
+  guestToken String?    @unique
+  items      CartItem[]
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+}
+
+model CartItem {
+  id        String  @id @default(cuid())
+  cartId    String
+  cart      Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity  Int
+
+  @@unique([cartId, productId])
+}
+
+model Order {
+  id                String         @id @default(cuid())
+  number            String         @unique
+  /// Секретний токен для перегляду замовлення гостем (у посиланні)
+  accessToken       String         @unique
+  userId            String?
+  user              User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+  contactName       String
+  contactPhone      String
+  contactEmail      String
+  comment           String?
+  status            OrderStatus    @default(NEW)
+  paymentStatus     PaymentStatus  @default(PENDING)
+  paymentMethod     PaymentMethod
+  paymentProvider   String?
+  /// Ідентифікатор платежу на боці платіжної системи (order_id у LiqPay)
+  paymentExternalId String?        @unique
+  paidAt            DateTime?
+  deliveryMethod    DeliveryMethod
+  /// Місто, відділення, адреса тощо — залежно від способу доставки
+  deliveryData      Json
+  deliveryCost      Int
+  itemsTotal        Int
+  total             Int
+  /// Номер ТТН
+  trackingNumber    String?
+  items             OrderItem[]
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  @@index([status, createdAt])
+  @@index([userId])
+}
+
+model OrderItem {
+  id          String   @id @default(cuid())
+  orderId     String
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   String?
+  product     Product? @relation(fields: [productId], references: [id], onDelete: SetNull)
+  productName String
+  productSku  String
+  quantity    Int
+  /// Ціна за одиницю на момент покупки, в копійках
+  unitPrice   Int
+}
+
+model Address {
+  id             String         @id @default(cuid())
+  userId         String
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label          String?
+  recipientName  String
+  recipientPhone String
+  deliveryMethod DeliveryMethod
+  city           String
+  cityRef        String?
+  warehouse      String?
+  warehouseRef   String?
+  street         String?
+  building       String?
+  apartment      String?
+  postalCode     String?
+  isDefault      Boolean        @default(false)
+  createdAt      DateTime       @default(now())
+
+  @@index([userId])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  tokenHash String    @unique
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+}
+
+/// Лічильники для обмеження кількості спроб (вхід, реєстрація, відновлення пароля)
+model RateLimit {
+  key     String   @id
+  count   Int
+  resetAt DateTime
+}
+
+/// Налаштування магазину (один рядок з id = 1). Значення в копійках.
+model StoreSettings {
+  id                      Int      @id @default(1)
+  freeShippingThreshold   Int
+  ukrposhtaRate           Int
+  npWarehouseFallbackRate Int
+  npCourierFallbackRate   Int
+  updatedAt               DateTime @updatedAt
+}
