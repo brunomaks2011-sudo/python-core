@@ -34,6 +34,8 @@ const nextConfig: NextConfig = {
   // Самодостатній бандл для Docker-образу (NEXT_OUTPUT=standalone задається в Dockerfile)
   output: process.env.NEXT_OUTPUT === "standalone" ? "standalone" : undefined,
   poweredByHeader: false,
+  // Не генерувати AGENTS.md / CLAUDE.md під час next dev
+  agentRules: false,
   serverExternalPackages: ["@prisma/client", "bcryptjs"],
   experimental: {
     // Завантаження зображень товарів через Server Actions (до 10 МБ за раз)

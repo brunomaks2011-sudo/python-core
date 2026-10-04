@@ -20,7 +20,8 @@
     "postinstall": "prisma generate",
     "vercel-build": "prisma generate && prisma migrate deploy && next build",
     "placeholders": "node scripts/generate-placeholders.mjs",
-    "test:db": "RUN_DB_TESTS=1 vitest run"
+    "test:db": "RUN_DB_TESTS=1 vitest run",
+    "local": "node scripts/local-start.mjs"
   },
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -43,6 +44,7 @@
     "@types/nodemailer": "^8.0.2",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "embedded-postgres": "^18.4.0-beta.17",
     "prisma": "^6.19.3",
     "tailwindcss": "^4.3.3",
     "tsx": "^4.23.15",

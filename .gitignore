@@ -10,3 +10,7 @@ next-env.d.ts
 uploads/
 .DS_Store
 .vercel
+
+# Локальна база для scripts/local-start.mjs
+.local-db/
+.local-db.seeded
