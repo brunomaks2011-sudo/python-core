@@ -4,6 +4,7 @@ rem Usage: scripts\setup.cmd   (Docker Desktop must be running; .env must exist 
 setlocal
 cd /d "%~dp0.."
 
+echo ==^> Checking Docker
 docker info >nul 2>&1
 if errorlevel 1 (
     echo Docker is not running. Start Docker Desktop, wait for "Engine running" and try again.

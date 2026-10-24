@@ -104,13 +104,16 @@ async def mrkt_login(env_path: str | None, show: bool) -> int:
     await client.start()
     try:
         token = await client.obtain_token()
-        balance = await client.balance_nano()
+        try:
+            balance = format_ton(await client.balance_nano())
+        except MrktError as exc:  # informational only: the token and the session are what matter
+            balance = f"нет данных ({exc})"
     except MrktError as exc:
         print(f"❌ MRKT не выдал токен: {exc}")
         return 1
     finally:
         await client.close()
-    print(f"✅ Токен MRKT получен: {mask(token)}; баланс MRKT: {format_ton(balance)}")
+    print(f"✅ Токен MRKT получен: {mask(token)}; баланс MRKT: {balance}")
     print(
         "Пока сессия существует, бот сам получает и обновляет токен (MRKT_ACCESS_TOKEN можно не задавать).\n"
         "Сессия даёт полный доступ к аккаунту Telegram: храните её в тайне; завершить её можно в "

@@ -10,6 +10,7 @@ from pathlib import Path
 import pytest
 import pytest_asyncio
 
+from gift_sniper import __main__ as cli
 from gift_sniper.envfile import mask, update_env_value
 from gift_sniper.integrations.mrkt import MrktAuthError, MrktClient, telegram_auth
 from gift_sniper.integrations.mrkt.telegram_auth import (
@@ -175,6 +176,32 @@ async def test_reauthorization_cooldown(
     finally:
         await client.close()
     assert len(server.calls("POST", API + "auth")) == 1
+
+
+async def test_login_succeeds_when_balance_is_unavailable(
+    server: FakeServer,
+    session_path: str,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    async def fake_fetch(**kwargs: object) -> str:
+        return "init-from-login"
+
+    settings = make_settings(
+        mrkt_api_base_url=server.url + "/api/v1",
+        mrkt_access_token=None,
+        telegram_api_id=1,
+        telegram_api_hash="hash",
+        mrkt_telegram_session=session_path,
+    )
+    monkeypatch.setattr(telegram_auth, "fetch_init_data", fake_fetch)
+    monkeypatch.setattr(cli, "get_settings", lambda: settings)
+    server.add("POST", API + "auth", Reply(body={"token": "fresh-token-123456"}))
+    server.add("GET", API + "balance", Reply(status=404, body={"error": "not found"}))
+    assert await cli.mrkt_login(None, show=False) == 0
+    out = capsys.readouterr().out
+    assert "✅ Токен MRKT получен: fres…3456" in out and "нет данных" in out
+    assert server.calls("POST", API + "auth")[0].json == {"data": "init-from-login"}
 
 
 def test_update_env_value(tmp_path: Path) -> None:
