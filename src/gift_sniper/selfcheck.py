@@ -11,6 +11,7 @@ from typing import Any
 
 from gift_sniper.config import Settings
 from gift_sniper.domain.normalize import color_candidates, normalize_name
+from gift_sniper.webapp.images import absolute_url, collection_thumb, gift_image, giftname
 
 OK, WARN, FAIL = "✅", "⚠️", "❌"
 
@@ -88,7 +89,7 @@ async def _check_telegram(settings: Settings, report: Report) -> None:
         report.add(WARN, "ADMIN_USER_IDS пуст — управлять ботом будет некому")
 
 
-async def _check_mrkt(settings: Settings, report: Report) -> list[str]:
+async def _check_mrkt(settings: Settings, report: Report, samples: list[tuple[str, str]]) -> list[str]:
     from gift_sniper.integrations.mrkt import MrktClient, MrktError, SalingQuery
 
     collections: list[str] = []
@@ -129,6 +130,18 @@ async def _check_mrkt(settings: Settings, report: Report) -> list[str]:
                     OK if gift else WARN,
                     "MRKT gifts/gift/{id}: " + ("работает" if gift else "не вернул подарок"),
                 )
+                first = listings[0]
+                thumb = collection_thumb(giftname(first.collection_name, slug=first.name))
+                if thumb:
+                    samples.append(
+                        (
+                            f"обложки коллекции Fragment ({first.collection_title or first.collection_name})",
+                            thumb,
+                        )
+                    )
+                picture = gift_image(first.name)
+                if picture:
+                    samples.append((f"подарка Fragment ({first.name})", picture))
                 colors = sum(1 for item in listings if item.backdrop_center_color is not None)
                 report.add(
                     OK if colors else WARN, f"Цвета фона в листингах MRKT: {colors} из {len(listings)}"
@@ -180,7 +193,9 @@ async def _check_mrkt(settings: Settings, report: Report) -> list[str]:
     return collections
 
 
-async def _check_giftwiki(settings: Settings, report: Report, mrkt_collections: list[str]) -> None:
+async def _check_giftwiki(
+    settings: Settings, report: Report, mrkt_collections: list[str], samples: list[tuple[str, str]]
+) -> None:
     from gift_sniper.domain.enums import GiftWikiMonochromeType
     from gift_sniper.integrations.giftwiki import GiftWikiClient, GiftWikiError
 
@@ -216,6 +231,16 @@ async def _check_giftwiki(settings: Settings, report: Report, mrkt_collections: 
         )
         if extra:
             report.add(OK, f"Дополнительные поля записей (сохраняются в raw, не интерпретируются): {extra}")
+        photo = next((r for r in records if r.photo_url), None)
+        url = absolute_url(photo.photo_url, settings.giftwiki_api_base_url) if photo else None
+        report.add(
+            OK if url else WARN,
+            f"Фото пар в Gift Wiki: у {sum(1 for r in records if r.photo_url)} из {len(records)} записей",
+        )
+        if photo and url:
+            samples.append(
+                (f"Gift Wiki ({photo.gift_name} · {photo.model_name} · {photo.backdrop_name})", url)
+            )
         parsable = sum(1 for r in records if color_candidates(r.center_color))
         report.add(
             OK if parsable else WARN,
@@ -245,12 +270,35 @@ async def _check_giftwiki(settings: Settings, report: Report, mrkt_collections: 
         await client.close()
 
 
+async def _check_images(report: Report, samples: list[tuple[str, str]]) -> None:
+    """The Mini App shows these pictures straight from their sites: check that they really are pictures."""
+    import aiohttp
+
+    if not samples:
+        report.add(WARN, "Картинки мини-приложения: нет примеров для проверки")
+        return
+    async with aiohttp.ClientSession(timeout=aiohttp.ClientTimeout(total=15), trust_env=True) as http:
+        for label, url in samples:
+            try:
+                async with http.get(url) as resp:
+                    kind = resp.headers.get("Content-Type", "")
+                    await resp.content.read(512)
+                ok = resp.status == 200 and kind.startswith("image/")
+                report.add(
+                    OK if ok else WARN, f"Картинка {label}: HTTP {resp.status} {kind or 'без типа'} — {url}"
+                )
+            except (aiohttp.ClientError, TimeoutError) as exc:
+                report.add(WARN, f"Картинка {label}: {type(exc).__name__} — {url}")
+
+
 async def run_selfcheck(settings: Settings) -> int:
     report = Report()
     report.add(OK, f"RUN_MODE={settings.run_mode.value}")
     await _check_storage(settings, report)
     await _check_telegram(settings, report)
-    collections = await _check_mrkt(settings, report)
-    await _check_giftwiki(settings, report, collections)
+    samples: list[tuple[str, str]] = []
+    collections = await _check_mrkt(settings, report, samples)
+    await _check_giftwiki(settings, report, collections, samples)
+    await _check_images(report, samples)
     report.print()
     return 1 if report.failed else 0

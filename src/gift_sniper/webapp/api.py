@@ -33,7 +33,7 @@ from gift_sniper.services.percentages import monochrome_model_share
 from gift_sniper.services.reference import ReferenceSnapshot, RefRecord
 from gift_sniper.services.texts import nft_url
 from gift_sniper.webapp.auth import WebAppIdentity
-from gift_sniper.webapp.images import collection_thumb, color_hex, gift_image, giftname
+from gift_sniper.webapp.images import absolute_url, collection_thumb, color_hex, gift_image, giftname
 
 log = logging.getLogger(__name__)
 
@@ -379,7 +379,8 @@ class MiniAppApi:
                         "backdrop": record.backdrop_name,
                         "type": record.type.value if record.type else record.type_raw,
                         "rarity": _percent(rarity.get(backdrop_norm)),
-                        "image": record.photo_url or gift_image(seen_pairs.get((norm, backdrop_norm))),
+                        "image": absolute_url(record.photo_url, self.settings.giftwiki_api_base_url)
+                        or gift_image(seen_pairs.get((norm, backdrop_norm))),
                         "center": color_hex(record.center_color) or color_hex(center),
                         "edge": color_hex(record.edge_color) or color_hex(edge),
                         "price": _pick_price(mono, norm, backdrop_norm),

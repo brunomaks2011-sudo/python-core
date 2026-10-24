@@ -11,6 +11,7 @@ gift with exactly that model and backdrop seen on MRKT.
 from __future__ import annotations
 
 import re
+from urllib.parse import urljoin, urlparse
 
 from gift_sniper.domain.types import nft_slug
 
@@ -34,6 +35,14 @@ def collection_thumb(name: str | None) -> str | None:
 def gift_image(slug: str | None) -> str | None:
     known = nft_slug(slug)
     return f"https://nft.fragment.com/gift/{known.lower()}.webp" if known else None
+
+
+def absolute_url(url: str | None, base: str) -> str | None:
+    """Gift Wiki may give a picture path relative to its API; pages need an absolute http(s) URL."""
+    if not url or not url.strip():
+        return None
+    full = urljoin(base.rstrip("/") + "/", url.strip())
+    return full if urlparse(full).scheme in ("http", "https") else None
 
 
 def color_hex(value: int | str | None) -> str | None:
