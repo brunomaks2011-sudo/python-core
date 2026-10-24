@@ -4,7 +4,7 @@ python -m gift_sniper run [--components bot,monitor,processor,buyer,scheduler,me
 python -m gift_sniper migrate
 python -m gift_sniper sync-giftwiki
 python -m gift_sniper check
-python -m gift_sniper mrkt-login [--write-env .env] [--show]
+python -m gift_sniper mrkt-login [--write-env .env] [--show] [--qr]
 """
 
 from __future__ import annotations
@@ -62,7 +62,25 @@ async def sync_giftwiki() -> int:
         await app.shutdown()
 
 
-async def mrkt_login(env_path: str | None, show: bool) -> int:
+LOGIN_HINT_CODE = (
+    "Если сессии ещё нет, Telegram запросит номер телефона, код входа и пароль 2FA (если включён).\n"
+    "Они вводятся только в этом терминале и отправляются напрямую в Telegram; бот их не получает и не хранит.\n"
+    "Вопросы задаёт библиотека Pyrogram на английском:\n"
+    "  Enter phone number or bot token - номер с + и кодом страны\n"
+    '  Is "..." correct? (y/N)         - латинская y в английской раскладке, иначе номер спросят снова\n'
+    "  Enter confirmation code         - код из чата «Telegram» в приложении Telegram\n"
+    "  Enter 2FA password              - облачный пароль, если включена двухэтапная проверка\n"
+    "Код не пришёл? Вход без кода: mrkt-login --qr"
+)
+LOGIN_HINT_QR = (
+    "Если сессии ещё нет, появится QR-код. В Telegram на телефоне: Настройки → Устройства →\n"
+    "«Подключить устройство», затем наведите камеру на код (он обновляется примерно раз в 30 секунд).\n"
+    "Если включена двухэтапная проверка, затем спросит облачный пароль (Enter 2FA password).\n"
+    "Он вводится только в этом терминале и отправляется напрямую в Telegram; бот его не получает и не хранит."
+)
+
+
+async def mrkt_login(env_path: str | None, show: bool, use_qr: bool = False) -> int:
     """Create the operator's Telegram session (interactive, in this terminal) and obtain a MRKT token.
 
     The flow is the one from the MRKT community documentation: RequestAppWebView(@mrkt, "app") ->
@@ -84,21 +102,14 @@ async def mrkt_login(env_path: str | None, show: bool) -> int:
         )
         return 2
     print(f"Telegram-сессия: {session_file(settings.mrkt_telegram_session)}")
-    print(
-        "Если сессии ещё нет, Telegram запросит номер телефона, код входа и пароль 2FA (если включён).\n"
-        "Они вводятся только в этом терминале и отправляются напрямую в Telegram; бот их не получает и не хранит.\n"
-        "Вопросы задаёт библиотека Pyrogram на английском:\n"
-        "  Enter phone number or bot token - номер с + и кодом страны\n"
-        '  Is "..." correct? (y/N)         - латинская y в английской раскладке, иначе номер спросят снова\n'
-        "  Enter confirmation code         - код из чата «Telegram» в приложении Telegram\n"
-        "  Enter 2FA password              - облачный пароль, если включена двухэтапная проверка"
-    )
+    print(LOGIN_HINT_QR if use_qr else LOGIN_HINT_CODE)
     try:
         init_data = await fetch_init_data(
             api_id=settings.telegram_api_id,
             api_hash=settings.telegram_api_hash.get_secret_value(),
             session_path=settings.mrkt_telegram_session,
             interactive=True,
+            use_qr=use_qr,
         )
     except Exception as exc:
         print(f"❌ Не удалось открыть MRKT через Telegram: {exc}")
@@ -157,6 +168,9 @@ def main(argv: list[str] | None = None) -> int:
         "--write-env", default=None, help="also write MRKT_ACCESS_TOKEN into this .env file"
     )
     login_parser.add_argument("--show", action="store_true", help="print the full token")
+    login_parser.add_argument(
+        "--qr", action="store_true", help="log in by scanning a QR code in the Telegram app (no login code)"
+    )
     args = parser.parse_args(argv)
 
     settings = get_settings()
@@ -173,7 +187,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.command == "check":
         return asyncio.run(check())
     if args.command == "mrkt-login":
-        return asyncio.run(mrkt_login(args.write_env, args.show))
+        return asyncio.run(mrkt_login(args.write_env, args.show, args.qr))
     return 2
 
 

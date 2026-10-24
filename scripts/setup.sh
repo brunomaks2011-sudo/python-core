@@ -1,8 +1,13 @@
 #!/bin/sh
 # One-time server setup: build, Telegram login for MRKT (interactive), start, self-check.
 # Usage: ./scripts/setup.sh   (run from any directory, .env must exist next to docker-compose.yml)
+#        ./scripts/setup.sh qr   log in by scanning a QR code in the Telegram app instead of a login code
 set -eu
 cd "$(dirname "$0")/.."
+login_args=""
+if [ "${1:-}" = "qr" ]; then
+    login_args="--qr"
+fi
 
 if [ ! -f .env ]; then
     echo "Нет файла .env: скопируйте .env.example в .env и заполните его." >&2
@@ -24,7 +29,7 @@ echo "==> Сборка образа"
 docker compose build
 
 echo "==> Вход в Telegram для MRKT (номер телефона и код вводятся только здесь)"
-docker compose run --rm -it bot python -m gift_sniper mrkt-login
+docker compose run --rm -it bot python -m gift_sniper mrkt-login $login_args
 
 echo "==> Запуск"
 docker compose up -d

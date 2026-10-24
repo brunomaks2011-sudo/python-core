@@ -6,6 +6,7 @@ import asyncio
 import stat
 from collections.abc import AsyncIterator
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 import pytest_asyncio
@@ -202,6 +203,67 @@ async def test_login_succeeds_when_balance_is_unavailable(
     out = capsys.readouterr().out
     assert "✅ Токен MRKT получен: fres…3456" in out and "нет данных" in out
     assert server.calls("POST", API + "auth")[0].json == {"data": "init-from-login"}
+
+
+class FakeTelegramClient:
+    def __init__(self, kwargs: dict[str, object]) -> None:
+        self.kwargs = kwargs
+        self.started_with: dict[str, object] | None = None
+        self.stopped = False
+
+    async def start(self, **kwargs: object) -> FakeTelegramClient:
+        self.started_with = kwargs
+        return self
+
+    async def stop(self) -> None:
+        self.stopped = True
+
+    async def resolve_peer(self, username: str) -> SimpleNamespace:
+        return SimpleNamespace(user_id=1, access_hash=2)
+
+    async def invoke(self, query: object) -> SimpleNamespace:
+        return SimpleNamespace(url="https://cdn.tgmrkt.io/#tgWebAppData=a%3D1&tgWebAppVersion=8.0")
+
+
+async def test_qr_login_uses_a_connection_with_updates(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    clients: list[FakeTelegramClient] = []
+
+    def make_client(name: str, **kwargs: object) -> FakeTelegramClient:
+        clients.append(FakeTelegramClient(kwargs))
+        return clients[-1]
+
+    # imported lazily: importing pyrogram outside a running loop emits a DeprecationWarning
+    monkeypatch.setattr("pyrogram.Client", make_client)
+    for use_qr in (False, True):
+        init_data = await telegram_auth.fetch_init_data(
+            api_id=1,
+            api_hash="h",
+            session_path=str(tmp_path / "data" / "mrkt"),
+            interactive=True,
+            use_qr=use_qr,
+        )
+        assert init_data == "a=1"
+    # updateLoginToken (QR scanned) never reaches a no-updates connection
+    assert [c.kwargs["no_updates"] for c in clients] == [True, False]
+    assert [c.started_with for c in clients] == [{"use_qr": False}, {"use_qr": True}]
+    assert all(c.stopped for c in clients)
+
+
+def test_cli_passes_the_qr_flag(monkeypatch: pytest.MonkeyPatch) -> None:
+    calls: list[tuple[str | None, bool, bool]] = []
+
+    async def fake_login(env_path: str | None, show: bool, use_qr: bool = False) -> int:
+        calls.append((env_path, show, use_qr))
+        return 0
+
+    monkeypatch.setattr(cli, "get_settings", make_settings)
+    monkeypatch.setattr(cli, "setup_logging", lambda *args: None)
+    monkeypatch.setattr(cli, "mrkt_login", fake_login)
+    assert cli.main(["mrkt-login", "--qr"]) == 0
+    assert cli.main(["mrkt-login"]) == 0
+    assert calls == [(None, False, True), (None, False, False)]
 
 
 def test_update_env_value(tmp_path: Path) -> None:

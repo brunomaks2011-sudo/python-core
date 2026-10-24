@@ -129,7 +129,7 @@ PYTHONPATH=src python -m gift_sniper run
 | `python -m gift_sniper migrate` | применить миграции Alembic |
 | `python -m gift_sniper sync-giftwiki` | разовая синхронизация Gift Wiki |
 | `python -m gift_sniper check` | самопроверка источников данных и интеграций |
-| `python -m gift_sniper mrkt-login [--write-env .env] [--show]` | один раз: вход в Telegram и получение токена MRKT |
+| `python -m gift_sniper mrkt-login [--write-env .env] [--show] [--qr]` | один раз: вход в Telegram и получение токена MRKT (`--qr` — по QR-коду, без кода входа) |
 
 ---
 
@@ -166,6 +166,11 @@ PYTHONPATH=src python -m gift_sniper run
    Telegram запросит номер телефона, код входа и пароль 2FA (если включён). Они вводятся только в
    этом терминале и уходят напрямую в Telegram; бот их не получает и не хранит (Pyrogram сохраняет
    лишь ключ авторизации сессии). Команда проверит, что MRKT выдаёт токен, и покажет баланс.
+
+   Код входа приходит не по SMS, а в приложение Telegram — в чат «Telegram» на устройстве, где вы уже
+   вошли. Если он не приходит, войдите по QR-коду: добавьте `--qr` (или `./scripts/setup.sh qr`,
+   `scripts\setup.cmd qr`) и отсканируйте код в Telegram на телефоне: Настройки → Устройства →
+   «Подключить устройство». Частые повторные запросы кода Telegram временно блокирует.
 3. Запустите бота: `docker compose up -d`. Сессия лежит в томе `botdata` (`/app/data/mrkt.session`),
    и бот сам получает токен MRKT при старте и заново — если MRKT отклонит старый (не чаще раза в
    `MRKT_AUTH_COOLDOWN_SECONDS`).

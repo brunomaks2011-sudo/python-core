@@ -19,6 +19,7 @@ dependencies = [
     "pydantic-settings==2.16.1",
     "prometheus-client==0.26.0",
     "kurigram==2.2.26",
+    "qrcode==8.2",
     "tzdata>=2024.1",
 ]
 

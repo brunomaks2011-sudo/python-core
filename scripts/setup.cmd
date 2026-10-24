@@ -1,7 +1,10 @@
 @echo off
 rem One-time setup on Windows (cmd.exe): build, Telegram login for MRKT, start, self-check.
 rem Usage: scripts\setup.cmd   (Docker Desktop must be running; .env must exist in the project folder)
+rem        scripts\setup.cmd qr   log in by scanning a QR code in the Telegram app instead of a login code
 setlocal
+set LOGIN_ARGS=
+if /i "%~1"=="qr" set LOGIN_ARGS=--qr
 cd /d "%~dp0.."
 
 echo ==^> Checking Docker
@@ -33,7 +36,7 @@ docker compose build
 if errorlevel 1 exit /b 1
 
 echo ==^> Telegram login for MRKT (phone number and code are typed only here)
-docker compose run --rm -it bot python -m gift_sniper mrkt-login
+docker compose run --rm -it bot python -m gift_sniper mrkt-login %LOGIN_ARGS%
 if errorlevel 1 exit /b 1
 
 echo ==^> Starting

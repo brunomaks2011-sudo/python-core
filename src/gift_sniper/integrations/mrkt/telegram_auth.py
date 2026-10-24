@@ -12,6 +12,7 @@ if it leaks.
 
 from __future__ import annotations
 
+import contextlib
 from pathlib import Path
 from typing import Any
 from urllib.parse import unquote
@@ -42,11 +43,14 @@ def extract_init_data(url: str) -> str:
     return unquote(url.split("tgWebAppData=", 1)[1].split("&tgWebAppVersion", 1)[0])
 
 
-async def fetch_init_data(*, api_id: int, api_hash: str, session_path: str, interactive: bool) -> str:
+async def fetch_init_data(
+    *, api_id: int, api_hash: str, session_path: str, interactive: bool, use_qr: bool = False
+) -> str:
     """Open the MRKT Mini App as the session's user and return its initData.
 
     With interactive=False an existing, authorized session is required: the call never prompts,
-    so it is safe inside the running bot.
+    so it is safe inside the running bot. use_qr logs a new session in by scanning a QR code with the
+    Telegram app (Settings -> Devices) instead of typing a login code.
     """
     try:
         from pyrogram import Client
@@ -56,7 +60,9 @@ async def fetch_init_data(*, api_id: int, api_hash: str, session_path: str, inte
         raise TelegramSessionError("kurigram is not installed (pip install kurigram)") from exc
 
     workdir, name = _prepare_workdir(session_path, interactive=interactive)
-    client = Client(name, api_id=api_id, api_hash=api_hash, workdir=workdir, no_updates=True)
+    qr = interactive and use_qr
+    # QR login waits for updateLoginToken, which a no-updates connection never receives
+    client = Client(name, api_id=api_id, api_hash=api_hash, workdir=workdir, no_updates=not qr)
     if not interactive:
         # an existing session must already be authorized; never fall back to input() prompts
         is_authorized = await client.connect()
@@ -68,8 +74,12 @@ async def fetch_init_data(*, api_id: int, api_hash: str, session_path: str, inte
             return await _request_init_data(client, RequestAppWebView, InputBotAppShortName, InputUser)
         finally:
             await client.disconnect()
-    async with client:  # interactive login in the operator's terminal when needed
+    await client.start(use_qr=qr)  # interactive login in the operator's terminal when needed
+    try:
         return await _request_init_data(client, RequestAppWebView, InputBotAppShortName, InputUser)
+    finally:
+        with contextlib.suppress(ConnectionError):
+            await client.stop()
 
 
 def _prepare_workdir(session_path: str, *, interactive: bool) -> tuple[str, str]:
