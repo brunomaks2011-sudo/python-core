@@ -13,6 +13,7 @@ from gift_sniper.integrations.giftwiki import (
     GiftWikiClient,
     GiftWikiError,
     GiftWikiForbiddenError,
+    key_looks_truncated,
 )
 from gift_sniper.integrations.mrkt import BuyOutcomeKind, MrktAuthError, MrktClient, SalingQuery
 from gift_sniper.integrations.mrkt.client import classify_buy_response
@@ -364,3 +365,25 @@ class TestGiftWikiClient:
                 await client.list_monochromes(1)
         finally:
             await client.close()
+
+    async def test_truncated_key_is_named_in_the_401_error(self, server: FakeServer) -> None:
+        """Only the key id (gw_dev_8400b365) was sent: Gift Wiki answers 401 Invalid API key."""
+        server.add("GET", GW, Reply(status=401, body={"error": "Invalid API key"}))
+        short = GiftWikiClient(
+            make_settings(giftwiki_api_base_url=server.url, giftwiki_api_key="gw_dev_8400b365")
+        )
+        full = GiftWikiClient(
+            make_settings(giftwiki_api_base_url=server.url, giftwiki_api_key="gw_dev_8400b365_WTl_ahe-NehFig")
+        )
+        for client in (short, full):
+            await client.start()
+        try:
+            with pytest.raises(GiftWikiAuthError, match="только начало ключа"):
+                await short.list_monochromes(1)
+            with pytest.raises(GiftWikiAuthError) as error:
+                await full.list_monochromes(1)
+            assert "только начало" not in str(error.value)
+        finally:
+            for client in (short, full):
+                await client.close()
+        assert key_looks_truncated(" gw_dev_ff23ef44 ") and not key_looks_truncated("gw_dev_8400b365_WTl")

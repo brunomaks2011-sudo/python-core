@@ -20,6 +20,7 @@ from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 from gift_sniper.config import Settings
 from gift_sniper.db.models import Filter, Gift, MarketCollection
 from gift_sniper.db.repo import filters as filters_repo
+from gift_sniper.db.repo import giftwiki as giftwiki_repo
 from gift_sniper.db.repo import listings as listings_repo
 from gift_sniper.db.repo import misc
 from gift_sniper.db.repo import purchases as purchases_repo
@@ -224,8 +225,10 @@ class MiniAppApi:
                 session, user_id=user_id, prun=PurchaseRunMode.LIVE, mode=PurchaseMode.REGULAR, spec=None
             )
             rows = await filters_repo.list_filters(session, user_id)
+            last_sync = next(iter(await giftwiki_repo.last_runs(session, 1)), None)
         limits, usage = user_state.limits, user_state.usage
         snapshot = self.store.snapshot
+        sync_error = last_sync.error if last_sync is not None and last_sync.status == "failed" else None
         run_mode = (await self.control.run_mode()).value
         stopped = await self.control.is_stopped()
         buying = [r for r in rows if r.enabled and r.autobuy]
@@ -252,7 +255,8 @@ class MiniAppApi:
             checklist.append(
                 {
                     "ok": bool(snapshot.records_count),
-                    "text": "Данные Gift Wiki для монохромов",
+                    "text": "Данные Gift Wiki для монохромов"
+                    + (f" — последняя загрузка не удалась: {sync_error}" if sync_error else ""),
                     "action": None,
                 }
             )

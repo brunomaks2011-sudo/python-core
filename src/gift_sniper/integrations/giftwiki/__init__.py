@@ -4,6 +4,7 @@ from gift_sniper.integrations.giftwiki.client import (
     GiftWikiClient,
     GiftWikiError,
     GiftWikiForbiddenError,
+    key_looks_truncated,
     parse_monochrome_record,
 )
 
@@ -13,5 +14,6 @@ __all__ = [
     "GiftWikiClient",
     "GiftWikiError",
     "GiftWikiForbiddenError",
+    "key_looks_truncated",
     "parse_monochrome_record",
 ]

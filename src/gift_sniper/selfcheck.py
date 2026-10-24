@@ -204,6 +204,15 @@ async def _check_giftwiki(
             FAIL, "GIFTWIKI_API_KEY не задан: классификация монохромов невозможна (статус всегда UNKNOWN)"
         )
         return
+    from gift_sniper.envfile import mask
+    from gift_sniper.integrations.giftwiki import key_looks_truncated
+
+    assert settings.giftwiki_api_key is not None
+    key = settings.giftwiki_api_key.get_secret_value()
+    if key_looks_truncated(key):
+        report.add(FAIL, f"GIFTWIKI_API_KEY={key}: это только начало ключа — вставьте в .env ключ целиком")
+        return
+    report.add(OK, f"GIFTWIKI_API_KEY: {mask(key)} ({len(key)} символов)")
     client = GiftWikiClient(settings)
     await client.start()
     try:

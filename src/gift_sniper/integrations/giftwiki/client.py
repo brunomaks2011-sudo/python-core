@@ -13,6 +13,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import re
 from collections.abc import AsyncIterator, Iterable
 from typing import Any
 from urllib.parse import urlencode
@@ -29,6 +30,18 @@ log = logging.getLogger(__name__)
 SERVICE = "giftwiki"
 PATH_MONOCHROMES = "/gifts/monochromes"
 PAGE_SIZE = 21  # "the public list is fixed at 21 items"
+
+
+# Keys look like gw_dev_8400b365_<long secret>; the short id shown next to a key is rejected with 401
+_KEY_ID_ONLY = re.compile(r"^gw_[a-z]+_[0-9a-f]{8}$")
+TRUNCATED_KEY_HINT = (
+    "похоже, в GIFTWIKI_API_KEY только начало ключа (gw_dev_xxxxxxxx) — вставьте ключ целиком, "
+    "вида gw_dev_xxxxxxxx_<длинная часть>"
+)
+
+
+def key_looks_truncated(key: str | None) -> bool:
+    return bool(key) and bool(_KEY_ID_ONLY.match(str(key).strip()))
 
 
 class GiftWikiError(Exception):
@@ -151,7 +164,13 @@ class GiftWikiClient:
                 return records
             error = _error_message(body)
             if status == 401:
-                raise GiftWikiAuthError(f"Gift Wiki 401 Unauthorized: {error}")
+                key = (
+                    self.settings.giftwiki_api_key.get_secret_value()
+                    if self.settings.giftwiki_api_key
+                    else ""
+                )
+                hint = f" ({TRUNCATED_KEY_HINT})" if key_looks_truncated(key) else ""
+                raise GiftWikiAuthError(f"Gift Wiki 401 Unauthorized: {error}{hint}")
             if status == 403:
                 raise GiftWikiForbiddenError(f"Gift Wiki 403 Forbidden: {error}")
             if status == 429 or status >= 500:
