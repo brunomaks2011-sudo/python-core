@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections.abc import AsyncIterator, Iterable
 from datetime import UTC, datetime
+from typing import Any
 
 import pytest
 from sqlalchemy import select
@@ -13,7 +14,8 @@ from gift_sniper.db.repo import listings as listings_repo
 from gift_sniper.domain.enums import MonochromeStatus
 from gift_sniper.domain.types import MonochromeRecord
 from gift_sniper.integrations.giftwiki import PAGE_SIZE, GiftWikiError, GiftWikiForbiddenError
-from gift_sniper.services.giftwiki_sync import GiftWikiSync
+from gift_sniper.services.giftwiki_sync import ALREADY_RUNNING, LOCK_TTL_SECONDS, GiftWikiSync
+from gift_sniper.services.locks import RedisLock
 from tests.factories import make_listing
 from tests.integration.conftest import Env
 
@@ -190,3 +192,24 @@ async def test_sync_stores_mapping_table(env: Env) -> None:
         }
     assert rows["Plush Pepe"].status == "matched" and rows["Plush Pepe"].giftwiki_gift_id == "id-Plush Pepe"
     assert rows["Lunar Snake"].status == "not_found" and rows["Lunar Snake"].giftwiki_gift_id is None
+
+
+async def test_a_running_sync_is_visible_and_its_lock_is_short_lived(env: Env) -> None:
+    lock_ttls: list[int] = []
+
+    class Watching(FakeGiftWiki):
+        async def monochromes_for_gift(self, **kwargs: Any) -> list[MonochromeRecord]:
+            lock_ttls.append(await env.redis.pttl(sync.lock_key()))
+            return await super().monochromes_for_gift(**kwargs)
+
+    sync = make_sync(env, Watching([rec(1, "Plush Pepe", "Onyx", "Black")]))
+    elsewhere = RedisLock(env.redis, sync.lock_key(), LOCK_TTL_SECONDS)  # e.g. the bot syncing on start
+    assert await elsewhere.acquire() and await sync.is_running()
+    skipped = await sync.run(trigger="manual")
+    assert (skipped.status, skipped.error) == ("skipped", ALREADY_RUNNING)
+    await elsewhere.release()
+    assert not await sync.is_running()
+    assert (await sync.run(trigger="manual")).status == "success"
+    # renewed while working, and short: a killed process does not block syncs for an hour
+    assert lock_ttls and all(0 < ttl <= LOCK_TTL_SECONDS * 1000 for ttl in lock_ttls)
+    assert not await sync.is_running()

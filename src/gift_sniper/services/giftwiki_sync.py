@@ -48,6 +48,11 @@ class SyncReport:
     complete_gifts: set[str] = field(default_factory=set)
 
 
+ALREADY_RUNNING = "синхронизация уже выполняется"
+# short, renewed on every page and lookup: a killed process does not block syncs for long
+LOCK_TTL_SECONDS = 300
+
+
 class GiftWikiSync:
     def __init__(
         self,
@@ -64,6 +69,18 @@ class GiftWikiSync:
         self.redis = redis
         self.store = store
         self.enricher = enricher
+        self._lock: RedisLock | None = None
+
+    def lock_key(self) -> str:
+        return f"{self.settings.redis_prefix}:lock:giftwiki-sync"
+
+    async def is_running(self) -> bool:
+        return bool(await self.redis.exists(self.lock_key()))
+
+    async def _heartbeat(self) -> None:
+        """Keep the lock while the sync makes progress; a crashed process releases it within the TTL."""
+        if self._lock is not None:
+            await self._lock.extend(LOCK_TTL_SECONDS)
 
     async def run(self, trigger: str = "schedule") -> SyncReport:
         report = SyncReport()
@@ -71,11 +88,12 @@ class GiftWikiSync:
             report.status = "skipped"
             report.error = "GIFTWIKI_API_KEY не задан"
             return report
-        lock = RedisLock(self.redis, f"{self.settings.redis_prefix}:lock:giftwiki-sync", 3600)
+        lock = RedisLock(self.redis, self.lock_key(), LOCK_TTL_SECONDS)
         if not await lock.acquire():
             report.status = "skipped"
-            report.error = "синхронизация уже выполняется"
+            report.error = ALREADY_RUNNING
             return report
+        self._lock = lock
         async with self.sessionmaker() as session, session.begin():
             run = await repo.start_run(session, trigger)
             run_id = run.id
@@ -94,6 +112,7 @@ class GiftWikiSync:
             report.error = f"{type(exc).__name__}: {exc}"
             log.exception("Gift Wiki sync crashed")
         finally:
+            self._lock = None
             await lock.release()
             async with self.sessionmaker() as session, session.begin():
                 run_row = await session.get(GiftWikiSyncRun, run_id)
@@ -129,6 +148,7 @@ class GiftWikiSync:
         records: dict[str, MonochromeRecord] = {}
         last_page_len = PAGE_SIZE
         async for page, batch in self.client.iter_all_pages(self.settings.giftwiki_max_pages):
+            await self._heartbeat()
             report.pages = page
             last_page_len = len(batch)
             for rec in batch:
@@ -151,6 +171,7 @@ class GiftWikiSync:
             for key, gift_name in list(names.items()):
                 if not gift_name:
                     continue
+                await self._heartbeat()
                 try:
                     recs = await self.client.monochromes_for_gift(gift_name=gift_name)
                 except GiftWikiForbiddenError as exc:

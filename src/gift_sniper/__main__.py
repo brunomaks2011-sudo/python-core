@@ -48,11 +48,36 @@ async def run(components: set[str]) -> None:
 
 async def sync_giftwiki() -> int:
     from gift_sniper.app import Application
+    from gift_sniper.db.repo import giftwiki as giftwiki_repo
+    from gift_sniper.services.giftwiki_sync import ALREADY_RUNNING
 
     app = Application(get_settings())
     services = await app.build()
     try:
         report = await services.sync.run(trigger="manual")
+        if report.status == "skipped" and report.error == ALREADY_RUNNING:
+            # the running bot syncs on start: wait for it instead of failing
+            print(
+                "Бот уже загружает данные Gift Wiki. Жду, пока он закончит (обычно несколько минут)…",
+                flush=True,
+            )
+            waited = 0
+            while await services.sync.is_running():
+                await asyncio.sleep(5)
+                waited += 5
+                if waited % 60 == 0:
+                    print(f"… всё ещё загружается ({waited // 60} мин)", flush=True)
+            async with services.sessionmaker() as session:
+                last = next(iter(await giftwiki_repo.last_runs(session, 1)), None)
+            if last is None:
+                print("Итог загрузки не найден: запустите команду ещё раз.")
+                return 1
+            print(
+                f"status={last.status} pages={last.pages_fetched} records={last.records_fetched} "
+                f"gifts={last.gifts_covered} added={last.records_added} removed={last.records_removed} "
+                f"lookups={last.lookups_done}/{last.lookups_done + last.lookups_failed} error={last.error}"
+            )
+            return 0 if last.status in ("success", "partial") else 1
         print(
             f"status={report.status} pages={report.pages} records={report.records} gifts={report.gifts} "
             f"added={report.added} removed={report.removed} lookups={report.lookups_done}/"
