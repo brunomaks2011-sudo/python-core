@@ -212,12 +212,16 @@ def filters_list_kb(rows: list[Filter], *, kind: FilterKind | None) -> InlineKey
 async def cb_filters(callback: CallbackQuery, services: Services, state: FSMContext) -> None:
     await state.clear()
     async with services.sessionmaker() as session:
-        rows = await filters_repo.list_filters(session, callback.from_user.id)
+        rows, plans = filters_repo.without_plans(
+            await filters_repo.list_filters(session, callback.from_user.id)
+        )
     text = (
         "⚙️ <b>Настройки фильтров</b>\n"
         "✅ — включён, ⏸ — выключен, 🤖 — автопокупка по фильтру.\n"
         "🎁 — обычная автопокупка, ⚫ — автопокупка монохромов (покупает только статус MONOCHROME по Gift Wiki)."
     )
+    if plans:
+        text += f"\n📱 Правил мини-приложения: {plans} — они настраиваются в мини-приложении (/app)."
     if not rows:
         text += "\n\nФильтров пока нет."
     await show(callback, text, filters_list_kb(rows, kind=None))
@@ -424,7 +428,7 @@ async def cb_delete_ok(callback: CallbackQuery, callback_data: FilterCb, service
             await misc.audit(session, "filter_deleted", user_id=row.user_id, filter_id=row.id)
     await _invalidate(services)
     async with services.sessionmaker() as session:
-        rows = await filters_repo.list_filters(session, callback.from_user.id)
+        rows, _ = filters_repo.without_plans(await filters_repo.list_filters(session, callback.from_user.id))
     await show(callback, "🗑 Фильтр удалён.", filters_list_kb(rows, kind=None))
 
 

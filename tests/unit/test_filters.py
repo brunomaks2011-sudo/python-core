@@ -6,7 +6,7 @@ from datetime import UTC, datetime, timedelta
 
 from gift_sniper.domain.enums import FilterKind, GiftWikiMonochromeType, MonochromeStatus
 from gift_sniper.domain.types import Share
-from gift_sniper.services.filters import FilterCriteria, MatchContext, describe_criteria, evaluate
+from gift_sniper.services.filters import FilterCriteria, MatchContext, Pick, describe_criteria, evaluate
 from tests.factories import TON, make_enrichment, make_listing
 
 NOW = datetime.now(UTC)
@@ -132,3 +132,37 @@ def test_description_lists_applied_filter() -> None:
     lines = describe_criteria(FilterKind.MONOCHROME, FilterCriteria(max_price_nano=5 * TON, models=["Onyx"]))
     text = "\n".join(lines)
     assert "5 TON" in text and "Onyx" in text and "MONOCHROME" in text
+
+
+def test_picks_take_the_most_specific_choice_and_its_price() -> None:
+    picks = [
+        Pick(max_price_nano=5 * TON),  # the whole collection
+        Pick(model="Onyx", max_price_nano=7 * TON),  # every Onyx
+        Pick(model="Onyx", backdrops=["Black"], max_price_nano=9 * TON),  # Onyx on Black
+    ]
+    c = FilterCriteria(collections=["Plush Pepe"], picks=picks)
+    assert check(c, model_name="Onyx", backdrop_name="Black", price_nano=8 * TON).matched
+    on_white = check(c, model_name="onyx", backdrop_name="White", price_nano=8 * TON)
+    assert not on_white.matched and "7 TON" in on_white.failed[0]
+    assert check(c, model_name="Ivory", backdrop_name="White", price_nano=4 * TON).matched
+    assert not check(c, model_name="Ivory", backdrop_name="White", price_nano=6 * TON).matched
+    only_pairs = FilterCriteria(picks=[Pick(model="Onyx", backdrops=["Black"], max_price_nano=9 * TON)])
+    assert check(only_pairs, model_name="Ivory", price_nano=TON).failed == [
+        "модель и фон не выбраны в мини-приложении"
+    ]
+    assert "Выбрано (3)" in describe_criteria(FilterKind.REGULAR, c)[-1]
+
+
+def test_monochrome_picks_still_require_gift_wiki_confirmation() -> None:
+    c = FilterCriteria(picks=[Pick(model="Onyx", backdrops=["Black"], max_price_nano=9 * TON)])
+    unknown = check(c, kind=FilterKind.MONOCHROME, model_name="Onyx", backdrop_name="Black", price_nano=TON)
+    assert not unknown.matched
+    confirmed = make_enrichment(MonochromeStatus.MONOCHROME)
+    assert check(
+        c,
+        kind=FilterKind.MONOCHROME,
+        enrichment=confirmed,
+        model_name="Onyx",
+        backdrop_name="Black",
+        price_nano=TON,
+    ).matched

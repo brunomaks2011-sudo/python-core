@@ -82,18 +82,27 @@ async def test_collection_shows_models_monochrome_backdrops_and_chance(
         MrktAttribute("Midnight", 10),
         MrktAttribute("White", 30),
     ]
+    async with env.sessionmaker() as session, session.begin():  # a gift MRKT showed: Onyx on Black
+        await listings_repo.upsert_gift(
+            session, make_listing("g7", name="PlushPepe-77", backdrop_center_color=0x112233)
+        )
     detail = await (await client.get(PEPE, headers=auth())).json()
     onyx = next(m for m in detail["models"] if m["name"] == "Onyx")
-    assert [b["name"] for b in onyx["monochrome_backdrops"]] == ["Black", "Midnight"]
-    assert onyx["rarity"] == 1.5
+    black, midnight = onyx["pairs"]
+    assert (black["backdrop"], black["type"], black["rarity"]) == ("Black", "high", 2.0)
+    assert black["image"] == "https://nft.fragment.com/gift/plushpepe-77.webp"  # the gift seen on MRKT
+    assert black["center"] == "#112233" and black["price"] is None
+    assert (midnight["backdrop"], midnight["type"], midnight["image"]) == ("Midnight", "low", None)
+    assert onyx["rarity"] == 1.5 and onyx["image"] == black["image"]
     assert onyx["monochrome_chance"] == pytest.approx(3.0)  # Black 2% + Midnight 1% of Onyx copies
     assert detail["models"][0]["name"] == "Onyx"  # models with monochromes first
     assert detail["monochrome_share"] == pytest.approx(100 / 3) and detail["models_source"] == "mrkt"
-    assert {b["name"] for b in detail["backdrops"]} == {"Black", "Midnight", "White"}
+    assert detail["image"] == "https://fragment.com/file/gifts/plushpepe/thumb.webp"
 
     listing = await (await client.get("/api/collections", headers=auth())).json()
     pepe = next(c for c in listing["items"] if c["name"] == "Plush Pepe")
     assert (pepe["monochrome_models"], pepe["known_models"], pepe["monochrome_pairs"]) == (1, 3, 2)
+    assert pepe["image"] == "https://fragment.com/file/gifts/plushpepe/thumb.webp"
     await client.get(PEPE, headers=auth())
     assert env.mrkt.attribute_calls.count(("model", "Plush Pepe")) == 1  # cached in Redis
     assert (await client.get("/api/collections/Nope", headers=auth())).status == 404
@@ -188,3 +197,58 @@ async def test_emergency_stop_from_the_mini_app(client: TestClient, env: Env) ->
     assert stopped["stopped"] and await env.control.is_stopped()
     resumed = await (await client.post("/api/resume", headers=auth())).json()
     assert not resumed["stopped"]
+
+
+async def test_pairs_picked_with_their_own_prices(client: TestClient, env: Env) -> None:  # type: ignore[type-arg]
+    await env.add_giftwiki("Plush Pepe", [("Onyx", "Black", "high"), ("Onyx", "Midnight", "low")])
+    picks = {
+        "model": "Onyx",
+        "any_price_ton": "3",
+        "monochrome_price_ton": "7",
+        "pairs": [{"backdrop": "Black", "price_ton": "9"}],
+        "autobuy": True,
+    }
+    no_price = await client.put(
+        PEPE + "/picks", headers=auth(), json={"model": "Onyx", "pairs": [{"backdrop": "Black"}]}
+    )
+    assert no_price.status == 400 and "Black" in (await no_price.json())["error"]
+    saved = await (await client.put(PEPE + "/picks", headers=auth(), json=picks)).json()
+    onyx = next(m for m in saved["models"] if m["name"] == "Onyx")
+    assert (onyx["any"], onyx["monochrome"], onyx["taken"]) == (3, 7, 3)
+    assert [(p["backdrop"], p["price"]) for p in onyx["pairs"]] == [("Black", 9), ("Midnight", None)]
+    whole = await client.put(PEPE + "/picks", headers=auth(), json={"monochrome_price_ton": "4"})
+    assert (await whole.json())["whole"] == {"any": None, "monochrome": 4}
+
+    async with env.sessionmaker() as session:
+        rows = await filters_repo.list_filters(session, ADMIN)
+        prefs = await users_repo.get_settings(session, ADMIN)
+    assert sorted(r.name for r in rows) == ["📱 Plush Pepe", "📱 Plush Pepe · монохромы"]
+    assert all(r.enabled and r.autobuy for r in rows) and prefs.monochrome_autobuy_enabled
+    assert filters_repo.without_plans(rows) == ([], 2)  # the chat menus do not list them
+
+    await client.put(
+        "/api/settings",
+        headers=auth(),
+        json={"per_purchase_ton": "20", "daily_ton": "50", "total_ton": "100"},
+    )
+    queue = MemoryQueue()
+    processor = ListingProcessor(
+        env.settings, env.sessionmaker, env.enricher, env.filter_cache, env.notifier, queue
+    )
+
+    async def offer(event_id: str, price: int, **kw: str) -> list[int]:
+        listing = make_listing(event_id, price_nano=price, **kw)  # type: ignore[arg-type]
+        event = FeedEvent(event_id, "listing", listing, price, datetime.now(UTC) - timedelta(seconds=1))
+        return (await processor.process(event, detected_at=datetime.now(UTC))).matched_filters
+
+    mono_plan = next(r.id for r in rows if r.kind == "monochrome")
+    assert await offer("a", 8 * TON) == [mono_plan]  # Onyx on Black: the pair's own price 9 TON
+    assert await offer("b", int(9.5 * TON)) == []
+    assert await offer("c", 6 * TON, backdrop_name="Midnight") == [mono_plan]  # every Onyx monochrome: 7
+    assert await offer("d", 8 * TON, backdrop_name="Midnight") == []
+
+    cleared = await (await client.put(PEPE + "/picks", headers=auth(), json={"model": "Onyx"})).json()
+    assert next(m for m in cleared["models"] if m["name"] == "Onyx")["taken"] == 0
+    await client.put(PEPE + "/picks", headers=auth(), json={})  # nothing left for the whole collection
+    async with env.sessionmaker() as session:
+        assert await filters_repo.list_filters(session, ADMIN) == []

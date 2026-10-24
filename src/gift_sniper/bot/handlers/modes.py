@@ -28,7 +28,7 @@ async def render_mode(callback: CallbackQuery, services: Services, mode: str, *,
     user_id = callback.from_user.id
     async with services.sessionmaker() as session:
         prefs = await users_repo.get_settings(session, user_id)
-        rows = await filters_repo.list_filters(session, user_id, kind)
+        rows, plans = filters_repo.without_plans(await filters_repo.list_filters(session, user_id, kind))
         live_user, live_mode, _ = await services.purchase.scope_states(
             session, user_id=user_id, prun=PurchaseRunMode.LIVE, mode=purchase_mode, spec=None
         )
@@ -75,6 +75,8 @@ async def render_mode(callback: CallbackQuery, services: Services, mode: str, *,
         )
     lines.append("")
     lines.append("<b>Фильтры режима</b>:" if rows else "Фильтров этого режима пока нет.")
+    if plans:
+        lines.append(f"📱 Правил мини-приложения: {plans} (настраиваются в мини-приложении, /app)")
     for row in rows:
         lines.append(
             f"{'✅' if row.enabled else '⏸'} {escape(row.name)} — автопокупка {'вкл' if row.autobuy else 'выкл'}"

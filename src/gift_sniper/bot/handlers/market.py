@@ -49,7 +49,7 @@ STATUS_ICON = {
 @router.callback_query(Menu.filter(F.section == "search"))
 async def cb_search_menu(callback: CallbackQuery, services: Services) -> None:
     async with services.sessionmaker() as session:
-        rows = await filters_repo.list_filters(session, callback.from_user.id)
+        rows, _ = filters_repo.without_plans(await filters_repo.list_filters(session, callback.from_user.id))
     b = InlineKeyboardBuilder()
     for row in rows:
         icon = "⚫" if row.kind == FilterKind.MONOCHROME.value else "🎁"

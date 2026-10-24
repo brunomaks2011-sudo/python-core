@@ -101,6 +101,12 @@ def create_app(api: MiniAppApi, settings: Settings) -> web.Application:
     async def collection(request: web.Request) -> web.Response:
         return web.json_response(await api.collection(await caller(request), request.match_info["name"]))
 
+    async def save_picks(request: web.Request) -> web.Response:
+        user_id = await caller(request)
+        return web.json_response(
+            await api.save_picks(user_id, request.match_info["name"], await body(request))
+        )
+
     async def rules(request: web.Request) -> web.Response:
         return web.json_response(await api.rules(await caller(request)))
 
@@ -135,6 +141,7 @@ def create_app(api: MiniAppApi, settings: Settings) -> web.Application:
     app.router.add_get("/api/me", me)
     app.router.add_get("/api/collections", collections)
     app.router.add_get("/api/collections/{name}", collection)
+    app.router.add_put("/api/collections/{name}/picks", save_picks)
     app.router.add_get("/api/rules", rules)
     app.router.add_post("/api/rules", create_rule)
     app.router.add_put("/api/rules/{rule_id}", update_rule)

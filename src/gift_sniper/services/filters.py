@@ -5,7 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import datetime
 
-from pydantic import BaseModel, ConfigDict, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from gift_sniper.domain.enums import FeedEventType, FilterKind, GiftWikiMonochromeType, MonochromeStatus
 from gift_sniper.domain.money import format_ton
@@ -14,6 +14,7 @@ from gift_sniper.domain.types import Enrichment, ListingSnapshot
 from gift_sniper.services.percentages import format_percent
 
 MAX_LIST_ITEMS = 50
+MAX_PICKS = 500
 
 
 def _clean_names(values: list[str]) -> list[str]:
@@ -26,6 +27,49 @@ def _clean_names(values: list[str]) -> list[str]:
             seen.add(key)
             result.append(text)
     return result[:MAX_LIST_ITEMS]
+
+
+class Pick(BaseModel):
+    """A choice made in the Mini App inside one collection: a model (or every model) with chosen backdrops
+    (or any), bought up to its own price. A monochrome filter additionally requires MONOCHROME status."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    model: str | None = None
+    backdrops: list[str] = []
+    max_price_nano: int = Field(gt=0)
+
+    @field_validator("model", mode="after")
+    @classmethod
+    def _model(cls, value: str | None) -> str | None:
+        text = " ".join(value.split()) if value else ""
+        return text or None
+
+    @field_validator("backdrops", mode="after")
+    @classmethod
+    def _backdrops(cls, value: list[str]) -> list[str]:
+        return _clean_names(value)
+
+    def specificity(self) -> int:
+        return (self.model is not None) + bool(self.backdrops)
+
+    def matches(self, listing: ListingSnapshot) -> bool:
+        if self.model is not None and not _name_in(listing.model_name, [self.model]):
+            return False
+        return not self.backdrops or _name_in(listing.backdrop_name, self.backdrops)
+
+    def label(self) -> str:
+        backdrops = ", ".join(self.backdrops) if self.backdrops else "любой фон"
+        return f"{self.model or 'все модели'} · {backdrops} ≤ {format_ton(self.max_price_nano)}"
+
+
+def matching_pick(picks: list[Pick], listing: ListingSnapshot) -> Pick | None:
+    """The most specific pick for the listing (model + backdrop over model only over the whole collection);
+    among equally specific ones the highest price."""
+    candidates = [p for p in picks if p.matches(listing)]
+    if not candidates:
+        return None
+    return max(candidates, key=lambda p: (p.specificity(), p.max_price_nano))
 
 
 class FilterCriteria(BaseModel):
@@ -50,6 +94,8 @@ class FilterCriteria(BaseModel):
     # monochrome mode only
     monochrome_types: list[str] = []
     min_monochrome_model_share_percent: float | None = None
+    # Mini App: what to buy inside the collection(s) and up to which price, per model / backdrop
+    picks: list[Pick] = Field(default_factory=list, max_length=MAX_PICKS)
 
     @field_validator(
         "collections", "models", "backdrops", "symbols", "exclude_collections", "exclude_models", mode="after"
@@ -158,6 +204,12 @@ def evaluate(
         failed.append("фон не выбран")
     if criteria.symbols and not _name_in(listing.symbol_name, criteria.symbols):
         failed.append("символ не выбран")
+    if criteria.picks:
+        pick = matching_pick(criteria.picks, listing)
+        if pick is None:
+            failed.append("модель и фон не выбраны в мини-приложении")
+        elif price is not None and price > pick.max_price_nano:
+            failed.append(f"цена выше {format_ton(pick.max_price_nano)} ({pick.model or 'все модели'})")
 
     _check_range(
         failed,
@@ -240,6 +292,10 @@ def describe_criteria(kind: FilterKind, c: FilterCriteria) -> list[str]:
             lines.append(
                 f"{label}: {low if low is not None else '—'}‰ … {high if high is not None else '—'}‰"
             )
+    if c.picks:
+        shown = [p.label() for p in c.picks[:5]]
+        more = f" и ещё {len(c.picks) - 5}" if len(c.picks) > 5 else ""
+        lines.append(f"Выбрано ({len(c.picks)}): " + "; ".join(shown) + more)
     if c.only_new_listings:
         lines.append("Только новые листинги")
     if c.min_discount_percent is not None:

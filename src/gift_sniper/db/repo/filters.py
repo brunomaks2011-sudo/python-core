@@ -10,6 +10,19 @@ from gift_sniper.domain.enums import FilterKind, PurchaseStatus
 from gift_sniper.services.filters import FilterCriteria, FilterLimits, FilterSpec
 
 MAX_FILTERS_PER_USER = 30
+# Mini App collection plans (filters with picks): at most two per collection, regular and monochrome
+MAX_PLANS_PER_USER = 300
+
+
+def is_plan(row: Filter) -> bool:
+    """A filter managed by the Mini App: per-collection picks of models and backdrops with their prices."""
+    return bool((row.criteria or {}).get("picks"))
+
+
+def without_plans(rows: list[Filter]) -> tuple[list[Filter], int]:
+    """Filters for the chat interface and the number of Mini App plans left out of it."""
+    kept = [r for r in rows if not is_plan(r)]
+    return kept, len(rows) - len(kept)
 
 
 def to_spec(row: Filter) -> FilterSpec:
@@ -40,17 +53,19 @@ async def get_filter(session: AsyncSession, user_id: int, filter_id: int) -> Fil
     return row
 
 
-async def count_filters(session: AsyncSession, user_id: int) -> int:
-    return int(
-        (
-            await session.execute(select(func.count()).select_from(Filter).where(Filter.user_id == user_id))
-        ).scalar_one()
-    )
-
-
-async def create_filter(session: AsyncSession, user_id: int, name: str, kind: FilterKind) -> Filter:
-    if await count_filters(session, user_id) >= MAX_FILTERS_PER_USER:
+async def _check_room(session: AsyncSession, user_id: int, *, plan: bool) -> None:
+    rows = await list_filters(session, user_id)
+    plans = sum(1 for r in rows if is_plan(r))
+    if plan and plans >= MAX_PLANS_PER_USER:
+        raise ValueError(f"Не больше {MAX_PLANS_PER_USER} правил мини-приложения на пользователя")
+    if not plan and len(rows) - plans >= MAX_FILTERS_PER_USER:
         raise ValueError(f"Не больше {MAX_FILTERS_PER_USER} фильтров на пользователя")
+
+
+async def create_filter(
+    session: AsyncSession, user_id: int, name: str, kind: FilterKind, *, plan: bool = False
+) -> Filter:
+    await _check_room(session, user_id, plan=plan)
     row = Filter(
         user_id=user_id,
         name=name[:64],
@@ -66,8 +81,7 @@ async def create_filter(session: AsyncSession, user_id: int, name: str, kind: Fi
 
 
 async def copy_filter(session: AsyncSession, source: Filter) -> Filter:
-    if await count_filters(session, source.user_id) >= MAX_FILTERS_PER_USER:
-        raise ValueError(f"Не больше {MAX_FILTERS_PER_USER} фильтров на пользователя")
+    await _check_room(session, source.user_id, plan=is_plan(source))
     row = Filter(
         user_id=source.user_id,
         name=(f"{source.name} (копия)")[:64],

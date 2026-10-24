@@ -28,11 +28,12 @@ from gift_sniper.domain.enums import BudgetScope, FilterKind, PurchaseMode, Purc
 from gift_sniper.domain.money import NANO_PER_TON, ton_to_nano
 from gift_sniper.domain.normalize import normalize_name
 from gift_sniper.integrations.mrkt import MrktAttribute, MrktError
-from gift_sniper.services.filters import FilterCriteria, FilterLimits, describe_criteria
+from gift_sniper.services.filters import FilterCriteria, FilterLimits, Pick, describe_criteria
 from gift_sniper.services.percentages import monochrome_model_share
 from gift_sniper.services.reference import ReferenceSnapshot, RefRecord
 from gift_sniper.services.texts import nft_url
 from gift_sniper.webapp.auth import WebAppIdentity
+from gift_sniper.webapp.images import collection_thumb, color_hex, gift_image, giftname
 
 log = logging.getLogger(__name__)
 
@@ -128,6 +129,49 @@ class LimitsInput(BaseModel):
     autobuy_enabled: bool | None = None
     monochrome_autobuy_enabled: bool | None = None
     purchases_paused: bool | None = None
+
+
+class PairPick(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+
+    backdrop: str = Field(min_length=1, max_length=128)
+    price_ton: str | float | None = None
+
+
+class ModelPicks(BaseModel):
+    """What to take for one model (or the whole collection when model is empty) and up to which price."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    model: str | None = Field(default=None, max_length=128)
+    any_price_ton: str | float | None = None  # every copy of the model, any backdrop
+    monochrome_price_ton: str | float | None = None  # every pair Gift Wiki confirms as monochrome
+    pairs: list[PairPick] = Field(default_factory=list, max_length=200)  # single monochrome pairs
+    autobuy: bool | None = None
+
+    @field_validator("model", mode="after")
+    @classmethod
+    def _blank_model(cls, value: str | None) -> str | None:
+        return (value.strip() or None) if value else None
+
+
+def _picks_of(row: Filter | None) -> list[Pick]:
+    return FilterCriteria.model_validate(row.criteria or {}).picks if row is not None else []
+
+
+def _pick_price(picks: list[Pick], model_norm: str | None, backdrop_norm: str | None) -> float | None:
+    """Price of the pick for exactly this model (None: whole collection) and backdrop (None: no backdrop)."""
+    wanted = [backdrop_norm] if backdrop_norm else []
+    for pick in picks:
+        if (normalize_name(pick.model) if pick.model else None) == model_norm and [
+            normalize_name(b) for b in pick.backdrops
+        ] == wanted:
+            return ton(pick.max_price_nano)
+    return None
+
+
+def _percent(permille: int | None) -> float | None:
+    return permille / 10 if permille is not None else None
 
 
 def _records_by_model(records: list[RefRecord]) -> dict[str, list[RefRecord]]:
@@ -244,31 +288,39 @@ class MiniAppApi:
             rows = await listings_repo.market_collections(session)
             models = await listings_repo.models_by_collection(session)
             rules = await filters_repo.list_filters(session, user_id)
+            slugs = await listings_repo.collection_slugs(session)
         snapshot = self.store.snapshot
-        rules_by_collection: dict[str, int] = {}
+        taken: dict[str, int] = {}
+        other_rules: dict[str, int] = {}
         for rule in rules:
-            if rule.enabled:
-                for name in FilterCriteria.model_validate(rule.criteria or {}).collections:
-                    rules_by_collection[normalize_name(name)] = (
-                        rules_by_collection.get(normalize_name(name), 0) + 1
-                    )
+            if not rule.enabled:
+                continue
+            criteria = FilterCriteria.model_validate(rule.criteria or {})
+            for collection_name in criteria.collections:
+                key = normalize_name(collection_name)
+                if criteria.picks:
+                    taken[key] = taken.get(key, 0) + len(criteria.picks)
+                else:
+                    other_rules[key] = other_rules.get(key, 0) + 1
         items = []
         for row in rows:
             records = self._records(snapshot, row.name, row.title)
             mono_models = {normalize_name(r.model_name) for r in records if r.model_name}
             observed = models.get(normalize_name(row.name), set())
             share = monochrome_model_share(mono_models, observed) if mono_models else None
+            key = normalize_name(row.name)
             items.append(
                 {
                     "name": row.name,
                     "title": row.title or row.name,
                     "floor": ton(row.floor_price_nano),
+                    "image": collection_thumb(giftname(row.name, slug=slugs.get(row.name))),
                     "monochrome_pairs": len(records),
                     "monochrome_models": len(mono_models),
                     "known_models": share.denominator if share else len(observed),
                     "monochrome_share": share.percent if share else None,
-                    "photo": next((r.photo_url for r in records if r.photo_url), None),
-                    "rules": rules_by_collection.get(normalize_name(row.name), 0),
+                    "taken": taken.get(key, 0),
+                    "rules": other_rules.get(key, 0),
                 }
             )
         return {"items": items, "giftwiki_records": snapshot.records_count}
@@ -280,8 +332,8 @@ class MiniAppApi:
                 raise ApiError("Коллекция не найдена", 404)
         mrkt_models = await self._attributes("model", name)
         mrkt_backdrops = await self._attributes("backdrop", name)
-        async with self.sessionmaker() as session, session.begin():
-            if mrkt_models:
+        if mrkt_models:
+            async with self.sessionmaker() as session, session.begin():
                 await listings_repo.upsert_models(
                     session, name, [(m.name, m.rarity_permille) for m in mrkt_models], source="mrkt_models"
                 )
@@ -290,104 +342,164 @@ class MiniAppApi:
             seen_backdrops = await listings_repo.collection_backdrops(session, name)
             floors = await listings_repo.model_floors(session, name)
             rules = await filters_repo.list_filters(session, user_id)
+            seen_pairs = await listings_repo.pair_slugs(session, name)
+            colors = await listings_repo.backdrop_colors(session)
         snapshot = self.store.snapshot
         records = self._records(snapshot, row.name, row.title)
         mono_by_model = _records_by_model(records)
+        plans = self._plans(rules, name)
+        regular = _picks_of(plans.get(FilterKind.REGULAR))
+        mono = _picks_of(plans.get(FilterKind.MONOCHROME))
 
-        backdrops: dict[str, dict[str, Any]] = {}
-        for backdrop in mrkt_backdrops:
-            backdrops[normalize_name(backdrop.name)] = {
-                "name": backdrop.name,
-                "rarity": backdrop.rarity_permille,
-            }
-        for backdrop_name, rarity in seen_backdrops.items():
-            item = backdrops.setdefault(
-                normalize_name(backdrop_name), {"name": backdrop_name, "rarity": None}
-            )
-            item["rarity"] = item["rarity"] if item["rarity"] is not None else rarity
-        for record in records:
-            if record.backdrop_name:
-                backdrops.setdefault(
-                    normalize_name(record.backdrop_name), {"name": record.backdrop_name, "rarity": None}
-                )
+        rarity: dict[str, int | None] = {normalize_name(b.name): b.rarity_permille for b in mrkt_backdrops}
+        for backdrop_name, value in seen_backdrops.items():
+            if rarity.get(normalize_name(backdrop_name)) is None:
+                rarity[normalize_name(backdrop_name)] = value
 
         models: dict[str, dict[str, Any]] = {}
-        floor_by_model = {m.name: m.floor_price_nano for m in mrkt_models}
+        floor_by_model = {normalize_name(m.name): m.floor_price_nano for m in mrkt_models}
         for stored in stored_models:
             models[stored.model_norm] = {"name": stored.model_name, "rarity": stored.rarity_permille}
         for norm, recs in mono_by_model.items():
             models.setdefault(norm, {"name": recs[0].model_name, "rarity": None})
-        rules_view = [self._rule_view(r) for r in rules if self._rule_collection(r) == normalize_name(name)]
+        thumb = collection_thumb(giftname(name, slug=next(iter(seen_pairs.values()), None)))
+
         model_items = []
         for norm, model in models.items():
-            recs = mono_by_model.get(norm, [])
-            mono_backdrops = sorted(
-                {normalize_name(r.backdrop_name or ""): r for r in recs}.values(),
+            recs = sorted(
+                {normalize_name(r.backdrop_name or ""): r for r in mono_by_model.get(norm, [])}.values(),
                 key=lambda r: r.backdrop_name or "",
             )
-            rarities = [
-                backdrops.get(normalize_name(r.backdrop_name or ""), {}).get("rarity") for r in mono_backdrops
-            ]
+            pairs = []
+            for record in recs:
+                backdrop_norm = normalize_name(record.backdrop_name or "")
+                center, edge = colors.get(backdrop_norm, (None, None))
+                pairs.append(
+                    {
+                        "backdrop": record.backdrop_name,
+                        "type": record.type.value if record.type else record.type_raw,
+                        "rarity": _percent(rarity.get(backdrop_norm)),
+                        "image": record.photo_url or gift_image(seen_pairs.get((norm, backdrop_norm))),
+                        "center": color_hex(record.center_color) or color_hex(center),
+                        "edge": color_hex(record.edge_color) or color_hex(edge),
+                        "price": _pick_price(mono, norm, backdrop_norm),
+                    }
+                )
             # share of this model's copies with a monochrome backdrop, from MRKT backdrop rarities
-            known = [int(r) for r in rarities if r is not None]
+            rarities = [rarity.get(normalize_name(r.backdrop_name or "")) for r in recs]
+            known = [int(v) for v in rarities if v is not None]
             chance = sum(known) / 10 if rarities and len(known) == len(rarities) else None
             seen_floor, on_sale = floors.get(model["name"], (None, 0))
+            observed_image = next(
+                (gift_image(slug) for (m, _), slug in seen_pairs.items() if m == norm and gift_image(slug)),
+                None,
+            )
             model_items.append(
                 {
                     "name": model["name"],
-                    "rarity": model["rarity"] / 10 if model["rarity"] is not None else None,
-                    "floor": ton(floor_by_model.get(model["name"]))
-                    if floor_by_model.get(model["name"])
-                    else None,
+                    "rarity": _percent(model["rarity"]),
+                    "floor": ton(floor_by_model.get(norm)),
                     "seen_floor": ton(seen_floor),
                     "on_sale": on_sale,
-                    "monochrome_backdrops": [
-                        {"name": r.backdrop_name, "type": r.type.value if r.type else r.type_raw}
-                        for r in mono_backdrops
-                    ],
+                    "image": next((p["image"] for p in pairs if p["image"]), None) or observed_image,
                     "monochrome_chance": chance,
-                    "photo": next((r.photo_url for r in mono_backdrops if r.photo_url), None),
-                    "rules": [
-                        rule["id"] for rule in rules_view if normalize_name(rule["model"] or "") == norm
-                    ],
+                    "any": _pick_price(regular, norm, None),
+                    "monochrome": _pick_price(mono, norm, None),
+                    "taken": sum(1 for p in [*regular, *mono] if p.model and normalize_name(p.model) == norm),
+                    "pairs": pairs,
                 }
             )
         model_items.sort(
-            key=lambda m: (-len(m["monochrome_backdrops"]), m["rarity"] if m["rarity"] is not None else 1e9)
+            key=lambda m: (-m["taken"], -len(m["pairs"]), m["rarity"] if m["rarity"] is not None else 1e9)
         )
         mono_models = {n for n, recs in mono_by_model.items() if recs}
         share = monochrome_model_share(mono_models, set(models)) if mono_models else None
-        backdrop_items = sorted(
-            (
-                {
-                    "name": b["name"],
-                    "rarity": b["rarity"] / 10 if b["rarity"] is not None else None,
-                    "monochrome_for": sorted(
-                        {
-                            r.model_name
-                            for r in records
-                            if r.model_name and normalize_name(r.backdrop_name or "") == key
-                        }
-                    ),
-                }
-                for key, b in backdrops.items()
-            ),
-            key=lambda b: b["name"],
-        )
         return {
             "name": row.name,
             "title": row.title or row.name,
             "floor": ton(row.floor_price_nano),
+            "image": thumb,
             "giftwiki": bool(records),
             "monochrome_pairs": len(records),
             "monochrome_share": share.percent if share else None,
             "monochrome_models": len(mono_models),
             "known_models": share.denominator if share else len(models),
             "models_source": "mrkt" if mrkt_models else "observed",
+            "autobuy": any(r.autobuy for r in plans.values())
+            if plans
+            else self.settings.can_purchase(user_id),
+            "whole": {"any": _pick_price(regular, None, None), "monochrome": _pick_price(mono, None, None)},
+            "taken": len(regular) + len(mono),
+            "plans": [r.id for r in plans.values()],
             "models": model_items,
-            "backdrops": backdrop_items,
-            "rules": rules_view,
+            "rules": [
+                self._rule_view(r)
+                for r in rules
+                if not filters_repo.is_plan(r) and self._rule_collection(r) == normalize_name(name)
+            ],
         }
+
+    @staticmethod
+    def _plans(rules: list[Filter], collection_name: str) -> dict[FilterKind, Filter]:
+        """The Mini App plan filters (regular and monochrome) of one collection."""
+        key = normalize_name(collection_name)
+        plans: dict[FilterKind, Filter] = {}
+        for rule in rules:
+            collections = FilterCriteria.model_validate(rule.criteria or {}).collections
+            if filters_repo.is_plan(rule) and [normalize_name(c) for c in collections] == [key]:
+                plans.setdefault(FilterKind(rule.kind), rule)
+        return plans
+
+    async def save_picks(self, user_id: int, collection_name: str, payload: dict[str, Any]) -> dict[str, Any]:
+        """Replace what the bot takes for one model (or the whole collection) of a collection."""
+        data = ModelPicks.model_validate(payload)
+        model_norm = normalize_name(data.model) if data.model else None
+        new: dict[FilterKind, list[Pick]] = {FilterKind.REGULAR: [], FilterKind.MONOCHROME: []}
+        if (price := _price(data.any_price_ton)) is not None:
+            new[FilterKind.REGULAR].append(Pick(model=data.model, max_price_nano=price))
+        if (price := _price(data.monochrome_price_ton)) is not None:
+            new[FilterKind.MONOCHROME].append(Pick(model=data.model, max_price_nano=price))
+        for pair in data.pairs:
+            price = _price(pair.price_ton)
+            if price is None:
+                raise ApiError(f"Укажите цену для фона {pair.backdrop}")
+            new[FilterKind.MONOCHROME].append(
+                Pick(model=data.model, backdrops=[pair.backdrop], max_price_nano=price)
+            )
+        can_purchase = self.settings.can_purchase(user_id)
+        async with self.sessionmaker() as session, session.begin():
+            title = await self._collection_title(session, collection_name)
+            plans = self._plans(await filters_repo.list_filters(session, user_id), collection_name)
+            default = any(r.autobuy for r in plans.values()) if plans else True
+            autobuy = (data.autobuy if data.autobuy is not None else default) and can_purchase
+            for kind in (FilterKind.REGULAR, FilterKind.MONOCHROME):
+                row = plans.get(kind)
+                picks = [
+                    p for p in _picks_of(row) if (normalize_name(p.model) if p.model else None) != model_norm
+                ]
+                picks += new[kind]
+                if not picks:
+                    if row is not None:
+                        await filters_repo.delete_filter(session, row)
+                    continue
+                if row is None:
+                    try:
+                        row = await filters_repo.create_filter(session, user_id, title, kind, plan=True)
+                    except ValueError as exc:
+                        raise ApiError(str(exc)) from exc
+                criteria = FilterCriteria.model_validate(
+                    {"collections": [collection_name], "picks": [p.model_dump() for p in picks]}
+                )
+                filters_repo.update_criteria(row, criteria)
+                row.name = (f"📱 {title}" + (" · монохромы" if kind is FilterKind.MONOCHROME else ""))[:64]
+                filters_repo.set_enabled(row, True)
+                row.autobuy = autobuy
+                await self._enable_mode(session, user_id, row)
+            await misc.audit(
+                session, "webapp_picks", user_id=user_id, collection=collection_name, model=data.model
+            )
+        await self.filter_cache.invalidate()
+        return await self.collection(user_id, collection_name)
 
     def _records(self, snapshot: ReferenceSnapshot, name: str, title: str | None) -> list[RefRecord]:
         match = snapshot.match_collection(name, title)
@@ -438,7 +550,9 @@ class MiniAppApi:
             "backdrops": c.backdrops,
             "max_price": ton(c.max_price_nano),
             "max_count": spec.limits.max_count,
-            "simple": simple,
+            "simple": simple and not c.picks,
+            "plan": bool(c.picks),
+            "picks": [p.label() for p in c.picks],
             "summary": describe_criteria(spec.kind, c),
         }
 
@@ -517,11 +631,11 @@ class MiniAppApi:
                     filters_repo.set_enabled(row, bool(payload["enabled"]))
                 if "autobuy" in payload:
                     row.autobuy = bool(payload["autobuy"]) and self.settings.can_purchase(user_id)
-                    if (
-                        row.autobuy
-                        and FilterCriteria.model_validate(row.criteria or {}).max_price_nano is None
-                    ):
+                    criteria = FilterCriteria.model_validate(row.criteria or {})
+                    if row.autobuy and criteria.max_price_nano is None and not criteria.picks:
                         raise ApiError("Для автопокупки укажите в правиле максимальную цену")
+            elif filters_repo.is_plan(row):
+                raise ApiError("Это правило меняется на странице коллекции")
             else:
                 data = RuleInput.model_validate(payload)
                 title = await self._collection_title(session, data.collection)

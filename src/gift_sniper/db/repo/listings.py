@@ -374,3 +374,38 @@ async def model_floors(session: AsyncSession, collection_name: str) -> dict[str,
         .group_by(Listing.model_name)
     )
     return {str(model): (price, int(count)) for model, price, count in (await session.execute(stmt)).all()}
+
+
+async def collection_slugs(session: AsyncSession) -> dict[str, str]:
+    """One gift name seen per collection (e.g. PlushPepe-12), for picture URLs."""
+    stmt = (
+        select(Gift.collection_name, func.min(Gift.name))
+        .where(Gift.collection_name.is_not(None), Gift.name.is_not(None))
+        .group_by(Gift.collection_name)
+    )
+    return {str(c): str(n) for c, n in (await session.execute(stmt)).all()}
+
+
+async def pair_slugs(session: AsyncSession, collection_name: str) -> dict[tuple[str, str], str]:
+    """A gift name seen for each (model, backdrop) of a collection."""
+    stmt = (
+        select(Gift.model_name, Gift.backdrop_name, func.min(Gift.name))
+        .where(
+            Gift.collection_name == collection_name,
+            Gift.model_name.is_not(None),
+            Gift.backdrop_name.is_not(None),
+            Gift.name.is_not(None),
+        )
+        .group_by(Gift.model_name, Gift.backdrop_name)
+    )
+    return {(normalize_name(m), normalize_name(b)): str(n) for m, b, n in (await session.execute(stmt)).all()}
+
+
+async def backdrop_colors(session: AsyncSession) -> dict[str, tuple[int | None, int | None]]:
+    """Normalized backdrop name -> (center, edge) colors seen on MRKT gifts; backdrops are shared by all gifts."""
+    stmt = (
+        select(Gift.backdrop_name, func.max(Gift.backdrop_center_color), func.max(Gift.backdrop_edge_color))
+        .where(Gift.backdrop_name.is_not(None))
+        .group_by(Gift.backdrop_name)
+    )
+    return {normalize_name(str(b)): (c, e) for b, c, e in (await session.execute(stmt)).all()}

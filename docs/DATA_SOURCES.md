@@ -167,6 +167,16 @@ HTTP 401 (не чаще раза в `MRKT_AUTH_COOLDOWN_SECONDS`). Сессия 
 `backdropColorsSymbolColor`, `floorPriceNanoTONsByCollection`, `floorPriceNanoTONsByBackdropModel`.
 Отсутствующие поля бот не заменяет нулями: в интерфейсе они показываются как «Нет данных».
 
+### Картинки подарков (мини-приложение)
+
+По справочнику сообщества [Nxrix/Telegram-Gifts](https://github.com/Nxrix/Telegram-Gifts): обложка коллекции
+`https://fragment.com/file/gifts/[giftname]/thumb.webp`, изображение подарка
+`https://nft.fragment.com/gift/[giftname]-[id].webp`, где `giftname` — имя коллекции строчными буквами
+(как в ссылке `t.me/nft/PlushPepe-1`, только строчными). Имя берётся из поля `name` подарка MRKT, а если
+подарков коллекции бот ещё не видел — из названия коллекции без пробелов и знаков. Пара «модель + фон» —
+`photo_url` записи Gift Wiki. Числового «процента монохромности» Gift Wiki не публикует: есть только уровень
+`type` (`low` / `medium` / `high` / `combo`), его и показывает приложение.
+
 ### Что не подтверждено
 
 * **WebSocket или потоковых обновлений нет ни в одном источнике.** Поэтому мониторинг работает
