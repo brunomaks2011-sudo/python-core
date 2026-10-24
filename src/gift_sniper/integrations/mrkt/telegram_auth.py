@@ -25,6 +25,15 @@ class TelegramSessionError(RuntimeError):
     pass
 
 
+class TelegramSessionRevoked(TelegramSessionError):
+    """Telegram no longer accepts the stored authorization (terminated in Settings -> Devices, expired)."""
+
+
+SESSION_REVOKED_MESSAGE = (
+    "Telegram session was terminated or expired: run `python -m gift_sniper mrkt-login` to log in again"
+)
+
+
 def session_parts(session_path: str) -> tuple[str, str]:
     """'data/mrkt' -> (workdir 'data', name 'mrkt'); Pyrogram stores it as data/mrkt.session."""
     path = Path(session_path)
@@ -54,10 +63,18 @@ async def fetch_init_data(
     """
     try:
         from pyrogram import Client
+        from pyrogram.errors import (
+            AuthKeyInvalid,
+            AuthKeyPermEmpty,
+            AuthKeyUnregistered,
+            SessionExpired,
+            SessionRevoked,
+        )
         from pyrogram.raw.functions.messages import RequestAppWebView
         from pyrogram.raw.types import InputBotAppShortName, InputUser
     except ImportError as exc:  # pragma: no cover - dependency is in requirements.txt
         raise TelegramSessionError("kurigram is not installed (pip install kurigram)") from exc
+    revoked = (AuthKeyUnregistered, AuthKeyInvalid, AuthKeyPermEmpty, SessionExpired, SessionRevoked)
 
     workdir, name = _prepare_workdir(session_path, interactive=interactive)
     qr = interactive and use_qr
@@ -72,14 +89,26 @@ async def fetch_init_data(
                     "Telegram session is not authorized: run `python -m gift_sniper mrkt-login`"
                 )
             return await _request_init_data(client, RequestAppWebView, InputBotAppShortName, InputUser)
+        except revoked as exc:
+            raise TelegramSessionRevoked(SESSION_REVOKED_MESSAGE) from exc
         finally:
             await client.disconnect()
-    await client.start(use_qr=qr)  # interactive login in the operator's terminal when needed
+    try:
+        await client.start(use_qr=qr)  # interactive login in the operator's terminal when needed
+    except revoked as exc:  # a stored session is used as is, without a new login
+        raise TelegramSessionRevoked(SESSION_REVOKED_MESSAGE) from exc
     try:
         return await _request_init_data(client, RequestAppWebView, InputBotAppShortName, InputUser)
     finally:
         with contextlib.suppress(ConnectionError):
             await client.stop()
+
+
+def discard_session(session_path: str) -> None:
+    """Delete a session Telegram no longer accepts, so the next login starts from scratch."""
+    path = session_file(session_path)
+    for stale in (path, path.with_name(path.name + "-journal")):
+        stale.unlink(missing_ok=True)
 
 
 def _prepare_workdir(session_path: str, *, interactive: bool) -> tuple[str, str]:

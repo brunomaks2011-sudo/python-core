@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import argparse
 import asyncio
+import functools
 import logging
 import os
 import sys
@@ -92,7 +93,12 @@ async def mrkt_login(env_path: str | None, show: bool, use_qr: bool = False) -> 
     from gift_sniper.domain.money import format_ton
     from gift_sniper.envfile import mask, update_env_value
     from gift_sniper.integrations.mrkt import MrktClient, MrktError
-    from gift_sniper.integrations.mrkt.telegram_auth import fetch_init_data, session_file
+    from gift_sniper.integrations.mrkt.telegram_auth import (
+        TelegramSessionRevoked,
+        discard_session,
+        fetch_init_data,
+        session_file,
+    )
 
     settings = get_settings()
     if not settings.telegram_api_id or not settings.telegram_api_hash:
@@ -103,14 +109,24 @@ async def mrkt_login(env_path: str | None, show: bool, use_qr: bool = False) -> 
         return 2
     print(f"Telegram-сессия: {session_file(settings.mrkt_telegram_session)}")
     print(LOGIN_HINT_QR if use_qr else LOGIN_HINT_CODE)
+    login = functools.partial(
+        fetch_init_data,
+        api_id=settings.telegram_api_id,
+        api_hash=settings.telegram_api_hash.get_secret_value(),
+        session_path=settings.mrkt_telegram_session,
+        interactive=True,
+        use_qr=use_qr,
+    )
     try:
-        init_data = await fetch_init_data(
-            api_id=settings.telegram_api_id,
-            api_hash=settings.telegram_api_hash.get_secret_value(),
-            session_path=settings.mrkt_telegram_session,
-            interactive=True,
-            use_qr=use_qr,
-        )
+        try:
+            init_data = await login()
+        except TelegramSessionRevoked:
+            print(
+                "Сохранённая Telegram-сессия больше не действует (её завершили в Telegram → Настройки → "
+                "Устройства или она истекла). Удаляю её и начинаю вход заново."
+            )
+            discard_session(settings.mrkt_telegram_session)
+            init_data = await login()
     except Exception as exc:
         print(f"❌ Не удалось открыть MRKT через Telegram: {exc}")
         return 1

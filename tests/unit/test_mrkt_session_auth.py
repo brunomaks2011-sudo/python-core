@@ -16,6 +16,7 @@ from gift_sniper.envfile import mask, update_env_value
 from gift_sniper.integrations.mrkt import MrktAuthError, MrktClient, telegram_auth
 from gift_sniper.integrations.mrkt.telegram_auth import (
     TelegramSessionError,
+    TelegramSessionRevoked,
     extract_init_data,
     session_file,
     session_parts,
@@ -249,6 +250,68 @@ async def test_qr_login_uses_a_connection_with_updates(
     assert [c.kwargs["no_updates"] for c in clients] == [True, False]
     assert [c.started_with for c in clients] == [{"use_qr": False}, {"use_qr": True}]
     assert all(c.stopped for c in clients)
+
+
+class TerminatedTelegramClient(FakeTelegramClient):
+    """The session file still says "authorized", but the user terminated it in Telegram -> Devices."""
+
+    async def start(self, **kwargs: object) -> FakeTelegramClient:
+        from pyrogram.errors import AuthKeyUnregistered
+
+        raise AuthKeyUnregistered()
+
+    async def connect(self) -> bool:
+        return True
+
+    async def disconnect(self) -> None:
+        self.stopped = True
+
+    async def resolve_peer(self, username: str) -> SimpleNamespace:
+        from pyrogram.errors import AuthKeyUnregistered
+
+        raise AuthKeyUnregistered()
+
+
+async def test_terminated_session_is_reported_as_revoked(
+    session_path: str, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr("pyrogram.Client", lambda name, **kwargs: TerminatedTelegramClient(kwargs))
+    for interactive in (True, False):
+        with pytest.raises(TelegramSessionRevoked, match="mrkt-login"):
+            await telegram_auth.fetch_init_data(
+                api_id=1, api_hash="h", session_path=session_path, interactive=interactive
+            )
+
+
+async def test_login_discards_a_terminated_session_and_starts_over(
+    server: FakeServer,
+    session_path: str,
+    monkeypatch: pytest.MonkeyPatch,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    session_existed: list[bool] = []
+
+    async def fake_fetch(**kwargs: object) -> str:
+        session_existed.append(session_file(session_path).exists())
+        if len(session_existed) == 1:
+            raise TelegramSessionRevoked("terminated")
+        return "init-after-new-login"
+
+    settings = make_settings(
+        mrkt_api_base_url=server.url + "/api/v1",
+        mrkt_access_token=None,
+        telegram_api_id=1,
+        telegram_api_hash="hash",
+        mrkt_telegram_session=session_path,
+    )
+    monkeypatch.setattr(telegram_auth, "fetch_init_data", fake_fetch)
+    monkeypatch.setattr(cli, "get_settings", lambda: settings)
+    server.add("POST", API + "auth", Reply(body={"token": "fresh-token-123456"}))
+    server.add("GET", API + "balance", Reply(body={"hard": 1}))
+    assert await cli.mrkt_login(None, show=False) == 0
+    assert session_existed == [True, False]  # the stale file is gone before the new login
+    assert "начинаю вход заново" in capsys.readouterr().out
+    assert server.calls("POST", API + "auth")[0].json == {"data": "init-after-new-login"}
 
 
 def test_cli_passes_the_qr_flag(monkeypatch: pytest.MonkeyPatch) -> None:
