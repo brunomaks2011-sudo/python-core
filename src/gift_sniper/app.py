@@ -35,10 +35,13 @@ from gift_sniper.services.purchase import PurchaseRequest, PurchaseService
 from gift_sniper.services.queue import StreamQueue
 from gift_sniper.services.search import SearchService
 from gift_sniper.services.stats import StatsService
+from gift_sniper.webapp.api import MiniAppApi
+from gift_sniper.webapp.menu import publish_menu_button
+from gift_sniper.webapp.server import start_webapp_server
 
 log = logging.getLogger(__name__)
 
-ALL_COMPONENTS = {"bot", "monitor", "processor", "buyer", "scheduler", "metrics"}
+ALL_COMPONENTS = {"bot", "monitor", "processor", "buyer", "scheduler", "metrics", "webapp"}
 
 
 class NullSender:
@@ -59,6 +62,7 @@ class Application:
         self.bot: Any = None
         self.services: Services | None = None
         self._http_runner: Any = None
+        self._webapp_runner: Any = None
 
     async def build(self) -> Services:
         s = self.settings
@@ -248,6 +252,10 @@ class Application:
             await services.purchase.recover_on_startup()
         if "metrics" in components:
             self._http_runner = await start_http_server(s.metrics_host, s.metrics_port, self.health)
+        if "webapp" in components:
+            self._webapp_runner = await start_webapp_server(self._webapp_api(services), s)
+            if self.bot is not None:
+                self._spawn(publish_menu_button(self.bot, s, services.redis, self.stop), "webapp-menu")
         if "monitor" in components and services.monitor is not None and s.mrkt_monitor_enabled:
             self._spawn(services.monitor.run(self.stop), "monitor")
         elif "monitor" in components:
@@ -288,6 +296,19 @@ class Application:
         await self.stop.wait()
         await self.shutdown()
 
+    @staticmethod
+    def _webapp_api(services: Services) -> MiniAppApi:
+        return MiniAppApi(
+            services.settings,
+            services.sessionmaker,
+            services.redis,
+            services.mrkt,
+            services.store,
+            services.filter_cache,
+            services.purchase,
+            services.control,
+        )
+
     async def _run_bot(self, services: Services) -> None:
         from gift_sniper.bot.setup import build_dispatcher
 
@@ -305,6 +326,8 @@ class Application:
         await asyncio.gather(*self.tasks, return_exceptions=True)
         if self._http_runner is not None:
             await self._http_runner.cleanup()
+        if self._webapp_runner is not None:
+            await self._webapp_runner.cleanup()
         if self.services is not None:
             await self.services.mrkt.close()
             await self.services.giftwiki.close()

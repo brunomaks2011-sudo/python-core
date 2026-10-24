@@ -155,7 +155,21 @@ async def _check_mrkt(settings: Settings, report: Report) -> list[str]:
             collections = [c.name for c in await client.collections()]
             report.add(OK if collections else WARN, f"MRKT gifts/collections: {len(collections)} коллекций")
         except MrktError as exc:
+            collections = []
             report.add(WARN, str(exc))
+        for kind, label in (("model", "моделей"), ("backdrop", "фонов")):
+            if not collections:
+                break
+            try:
+                items = await client.collection_attributes(kind, collections[0])
+                rarity = sum(1 for i in items if i.rarity_permille is not None)
+                report.add(
+                    OK if items else WARN,
+                    f"MRKT gifts/{kind}s ({collections[0]}): {len(items)} {label}, с редкостью {rarity}"
+                    + ("" if items else " — мини-приложение покажет только замеченные ботом"),
+                )
+            except MrktError as exc:
+                report.add(WARN, f"{exc} (мини-приложение покажет только замеченные ботом {label})")
         report.add(
             WARN,
             "MRKT gifts/buy нельзя проверить без реальной покупки. Начните с RUN_MODE=dry_run, затем выполните "

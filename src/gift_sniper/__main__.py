@@ -1,6 +1,6 @@
 """Command line entry point.
 
-python -m gift_sniper run [--components bot,monitor,processor,buyer,scheduler,metrics]
+python -m gift_sniper run [--components bot,monitor,processor,buyer,scheduler,metrics,webapp]
 python -m gift_sniper migrate
 python -m gift_sniper sync-giftwiki
 python -m gift_sniper check
@@ -171,8 +171,8 @@ def main(argv: list[str] | None = None) -> int:
     run_parser = sub.add_parser("run", help="run the bot and workers")
     run_parser.add_argument(
         "--components",
-        default="bot,monitor,processor,buyer,scheduler,metrics",
-        help="comma-separated subset of: bot, monitor, processor, buyer, scheduler, metrics",
+        default="bot,monitor,processor,buyer,scheduler,metrics,webapp",
+        help="comma-separated subset of: bot, monitor, processor, buyer, scheduler, metrics, webapp",
     )
     sub.add_parser("migrate", help="apply database migrations")
     sub.add_parser("sync-giftwiki", help="run one Gift Wiki synchronization")

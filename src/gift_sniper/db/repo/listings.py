@@ -304,3 +304,73 @@ async def get_gift_row(session: AsyncSession, gift_id: str) -> Gift | None:
 async def latest_listing(session: AsyncSession, gift_id: str) -> Listing | None:
     stmt = select(Listing).where(Listing.gift_id == gift_id).order_by(Listing.first_seen_at.desc()).limit(1)
     return (await session.execute(stmt)).scalar_one_or_none()
+
+
+# ------------------------------------------------------------------ catalog for the Mini App
+async def market_collections(session: AsyncSession) -> list[MarketCollection]:
+    stmt = select(MarketCollection).order_by(MarketCollection.title, MarketCollection.name)
+    return list((await session.execute(stmt)).scalars())
+
+
+async def models_by_collection(session: AsyncSession) -> dict[str, set[str]]:
+    """Normalized collection name -> normalized names of the models MRKT has shown for it."""
+    result: dict[str, set[str]] = {}
+    for collection_norm, model_norm in (
+        await session.execute(select(GiftModel.collection_norm, GiftModel.model_norm))
+    ).all():
+        result.setdefault(collection_norm, set()).add(model_norm)
+    return result
+
+
+async def collection_models(session: AsyncSession, collection_name: str) -> list[GiftModel]:
+    stmt = select(GiftModel).where(GiftModel.collection_norm == normalize_name(collection_name))
+    return list((await session.execute(stmt)).scalars())
+
+
+async def upsert_models(
+    session: AsyncSession, collection_name: str, models: list[tuple[str, int | None]], *, source: str
+) -> None:
+    """Models of a collection listed by MRKT itself (not only those seen in listings)."""
+    now = datetime.now(UTC)
+    for model_name, rarity in models:
+        stmt = pg_insert(GiftModel).values(
+            collection_name=collection_name,
+            collection_norm=normalize_name(collection_name),
+            model_name=model_name,
+            model_norm=normalize_name(model_name),
+            rarity_permille=rarity,
+            source=source,
+            last_seen_at=now,
+        )
+        stmt = stmt.on_conflict_do_update(
+            constraint="uq_gift_models_key",
+            set_={
+                "last_seen_at": now,
+                "rarity_permille": func.coalesce(stmt.excluded.rarity_permille, GiftModel.rarity_permille),
+            },
+        )
+        await session.execute(stmt)
+
+
+async def collection_backdrops(session: AsyncSession, collection_name: str) -> dict[str, int | None]:
+    """Backdrops seen on MRKT gifts of a collection: name -> rarity per mille."""
+    stmt = (
+        select(Gift.backdrop_name, func.max(Gift.backdrop_rarity_permille))
+        .where(Gift.collection_name == collection_name, Gift.backdrop_name.is_not(None))
+        .group_by(Gift.backdrop_name)
+    )
+    return {str(name): rarity for name, rarity in (await session.execute(stmt)).all()}
+
+
+async def model_floors(session: AsyncSession, collection_name: str) -> dict[str, tuple[int | None, int]]:
+    """Cheapest active listing and number of active listings per model, as seen by the monitor."""
+    stmt = (
+        select(Listing.model_name, func.min(Listing.price_nano), func.count())
+        .where(
+            Listing.status == ListingStatus.ACTIVE.value,
+            Listing.collection_name == collection_name,
+            Listing.model_name.is_not(None),
+        )
+        .group_by(Listing.model_name)
+    )
+    return {str(model): (price, int(count)) for model, price, count in (await session.execute(stmt)).all()}

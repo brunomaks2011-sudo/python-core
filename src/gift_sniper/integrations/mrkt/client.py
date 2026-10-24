@@ -37,6 +37,12 @@ from gift_sniper.metrics import EXTERNAL_LATENCY, EXTERNAL_REQUESTS, Timer
 
 log = logging.getLogger(__name__)
 
+
+def _first(item: dict[str, Any], *keys: str) -> Any:
+    """Value of the first key that is present and not null."""
+    return next((item[k] for k in keys if item.get(k) is not None), None)
+
+
 SERVICE = "mrkt"
 MAX_PAGE_SIZE = 20  # documented limit of gifts/saling
 
@@ -108,6 +114,15 @@ class MrktCollection:
     name: str
     title: str | None
     floor_price_nano: int | None
+
+
+@dataclass(frozen=True, slots=True)
+class MrktAttribute:
+    """A model or backdrop of a collection as listed by MRKT (POST gifts/models | gifts/backdrops)."""
+
+    name: str
+    rarity_permille: int | None = None
+    floor_price_nano: int | None = None
 
 
 class MrktClient:
@@ -379,6 +394,41 @@ class MrktClient:
                         floor_price_nano=_int(item.get("floorPriceNanoTons")),
                     )
                 )
+        return result
+
+    async def collection_attributes(self, kind: str, collection_name: str) -> list[MrktAttribute]:
+        """Models (kind="model") or backdrops (kind="backdrop") of a collection.
+
+        The request comes from tgmrkts (`POST gifts/models | gifts/backdrops {"collections": [...]}`), which does
+        not document the response fields. Items are read with the field names MRKT uses in gift objects
+        (`modelName`, `modelRarityPerMille`, ...) and collections (`floorPriceNanoTons`); anything else gives an
+        empty list, and callers fall back to what the monitor has observed.
+        """
+        if kind not in ("model", "backdrop"):
+            raise ValueError(f"unknown attribute kind: {kind}")
+        endpoint = f"gifts/{kind}s"
+        data = await self._request(
+            "POST", endpoint, endpoint=endpoint, payload={"collections": [collection_name]}, max_retries=1
+        )
+        items = data.get(f"{kind}s") if isinstance(data, dict) else data
+        result: list[MrktAttribute] = []
+        for item in items if isinstance(items, list) else []:
+            if not isinstance(item, dict):
+                continue
+            name = _first(item, f"{kind}Name", "name")
+            if name is None or not str(name).strip():
+                continue
+            result.append(
+                MrktAttribute(
+                    name=str(name).strip(),
+                    rarity_permille=_int(_first(item, f"{kind}RarityPerMille", "rarityPerMille")),
+                    floor_price_nano=_int(_first(item, "floorPriceNanoTons", "floorPriceNanoTONs")),
+                )
+            )
+        if not result and data:
+            sample = items[0] if isinstance(items, list) and items else data
+            keys = sorted(sample)[:20] if isinstance(sample, dict) else type(sample).__name__
+            log.warning("MRKT %s: unrecognized response shape", endpoint, extra={"keys": keys})
         return result
 
     async def me(self) -> dict[str, Any] | None:

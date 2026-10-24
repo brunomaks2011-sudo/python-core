@@ -158,6 +158,7 @@ HTTP 401 (не чаще раза в `MRKT_AUTH_COOLDOWN_SECONDS`). Сессия 
 | Баланс | `GET /balance` → `{"hard": nanoTON, ...}` | tgmrkts, amrkt |
 | Коллекции | `GET /gifts/collections` → `[{"name","title","floorPriceNanoTons",...}]` | tgmrkts, amrkt |
 | Инвентарь (проверка результата) | `POST /gifts` с фильтрами и `number` | tgmrkts, amrkt |
+| Модели и фоны коллекции (мини-приложение) | `POST /gifts/models`, `POST /gifts/backdrops` `{"collections": [name]}`. Поля ответа в источнике не описаны: бот читает `modelName`/`backdropName`/`name`, `...RarityPerMille`/`rarityPerMille`, `floorPriceNanoTons`; нераспознанный ответ даёт пустой список (используются модели из листингов), `check` показывает результат | tgmrkts |
 
 Поля подарка (по pydantic-моделям `amrkt`): `id`, `name`, `number`, `collectionName`, `collectionTitle`,
 `modelName`, `modelRarityPerMille`, `backdropName`, `backdropRarityPerMille`, `symbolName`,

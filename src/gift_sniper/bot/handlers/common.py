@@ -8,12 +8,13 @@ from html import escape
 from aiogram import F, Router
 from aiogram.filters import Command, CommandStart
 from aiogram.fsm.context import FSMContext
-from aiogram.types import CallbackQuery, Message
+from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message, WebAppInfo
 
 from gift_sniper.bot.callbacks import Menu
 from gift_sniper.bot.ui import main_menu_kb, show
 from gift_sniper.config import RunMode
 from gift_sniper.services.container import Services
+from gift_sniper.webapp.menu import current_url
 
 router = Router(name="common")
 
@@ -58,19 +59,40 @@ async def header(services: Services) -> str:
 @router.message(CommandStart())
 async def cmd_start(message: Message, services: Services, state: FSMContext) -> None:
     await state.clear()
-    await message.answer(await header(services), reply_markup=main_menu_kb())
+    await message.answer(await header(services), reply_markup=await _menu(services))
+
+
+async def _menu(services: Services) -> InlineKeyboardMarkup:
+    return main_menu_kb(await current_url(services.redis, services.settings.redis_prefix))
 
 
 @router.message(Command("menu"))
 async def cmd_menu(message: Message, services: Services, state: FSMContext) -> None:
     await state.clear()
-    await message.answer(await header(services), reply_markup=main_menu_kb())
+    await message.answer(await header(services), reply_markup=await _menu(services))
+
+
+@router.message(Command("app"))
+async def cmd_app(message: Message, services: Services) -> None:
+    url = await current_url(services.redis, services.settings.redis_prefix)
+    if not url:
+        await message.answer(
+            "Мини-приложение ещё не запущено: нет адреса. Проверьте сервис `tunnel` "
+            "(docker compose logs tunnel) или задайте WEBAPP_URL."
+        )
+        return
+    kb = InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="📱 Открыть мини-приложение", web_app=WebAppInfo(url=url))]
+        ]
+    )
+    await message.answer("Выберите коллекции, модели и фоны, которые покупать:", reply_markup=kb)
 
 
 @router.callback_query(Menu.filter(F.section == "main"))
 async def cb_main(callback: CallbackQuery, services: Services, state: FSMContext) -> None:
     await state.clear()
-    await show(callback, await header(services), main_menu_kb())
+    await show(callback, await header(services), await _menu(services))
 
 
 @router.message(Command("stop"))
@@ -94,6 +116,6 @@ async def cmd_cancel(message: Message, state: FSMContext) -> None:
 @router.message(Command("help"))
 async def cmd_help(message: Message) -> None:
     await message.answer(
-        "Команды:\n/start — главное меню\n/stop — немедленно остановить все автопокупки\n"
+        "Команды:\n/start — главное меню\n/app — мини-приложение\n/stop — немедленно остановить все автопокупки\n"
         "/cancel — отменить ввод\n\nВсе действия доступны через кнопки меню."
     )

@@ -5,7 +5,7 @@ from __future__ import annotations
 import contextlib
 
 from aiogram.exceptions import TelegramBadRequest
-from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message
+from aiogram.types import CallbackQuery, InlineKeyboardButton, InlineKeyboardMarkup, Message, WebAppInfo
 from aiogram.utils.keyboard import InlineKeyboardBuilder
 
 from gift_sniper.bot.callbacks import Menu
@@ -25,11 +25,13 @@ MAIN_SECTIONS: list[tuple[str, str]] = [
 ]
 
 
-def main_menu_kb() -> InlineKeyboardMarkup:
+def main_menu_kb(webapp_url: str | None = None) -> InlineKeyboardMarkup:
     builder = InlineKeyboardBuilder()
     for text, section in MAIN_SECTIONS:
         builder.button(text=text, callback_data=Menu(section=section))
     builder.adjust(2, 2, 2, 2, 2, 1)
+    if webapp_url:  # the simple way: choose collections and models on one screen
+        builder.row(InlineKeyboardButton(text="📱 Мини-приложение", web_app=WebAppInfo(url=webapp_url)))
     return builder.as_markup()
 
 

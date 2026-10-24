@@ -129,6 +129,15 @@ class Settings(BaseSettings):
     bot_flood_max_events: int = 15
     bot_flood_window_seconds: float = 5.0
 
+    # --- Telegram Mini App -----------------------------------------------------------------
+    webapp_host: str = "0.0.0.0"
+    webapp_port: int = 8080
+    # Public HTTPS address of the Mini App (e.g. https://sniper.example.com/app/). Empty: the address of the
+    # Cloudflare quick tunnel is read from WEBAPP_TUNNEL_METRICS_URL (docker-compose service `tunnel`).
+    webapp_url: str | None = None
+    webapp_tunnel_metrics_url: str | None = None
+    webapp_init_data_max_age_hours: float = 24.0
+
     # --- Observability ------------------------------------------------------------------
     metrics_port: int = 9100
     metrics_host: str = "0.0.0.0"

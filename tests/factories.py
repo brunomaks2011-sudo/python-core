@@ -148,6 +148,8 @@ class FakeMrkt:
         self.buy_delay = 0.02
         self.configured = True
         self.can_reauthenticate = False
+        self.attributes: dict[tuple[str, str], list[Any]] = {}  # (kind, collection) -> MrktAttribute list
+        self.attribute_calls: list[tuple[str, str]] = []
 
     def add(self, listing: ListingSnapshot) -> None:
         self.gifts[listing.gift_id] = listing
@@ -176,6 +178,10 @@ class FakeMrkt:
 
     async def balance_nano(self) -> int | None:
         return self.balance
+
+    async def collection_attributes(self, kind: str, collection_name: str) -> list[Any]:
+        self.attribute_calls.append((kind, collection_name))
+        return self.attributes.get((kind, collection_name), [])
 
     async def find_in_inventory(self, collection_name: str, number: int) -> list[ListingSnapshot]:
         return [g for g in self.inventory if g.collection_name == collection_name and g.number == number]
