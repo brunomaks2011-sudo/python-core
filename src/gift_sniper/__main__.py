@@ -86,7 +86,12 @@ async def mrkt_login(env_path: str | None, show: bool) -> int:
     print(f"Telegram-сессия: {session_file(settings.mrkt_telegram_session)}")
     print(
         "Если сессии ещё нет, Telegram запросит номер телефона, код входа и пароль 2FA (если включён).\n"
-        "Они вводятся только в этом терминале и отправляются напрямую в Telegram; бот их не получает и не хранит."
+        "Они вводятся только в этом терминале и отправляются напрямую в Telegram; бот их не получает и не хранит.\n"
+        "Вопросы задаёт библиотека Pyrogram на английском:\n"
+        "  Enter phone number or bot token - номер с + и кодом страны\n"
+        '  Is "..." correct? (y/N)         - латинская y в английской раскладке, иначе номер спросят снова\n'
+        "  Enter confirmation code         - код из чата «Telegram» в приложении Telegram\n"
+        "  Enter 2FA password              - облачный пароль, если включена двухэтапная проверка"
     )
     try:
         init_data = await fetch_init_data(

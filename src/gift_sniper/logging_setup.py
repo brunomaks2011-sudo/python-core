@@ -60,5 +60,8 @@ def setup_logging(level: str = "INFO", fmt: str = "json") -> None:
     root = logging.getLogger()
     root.handlers[:] = [handler]
     root.setLevel(level.upper())
-    for noisy in ("aiohttp.access", "asyncio"):
+    # pyrogram logs every MTProto connection step at INFO, which also breaks up the mrkt-login prompts
+    for noisy in ("aiohttp.access", "asyncio", "pyrogram"):
         logging.getLogger(noisy).setLevel(logging.WARNING)
+    # a token refresh is a few MTProto calls: the pure-Python crypto fallback is fast enough
+    logging.getLogger("pyrogram.crypto.aes").setLevel(logging.ERROR)
