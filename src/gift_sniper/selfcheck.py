@@ -6,6 +6,7 @@ It checks only what can be verified without spending money. The purchase endpoin
 
 from __future__ import annotations
 
+from collections import Counter
 from typing import Any
 
 from gift_sniper.config import Settings
@@ -135,8 +136,11 @@ async def _check_mrkt(settings: Settings, report: Report) -> list[str]:
         except MrktError as exc:
             report.add(FAIL, str(exc))
         try:
-            events, _ = await client.feed(types=["listing", "change_price", "sale"], count=10)
-            report.add(OK if events else WARN, f"MRKT feed: {len(events)} событий")
+            events, _ = await client.feed(count=20)
+            kinds = ", ".join(f"{kind}: {n}" for kind, n in Counter(e.type for e in events).most_common())
+            report.add(
+                OK if events else WARN, f"MRKT feed: {len(events)} событий" + (f" ({kinds})" if kinds else "")
+            )
         except MrktError as exc:
             report.add(FAIL, f"{exc} (мониторинг можно переключить на MRKT_MONITOR_SOURCE=saling)")
         try:

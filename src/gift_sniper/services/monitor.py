@@ -27,12 +27,14 @@ from gift_sniper.services.processor import Publisher, event_to_payload
 
 log = logging.getLogger(__name__)
 
-FEED_TYPES = [
-    FeedEventType.LISTING.value,
-    FeedEventType.CHANGE_PRICE.value,
-    FeedEventType.SALE.value,
-    FeedEventType.UNLISTING.value,
-]
+FEED_TYPES = frozenset(
+    {
+        FeedEventType.LISTING.value,
+        FeedEventType.CHANGE_PRICE.value,
+        FeedEventType.SALE.value,
+        FeedEventType.UNLISTING.value,
+    }
+)
 
 
 class ListingMonitor:
@@ -61,13 +63,12 @@ class ListingMonitor:
         events: list[FeedEvent] = []
         cursor = ""
         for _ in range(max(1, self.settings.mrkt_feed_max_pages)):
-            page, cursor_next = await self.mrkt.feed(
-                types=FEED_TYPES, count=self.settings.mrkt_feed_page_size, cursor=cursor
-            )
-            events.extend(page)
+            page, cursor_next = await self.mrkt.feed(count=self.settings.mrkt_feed_page_size, cursor=cursor)
+            events.extend(e for e in page if e.type in FEED_TYPES)  # the feed holds every event type
             if not page or not cursor_next or self.first_poll:
                 break
-            # keep paging only while the whole page is unseen (we may have missed events)
+            # keep paging only while the whole page is unseen (we may have missed events); other event
+            # types are never marked as seen, so a page of only those keeps paging up to the limit
             if await self.redis.exists(*[self.seen_prefix + e.event_id for e in page]):
                 break
             cursor = cursor_next

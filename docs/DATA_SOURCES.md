@@ -152,7 +152,7 @@ HTTP 401 (не чаще раза в `MRKT_AUTH_COOLDOWN_SECONDS`). Сессия 
 | Назначение | Запрос | Источник |
 |---|---|---|
 | Листинги с фильтрами | `POST /gifts/saling` (`collectionNames`, `modelNames`, `backdropNames`, `symbolNames`, `minPrice`, `maxPrice`, `ordering`, `lowToHigh`, `count`≤20, `cursor`) → `{"gifts": [...], "cursor": ...}` | boostNT, tgmrkts, amrkt |
-| Лента событий рынка | `POST /feed` (`type`: `listing`, `sale`, `return`, `unlisting`, `change_price`, `upload`; `ordering: "Latest"`, `count`, `cursor`) → `{"items": [{"type","id","gift","amount","date"}]}` | tgmrkts, amrkt |
+| Лента событий рынка | `POST /feed` (`type`: `listing`, `sale`, `return`, `unlisting`, `change_price`, `upload`; `ordering: "Latest"`, `count`, `cursor`) → `{"items": [{"type","id","gift","amount","date"}]}`. Проверено 2026-10-24: фильтр `type` со значением `change_price` MRKT отклоняет (HTTP 400, `Error converting value "change_price" to type 'FeedItemType'`), поэтому бот отправляет `type: []` и отбирает типы событий сам | tgmrkts, amrkt |
 | Карточка подарка (повторная проверка) | `GET /gifts/gift/{id}` | amrkt |
 | Покупка | `POST /gifts/buy` `{"ids": [id]}` → `[{"userGift": {...}, "price": int}]` | tgmrkts, amrkt |
 | Баланс | `GET /balance` → `{"hard": nanoTON, ...}` | tgmrkts, amrkt |

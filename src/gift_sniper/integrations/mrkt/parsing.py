@@ -6,10 +6,14 @@ becomes None. It is never replaced with zero, because "no data" and "0" mean dif
 
 from __future__ import annotations
 
+import re
 from datetime import UTC, datetime
 from typing import Any
 
 from gift_sniper.domain.types import FeedEvent, ListingSnapshot
+
+# MRKT's request validation names feed types as C# enum members (FeedItemType); accept that spelling too
+_CAMEL_BOUNDARY = re.compile(r"(?<=[a-z0-9])(?=[A-Z])")
 
 
 def _int(value: Any) -> int | None:
@@ -121,7 +125,7 @@ def parse_feed_item(data: Any, fetched_at: datetime | None = None) -> FeedEvent 
     )
     return FeedEvent(
         event_id=event_id,
-        type=event_type.lower(),
+        type=_CAMEL_BOUNDARY.sub("_", event_type).lower(),  # "ChangePrice" -> "change_price"
         listing=listing,
         amount_nano=amount,
         date=date,

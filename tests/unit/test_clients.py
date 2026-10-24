@@ -165,11 +165,28 @@ class TestMrktClient:
         )
         client = await mrkt_client(server)
         try:
-            events, _ = await client.feed(types=["listing"])
+            events, _ = await client.feed()
         finally:
             await client.close()
         assert [e.event_id for e in events] == ["e1"]
-        assert len(server.calls("POST", API + "feed")) == 2
+        calls = server.calls("POST", API + "feed")
+        assert len(calls) == 2
+        # MRKT answers HTTP 400 to a "change_price" type filter: every type is requested
+        assert calls[-1].json["type"] == []
+
+    async def test_feed_type_names_are_normalized(self, server: FakeServer) -> None:
+        items = [
+            {"type": "change_price", "id": "e1", "gift": GIFT, "amount": 1},
+            {"type": "ChangePrice", "id": "e2", "gift": GIFT, "amount": 1},
+            {"type": "Listing", "id": "e3", "gift": GIFT, "amount": 1},
+        ]
+        server.add("POST", API + "feed", Reply(body={"items": items}))
+        client = await mrkt_client(server)
+        try:
+            events, _ = await client.feed()
+        finally:
+            await client.close()
+        assert [e.type for e in events] == ["change_price", "change_price", "listing"]
 
     async def test_401_raises_auth_error(self, server: FakeServer) -> None:
         server.add("GET", API + "me", Reply(status=401))

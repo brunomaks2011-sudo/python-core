@@ -38,6 +38,19 @@ async def test_first_poll_is_backlog_then_only_new_events(env: Env) -> None:
     assert monitor.last_success is not None
 
 
+async def test_monitor_keeps_only_tracked_event_types(env: Env) -> None:
+    """The feed is requested without a type filter, so the monitor drops the types it does not track."""
+    queue = MemoryQueue()
+    env.mrkt.feed_pages = deque([[ev("u1", "g9", "upload"), ev("e2", "g2", "change_price"), ev("e1", "g1")]])
+    monitor = ListingMonitor(env.settings, env.mrkt, queue, env.redis)  # type: ignore[arg-type]
+    assert await monitor.poll_once() == 2
+    assert [p["event_id"] for p in queue.published] == ["e1", "e2"]
+    # a page holding only untracked types is never "seen": paging continues to the tracked events
+    env.mrkt.feed_pages = deque([[ev("u2", "g8", "upload")], [ev("e3", "g3"), ev("e2", "g2")]])
+    assert await monitor.poll_once() == 1
+    assert queue.published[-1]["event_id"] == "e3"
+
+
 async def test_monitor_alerts_admins_on_auth_failure(env: Env) -> None:
     async with env.sessionmaker() as session, session.begin():
         await users_repo.ensure_admin(session, 1, can_purchase=True)  # done by Application.build() on start

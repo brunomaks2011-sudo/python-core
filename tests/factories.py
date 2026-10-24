@@ -184,9 +184,7 @@ class FakeMrkt:
     feed_pages: deque[list[Any]]
     saling_pages: deque[tuple[list[ListingSnapshot], str | None]]
 
-    async def feed(
-        self, *, types: list[str], count: int = 20, cursor: str = ""
-    ) -> tuple[list[Any], str | None]:
+    async def feed(self, *, count: int = 20, cursor: str = "") -> tuple[list[Any], str | None]:
         pages = getattr(self, "feed_pages", deque())
         if not pages:
             return [], None

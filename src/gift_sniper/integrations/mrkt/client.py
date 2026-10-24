@@ -306,16 +306,19 @@ class MrktClient:
         cursor = data.get("cursor") if isinstance(data, dict) else None
         return listings, (str(cursor) if cursor else None)
 
-    async def feed(
-        self, *, types: list[str], count: int = 20, cursor: str = ""
-    ) -> tuple[list[FeedEvent], str | None]:
+    async def feed(self, *, count: int = 20, cursor: str = "") -> tuple[list[FeedEvent], str | None]:
+        """Latest market events of every type; callers keep the types they need.
+
+        MRKT rejects "change_price" as a `type` filter (HTTP 400, FeedItemType) although the community
+        clients document it and MRKT reports that type in feed items, so no server-side type filter is sent.
+        """
         payload = {
             "count": count,
             "cursor": cursor,
             "collectionNames": [],
             "modelNames": [],
             "backdropNames": [],
-            "type": types,
+            "type": [],
             "ordering": "Latest",
             "lowToHigh": False,
         }
