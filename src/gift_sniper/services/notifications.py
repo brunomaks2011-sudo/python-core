@@ -9,7 +9,7 @@ import secrets
 import time
 from typing import Any, Protocol
 
-from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup
+from aiogram.types import InlineKeyboardButton, InlineKeyboardMarkup, LinkPreviewOptions
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
@@ -30,7 +30,14 @@ log = logging.getLogger(__name__)
 
 
 class MessageSender(Protocol):
-    async def send(self, chat_id: int, text: str, keyboard: InlineKeyboardMarkup | None = None) -> bool: ...
+    async def send(
+        self,
+        chat_id: int,
+        text: str,
+        keyboard: InlineKeyboardMarkup | None = None,
+        *,
+        preview_url: str | None = None,
+    ) -> bool: ...
 
 
 class TelegramSender:
@@ -41,14 +48,23 @@ class TelegramSender:
         self.limiter = AsyncRateLimiter(messages_per_second, burst=max(1, int(messages_per_second)))
         self.blocked: set[int] = set()
 
-    async def send(self, chat_id: int, text: str, keyboard: InlineKeyboardMarkup | None = None) -> bool:
+    async def send(
+        self,
+        chat_id: int,
+        text: str,
+        keyboard: InlineKeyboardMarkup | None = None,
+        *,
+        preview_url: str | None = None,
+    ) -> bool:
         from aiogram.exceptions import TelegramBadRequest, TelegramForbiddenError, TelegramRetryAfter
 
+        # previews stay off except the one explicitly requested (a gift's t.me/nft card)
+        preview = LinkPreviewOptions(url=preview_url) if preview_url else LinkPreviewOptions(is_disabled=True)
         for _ in range(3):
             await self.limiter.acquire()
             try:
                 await self.bot.send_message(
-                    chat_id, text, reply_markup=keyboard, disable_web_page_preview=True
+                    chat_id, text, reply_markup=keyboard, link_preview_options=preview
                 )
                 return True
             except TelegramRetryAfter as exc:
@@ -113,6 +129,7 @@ class Notifier:
         listing_id: int | None = None,
         critical: bool = False,
         max_per_minute: int | None = None,
+        preview_url: str | None = None,
     ) -> bool:
         """Deliver a message. Never raises: a notification problem must not stop monitoring or buying."""
         try:
@@ -125,6 +142,7 @@ class Notifier:
                 listing_id=listing_id,
                 critical=critical,
                 max_per_minute=max_per_minute,
+                preview_url=preview_url,
             )
         except Exception:
             log.exception("notification failed", extra={"user_id": user_id, "kind": kind})
@@ -142,6 +160,7 @@ class Notifier:
         listing_id: int | None,
         critical: bool,
         max_per_minute: int | None,
+        preview_url: str | None = None,
     ) -> bool:
         if dedup_key:
             async with self.sessionmaker() as session, session.begin():
@@ -169,7 +188,7 @@ class Notifier:
                         "(покупки и ошибки приходят всегда). Лимит меняется в ⚙️ Настройки → 🔔 Уведомления.",
                     )
                 return False
-        ok = await self.sender.send(user_id, text, keyboard)
+        ok = await self.sender.send(user_id, text, keyboard, preview_url=preview_url)
         NOTIFICATIONS.labels(kind, "sent" if ok else "failed").inc()
         if not ok:
             if dedup_key:
@@ -269,6 +288,7 @@ class Notifier:
                 dedup_key=self._dedup_key(prefs, listing_id, listing.gift_id, listing.price_nano, "drop"),
                 listing_id=listing_id,
                 max_per_minute=prefs.max_per_minute,
+                preview_url=texts.telegram_nft_url(listing),
             )
 
         mono_filters = [s for s in matched if s.kind is FilterKind.MONOCHROME]
@@ -300,6 +320,7 @@ class Notifier:
             dedup_key=self._dedup_key(prefs, listing_id, listing.gift_id, listing.price_nano, "listing"),
             listing_id=listing_id,
             max_per_minute=prefs.max_per_minute,
+            preview_url=texts.telegram_nft_url(listing),
         )
 
     async def purchase_message(

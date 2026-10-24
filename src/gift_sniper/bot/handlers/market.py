@@ -98,7 +98,7 @@ async def cb_search(callback: CallbackQuery, callback_data: FilterCb, services: 
     for index, (listing, enrichment) in enumerate(result.items, start=1):
         v = enrichment.verdict
         lines.append(
-            f"{index}. {escape(listing.title)} — {format_ton(listing.price_nano)} — "
+            f"{index}. {texts.gift_link(listing)} — {format_ton(listing.price_nano)} — "
             f"{escape(listing.model_name or 'модель ?')} ({format_permille(listing.model_rarity_permille)}) — "
             f"{MONO_ICON[v.status.value]} {texts.MONO_LABEL[v.status]}"
             + (f" ({v.gw_type.value})" if v.gw_type else "")
@@ -133,7 +133,8 @@ async def cb_new_listings(callback: CallbackQuery, services: Services) -> None:
             listing.status, listing.status
         )
         lines.append(
-            f"{index}. {listing.first_seen_at:%H:%M:%S} {escape(title)} — {format_ton(listing.price_nano)} — "
+            f"{index}. {listing.first_seen_at:%H:%M:%S} {texts.linked_title(title, texts.nft_url(gift.name))} — "
+            f"{format_ton(listing.price_nano)} — "
             f"{MONO_ICON.get(listing.monochrome_status, '❔')} — {status}"
         )
         token = await services.notifier.make_token(
@@ -218,7 +219,7 @@ async def cb_manual_buy(callback: CallbackQuery, services: Services, can_purchas
     await callback.answer()
     if callback.message is not None:
         await callback.message.answer(
-            f"Купить <b>{escape(listing.title)}</b> за {format_ton(price)}?\n{mode_note}\n"
+            f"Купить <b>{texts.gift_link(listing)}</b> за {format_ton(price)}?\n{mode_note}\n"
             "Перед покупкой бот перепроверит наличие, цену (не выше указанной) и ваши лимиты.",
             reply_markup=kb,
         )

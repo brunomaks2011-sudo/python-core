@@ -12,6 +12,11 @@ from gift_sniper.domain.enums import GiftWikiMonochromeType, MonochromeStatus
 _SLUG_RE = re.compile(r"^[A-Za-z0-9]+-\d+$")
 
 
+def nft_slug(name: str | None) -> str | None:
+    """MRKT's gift `name` when it has the form of a Telegram NFT slug (t.me/nft/<slug>), e.g. PlushPepe-123."""
+    return name if name and _SLUG_RE.match(name) else None
+
+
 @dataclass(frozen=True, slots=True)
 class ListingSnapshot:
     """A MRKT gift as returned by the API at `fetched_at`. Missing values stay None (never zero)."""
@@ -48,9 +53,7 @@ class ListingSnapshot:
 
     @property
     def telegram_slug(self) -> str | None:
-        if self.name and _SLUG_RE.match(self.name):
-            return self.name
-        return None
+        return nft_slug(self.name)
 
 
 @dataclass(frozen=True, slots=True)

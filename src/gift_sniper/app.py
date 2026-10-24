@@ -44,7 +44,9 @@ ALL_COMPONENTS = {"bot", "monitor", "processor", "buyer", "scheduler", "metrics"
 class NullSender:
     """Used when TELEGRAM_BOT_TOKEN is not set (e.g. a worker-only process): logs instead of sending."""
 
-    async def send(self, chat_id: int, text: str, keyboard: Any = None) -> bool:
+    async def send(
+        self, chat_id: int, text: str, keyboard: Any = None, *, preview_url: str | None = None
+    ) -> bool:
         log.info("notification (no bot configured)", extra={"chat_id": chat_id, "text": text[:200]})
         return True
 

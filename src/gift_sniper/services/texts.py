@@ -8,7 +8,7 @@ from html import escape
 from gift_sniper.config import Settings
 from gift_sniper.domain.enums import MonochromeStatus, PurchaseStatus
 from gift_sniper.domain.money import format_ton
-from gift_sniper.domain.types import Enrichment, ListingSnapshot, Share
+from gift_sniper.domain.types import Enrichment, ListingSnapshot, Share, nft_slug
 from gift_sniper.services.percentages import NO_DATA, format_model_share, format_percent, format_permille
 
 MONO_LABEL = {
@@ -34,9 +34,22 @@ def listing_url(settings: Settings, listing: ListingSnapshot) -> str:
     return settings.mrkt_app_url
 
 
-def telegram_nft_url(listing: ListingSnapshot) -> str | None:
-    slug = listing.telegram_slug
+def nft_url(name: str | None) -> str | None:
+    slug = nft_slug(name)
     return f"https://t.me/nft/{slug}" if slug else None
+
+
+def telegram_nft_url(listing: ListingSnapshot) -> str | None:
+    return nft_url(listing.name)
+
+
+def linked_title(title: str, url: str | None) -> str:
+    """Gift title (collection + number) as a link to the gift in Telegram when its slug is known."""
+    return f'<a href="{escape(url, quote=True)}">{escape(title)}</a>' if url else escape(title)
+
+
+def gift_link(listing: ListingSnapshot) -> str:
+    return linked_title(listing.title, telegram_nft_url(listing))
 
 
 def rarity_line(listing: ListingSnapshot) -> str:
@@ -72,7 +85,7 @@ def new_listing_text(
     v = enrichment.verdict
     lines = [
         "🎁 <b>Новый подарок на MRKT</b>" if not price_note else "📉 <b>Снижение цены на MRKT</b>",
-        f"Подарок: {e(listing.title)}",
+        f"Подарок: {gift_link(listing)}",
         f"Коллекция: {e(listing.collection_title or listing.collection_name)}",
         f"Модель: {e(listing.model_name)}",
         f"Фон: {e(listing.backdrop_name)}",
@@ -92,7 +105,7 @@ def monochrome_text(listing: ListingSnapshot, enrichment: Enrichment, *, filter_
     v = enrichment.verdict
     lines = [
         "⚫ <b>Найден подтверждённый монохром</b>",
-        f"Подарок: {e(listing.title)}",
+        f"Подарок: {gift_link(listing)}",
         f"Коллекция: {e(listing.collection_title or listing.collection_name)}",
         f"Модель: {e(listing.model_name)}",
         f"Фон: {e(listing.backdrop_name)}",
@@ -120,7 +133,7 @@ def details_text(
     elif enrichment.discount_samples:
         discount = f"Нет данных (наблюдений: {enrichment.discount_samples}, нужно больше)"
     lines = [
-        f"🔎 <b>{e(listing.title)}</b>",
+        f"🔎 <b>{gift_link(listing)}</b>",
         f"ID MRKT: <code>{escape(listing.gift_id)}</code>",
         f"Коллекция: {e(listing.collection_title or listing.collection_name)}",
         f"Модель: {e(listing.model_name)} — {format_permille(listing.model_rarity_permille)}",
@@ -159,6 +172,7 @@ OPERATION_STATUS = {
 def purchase_confirmed_text(
     *,
     title: str,
+    url: str | None = None,
     collection: str | None,
     model: str | None,
     price_nano: int | None,
@@ -168,7 +182,7 @@ def purchase_confirmed_text(
     return "\n".join(
         [
             "✅ <b>Покупка подтверждена</b>",
-            f"Подарок: {e(title)}",
+            f"Подарок: {linked_title(title, url)}",
             f"Коллекция: {e(collection)}",
             f"Модель: {e(model)}",
             f"Цена: {format_ton(price_nano)}",
@@ -178,11 +192,11 @@ def purchase_confirmed_text(
     )
 
 
-def purchase_failed_text(*, title: str, reason: str, status: PurchaseStatus) -> str:
+def purchase_failed_text(*, title: str, reason: str, status: PurchaseStatus, url: str | None = None) -> str:
     return "\n".join(
         [
             "⚠️ <b>Покупка не подтверждена</b>",
-            f"Подарок: {e(title)}",
+            f"Подарок: {linked_title(title, url)}",
             f"Причина: {escape(reason)}",
             f"Статус операции: {OPERATION_STATUS.get(status, 'неизвестен')}",
         ]
@@ -190,12 +204,18 @@ def purchase_failed_text(*, title: str, reason: str, status: PurchaseStatus) -> 
 
 
 def dry_run_text(
-    *, title: str, collection: str | None, model: str | None, price_nano: int | None, filter_name: str | None
+    *,
+    title: str,
+    collection: str | None,
+    model: str | None,
+    price_nano: int | None,
+    filter_name: str | None,
+    url: str | None = None,
 ) -> str:
     return "\n".join(
         [
             "🧪 <b>Тестовый режим: подарок был бы куплен</b>",
-            f"Подарок: {e(title)}",
+            f"Подарок: {linked_title(title, url)}",
             f"Коллекция: {e(collection)}",
             f"Модель: {e(model)}",
             f"Цена: {format_ton(price_nano)}",

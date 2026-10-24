@@ -811,12 +811,14 @@ class PurchaseService:
         if self.notifier is None:
             return result
         title = listing.title if listing else req.gift_id
+        url = texts.telegram_nft_url(listing) if listing else None
         collection = listing.collection_title or listing.collection_name if listing else None
         model = listing.model_name if listing else None
         try:
             if result.status is PurchaseStatus.CONFIRMED:
                 text = texts.purchase_confirmed_text(
                     title=title,
+                    url=url,
                     collection=collection,
                     model=model,
                     price_nano=result.price_nano,
@@ -827,6 +829,7 @@ class PurchaseService:
             elif result.status is PurchaseStatus.DRY_RUN:
                 text = texts.dry_run_text(
                     title=title,
+                    url=url,
                     collection=collection,
                     model=model,
                     price_nano=result.price_nano,
@@ -834,7 +837,9 @@ class PurchaseService:
                 )
                 await self.notifier.purchase_message(req.user_id, text, success=True, prefs=prefs)
             elif result.status is not None:
-                text = texts.purchase_failed_text(title=title, reason=result.reason, status=result.status)
+                text = texts.purchase_failed_text(
+                    title=title, reason=result.reason, status=result.status, url=url
+                )
                 await self.notifier.purchase_message(
                     req.user_id, text, success=False, prefs=prefs, dedup_key=dedup_key
                 )

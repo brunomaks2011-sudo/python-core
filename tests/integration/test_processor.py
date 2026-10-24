@@ -58,6 +58,9 @@ async def test_new_listing_matches_filter_publishes_purchase_and_notifies(env: E
     assert "Новый подарок на MRKT" in texts[0] and "cheap pepe" in texts[0]
     assert "Монохром: Неизвестно" in texts[0]  # no Gift Wiki data loaded
     assert "Вероятность выпадения модели: Нет данных" in texts[0]
+    # the title links to the gift in Telegram, and the notification shows the gift card
+    assert '<a href="https://t.me/nft/PlushPepe-100">Plush Pepe #100</a>' in texts[0]
+    assert env.sender.previews == ["https://t.me/nft/PlushPepe-100"]
     assert await count(env, Listing) == 1 and await count(env, Gift) == 1
     assert await count(env, FilterHit) == 1 and await count(env, PriceHistory) == 1
 
