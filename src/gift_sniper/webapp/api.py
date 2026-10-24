@@ -61,6 +61,8 @@ class _Mrkt(Protocol):
 class _Store(Protocol):
     snapshot: ReferenceSnapshot
 
+    async def maybe_reload(self, min_interval: float = 15.0) -> None: ...
+
 
 class _FilterCache(Protocol):
     async def invalidate(self) -> None: ...
@@ -219,6 +221,7 @@ class MiniAppApi:
 
     # ------------------------------------------------------------------ status
     async def me(self, user_id: int) -> dict[str, Any]:
+        await self.store.maybe_reload(min_interval=5)  # a sync may have run in another process
         async with self.sessionmaker() as session:
             prefs = await users_repo.get_settings(session, user_id)
             user_state, _, _ = await self.purchase.scope_states(
@@ -288,6 +291,7 @@ class MiniAppApi:
 
     # ------------------------------------------------------------------ catalog
     async def collections(self, user_id: int) -> dict[str, Any]:
+        await self.store.maybe_reload(min_interval=5)
         async with self.sessionmaker() as session:
             rows = await listings_repo.market_collections(session)
             models = await listings_repo.models_by_collection(session)
@@ -330,6 +334,7 @@ class MiniAppApi:
         return {"items": items, "giftwiki_records": snapshot.records_count}
 
     async def collection(self, user_id: int, name: str) -> dict[str, Any]:
+        await self.store.maybe_reload(min_interval=5)
         async with self.sessionmaker() as session:
             row = await session.get(MarketCollection, name)
             if row is None:

@@ -10,10 +10,12 @@ import pytest_asyncio
 from aiohttp.test_utils import TestClient, TestServer
 
 from gift_sniper.db.repo import filters as filters_repo
+from gift_sniper.db.repo import giftwiki as giftwiki_repo
 from gift_sniper.db.repo import listings as listings_repo
 from gift_sniper.db.repo import users as users_repo
-from gift_sniper.domain.types import FeedEvent
+from gift_sniper.domain.types import FeedEvent, MonochromeRecord
 from gift_sniper.integrations.mrkt import MrktAttribute
+from gift_sniper.services.enrichment import ReferenceStore
 from gift_sniper.services.processor import ListingProcessor
 from gift_sniper.services.queue import MemoryQueue
 from gift_sniper.webapp.api import MiniAppApi
@@ -252,3 +254,34 @@ async def test_pairs_picked_with_their_own_prices(client: TestClient, env: Env) 
     await client.put(PEPE + "/picks", headers=auth(), json={})  # nothing left for the whole collection
     async with env.sessionmaker() as session:
         assert await filters_repo.list_filters(session, ADMIN) == []
+
+
+async def test_data_synced_by_another_process_shows_up(client: TestClient, env: Env) -> None:  # type: ignore[type-arg]
+    """`sync-giftwiki` runs in its own container: it stores records and bumps the version in Redis."""
+    now = datetime.now(UTC)
+    record = MonochromeRecord(
+        record_id="r1",
+        gift_id="gw-1",
+        gift_name="Plush Pepe",
+        model_name="Onyx",
+        backdrop_name="Black",
+        type_raw="high",
+        raw={},
+    )
+    async with env.sessionmaker() as session, session.begin():
+        await giftwiki_repo.upsert_gift(
+            session,
+            "gw-1",
+            "Plush Pepe",
+            records_count=1,
+            complete=True,
+            coverage_source="gift_lookup",
+            synced_at=now,
+            source_url="test",
+        )
+        await giftwiki_repo.upsert_records(session, "gw-1", [record], seen_at=now, source_url="test")
+        run = await giftwiki_repo.start_run(session, "manual")
+        run.status, run.finished_at = "success", now
+    await ReferenceStore(env.sessionmaker, env.redis, env.settings.redis_prefix).bump()  # the other process
+    listing = await (await client.get("/api/collections", headers=auth())).json()
+    assert next(c for c in listing["items"] if c["name"] == "Plush Pepe")["monochrome_pairs"] == 1

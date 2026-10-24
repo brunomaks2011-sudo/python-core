@@ -283,6 +283,11 @@ class Application:
                 "giftwiki",
             )
             self._spawn(self._every(3600, self._collections_job, "collections"), "collections")
+            # `sync-giftwiki` runs in its own container: pick up its data without waiting for a listing
+            self._spawn(
+                self._every(30, services.store.maybe_reload, "reference-reload", initial=30),
+                "reference-reload",
+            )
             self._spawn(self._every(24 * 3600, self._cleanup_job, "cleanup", initial=600), "cleanup")
             self._spawn(self._every(15, self._queue_metrics, "queue-metrics"), "queue-metrics")
         if "bot" in components:
