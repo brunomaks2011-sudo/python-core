@@ -8,4 +8,6 @@ redis==8.1.0
 pydantic==2.13.5
 pydantic-settings==2.16.1
 prometheus-client==0.26.0
+# Telegram client (maintained Pyrogram fork) for `mrkt-login` and automatic MRKT token refresh
+kurigram==2.2.26
 tzdata==2026.5

@@ -123,6 +123,7 @@ PYTHONPATH=src python -m gift_sniper run
 | `python -m gift_sniper migrate` | применить миграции Alembic |
 | `python -m gift_sniper sync-giftwiki` | разовая синхронизация Gift Wiki |
 | `python -m gift_sniper check` | самопроверка источников данных и интеграций |
+| `python -m gift_sniper mrkt-login [--write-env .env] [--show]` | один раз: вход в Telegram и получение токена MRKT |
 
 ---
 
@@ -139,27 +140,46 @@ PYTHONPATH=src python -m gift_sniper run
 | `PURCHASE_USER_IDS` | кому разрешены покупки (по умолчанию только администраторам) |
 | `RUN_MODE` | `notify_only` — только уведомления, `dry_run` — тестовый режим (по умолчанию), `live` — реальные покупки |
 | `GIFTWIKI_API_KEY` | dev-ключ Gift Wiki со scope `collection:read` |
-| `MRKT_ACCESS_TOKEN` / `MRKT_INIT_DATA` | авторизация MRKT (см. ниже) |
+| `TELEGRAM_API_ID` / `TELEGRAM_API_HASH` | для `mrkt-login` и автообновления токена MRKT (см. ниже) |
+| `MRKT_ACCESS_TOKEN` / `MRKT_INIT_DATA` | альтернативная авторизация MRKT |
 | `MONOCHROME_ABSENT_PAIR_POLICY` | `not_monochrome` или `unknown`: как трактовать пару, которой нет в полном списке Gift Wiki |
 
 ### Авторизация MRKT
 
-Бот **не запрашивает** номер телефона, код или пароль Telegram и не создаёт пользовательскую сессию.
-Возможны два варианта:
+Рекомендуемый способ — ваша собственная Telegram-сессия (тот же поток, что в документации сообщества:
+`RequestAppWebView(@mrkt, "app")` → `tgWebAppData` → `POST /auth`):
 
-1. `MRKT_ACCESS_TOKEN`. Откройте MRKT в веб-версии Telegram, в DevTools → Network найдите запрос
-   `https://api.tgmrkt.io/api/v1/auth` и скопируйте `token` из ответа. Так описано в неофициальной
-   документации сообщества. Токен даёт доступ к балансу вашего аккаунта MRKT: храните его как пароль.
-2. `MRKT_INIT_DATA`: строка `tgWebAppData` Mini App. Бот сам обменяет её на токен через `POST /auth`.
+1. Получите `api_id` и `api_hash` на https://my.telegram.org → *API development tools* и впишите их
+   в `.env` (`TELEGRAM_API_ID`, `TELEGRAM_API_HASH`).
+2. Один раз выполните вход (интерактивно, в вашем терминале):
 
-Если MRKT отклонит токен (HTTP 401), бот приостановит мониторинг и уведомит администраторов.
+   ```bash
+   docker compose run --rm -it bot python -m gift_sniper mrkt-login
+   ```
 
-Все покупки выполняются с одного аккаунта MRKT, указанного в `.env`. Бюджеты пользователей —
-это внутренние лимиты бота поверх этого аккаунта.
+   Telegram запросит номер телефона, код входа и пароль 2FA (если включён). Они вводятся только в
+   этом терминале и уходят напрямую в Telegram; бот их не получает и не хранит (Pyrogram сохраняет
+   лишь ключ авторизации сессии). Команда проверит, что MRKT выдаёт токен, и покажет баланс.
+3. Запустите бота: `docker compose up -d`. Сессия лежит в томе `botdata` (`/app/data/mrkt.session`),
+   и бот сам получает токен MRKT при старте и заново — если MRKT отклонит старый (не чаще раза в
+   `MRKT_AUTH_COOLDOWN_SECONDS`).
+
+> ⚠️ Файл сессии даёт полный доступ к вашему аккаунту Telegram. Не копируйте его и не публикуйте;
+> завершить сессию можно в Telegram → Настройки → Устройства.
+
+Альтернативы без сессии:
+
+* `MRKT_ACCESS_TOKEN` — токен из ответа `https://api.tgmrkt.io/api/v1/auth` (DevTools → Network в
+  веб-версии Telegram) или из `mrkt-login --write-env .env --show`. Без сессии бот не сможет обновить
+  его сам: при HTTP 401 мониторинг приостановится, администраторы получат уведомление.
+* `MRKT_INIT_DATA` — строка `tgWebAppData` Mini App; бот обменяет её на токен через `POST /auth`.
+
+Все покупки выполняются с одного аккаунта MRKT. Бюджеты пользователей — это внутренние лимиты бота
+поверх этого аккаунта.
 
 ### Рекомендуемый порядок включения
 
-1. `RUN_MODE=dry_run`, затем `python -m gift_sniper check`.
+1. `RUN_MODE=dry_run`, `mrkt-login`, затем `python -m gift_sniper check`.
 2. В боте: 💰 **Бюджет и лимиты** → задайте общие лимиты (на покупку, на день, всего). Без них покупки
    блокируются даже в тестовом режиме, чтобы тест честно отражал боевое поведение.
 3. Создайте фильтры, включите режимы и посмотрите уведомления «🧪 был бы куплен».

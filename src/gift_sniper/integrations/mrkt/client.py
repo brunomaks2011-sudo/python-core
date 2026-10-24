@@ -14,6 +14,7 @@ from __future__ import annotations
 import asyncio
 import json
 import logging
+import time
 from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import StrEnum
@@ -119,6 +120,7 @@ class MrktClient:
             settings.mrkt_access_token.get_secret_value() if settings.mrkt_access_token else None
         )
         self._auth_lock = asyncio.Lock()
+        self._last_auth_attempt: float | None = None
         self.limiter = AsyncRateLimiter(settings.mrkt_requests_per_second)
         self.priority_limiter = AsyncRateLimiter(settings.mrkt_priority_requests_per_second)
         self.last_auth_error: str | None = None
@@ -141,7 +143,16 @@ class MrktClient:
 
     @property
     def configured(self) -> bool:
-        return bool(self._token or self.settings.mrkt_init_data)
+        return bool(self._token or self.can_reauthenticate)
+
+    @property
+    def can_reauthenticate(self) -> bool:
+        """A new token can be obtained without the operator: initData or a saved Telegram session."""
+        return bool(self.settings.mrkt_init_data or self.settings.mrkt_session_available)
+
+    @property
+    def token(self) -> str | None:
+        return self._token
 
     # ------------------------------------------------------------------ auth
     def _auth_headers(self) -> dict[str, str]:
@@ -155,13 +166,44 @@ class MrktClient:
             headers["Authorization"] = value
         return headers
 
-    async def _authenticate(self) -> None:
-        init_data = self.settings.mrkt_init_data.get_secret_value() if self.settings.mrkt_init_data else ""
-        if not init_data:
-            raise MrktAuthError(
-                "MRKT token is missing or rejected and MRKT_INIT_DATA is not set; update MRKT_ACCESS_TOKEN"
-            )
+    async def _obtain_init_data(self) -> str:
+        if self.settings.mrkt_init_data:
+            return self.settings.mrkt_init_data.get_secret_value()
+        if self.settings.mrkt_session_available:
+            from gift_sniper.integrations.mrkt.telegram_auth import fetch_init_data
+
+            assert self.settings.telegram_api_id and self.settings.telegram_api_hash
+            try:
+                return await fetch_init_data(
+                    api_id=self.settings.telegram_api_id,
+                    api_hash=self.settings.telegram_api_hash.get_secret_value(),
+                    session_path=self.settings.mrkt_telegram_session,
+                    interactive=False,
+                )
+            except Exception as exc:  # Telegram RPC/network errors, revoked session, ...
+                raise MrktAuthError(f"Не удалось открыть MRKT через Telegram-сессию: {exc}") from exc
+        raise MrktAuthError(
+            "Нет токена MRKT: задайте MRKT_ACCESS_TOKEN или выполните `python -m gift_sniper mrkt-login`"
+        )
+
+    async def obtain_token(self) -> str:
+        """Force a new token (used by `mrkt-login`)."""
+        self._last_auth_attempt = None
+        await self._authenticate(stale_token=self._token)
+        assert self._token is not None
+        return self._token
+
+    async def _authenticate(self, stale_token: str | None = None) -> None:
         async with self._auth_lock:
+            if self._token and self._token != stale_token:
+                return  # another task has already refreshed the token
+            now = time.monotonic()
+            cooldown = self.settings.mrkt_auth_cooldown_seconds
+            if self._last_auth_attempt is not None and now - self._last_auth_attempt < cooldown:
+                wait = cooldown - (now - self._last_auth_attempt)
+                raise MrktAuthError(f"Повторная авторизация MRKT возможна через {wait:.0f} с")
+            self._last_auth_attempt = now
+            init_data = await self._obtain_init_data()
             timer = Timer()
             try:
                 async with self.session.post(
@@ -206,6 +248,7 @@ class MrktClient:
         while True:
             await (self.priority_limiter if priority else self.limiter).acquire()
             timer = Timer()
+            used_token = self._token
             try:
                 async with self.session.request(
                     method, self.base_url + path, json=payload, headers=self._auth_headers()
@@ -225,13 +268,14 @@ class MrktClient:
 
             EXTERNAL_REQUESTS.labels(SERVICE, endpoint, str(status)).inc()
             if status == 401:
-                if not reauthenticated and self.settings.mrkt_init_data:
-                    self._token = None
-                    await self._authenticate()
+                if not reauthenticated and self.can_reauthenticate:
+                    await self._authenticate(stale_token=used_token)
                     reauthenticated = True
                     continue
                 self.last_auth_error = f"HTTP 401 on {endpoint}"
-                raise MrktAuthError("MRKT rejected the token (HTTP 401). Update MRKT_ACCESS_TOKEN")
+                raise MrktAuthError(
+                    "MRKT отклонил токен (HTTP 401): обновите MRKT_ACCESS_TOKEN или выполните mrkt-login"
+                )
             if status == 404 and allow_404:
                 return None
             if status == 429 or status >= 500:

@@ -126,10 +126,15 @@ class ListingMonitor:
                 log.error("MRKT authorization failed", extra={"error": str(exc)})
                 if self.notifier is not None:
                     hour = datetime.now(UTC).strftime("%Y%m%d%H")
+                    if self.mrkt.can_reauthenticate:
+                        hint = "Бот повторит авторизацию через сохранённую Telegram-сессию через минуту."
+                    else:
+                        hint = (
+                            "Обновите MRKT_ACCESS_TOKEN или выполните `python -m gift_sniper mrkt-login` "
+                            "и перезапустите бота."
+                        )
                     await self.notifier.admins(
-                        "🔐 MRKT отклонил авторизацию. Мониторинг приостановлен до обновления MRKT_ACCESS_TOKEN "
-                        "(или MRKT_INIT_DATA) и перезапуска.",
-                        dedup_key=f"mrkt-auth:{hour}",
+                        f"🔐 MRKT отклонил авторизацию: {exc}\n{hint}", dedup_key=f"mrkt-auth:{hour}"
                     )
                 await self._sleep(stop, 60)
                 continue

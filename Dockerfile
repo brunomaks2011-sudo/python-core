@@ -10,7 +10,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-RUN useradd --create-home --uid 10001 sniper
+RUN useradd --create-home --uid 10001 sniper \
+    && mkdir -p /app/data \
+    && chown sniper:sniper /app/data
 
 COPY requirements.txt ./
 RUN pip install -r requirements.txt

@@ -10,4 +10,5 @@ venv/
 build/
 dist/
 *.session
+/data/
 *.session-journal

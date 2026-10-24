@@ -94,9 +94,20 @@ async def _check_mrkt(settings: Settings, report: Report) -> list[str]:
     if not settings.mrkt_configured:
         report.add(
             FAIL,
-            "MRKT не настроен: задайте MRKT_ACCESS_TOKEN или MRKT_INIT_DATA (мониторинг и покупки недоступны)",
+            "MRKT не настроен: выполните `python -m gift_sniper mrkt-login` (нужны TELEGRAM_API_ID и "
+            "TELEGRAM_API_HASH) или задайте MRKT_ACCESS_TOKEN",
         )
         return collections
+    sources = [
+        name
+        for name, enabled in (
+            ("MRKT_ACCESS_TOKEN", bool(settings.mrkt_access_token)),
+            ("MRKT_INIT_DATA", bool(settings.mrkt_init_data)),
+            ("Telegram-сессия (автообновление токена)", settings.mrkt_session_available),
+        )
+        if enabled
+    ]
+    report.add(OK, "Авторизация MRKT: " + ", ".join(sources))
     client = MrktClient(settings)
     await client.start()
     try:

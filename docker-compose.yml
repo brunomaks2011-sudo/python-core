@@ -38,6 +38,9 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    volumes:
+      # Telegram session created by `mrkt-login` (full access to the Telegram account: keep it private)
+      - botdata:/app/data
     ports:
       - "127.0.0.1:9100:9100"  # /metrics and /health, local only
     restart: unless-stopped
@@ -45,3 +48,4 @@ services:
 volumes:
   pgdata:
   redisdata:
+  botdata:

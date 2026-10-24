@@ -4,6 +4,7 @@ python -m gift_sniper run [--components bot,monitor,processor,buyer,scheduler,me
 python -m gift_sniper migrate
 python -m gift_sniper sync-giftwiki
 python -m gift_sniper check
+python -m gift_sniper mrkt-login [--write-env .env] [--show]
 """
 
 from __future__ import annotations
@@ -61,6 +62,68 @@ async def sync_giftwiki() -> int:
         await app.shutdown()
 
 
+async def mrkt_login(env_path: str | None, show: bool) -> int:
+    """Create the operator's Telegram session (interactive, in this terminal) and obtain a MRKT token.
+
+    The flow is the one from the MRKT community documentation: RequestAppWebView(@mrkt, "app") ->
+    tgWebAppData -> POST /auth. Phone number, login code and 2FA password are typed only here and go
+    straight to Telegram; the bot never receives them.
+    """
+    from pydantic import SecretStr
+
+    from gift_sniper.domain.money import format_ton
+    from gift_sniper.envfile import mask, update_env_value
+    from gift_sniper.integrations.mrkt import MrktClient, MrktError
+    from gift_sniper.integrations.mrkt.telegram_auth import fetch_init_data, session_file
+
+    settings = get_settings()
+    if not settings.telegram_api_id or not settings.telegram_api_hash:
+        print(
+            "Задайте TELEGRAM_API_ID и TELEGRAM_API_HASH в .env "
+            "(https://my.telegram.org → API development tools) и запустите команду снова."
+        )
+        return 2
+    print(f"Telegram-сессия: {session_file(settings.mrkt_telegram_session)}")
+    print(
+        "Если сессии ещё нет, Telegram запросит номер телефона, код входа и пароль 2FA (если включён).\n"
+        "Они вводятся только в этом терминале и отправляются напрямую в Telegram; бот их не получает и не хранит."
+    )
+    try:
+        init_data = await fetch_init_data(
+            api_id=settings.telegram_api_id,
+            api_hash=settings.telegram_api_hash.get_secret_value(),
+            session_path=settings.mrkt_telegram_session,
+            interactive=True,
+        )
+    except Exception as exc:
+        print(f"❌ Не удалось открыть MRKT через Telegram: {exc}")
+        return 1
+    client = MrktClient(
+        settings.model_copy(update={"mrkt_access_token": None, "mrkt_init_data": SecretStr(init_data)})
+    )
+    await client.start()
+    try:
+        token = await client.obtain_token()
+        balance = await client.balance_nano()
+    except MrktError as exc:
+        print(f"❌ MRKT не выдал токен: {exc}")
+        return 1
+    finally:
+        await client.close()
+    print(f"✅ Токен MRKT получен: {mask(token)}; баланс MRKT: {format_ton(balance)}")
+    print(
+        "Пока сессия существует, бот сам получает и обновляет токен (MRKT_ACCESS_TOKEN можно не задавать).\n"
+        "Сессия даёт полный доступ к аккаунту Telegram: храните её в тайне; завершить её можно в "
+        "Telegram → Настройки → Устройства."
+    )
+    if env_path:
+        update_env_value(Path(env_path), "MRKT_ACCESS_TOKEN", token)
+        print(f"MRKT_ACCESS_TOKEN записан в {env_path}")
+    if show:
+        print(token)
+    return 0
+
+
 async def check() -> int:
     from gift_sniper.selfcheck import run_selfcheck
 
@@ -79,6 +142,13 @@ def main(argv: list[str] | None = None) -> int:
     sub.add_parser("migrate", help="apply database migrations")
     sub.add_parser("sync-giftwiki", help="run one Gift Wiki synchronization")
     sub.add_parser("check", help="check access to MRKT and Gift Wiki and report what works")
+    login_parser = sub.add_parser(
+        "mrkt-login", help="create the Telegram session and obtain a MRKT token (interactive, run once)"
+    )
+    login_parser.add_argument(
+        "--write-env", default=None, help="also write MRKT_ACCESS_TOKEN into this .env file"
+    )
+    login_parser.add_argument("--show", action="store_true", help="print the full token")
     args = parser.parse_args(argv)
 
     settings = get_settings()
@@ -94,6 +164,8 @@ def main(argv: list[str] | None = None) -> int:
         return asyncio.run(sync_giftwiki())
     if args.command == "check":
         return asyncio.run(check())
+    if args.command == "mrkt-login":
+        return asyncio.run(mrkt_login(args.write_env, args.show))
     return 2
 
 

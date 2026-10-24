@@ -147,6 +147,7 @@ class FakeMrkt:
         self.balance: int | None = 10_000 * TON
         self.buy_delay = 0.02
         self.configured = True
+        self.can_reauthenticate = False
 
     def add(self, listing: ListingSnapshot) -> None:
         self.gifts[listing.gift_id] = listing

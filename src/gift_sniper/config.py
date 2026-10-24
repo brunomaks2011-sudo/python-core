@@ -73,6 +73,12 @@ class Settings(BaseSettings):
     mrkt_api_base_url: str = "https://api.tgmrkt.io/api/v1"
     mrkt_access_token: SecretStr | None = None
     mrkt_init_data: SecretStr | None = None
+    # Optional: the operator's own Telegram session (created once with `python -m gift_sniper mrkt-login`)
+    # lets the bot obtain and refresh the MRKT token automatically.
+    telegram_api_id: int | None = None
+    telegram_api_hash: SecretStr | None = None
+    mrkt_telegram_session: str = "data/mrkt"
+    mrkt_auth_cooldown_seconds: float = 60.0
     mrkt_auth_header_format: str = "raw"  # raw | bearer
     mrkt_referer: str = "https://cdn.tgmrkt.io/"
     mrkt_requests_per_second: float = 2.0
@@ -135,7 +141,13 @@ class Settings(BaseSettings):
         return _split_ints(value)
 
     @field_validator(
-        "telegram_bot_token", "mrkt_access_token", "mrkt_init_data", "giftwiki_api_key", mode="before"
+        "telegram_bot_token",
+        "mrkt_access_token",
+        "mrkt_init_data",
+        "giftwiki_api_key",
+        "telegram_api_hash",
+        "telegram_api_id",
+        mode="before",
     )
     @classmethod
     def _empty_secret(cls, value: Any) -> Any:
@@ -173,8 +185,17 @@ class Settings(BaseSettings):
         return self.is_admin(user_id)
 
     @property
+    def mrkt_session_available(self) -> bool:
+        """Telegram API credentials are set and the session file created by `mrkt-login` exists."""
+        from gift_sniper.integrations.mrkt.telegram_auth import session_file
+
+        if not self.telegram_api_id or not self.telegram_api_hash:
+            return False
+        return session_file(self.mrkt_telegram_session).exists()
+
+    @property
     def mrkt_configured(self) -> bool:
-        return bool(self.mrkt_access_token or self.mrkt_init_data)
+        return bool(self.mrkt_access_token or self.mrkt_init_data or self.mrkt_session_available)
 
     @property
     def giftwiki_configured(self) -> bool:
