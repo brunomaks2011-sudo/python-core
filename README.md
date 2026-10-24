@@ -88,11 +88,13 @@ docker compose run --rm bot python -m gift_sniper check
 
 ```bash
 cp .env.example .env
-# заполните: TELEGRAM_BOT_TOKEN, ADMIN_USER_IDS, POSTGRES_PASSWORD,
-#            GIFTWIKI_API_KEY, MRKT_ACCESS_TOKEN (или MRKT_INIT_DATA)
-docker compose up -d --build
+# заполните: TELEGRAM_BOT_TOKEN, ADMIN_USER_IDS, POSTGRES_PASSWORD, GIFTWIKI_API_KEY,
+#            TELEGRAM_API_ID, TELEGRAM_API_HASH
+./scripts/setup.sh          # сборка, вход в Telegram для MRKT, запуск, самопроверка
 docker compose logs -f bot
 ```
+
+`scripts/setup.sh` нужен один раз; дальше достаточно `docker compose up -d`.
 
 Контейнер `bot` при старте применяет миграции (`python -m gift_sniper migrate`), затем запускает бота
 и все фоновые задачи. Метрики и проверка состояния доступны на `http://127.0.0.1:9100/metrics`
