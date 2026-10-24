@@ -8,6 +8,7 @@ from __future__ import annotations
 import itertools
 from collections.abc import AsyncIterator
 from datetime import UTC, datetime
+from types import SimpleNamespace
 from typing import Any
 
 import pytest
@@ -19,6 +20,7 @@ from aiogram.types import CallbackQuery, Chat, Message, Update, User
 from sqlalchemy import select
 
 from gift_sniper.bot.callbacks import BudgetCb, ControlCb, FilterCb, Menu, ModeCb, NotifyCb, WikiCb
+from gift_sniper.bot.middlewares import AccessMiddleware
 from gift_sniper.bot.setup import build_dispatcher
 from gift_sniper.bot.ui import MAIN_SECTIONS
 from gift_sniper.db.models import Budget, Filter, UserSettings
@@ -153,6 +155,20 @@ async def test_start_shows_main_menu_with_all_sections(ui: Harness) -> None:
     markup = ui.session.last_markup()
     buttons = [b.text for row in markup.inline_keyboard for b in row]
     assert buttons == [t for t, _ in MAIN_SECTIONS]
+
+
+async def test_users_are_registered_right_after_boot(env: Env) -> None:
+    """time.monotonic() is close to zero shortly after the machine (or Docker's VM) starts."""
+    services = SimpleNamespace(settings=env.settings, sessionmaker=env.sessionmaker)
+    access = AccessMiddleware(services, clock=lambda: 5.0)  # type: ignore[arg-type]
+    event = SimpleNamespace(from_user=User(id=ADMIN, is_bot=False, first_name="Admin"))
+
+    async def handler(event: Any, data: dict[str, Any]) -> str:
+        return "handled"
+
+    assert await access(handler, event, {}) == "handled"  # type: ignore[arg-type]
+    async with env.sessionmaker() as session:
+        assert await session.get(UserSettings, ADMIN) is not None
 
 
 async def test_access_is_denied_to_unknown_users(ui: Harness) -> None:

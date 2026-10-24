@@ -17,10 +17,11 @@ from gift_sniper.services.container import Services
 class AccessMiddleware(BaseMiddleware):
     """Only users listed in ADMIN_USER_IDS / ALLOWED_USER_IDS may use the bot."""
 
-    def __init__(self, services: Services) -> None:
+    def __init__(self, services: Services, clock: Callable[[], float] = time.monotonic) -> None:
         self.services = services
         self.max_events = services.settings.bot_flood_max_events
         self.per_seconds = services.settings.bot_flood_window_seconds
+        self._clock = clock
         self._events: dict[int, deque[float]] = defaultdict(deque)
         self._registered: dict[int, float] = {}
 
@@ -42,7 +43,7 @@ class AccessMiddleware(BaseMiddleware):
             elif isinstance(event, CallbackQuery):
                 await event.answer("Доступ запрещён", show_alert=True)
             return None
-        now = time.monotonic()
+        now = self._clock()
         window = self._events[user.id]
         while window and now - window[0] > self.per_seconds:
             window.popleft()
@@ -51,7 +52,9 @@ class AccessMiddleware(BaseMiddleware):
                 await event.answer("Слишком часто, подождите секунду")
             return None
         window.append(now)
-        if now - self._registered.get(user.id, 0) > 600:
+        # the monotonic clock starts near zero at boot: a missing entry must not read as "registered at 0"
+        registered_at = self._registered.get(user.id)
+        if registered_at is None or now - registered_at > 600:
             async with self.services.sessionmaker() as session, session.begin():
                 await users_repo.ensure_user(
                     session,
