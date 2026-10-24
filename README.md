@@ -96,6 +96,10 @@ docker compose logs -f bot
 
 `scripts/setup.sh` нужен один раз; дальше достаточно `docker compose up -d`.
 
+**Windows** (cmd или PowerShell, нужен запущенный Docker Desktop): вместо `setup.sh` выполните
+`scripts\setup.cmd` из папки проекта. Если Проводник скрыл расширение и файл называется `.env.txt`,
+переименуйте его: `ren .env.txt .env`.
+
 Контейнер `bot` при старте применяет миграции (`python -m gift_sniper migrate`), затем запускает бота
 и все фоновые задачи. Метрики и проверка состояния доступны на `http://127.0.0.1:9100/metrics`
 и `/health`.

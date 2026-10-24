@@ -1,0 +1,4 @@
+# Keep script line endings correct on every OS (Git for Windows converts by default)
+*.sh text eol=lf
+*.cmd text eol=crlf
+Dockerfile text eol=lf
