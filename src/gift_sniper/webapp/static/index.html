@@ -139,9 +139,7 @@
   .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; padding: 3px; border-radius: 13px; background: var(--fill); }
   .seg button { padding: 10px 6px; border: 0; border-radius: 10px; background: none; color: var(--hint); font-size: 14px; font-weight: 700; }
   .seg button.on { background: var(--accent); color: var(--accent-text); box-shadow: 0 1px 4px rgba(0, 0, 0, .2); }
-  .seg button:disabled { opacity: .35; }
-  .seg.seg3 { grid-template-columns: repeat(3, 1fr); margin-bottom: 4px; }
-  .seg.seg3 button { padding: 10px 2px; font-size: 13px; }
+  .seg button.locked { opacity: .4; }
   .switch { position: relative; width: 51px; height: 31px; flex: none; }
   .switch input { position: absolute; width: 0; height: 0; opacity: 0; }
   .switch span { position: absolute; inset: 0; border-radius: 999px; background: var(--fill-2); transition: background .2s; }
@@ -257,7 +255,7 @@
 <nav class="tabbar" id="tabbar">
   <button data-tab="collections" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/></svg>Коллекции</button>
   <button data-tab="rules"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M5 8h14l-1.2 12.1a1 1 0 0 1-1 .9H7.2a1 1 0 0 1-1-.9z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8" stroke-linecap="round"/></svg>Берёт бот<i class="count" id="tab-count" hidden></i></button>
-  <button data-tab="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2.2"/><circle cx="9" cy="17" r="2.2"/></svg>Лимиты<i class="dot" id="tab-dot" hidden></i></button>
+  <button data-tab="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2.2"/><circle cx="9" cy="17" r="2.2"/></svg>Настройки<i class="dot" id="tab-dot" hidden></i></button>
   <button data-tab="history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>История</button>
 </nav>
 <div class="sheet-bg" id="sheet-bg"></div>
@@ -511,14 +509,15 @@ function ensureCollections() {
 function modePill() {
   const m = S.me;
   if (!m) return "";
-  const [cls, text] = m.stopped ? ["stop", "⛔ Стоп"] : m.run_mode === "live" ? ["live", "● Live"]
-    : m.run_mode === "dry_run" ? ["test", "🧪 Тест"] : ["", "🔔 Уведомления"];
+  const [cls, text] = m.stopped ? ["stop", "⛔ Стоп"] : m.run_mode === "live" ? ["live", "● Покупает"]
+    : m.run_mode === "dry_run" ? ["test", "🧪 Тест"] : ["", "⏸ Не покупает"];
   return `<button class="pill ${cls}" data-goto="settings">${text}</button>`;
 }
 const todo = () => (S.me ? S.me.checklist.filter((c) => !c.ok && c.id !== "live") : []);
 const TODO_SHORT = {
   limits: "задайте лимиты", rule: "выберите, что брать", modes: "включите автопокупку",
   giftwiki: "нет данных о монохромах", stopped: "включена аварийная остановка", rights: "нет права на покупки",
+  paused: "включена пауза",
 };
 function banner() {
   const m = S.me;
@@ -526,7 +525,7 @@ function banner() {
   const left = todo();
   const text = left.length === 1 ? `Бот пока не покупает: ${TODO_SHORT[left[0].id] || left[0].text}`
     : left.length ? `Бот пока не покупает — осталось ${left.length} ${plural(left.length, "шаг", "шага", "шагов")}`
-    : m.run_mode === "dry_run" ? "Тестовый режим: покупки только имитируются" : "Режим «только уведомления»";
+    : m.run_mode === "dry_run" ? "Тестовый режим: покупки только имитируются" : "Бот не покупает: включите «Покупать» в настройках";
   return `<button class="banner" data-goto="settings"><span>${left.length ? "⚠️" : "🧪"}</span><span class="grow">${esc(text)}</span><span class="chev">›</span></button>`;
 }
 function updateChrome() {
@@ -659,8 +658,10 @@ function drawCollection() {
 }
 function autobuySwitch(c) {
   if (!S.me.can_purchase) return '<p class="hint">🔔 Бот только уведомляет: у вас нет права на покупки.</p>';
+  const global = S.me.run_mode === "notify_only" ? " Сейчас бот не покупает ничего: в настройках выбрано «Не покупать»."
+    : S.me.run_mode === "dry_run" ? " Сейчас тестовый режим: покупки только имитируются." : "";
   return `<div class="seg" id="seg"><button data-v="1" class="${c.autobuy ? "on" : ""}">🛒 Покупать</button><button data-v="0" class="${c.autobuy ? "" : "on"}">🔔 Уведомлять</button></div>
-    <p class="hint">${c.autobuy ? "Бот сам купит выбранное в этой коллекции — в пределах лимитов." : "Бот только пришлёт сообщение о находке, покупать не будет."}</p>`;
+    <p class="hint">${c.autobuy ? "Бот сам купит выбранное в этой коллекции — в пределах лимитов." : "Бот только пришлёт сообщение о находке, покупать не будет."}${c.autobuy ? esc(global) : ""}</p>`;
 }
 function drawModelsGrid() {
   const c = S.col, q = S.colView.q.trim().toLowerCase();
@@ -929,22 +930,33 @@ async function rerenderRules() {
 const CHECK_TARGETS = {
   limits: ["Задать", () => scrollToId("budget")],
   rule: ["Выбрать", () => go("collections")],
-  modes: ["Включить", () => scrollToId("modes")],
+  modes: ["Включить", () => enableModes()],
   live: ["Включить", () => setMode("live")],
+  paused: ["Снять", () => savePrefs({ purchases_paused: false }, "Пауза снята")],
   stopped: ["Открыть", () => scrollToId("emergency")],
 };
 // the run mode goes up to RUN_MODE from .env; real purchases are allowed there once, on the bot's computer
-const RUN_MODES = [["notify_only", "🔔 Уведомления"], ["dry_run", "🧪 Тест"], ["live", "💸 Live"]];
+const RUN_MODES = [["live", "💸 Покупать"], ["notify_only", "⏸ Не покупать"]];
 const MODE_RANK = { notify_only: 0, dry_run: 1, live: 2 };
 const LIVE_HOWTO = "Реальные покупки включаются один раз на компьютере с ботом: в папке проекта выполните "
-  + "scripts\\live.cmd (Windows) или ./scripts/live.sh. После этого здесь можно выбрать «Live».";
+  + "scripts\\live.cmd (Windows) или ./scripts/live.sh. После этого здесь можно нажать «Покупать».";
+const NOTIFY = [
+  ["purchases", "Покупки", "куплено и «был бы куплен»"],
+  ["errors", "Неудачные покупки", "не хватило лимита, подарок не купился"],
+  ["matching_only", "Находки по вашему выбору", "подходят под выбранное, но бот их не покупает"],
+  ["monochrome", "Все монохромы рынка", "любой подтверждённый монохром, даже не из вашего выбора"],
+  ["all_listings", "Все новые листинги", "вообще всё, что выставляют на MRKT"],
+  ["price_drops", "Снижение цены", "у того, что подходит под ваш выбор"],
+];
 function modeSwitch(m) {
   if (!m.is_admin) return '<p class="hint">Режим работы меняет администратор.</p>';
   const max = MODE_RANK[m.max_run_mode] ?? 0;
-  const hint = m.run_mode === "live" ? "Бот покупает по-настоящему. «Тест» — только имитация, «Уведомления» — без покупок."
-    : max < MODE_RANK.live ? LIVE_HOWTO : "Выберите «Live», чтобы бот покупал по-настоящему.";
-  return `<div class="seg seg3" id="modeseg">${RUN_MODES.map(([k, title]) => `<button data-mode="${k}" class="${m.run_mode === k ? "on" : ""}"
-    ${MODE_RANK[k] > max ? "disabled" : ""}>${title}</button>`).join("")}</div><p class="hint">${esc(hint)}</p>`;
+  const hint = max < MODE_RANK.live ? LIVE_HOWTO
+    : m.run_mode === "live" ? "«Не покупать» — бот только присылает находки и ничего не покупает."
+    : "Нажмите «Покупать», чтобы бот покупал выбранное по-настоящему.";
+  return `<div class="seg" id="modeseg">${RUN_MODES.map(([k, title]) => `<button data-mode="${k}"
+    class="${m.run_mode === k ? "on" : ""}${MODE_RANK[k] > max ? " locked" : ""}">${title}</button>`).join("")}</div>
+    <p class="hint">${esc(hint)}</p>`;
 }
 async function setMode(mode) {
   const m = S.me;
@@ -957,31 +969,50 @@ async function setMode(mode) {
   try {
     S.me = await api("/mode", "PUT", { mode });
     haptic("success");
-    toast({ live: "Реальные покупки включены", dry_run: "Тестовый режим", notify_only: "Только уведомления" }[mode]);
+    toast({ live: "Бот покупает по-настоящему", dry_run: "Тестовый режим", notify_only: "Бот не покупает" }[mode]);
   } catch (err) { toast(err.message); haptic("error"); }
   updateChrome(); drawStatus();
+}
+// switches of the settings page: saved at once, then shown as the bot stored them
+async function savePrefs(body, message) {
+  haptic();
+  try {
+    S.me = await api("/settings", "PUT", body);
+    if (message) toast(message);
+  } catch (err) { toast(err.message); haptic("error"); }
+  updateChrome(); drawStatus();
+  $$("[data-pref]").forEach((el) => (el.checked = !!S.me[el.dataset.pref]));
+  $$("[data-notify]").forEach((el) => (el.checked = !!S.me.notify[el.dataset.notify]));
+}
+function enableModes() {
+  const missing = S.me.modes_missing;
+  if (!missing.length) return go("collections");  // nothing is bought automatically yet: choose it first
+  savePrefs(Object.fromEntries(missing.map((key) => [key, true])), "Автопокупка включена");
 }
 function scrollToId(id) { const el = document.getElementById(id); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); }
 async function renderSettings() {
   const id = newScreen();
-  view.innerHTML = head("Лимиты") + skeletonRows(3);
+  view.innerHTML = head("Настройки") + skeletonRows(3);
   try { await loadMe(); } catch (err) { if (!stale(id)) fail(err, renderSettings); return; }
   if (stale(id)) return;
   const m = S.me, l = m.limits;
   const limit = (key, title, value, sub) => `<div class="line"><div class="grow"><b>${title}</b>${sub ? `<div class="sub">${sub}</div>` : ""}</div>
     ${priceField(`data-limit="${key}"`, value ?? "", "—")}</div>`;
-  const pref = (key, title, sub) => `<div class="line"><div class="grow"><b>${title}</b><div class="sub">${sub}</div></div>
-    <label class="switch"><input type="checkbox" data-pref="${key}" ${m[key] ? "checked" : ""}><span></span></label></div>`;
-  view.innerHTML = head("Лимиты") + `<div id="status"></div>
+  const toggle = (attr, key, on, title, sub) => `<div class="line"><div class="grow"><b>${title}</b><div class="sub">${sub}</div></div>
+    <label class="switch"><input type="checkbox" ${attr}="${key}" ${on ? "checked" : ""}><span></span></label></div>`;
+  view.innerHTML = head("Настройки") + `<div id="status"></div>
     <div class="label" id="budget">Бюджет</div>
     <div class="card">${limit("per_purchase_ton", "На одну покупку", l.per_purchase, "")}
       ${limit("daily_ton", "В день", l.daily, `потрачено сегодня ${ton(m.spent.today)}`)}
       ${limit("total_ton", "Всего", l.total, `потрачено всего ${ton(m.spent.total)}`)}</div>
     <p class="hint">Без всех трёх лимитов бот ничего не покупает — даже в тестовом режиме.</p>
+    <div class="label" id="notify">Уведомления</div>
+    <div class="card">${NOTIFY.map(([key, title, sub]) => toggle("data-notify", key, m.notify[key], title, sub)).join("")}</div>
+    <p class="hint">Подарок, который бот покупает сам, приходит одним сообщением — с результатом покупки.</p>
     <div class="label" id="modes">Автопокупка</div>
-    <div class="card">${pref("autobuy_enabled", "Обычные подарки", "любой фон и фильтры из чата")}
-      ${pref("monochrome_autobuy_enabled", "Монохромы", "монохромные фоны")}
-      ${pref("purchases_paused", "Пауза", "временно ничего не покупать")}</div>
+    <div class="card">${toggle("data-pref", "autobuy_enabled", m.autobuy_enabled, "Обычные подарки", "любой фон и фильтры из чата")}
+      ${toggle("data-pref", "monochrome_autobuy_enabled", m.monochrome_autobuy_enabled, "Монохромы", "монохромные фоны")}
+      ${toggle("data-pref", "purchases_paused", m.purchases_paused, "Пауза", "временно ничего не покупать")}</div>
     <div id="emergency"></div>
     <div class="foot" id="datainfo"></div>`;
   drawStatus();
@@ -989,18 +1020,15 @@ async function renderSettings() {
   $$("[data-limit]").forEach((input) => (input.oninput = () => {
     JSON.stringify($$("[data-limit]").map((i) => i.value.trim())) === initial ? Save.hide() : Save.show("Сохранить лимиты", saveLimits);
   }));
-  $$("[data-pref]").forEach((el) => (el.onchange = async () => {
-    haptic();
-    try { S.me = await api("/settings", "PUT", { [el.dataset.pref]: el.checked }); updateChrome(); drawStatus(); }
-    catch (err) { el.checked = !el.checked; toast(err.message); }
-  }));
+  $$("[data-pref]").forEach((el) => (el.onchange = () => savePrefs({ [el.dataset.pref]: el.checked })));
+  $$("[data-notify]").forEach((el) => (el.onchange = () => savePrefs({ notify: { [el.dataset.notify]: el.checked } })));
 }
 function drawStatus() {
   const m = S.me;
   const modes = {
-    live: ["💸 Боевой режим", "Бот покупает по-настоящему, в пределах лимитов."],
+    live: ["💸 Бот покупает", "Реальные покупки за TON с баланса MRKT, в пределах лимитов."],
     dry_run: ["🧪 Тестовый режим", "Покупки только имитируются: бот пришлёт «был бы куплен»."],
-    notify_only: ["🔔 Только уведомления", "Бот ничего не покупает, только присылает находки."],
+    notify_only: ["⏸ Бот не покупает", "Только присылает находки — какие именно, задаётся в «Уведомлениях» ниже."],
   };
   const [title, text] = m.stopped ? ["⛔ Все покупки остановлены", m.is_admin ? "Аварийная остановка. Снять её можно внизу страницы." : "Аварийная остановка. Снять её может администратор."]
     : modes[m.run_mode] || [m.run_mode, ""];

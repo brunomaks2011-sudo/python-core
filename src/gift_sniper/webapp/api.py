@@ -33,12 +33,15 @@ from gift_sniper.services.filters import FilterCriteria, FilterLimits, Pick, des
 from gift_sniper.services.percentages import monochrome_model_share
 from gift_sniper.services.reference import ReferenceSnapshot, RefRecord
 from gift_sniper.services.texts import nft_url
+from gift_sniper.services.user_prefs import NotificationSettings
 from gift_sniper.webapp.auth import WebAppIdentity
 from gift_sniper.webapp.images import absolute_url, collection_thumb, color_hex, gift_image, giftname
 
 log = logging.getLogger(__name__)
 
 ATTRIBUTES_TTL_SECONDS = 3600
+# notification switches the Mini App shows (the chat menu has the same ones plus filters and limits)
+NOTIFY_SWITCHES = ("purchases", "errors", "matching_only", "monochrome", "all_listings", "price_drops")
 ATTRIBUTES_FAILURE_TTL_SECONDS = 120
 STATUS_LABELS = {
     "confirmed": "куплено",
@@ -133,6 +136,7 @@ class LimitsInput(BaseModel):
     autobuy_enabled: bool | None = None
     monochrome_autobuy_enabled: bool | None = None
     purchases_paused: bool | None = None
+    notify: dict[str, bool] = Field(default_factory=dict)  # NOTIFY_SWITCHES that change
 
 
 class PairPick(BaseModel):
@@ -231,6 +235,7 @@ class MiniAppApi:
             rows = await filters_repo.list_filters(session, user_id)
             last_sync = next(iter(await giftwiki_repo.last_runs(session, 1)), None)
         limits, usage = user_state.limits, user_state.usage
+        notify = NotificationSettings.model_validate(prefs.notify or {})
         snapshot = self.store.snapshot
         sync_error = last_sync.error if last_sync is not None and last_sync.status == "failed" else None
         run_mode = (await self.control.run_mode()).value
@@ -238,9 +243,17 @@ class MiniAppApi:
         buying = [r for r in rows if r.enabled and r.autobuy]
         kinds = {r.kind for r in buying}
         limits_ok = None not in (limits.per_purchase, limits.daily, limits.total)
-        modes_ok = all(
-            prefs.monochrome_autobuy_enabled if kind == FilterKind.MONOCHROME.value else prefs.autobuy_enabled
-            for kind in kinds
+        # the autobuy switches that are off although a buying rule needs them
+        modes_missing = sorted(
+            {
+                "monochrome_autobuy_enabled" if kind == FilterKind.MONOCHROME.value else "autobuy_enabled"
+                for kind in kinds
+                if not (
+                    prefs.monochrome_autobuy_enabled
+                    if kind == FilterKind.MONOCHROME.value
+                    else prefs.autobuy_enabled
+                )
+            }
         )
         can_purchase = self.settings.can_purchase(user_id)
         checklist = [
@@ -258,19 +271,25 @@ class MiniAppApi:
             },
             {
                 "id": "modes",
-                "ok": bool(buying) and modes_ok,
+                "ok": bool(buying) and not modes_missing,
                 "text": "Автопокупка включена",
                 "action": "settings",
             },
             {
                 "id": "live",
                 "ok": run_mode == "live",
-                "text": "Режим live (сейчас покупки только имитируются)"
-                if run_mode != "live"
-                else "Режим live",
+                "text": {
+                    "live": "Реальные покупки",
+                    "dry_run": "Реальные покупки (сейчас покупки только имитируются)",
+                    "notify_only": "Реальные покупки (сейчас бот не покупает)",
+                }.get(run_mode, "Реальные покупки"),
                 "action": None,
             },
         ]
+        if prefs.purchases_paused:
+            checklist.append(
+                {"id": "paused", "ok": False, "text": "Пауза покупок включена", "action": "settings"}
+            )
         if FilterKind.MONOCHROME.value in kinds or not snapshot.records_count:
             checklist.append(
                 {
@@ -298,7 +317,9 @@ class MiniAppApi:
             "stopped": stopped,
             "autobuy_enabled": prefs.autobuy_enabled,
             "monochrome_autobuy_enabled": prefs.monochrome_autobuy_enabled,
+            "modes_missing": modes_missing,
             "purchases_paused": prefs.purchases_paused,
+            "notify": {key: getattr(notify, key) for key in NOTIFY_SWITCHES},
             "limits": {
                 "per_purchase": ton(limits.per_purchase),
                 "daily": ton(limits.daily),
@@ -718,6 +739,14 @@ class MiniAppApi:
                 value = getattr(data, field)
                 if value is not None:
                     setattr(prefs, field, value)
+            if data.notify:
+                unknown = set(data.notify) - set(NOTIFY_SWITCHES)
+                if unknown:
+                    raise ApiError("Неизвестная настройка уведомлений: " + ", ".join(sorted(unknown)))
+                notify = NotificationSettings.model_validate(prefs.notify or {})
+                for key, value in data.notify.items():
+                    setattr(notify, key, value)
+                prefs.notify = notify.model_dump()
             await misc.audit(session, "webapp_settings", user_id=user_id, changes=payload)
         await self.filter_cache.invalidate()
         return await self.me(user_id)

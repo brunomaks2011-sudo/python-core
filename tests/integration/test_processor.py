@@ -7,6 +7,7 @@ from datetime import UTC, datetime, timedelta
 import pytest
 from sqlalchemy import func, select
 
+from gift_sniper.config import RunMode
 from gift_sniper.db.models import FeedEventLog, FilterHit, Gift, Listing, PriceHistory
 from gift_sniper.domain.enums import FilterKind, PurchaseMode
 from gift_sniper.domain.types import FeedEvent
@@ -33,9 +34,15 @@ def event(
     )
 
 
-def processor(env: Env, queue: MemoryQueue) -> ListingProcessor:
+def processor(env: Env, queue: MemoryQueue, *, with_control: bool = False) -> ListingProcessor:
     return ListingProcessor(
-        env.settings, env.sessionmaker, env.enricher, env.filter_cache, env.notifier, queue
+        env.settings,
+        env.sessionmaker,
+        env.enricher,
+        env.filter_cache,
+        env.notifier,
+        queue,
+        control=env.control if with_control else None,
     )
 
 
@@ -184,6 +191,28 @@ async def test_all_listings_mode_notifies_without_filters(env: Env) -> None:
     await processor(env, queue).process(event("e1"), detected_at=datetime.now(UTC))
     texts = env.sender.texts_for(UID)
     assert texts and "Не подходит под ваши фильтры" in texts[0]
+
+
+async def test_a_listing_the_bot_buys_is_not_announced_separately(env: Env) -> None:
+    """The purchase result is the message; in notify-only mode the listing message is all there is."""
+    await env.add_user(UID)
+    await env.add_filter(UID, name="buy pepe", criteria={"max_price_nano": 20 * TON})
+    watcher = 502
+    await env.add_user(watcher)
+    await env.add_filter(watcher, name="watch pepe", autobuy=False, criteria={"max_price_nano": 20 * TON})
+    queue = MemoryQueue()
+    report = await processor(env, queue, with_control=True).process(
+        event("e1"), detected_at=datetime.now(UTC)
+    )
+    assert [r.user_id for r in report.purchase_requests] == [UID]
+    assert env.sender.texts_for(UID) == []  # its purchase result will follow
+    assert len(env.sender.texts_for(watcher)) == 1  # a rule that only notifies still notifies
+
+    await env.control.set_run_mode(RunMode.NOTIFY_ONLY, by_user=None)
+    await processor(env, queue, with_control=True).process(
+        event("e2", gift_id="g2", number=101), detected_at=datetime.now(UTC)
+    )
+    assert len(env.sender.texts_for(UID)) == 1  # nothing will be bought: the listing itself is notified
 
 
 async def test_open_in_mrkt_is_the_share_link_of_the_gift(env: Env) -> None:

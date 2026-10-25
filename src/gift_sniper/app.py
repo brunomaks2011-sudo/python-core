@@ -122,7 +122,9 @@ class Application:
             purchase_queue=purchase_queue,
             events_queue=events_queue,
         )
-        self.processor = ListingProcessor(s, sessionmaker, enricher, filter_cache, notifier, purchase_queue)
+        self.processor = ListingProcessor(
+            s, sessionmaker, enricher, filter_cache, notifier, purchase_queue, control=control
+        )
         return self.services
 
     # ------------------------------------------------------------------ background loops

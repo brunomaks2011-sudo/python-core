@@ -31,7 +31,7 @@ if errorlevel 1 exit /b 1
 echo.
 if "%MODE%"=="live" (
     echo Real purchases are ON: the bot spends TON from your MRKT balance, only within the limits set in the bot.
-    echo The mini app must show "Live" at the top. If it shows "Test", switch to Live on its Limits page.
+    echo The badge at the top of the mini app must be green. If it is not, choose the buy mode on its settings tab.
     echo Back to the test mode: scripts\live.cmd off
 ) else (
     echo Test mode is ON: purchases are only simulated.

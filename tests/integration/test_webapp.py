@@ -205,6 +205,49 @@ async def test_emergency_stop_from_the_mini_app(client: TestClient, env: Env) ->
     assert not resumed["stopped"]
 
 
+async def test_notification_switches_and_what_blocks_buying(client: TestClient, env: Env) -> None:  # type: ignore[type-arg]
+    me = await (await client.get("/api/me", headers=auth())).json()
+    assert me["notify"] == {
+        "purchases": True,
+        "errors": True,
+        "matching_only": True,
+        "monochrome": True,
+        "all_listings": False,
+        "price_drops": False,
+    }
+    body = {"notify": {"monochrome": False, "matching_only": False}}
+    saved = await (await client.put("/api/settings", headers=auth(), json=body)).json()
+    assert (
+        saved["notify"]["monochrome"],
+        saved["notify"]["matching_only"],
+        saved["notify"]["purchases"],
+    ) == (
+        False,
+        False,
+        True,
+    )
+    async with env.sessionmaker() as session:
+        prefs = await users_repo.get_settings(session, ADMIN)
+    assert prefs.notify["monochrome"] is False  # where the notifier reads it
+    unknown = await client.put("/api/settings", headers=auth(), json={"notify": {"sms": True}})
+    assert unknown.status == 400
+
+    # a buying rule whose autobuy switch is off, and a pause: both are named, with the switch to turn on
+    await env.add_filter(
+        ADMIN, name="pepe", criteria={"collections": ["Plush Pepe"], "max_price_nano": 5 * TON}
+    )
+    await client.put(
+        "/api/settings", headers=auth(), json={"autobuy_enabled": False, "purchases_paused": True}
+    )
+    me = await (await client.get("/api/me", headers=auth())).json()
+    assert me["modes_missing"] == ["autobuy_enabled"]
+    assert {"modes", "paused"} <= {c["id"] for c in me["checklist"] if not c["ok"]}
+    fixed = await client.put(
+        "/api/settings", headers=auth(), json={"autobuy_enabled": True, "purchases_paused": False}
+    )
+    assert (await fixed.json())["modes_missing"] == []
+
+
 async def test_run_mode_switch_goes_up_to_run_mode_from_env(
     client: TestClient,  # type: ignore[type-arg]
     env: Env,

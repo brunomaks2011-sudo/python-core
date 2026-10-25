@@ -1,6 +1,7 @@
 """Listing processing: store the event, classify, evaluate all filters, decide purchases, notify.
 
 Purchase decisions are published before notifications are sent, because sniping is latency critical.
+A listing the bot is about to buy is not announced separately: the purchase result is the message.
 """
 
 from __future__ import annotations
@@ -16,7 +17,7 @@ from typing import Any, Protocol
 from sqlalchemy.dialects.postgresql import insert as pg_insert
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from gift_sniper.config import Settings
+from gift_sniper.config import RunMode, Settings
 from gift_sniper.db.models import FilterHit
 from gift_sniper.db.repo import listings as listings_repo
 from gift_sniper.domain.enums import FeedEventType, FilterKind, ListingStatus, MonochromeStatus, PurchaseMode
@@ -36,6 +37,11 @@ ACTIONABLE = {FeedEventType.LISTING.value, FeedEventType.CHANGE_PRICE.value, Fee
 
 class Publisher(Protocol):
     async def publish(self, payload: dict[str, Any]) -> str: ...
+
+
+class RunControl(Protocol):
+    async def run_mode(self) -> RunMode: ...
+    async def is_stopped(self) -> bool: ...
 
 
 def event_to_payload(event: FeedEvent, *, detected_at: datetime, backlog: bool) -> dict[str, Any]:
@@ -88,6 +94,7 @@ class ListingProcessor:
         filter_cache: FilterCache,
         notifier: Notifier | None,
         purchase_queue: Publisher | None,
+        control: RunControl | None = None,
     ) -> None:
         self.settings = settings
         self.sessionmaker = sessionmaker
@@ -95,6 +102,7 @@ class ListingProcessor:
         self.filter_cache = filter_cache
         self.notifier = notifier
         self.purchase_queue = purchase_queue
+        self.control = control
 
     async def handle_payload(self, payload: dict[str, Any]) -> None:
         event, detected_at, backlog = payload_to_event(payload)
@@ -199,8 +207,10 @@ class ListingProcessor:
                 if previous is None or current is None or current >= previous:
                     return report  # the price went up: nothing to notify
                 price_drop_from = previous
+            buying = await self._buying_users(report)
             tasks = []
-            for user_id, flags in users.items():
+            notified = [(user_id, flags) for user_id, flags in users.items() if user_id not in buying]
+            for user_id, flags in notified:
                 tasks.append(
                     self._notify_user(
                         flags,
@@ -212,12 +222,21 @@ class ListingProcessor:
                     )
                 )
             results = await asyncio.gather(*tasks, return_exceptions=True)
-            for user_id, res in zip(users.keys(), results, strict=True):
+            for (user_id, _), res in zip(notified, results, strict=True):
                 if res is True:
                     report.notified_users.append(user_id)
                 elif isinstance(res, Exception):
                     log.error("notification failed", exc_info=res, extra={"user_id": user_id})
         return report
+
+    async def _buying_users(self, report: ProcessReport) -> set[int]:
+        """Users whose purchase request will really run (live or test mode, no emergency stop): they hear
+        about the listing from the purchase result. In notify-only mode the listing message is all they get."""
+        if not report.purchase_requests or self.control is None:
+            return set()
+        if await self.control.run_mode() is RunMode.NOTIFY_ONLY or await self.control.is_stopped():
+            return set()
+        return {request.user_id for request in report.purchase_requests}
 
     async def _notify_user(
         self,
