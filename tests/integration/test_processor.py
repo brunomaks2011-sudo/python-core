@@ -55,12 +55,18 @@ async def test_new_listing_matches_filter_publishes_purchase_and_notifies(env: E
     assert (request["gift_id"], request["filter_id"], request["mode"]) == ("g1", fid, "regular")
     texts = env.sender.texts_for(UID)
     assert len(texts) == 1
-    assert "Новый подарок на MRKT" in texts[0] and "cheap pepe" in texts[0]
-    assert "Монохром: Неизвестно" in texts[0]  # no Gift Wiki data loaded
-    assert "Вероятность выпадения модели: Нет данных" in texts[0]
+    assert "Новый листинг" in texts[0] and "cheap pepe" in texts[0] and "10 TON" in texts[0]
+    # compact: no source lines and no rows of missing values
+    assert "Источник" not in texts[0] and "MRKT" not in texts[0] and "Нет данных" not in texts[0]
+    assert "Монохром" not in texts[0]  # no Gift Wiki data loaded: nothing to claim
     # the title links to the gift in Telegram, and the notification shows the gift card
     assert '<a href="https://t.me/nft/PlushPepe-100">Plush Pepe #100</a>' in texts[0]
     assert env.sender.previews == ["https://t.me/nft/PlushPepe-100"]
+    # buying comes first; without a known gift link there is no button that would open only the market
+    rows = env.sender.keyboards[0].inline_keyboard
+    assert rows[0][0].text == "🛒 Купить" and rows[0][0].callback_data.startswith("mb:")
+    assert rows[0][1].url == "https://t.me/nft/PlushPepe-100"
+    assert [b.text for b in rows[1]] == ["Подробнее"]
     assert await count(env, Listing) == 1 and await count(env, Gift) == 1
     assert await count(env, FilterHit) == 1 and await count(env, PriceHistory) == 1
 
@@ -111,7 +117,7 @@ async def test_price_drop_notification_and_only_new_filters(env: Env) -> None:
     assert watcher in report.matched_filters
     assert queue.published == []  # the only autobuy filter requires new listings
     texts = env.sender.texts_for(UID)
-    assert len(texts) == 2 and "Снижение цены" in texts[1] and "−20.0%" in texts[1]
+    assert len(texts) == 2 and "Цена снижена" in texts[1] and "−20.0%" in texts[1] and "8 TON" in texts[1]
     # a small change below the threshold is not notified
     await proc.process(event("e3", "change_price", price=int(7.8 * TON)), detected_at=datetime.now(UTC))
     assert len(env.sender.texts_for(UID)) == 2
@@ -143,7 +149,8 @@ async def test_monochrome_listing_goes_to_monochrome_mode(env: Env) -> None:
     assert queue.published[-1]["filter_id"] == mono
     assert report.enrichment is not None and report.enrichment.verdict.status.value == "MONOCHROME"
     texts = env.sender.texts_for(UID)
-    assert "Найден подтверждённый монохром" in texts[-1] and "Тип по Gift Wiki: high" in texts[-1]
+    assert "⚫ <b>Монохром</b> · high" in texts[-1] and "Монохромных моделей: 2 из 2 — 100%" in texts[-1]
+    assert "Источник" not in texts[-1] and "Gift Wiki" not in texts[-1]
     # the same pair with another backdrop matches only the regular filter
     report2 = await proc.process(
         event("e2", gift_id="g2", model_name="Onyx", backdrop_name="Ivory"), detected_at=datetime.now(UTC)
@@ -176,7 +183,18 @@ async def test_all_listings_mode_notifies_without_filters(env: Env) -> None:
     queue = MemoryQueue()
     await processor(env, queue).process(event("e1"), detected_at=datetime.now(UTC))
     texts = env.sender.texts_for(UID)
-    assert texts and "не подходит под ваши фильтры" in texts[0]
+    assert texts and "Не подходит под ваши фильтры" in texts[0]
+
+
+async def test_listing_link_template_adds_open_in_mrkt(env: Env, monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(
+        env.settings, "mrkt_listing_url_template", "https://t.me/mrkt/app?startapp={gift_id_hex}"
+    )
+    await env.add_user(UID)
+    await env.add_filter(UID)
+    await processor(env, MemoryQueue()).process(event("e1", gift_id="ab-12"), detected_at=datetime.now(UTC))
+    rows = env.sender.keyboards[0].inline_keyboard
+    assert rows[1][1].text == "Открыть в MRKT" and rows[1][1].url == "https://t.me/mrkt/app?startapp=ab12"
 
 
 def test_payload_roundtrip() -> None:

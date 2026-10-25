@@ -173,13 +173,15 @@ async def cb_details(callback: CallbackQuery, services: Services) -> None:
                 scope="активные объявления коллекции за 24 ч, наблюдения бота",
             )
     text = texts.details_text(listing, enrichment, monochrome_listing_share=share_c)
-    kb = InlineKeyboardMarkup(
-        inline_keyboard=[
-            [InlineKeyboardButton(text="Открыть MRKT", url=texts.listing_url(services.settings, listing))],
-            [InlineKeyboardButton(text="Купить вручную", callback_data=f"mb:{token}")],
-            [InlineKeyboardButton(text="« Меню", callback_data=Menu(section="main").pack())],
-        ]
-    )
+    rows = [[InlineKeyboardButton(text="🛒 Купить", callback_data=f"mb:{token}")]]
+    nft = texts.telegram_nft_url(listing)
+    if nft:
+        rows[0].append(InlineKeyboardButton(text="🎁 В Telegram", url=nft))
+    mrkt = texts.listing_url(services.settings, listing)
+    if mrkt:
+        rows.append([InlineKeyboardButton(text="Открыть в MRKT", url=mrkt)])
+    rows.append([InlineKeyboardButton(text="« Меню", callback_data=Menu(section="main").pack())])
+    kb = InlineKeyboardMarkup(inline_keyboard=rows)
     await callback.answer()
     if callback.message is not None:
         await callback.message.answer(text, reply_markup=kb, disable_web_page_preview=True)
@@ -197,7 +199,12 @@ async def cb_manual_buy(callback: CallbackQuery, services: Services, can_purchas
     url = texts.listing_url(services.settings, listing)
     if not can_purchase or run_mode is RunMode.NOTIFY_ONLY:
         reason = "у вас нет права покупок" if not can_purchase else "бот работает в режиме только уведомлений"
-        kb = InlineKeyboardMarkup(inline_keyboard=[[InlineKeyboardButton(text="Открыть MRKT", url=url)]])
+        button = (
+            InlineKeyboardButton(text="Открыть в MRKT", url=url)
+            if url
+            else InlineKeyboardButton(text="Маркет MRKT", url=services.settings.mrkt_app_url)
+        )
+        kb = InlineKeyboardMarkup(inline_keyboard=[[button]])
         await callback.answer()
         if callback.message is not None:
             await callback.message.answer(
@@ -266,12 +273,11 @@ async def _market_stats(callback: CallbackQuery, services: Services, hours: int)
     lines = [
         f"📊 <b>Статистика рынка</b> ({'сутки' if hours == 24 else f'{hours // 24} дн.'})",
         f"Период: {period}",
-        "Источник: наблюдения мониторинга MRKT ботом (не полная история рынка)",
         "",
         f"Новых листингов: {stats.new_listings}",
         f"Подходящих под ваши фильтры: {stats.matching_listings}",
         f"Средняя цена: {format_ton(stats.avg_price_nano)} · медиана: {format_ton(stats.median_price_nano)}",
-        f"Подтверждённых монохромов (Gift Wiki): {stats.monochrome_listings}",
+        f"Подтверждённых монохромов: {stats.monochrome_listings}",
         "Доля монохромных листингов (все новые листинги периода): "
         + format_listing_share(stats.listing_share),
     ]
@@ -282,7 +288,7 @@ async def _market_stats(callback: CallbackQuery, services: Services, hours: int)
                 f"• {escape(title)} — {escape(model or '?')} — {format_ton(price)} {MONO_ICON.get(mono, '')}"
             )
     if stats.collection_shares:
-        lines.append("\n<b>Доля монохромных моделей</b> (Gift Wiki, по известным моделям):")
+        lines.append("\n<b>Доля монохромных моделей</b> (по известным моделям):")
         for name, share in stats.collection_shares:
             lines.append(f"• {escape(name)}: {format_model_share(share)}")
     if stats.daily_medians:

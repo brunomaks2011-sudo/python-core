@@ -229,19 +229,14 @@ class Notifier:
         token = await self.make_token(
             {"gift_id": listing.gift_id, "price": listing.price_nano, "raw": listing.raw}
         )
-        first_row = [
-            InlineKeyboardButton(
-                text="Открыть MRKT" if monochrome else "Открыть объявление",
-                url=texts.listing_url(self.settings, listing),
-            )
-        ]
+        first_row = [InlineKeyboardButton(text="🛒 Купить", callback_data=f"mb:{token}")]
         nft = texts.telegram_nft_url(listing)
         if nft:
-            first_row.append(InlineKeyboardButton(text="Подарок в Telegram", url=nft))
-        second_row = [
-            InlineKeyboardButton(text="Подробнее", callback_data=f"ld:{token}"),
-            InlineKeyboardButton(text="Купить вручную", callback_data=f"mb:{token}"),
-        ]
+            first_row.append(InlineKeyboardButton(text="🎁 В Telegram", url=nft))
+        second_row = [InlineKeyboardButton(text="Подробнее", callback_data=f"ld:{token}")]
+        mrkt = texts.listing_url(self.settings, listing)  # only when the exact gift link is configured
+        if mrkt:
+            second_row.append(InlineKeyboardButton(text="Открыть в MRKT", url=mrkt))
         return InlineKeyboardMarkup(inline_keyboard=[first_row, second_row])
 
     def _dedup_key(

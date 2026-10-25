@@ -210,12 +210,14 @@ class RecordingSender:
     def __init__(self) -> None:
         self.messages: list[tuple[int, str]] = []
         self.previews: list[str | None] = []
+        self.keyboards: list[Any] = []
 
     async def send(
         self, chat_id: int, text: str, keyboard: Any = None, *, preview_url: str | None = None
     ) -> bool:
         self.messages.append((chat_id, text))
         self.previews.append(preview_url)
+        self.keyboards.append(keyboard)
         return True
 
     def texts_for(self, chat_id: int) -> list[str]:

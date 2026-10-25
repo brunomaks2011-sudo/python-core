@@ -22,16 +22,23 @@ def e(value: object | None) -> str:
     return escape(str(value)) if value not in (None, "") else NO_DATA
 
 
-def listing_url(settings: Settings, listing: ListingSnapshot) -> str:
-    """Link to the listing. Only documented URL forms are used (see docs/DATA_SOURCES.md)."""
-    if settings.mrkt_listing_url_template:
-        try:
-            return settings.mrkt_listing_url_template.format(
-                gift_id=listing.gift_id, slug=listing.telegram_slug or "", number=listing.number or ""
-            )
-        except (KeyError, IndexError, ValueError):
-            pass
-    return settings.mrkt_app_url
+def listing_url(settings: Settings, listing: ListingSnapshot) -> str | None:
+    """Link that opens this gift in MRKT, from MRKT_LISTING_URL_TEMPLATE.
+
+    MRKT does not document such links, so without a template there is none: a button that only opens the
+    market's main page is not offered as "open the gift".
+    """
+    if not settings.mrkt_listing_url_template:
+        return None
+    try:
+        return settings.mrkt_listing_url_template.format(
+            gift_id=listing.gift_id,
+            gift_id_hex=listing.gift_id.replace("-", ""),
+            slug=listing.telegram_slug or "",
+            number=listing.number or "",
+        )
+    except (KeyError, IndexError, ValueError):
+        return None
 
 
 def nft_url(name: str | None) -> str | None:
@@ -52,20 +59,9 @@ def gift_link(listing: ListingSnapshot) -> str:
     return linked_title(listing.title, telegram_nft_url(listing))
 
 
-def rarity_line(listing: ListingSnapshot) -> str:
-    values = [
-        ("модель", listing.model_rarity_permille),
-        ("фон", listing.backdrop_rarity_permille),
-        ("символ", listing.symbol_rarity_permille),
-    ]
-    if all(v is None for _, v in values):
-        return NO_DATA
-    return " · ".join(f"{label} {format_permille(v)}" for label, v in values) + " (по данным MRKT)"
-
-
 def data_age_text(hours: float | None) -> str:
     if hours is None:
-        return "данных Gift Wiki нет"
+        return "ещё не загружены"
     if hours < 1:
         return "обновлено менее часа назад"
     return f"обновлено {hours:.0f} ч назад" + (" ⚠️ устарели" if hours > 24 else "")
@@ -75,6 +71,34 @@ def share_text(share: Share | None) -> str:
     return format_model_share(share)
 
 
+def _attributes(listing: ListingSnapshot) -> str:
+    """'January 0.6% · Electric Purple 1.2% · Star 0.5%' (rarity only where MRKT gives it)."""
+    parts = []
+    for name, permille in (
+        (listing.model_name, listing.model_rarity_permille),
+        (listing.backdrop_name, listing.backdrop_rarity_permille),
+        (listing.symbol_name, listing.symbol_rarity_permille),
+    ):
+        if name:
+            parts.append(escape(name) + (f" {format_permille(permille)}" if permille is not None else ""))
+    return " · ".join(parts)
+
+
+def _monochrome_lines(enrichment: Enrichment, *, status: bool = True) -> list[str]:
+    v = enrichment.verdict
+    lines = []
+    if status and v.status is MonochromeStatus.MONOCHROME:
+        lines.append("⚫ Монохром" + (f" · {escape(v.gw_type.value)}" if v.gw_type else ""))
+    share = enrichment.model_share
+    if share is not None and share.percent is not None:
+        lines.append(
+            f"Монохромных моделей: {share.numerator} из {share.denominator} — {format_percent(share.percent)}"
+        )
+    if enrichment.model_drop_probability is not None:
+        lines.append(f"Шанс модели: {format_percent(enrichment.model_drop_probability)}")
+    return lines
+
+
 def new_listing_text(
     listing: ListingSnapshot,
     enrichment: Enrichment,
@@ -82,42 +106,30 @@ def new_listing_text(
     status_line: str,
     price_note: str = "",
 ) -> str:
-    v = enrichment.verdict
     lines = [
-        "🎁 <b>Новый подарок на MRKT</b>" if not price_note else "📉 <b>Снижение цены на MRKT</b>",
-        f"Подарок: {gift_link(listing)}",
-        f"Коллекция: {e(listing.collection_title or listing.collection_name)}",
-        f"Модель: {e(listing.model_name)}",
-        f"Фон: {e(listing.backdrop_name)}",
-        f"Символ: {e(listing.symbol_name)}",
-        f"Цена: {format_ton(listing.price_nano)}" + (f" ({escape(price_note)})" if price_note else ""),
-        f"Редкость: {rarity_line(listing)}",
-        f"Монохром: {MONO_LABEL[v.status]}" + (f" ({v.gw_type.value})" if v.gw_type else ""),
-        f"Доля монохромных моделей: {share_text(enrichment.model_share)}",
-        f"Вероятность выпадения модели: {format_percent(enrichment.model_drop_probability)}",
-        f"Источник классификации: Gift Wiki ({data_age_text(enrichment.giftwiki_data_age_hours)})",
-        f"Статус: {escape(status_line)}",
+        f"📉 <b>Цена снижена</b> · {escape(price_note)}" if price_note else "🎁 <b>Новый листинг</b>",
+        f"<b>{gift_link(listing)}</b>",
+        _attributes(listing),
+        f"💰 <b>{format_ton(listing.price_nano)}</b>",
+        *_monochrome_lines(enrichment),
     ]
-    return "\n".join(lines)
+    if status_line:
+        lines.append(f"<i>{escape(status_line[:1].upper() + status_line[1:])}</i>")
+    return "\n".join(line for line in lines if line)
 
 
 def monochrome_text(listing: ListingSnapshot, enrichment: Enrichment, *, filter_names: list[str]) -> str:
     v = enrichment.verdict
     lines = [
-        "⚫ <b>Найден подтверждённый монохром</b>",
-        f"Подарок: {gift_link(listing)}",
-        f"Коллекция: {e(listing.collection_title or listing.collection_name)}",
-        f"Модель: {e(listing.model_name)}",
-        f"Фон: {e(listing.backdrop_name)}",
-        f"Тип по Gift Wiki: {e(v.gw_type.value if v.gw_type else None)}",
-        f"Цена: {format_ton(listing.price_nano)}",
-        f"Доля монохромных моделей: {share_text(enrichment.model_share)}",
-        f"Вероятность выпадения модели: {format_percent(enrichment.model_drop_probability)}",
-        f"Источник: Gift Wiki ({data_age_text(enrichment.giftwiki_data_age_hours)})",
+        "⚫ <b>Монохром</b>" + (f" · {escape(v.gw_type.value)}" if v.gw_type else ""),
+        f"<b>{gift_link(listing)}</b>",
+        _attributes(listing),
+        f"💰 <b>{format_ton(listing.price_nano)}</b>",
+        *_monochrome_lines(enrichment, status=False),
     ]
     if filter_names:
-        lines.append("Фильтры: " + escape(", ".join(filter_names)))
-    return "\n".join(lines)
+        lines.append("<i>Правило: " + escape(", ".join(filter_names)) + "</i>")
+    return "\n".join(line for line in lines if line)
 
 
 def details_text(
@@ -143,20 +155,19 @@ def details_text(
         "",
         f"<b>Монохром:</b> {MONO_LABEL[v.status]} (<code>{v.status.value}</code>)",
         f"Обоснование: {escape(v.reason)}",
-        f"Тип Gift Wiki: {e(v.gw_type.value if v.gw_type else None)}",
-        f"Запись Gift Wiki: {e(v.record_id)}",
+        f"Тип монохрома: {e(v.gw_type.value if v.gw_type else None)}",
         f"Сверка цветов фона: {escape(v.color_check)}",
-        f"Данные Gift Wiki: {data_age_text(enrichment.giftwiki_data_age_hours)}",
+        f"Данные о монохромах: {data_age_text(enrichment.giftwiki_data_age_hours)}",
         "",
-        f"A. Доля монохромных моделей (Gift Wiki): {share_text(enrichment.model_share)}",
-        f"B. Вероятность выпадения модели (Gift Wiki): {format_percent(enrichment.model_drop_probability)}",
-        f"C. Доля монохромных листингов (MRKT): {monochrome_listing_share or NO_DATA}",
+        f"A. Доля монохромных моделей: {share_text(enrichment.model_share)}",
+        f"B. Вероятность выпадения модели: {format_percent(enrichment.model_drop_probability)}",
+        f"C. Доля монохромных листингов: {monochrome_listing_share or NO_DATA}",
         "",
         f"Скидка: {discount}",
         "Доля моделей не является вероятностью получить монохром.",
     ]
     if v.photo_url:
-        lines.append(f'<a href="{escape(v.photo_url, quote=True)}">Фото (Gift Wiki)</a>')
+        lines.append(f'<a href="{escape(v.photo_url, quote=True)}">Фото монохрома</a>')
     return "\n".join(lines)
 
 

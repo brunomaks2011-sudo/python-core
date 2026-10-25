@@ -36,7 +36,6 @@ async def cb_wiki(callback: CallbackQuery, services: Services, is_admin: bool) -
     age = services.store.snapshot.age_hours()
     lines = [
         "📚 <b>Gift Wiki</b>",
-        "Источник классификации монохромов: api.giftwiki.tg, GET /gifts/monochromes.",
         f"Подарков с данными: {gifts} · монохромных записей: {records}",
         f"Последняя успешная синхронизация: {texts.utc_label(success.finished_at if success else None)}"
         + ("" if age is None else f" ({texts.data_age_text(age)})"),

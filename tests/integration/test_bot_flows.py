@@ -337,7 +337,7 @@ async def test_search_details_manual_buy_history_and_stats(ui: Harness, env: Env
 
     details = await ui.click(details_cb)
     assert "MONOCHROME" in details and "A. Доля монохромных моделей" in details
-    assert "B. Вероятность выпадения модели (Gift Wiki): Нет данных" in details
+    assert "B. Вероятность выпадения модели: Нет данных" in details and "(Gift Wiki)" not in details
     buy_cb = next(c for c in _callback_buttons(ui.session.last_markup()) if c.startswith("mb:"))
 
     confirm = await ui.click(buy_cb)
@@ -355,7 +355,7 @@ async def test_search_details_manual_buy_history_and_stats(ui: Harness, env: Env
     mine = await ui.click(Menu(section="ustats"))
     assert "Подтверждённых покупок: 1 на 7 TON" in mine
     market = await ui.click(Menu(section="mstats"))
-    assert "Новых листингов: 1" in market and "Период:" in market and "Источник:" in market
+    assert "Новых листингов: 1" in market and "Период:" in market and "Источник" not in market
 
 
 async def test_wiki_gift_card(ui: Harness, env: Env) -> None:
