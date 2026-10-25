@@ -64,9 +64,12 @@ async def test_only_signed_requests_from_allowed_users(client: TestClient) -> No
     assert page.status == 200 and "Снайпер" in await page.text()
     me = await (await client.get("/api/me", headers=auth())).json()
     assert me["is_admin"] and not me["ready"]
-    assert {"ok": False, "text": "Общие лимиты: на покупку, на день и всего", "action": "settings"} in me[
-        "checklist"
-    ]
+    assert {
+        "id": "limits",
+        "ok": False,
+        "text": "Общие лимиты: на покупку, на день и всего",
+        "action": "settings",
+    } in me["checklist"]
 
 
 async def test_collection_shows_models_monochrome_backdrops_and_chance(
@@ -220,6 +223,16 @@ async def test_pairs_picked_with_their_own_prices(client: TestClient, env: Env) 
     assert [(p["backdrop"], p["price"]) for p in onyx["pairs"]] == [("Black", 9), ("Midnight", None)]
     whole = await client.put(PEPE + "/picks", headers=auth(), json={"monochrome_price_ton": "4"})
     assert (await whole.json())["whole"] == {"any": None, "monochrome": 4}
+    listing = (await (await client.get("/api/collections", headers=auth())).json())["items"]
+    pepe = next(c for c in listing if c["name"] == "Plush Pepe")
+    assert (pepe["taken"], pepe["autobuy"]) == (4, True)
+    assert next(c for c in listing if c["name"] == "Lol Pop")["autobuy"] is None  # nothing taken there
+    cards = {r["kind"]: r for r in (await (await client.get("/api/rules", headers=auth())).json())["items"]}
+    mono_card = cards["monochrome"]
+    assert mono_card["image"] == "https://fragment.com/file/gifts/plushpepe/thumb.webp"
+    assert {"model": "Onyx", "backdrops": ["Black"], "price": 9} in mono_card["pick_items"]
+    assert "Onyx · все монохромные фоны ≤ 7 TON" in mono_card["picks"]  # not "любой фон" in a monochrome plan
+    assert cards["regular"]["picks"] == ["Onyx · любой фон ≤ 3 TON"]
 
     async with env.sessionmaker() as session:
         rows = await filters_repo.list_filters(session, ADMIN)

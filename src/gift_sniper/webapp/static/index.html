@@ -3,139 +3,302 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark light">
 <title>Снайпер MRKT</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
+  /* Telegram passes the user's theme as --tg-theme-* variables; the fallbacks are a dark theme. */
   :root {
-    --bg: #0f1115;
-    --card: #171a21;
-    --box: #0b0d11;
-    --text: #f2f3f5;
-    --hint: #8d939e;
-    --accent: var(--tg-theme-button-color, #3b82f6);
+    --bg: var(--tg-theme-secondary-bg-color, #0e1013);
+    --surface: var(--tg-theme-section-bg-color, var(--tg-theme-bg-color, #181b21));
+    --text: var(--tg-theme-text-color, #f3f4f6);
+    --hint: var(--tg-theme-hint-color, #8b919c);
+    --accent: var(--tg-theme-button-color, #3d8bfd);
     --accent-text: var(--tg-theme-button-text-color, #ffffff);
-    --link: #5ea2ff;
-    --danger: #ef5b5b;
-    --line: rgba(255, 255, 255, .09);
-    --ok: #3ccf7a;
-    --warn: #e6b422;
-    --mono: #a78bfa;
+    --link: var(--tg-theme-link-color, #5ea2ff);
+    --danger: var(--tg-theme-destructive-text-color, #f05252);
+    --ok: #2fbf71;
+    --warn: #e9a91c;
+    --mono: #a58bff;
+    --fill: rgba(255, 255, 255, .07);
+    --fill-2: rgba(255, 255, 255, .13);
+    --line: rgba(255, 255, 255, .08);
+    --art: rgba(255, 255, 255, .035);
+    --art-hi: rgba(255, 255, 255, .11);
+    --shadow: none;
+    --tabbar-h: 60px;
+  }
+  :root[data-theme="light"] {
+    --bg: var(--tg-theme-secondary-bg-color, #f1f2f5);
+    --surface: var(--tg-theme-section-bg-color, var(--tg-theme-bg-color, #ffffff));
+    --text: var(--tg-theme-text-color, #111318);
+    --hint: var(--tg-theme-hint-color, #707783);
+    --mono: #7c5cf0;
+    --fill: rgba(0, 0, 0, .05);
+    --fill-2: rgba(0, 0, 0, .1);
+    --line: rgba(0, 0, 0, .08);
+    --art: rgba(0, 0, 0, .05);
+    --art-hi: rgba(0, 0, 0, .015);
+    --shadow: 0 1px 2px rgba(0, 0, 0, .06);
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html, body { margin: 0; background: var(--bg); color: var(--text);
-    font: 15px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
-  body { padding: 12px 14px 110px; max-width: 720px; margin: 0 auto; }
-  h1 { font-size: 21px; margin: 4px 0 10px; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-  h1 .brand { color: var(--mono); }
-  h3 { font-size: 15px; margin: 16px 2px 8px; color: var(--hint); font-weight: 600; }
-  .muted { color: var(--hint); font-size: 13px; }
-  .pill { font-size: 12px; padding: 3px 9px; border-radius: 999px; background: var(--card); color: var(--hint); font-weight: 600; }
-  .pill.live { background: rgba(60, 207, 122, .18); color: var(--ok); }
-  .pill.test { background: rgba(230, 180, 34, .18); color: var(--warn); }
-  .pill.stop { background: rgba(239, 91, 91, .2); color: var(--danger); }
-  .tabs { display: flex; gap: 6px; overflow-x: auto; margin: 0 -14px 12px; padding: 0 14px; scrollbar-width: none; }
-  .tabs::-webkit-scrollbar { display: none; }
-  .tab { flex: none; border: 1px solid var(--line); background: transparent; color: var(--text); border-radius: 999px;
-    padding: 8px 14px; font: inherit; font-weight: 600; }
-  .tab.active { background: var(--accent); color: var(--accent-text); border-color: transparent; }
-  .crumbs { font-size: 14px; margin: 0 2px 10px; color: var(--hint); }
-  .crumbs a { color: var(--link); text-decoration: none; cursor: pointer; }
-  .card { background: var(--card); border-radius: 16px; padding: 12px 14px; margin-bottom: 10px; border: 1px solid var(--line); }
-  .tap { cursor: pointer; }
-  .tap:active { opacity: .8; }
-  .row { display: flex; align-items: center; gap: 10px; }
+  html { background: var(--bg); }
+  body { margin: 0 auto; max-width: 720px; min-height: 100vh; padding: 6px 16px calc(var(--tabbar-h) + 28px + env(safe-area-inset-bottom));
+    background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased;
+    font: 15px/1.35 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif; }
+  body.has-savebar { padding-bottom: calc(var(--tabbar-h) + 96px + env(safe-area-inset-bottom)); }
+  button { font: inherit; color: inherit; cursor: pointer; -webkit-appearance: none; appearance: none; }
+  a { color: var(--link); text-decoration: none; }
+  h2 { margin: 0; font-size: 22px; line-height: 1.15; font-weight: 800; overflow-wrap: anywhere; }
+  h3 { margin: 0; font-size: 17px; font-weight: 750; }
+  .sub { color: var(--hint); font-size: 12.5px; }
   .grow { flex: 1; min-width: 0; }
-  .title { font-weight: 700; font-size: 17px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .gcard { background: var(--card); border: 1px solid var(--line); border-radius: 18px; padding: 10px; margin-bottom: 12px; }
-  .gcard.taken { border-color: rgba(59, 130, 246, .7); }
-  .gimg { position: relative; height: 150px; border-radius: 14px; background: var(--box); overflow: hidden;
-    display: grid; place-items: center; }
-  .gimg img { position: relative; height: 100%; max-width: 100%; object-fit: contain; z-index: 1; }
-  .gimg.tall { height: 190px; }
-  .gimg .initial { position: absolute; font-size: 54px; font-weight: 800; color: rgba(255, 255, 255, .12); }
-  .gimg .corner { position: absolute; top: 8px; right: 8px; z-index: 2; }
-  .gbody { padding: 10px 4px 2px; }
-  .badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 7px; }
-  .badge { font-size: 12px; font-weight: 700; padding: 3px 9px; border-radius: 999px; background: rgba(255, 255, 255, .07);
-    border: 1px solid var(--line); }
-  .badge.rule { background: var(--warn); color: #1b1600; border-color: transparent; }
-  .badge.mono { background: rgba(167, 139, 250, .18); color: var(--mono); border-color: transparent; }
-  .badge.ok { background: rgba(60, 207, 122, .18); color: var(--ok); border-color: transparent; }
-  .lvl { font-size: 13px; font-weight: 800; padding: 4px 10px; border-radius: 999px; background: rgba(0, 0, 0, .55); color: #fff; }
-  .lvl.t-high { background: #6d28d9; } .lvl.t-medium { background: #2563eb; } .lvl.t-low { background: #0f766e; }
-  .lvl.t-combo { background: #b45309; }
-  input, select { width: 100%; background: var(--box); color: var(--text); border: 1px solid var(--line); border-radius: 12px;
-    padding: 11px 12px; font: inherit; outline: none; }
-  input:focus, select:focus { border-color: var(--accent); }
-  input.price { width: 130px; flex: none; padding: 9px 10px; text-align: right; }
-  .controls { display: grid; grid-template-columns: 1fr auto; gap: 8px; margin-bottom: 10px; }
-  .chips { display: flex; flex-wrap: wrap; gap: 6px; margin: 8px 0; }
-  .chip { border: 1px solid var(--line); background: transparent; color: var(--text); border-radius: 999px; padding: 6px 11px;
-    font: inherit; font-size: 13px; }
-  .chip.on { background: var(--accent); color: var(--accent-text); border-color: transparent; }
-  .btn { display: block; width: 100%; border: 0; border-radius: 12px; padding: 13px; font: inherit; font-weight: 700;
-    background: var(--accent); color: var(--accent-text); margin-top: 10px; }
-  .btn.ghost { background: transparent; color: var(--link); border: 1px solid var(--line); }
-  .btn.danger { background: transparent; color: var(--danger); border: 1px solid rgba(239, 91, 91, .4); }
-  .btn:disabled { opacity: .5; }
-  .switch { position: relative; width: 46px; height: 28px; flex: none; }
-  .switch input { opacity: 0; width: 0; height: 0; position: absolute; }
-  .switch span { position: absolute; inset: 0; background: rgba(255, 255, 255, .18); border-radius: 999px; transition: .2s; }
-  .switch span::before { content: ""; position: absolute; width: 22px; height: 22px; left: 3px; top: 3px; background: #fff;
-    border-radius: 50%; transition: .2s; }
+  .hidden, [hidden] { display: none !important; }
+
+  /* headers */
+  .head { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 46px; margin: 0 0 6px; }
+  .head h1 { margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -.01em; }
+  .pill { flex: none; border: 0; border-radius: 999px; padding: 6px 11px; background: var(--fill); color: var(--hint); font-size: 12.5px; font-weight: 700; white-space: nowrap; }
+  .pill.live { background: rgba(47, 191, 113, .16); color: var(--ok); }
+  .pill.test { background: rgba(233, 169, 28, .16); color: var(--warn); }
+  .pill.stop { background: rgba(240, 82, 82, .16); color: var(--danger); }
+  .topbar { display: flex; align-items: center; min-height: 40px; margin: 0 0 6px -8px; }
+  .back { display: inline-flex; align-items: center; gap: 2px; max-width: 100%; padding: 8px; border: 0; background: none; color: var(--link); font-size: 16px; font-weight: 600; }
+  .back span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .back svg { width: 20px; height: 20px; flex: none; }
+
+  /* search and filters */
+  .sticky { position: sticky; top: 0; z-index: 10; margin: 0 -16px; padding: 6px 16px 0; background: var(--bg); }
+  .search { display: flex; align-items: center; gap: 8px; height: 42px; padding: 0 4px 0 12px; border-radius: 12px; background: var(--fill); }
+  .search > svg { width: 18px; height: 18px; flex: none; color: var(--hint); }
+  .search input { flex: 1; min-width: 0; height: 100%; border: 0; outline: none; background: none; color: var(--text); font: inherit; -webkit-appearance: none; appearance: none; }
+  .search input::placeholder { color: var(--hint); }
+  .search input::-webkit-search-cancel-button { display: none; }
+  .iconbtn { display: grid; place-items: center; width: 36px; height: 36px; flex: none; border: 0; border-radius: 10px; background: none; color: var(--hint); }
+  .iconbtn svg { width: 20px; height: 20px; }
+  .iconbtn.on { color: var(--accent); }
+  .chips { display: flex; gap: 6px; margin: 10px -16px; padding: 0 16px 2px; overflow-x: auto; scrollbar-width: none; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip { flex: none; padding: 7px 13px; border: 0; border-radius: 999px; background: var(--fill); font-size: 13.5px; font-weight: 650; }
+  .chip i { margin-left: 4px; color: var(--hint); font-style: normal; }
+  .chip.on { background: var(--accent); color: var(--accent-text); }
+  .chip.on i { color: inherit; opacity: .75; }
+
+  /* picture tiles */
+  .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  @media (min-width: 560px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  .grid > .empty { grid-column: 1 / -1; }
+  .tile { position: relative; display: block; width: 100%; padding: 5px; border: 2px solid transparent; border-radius: 19px; background: var(--surface);
+    text-align: left; box-shadow: var(--shadow); transition: transform .12s, border-color .15s; }
+  .tile:active { transform: scale(.975); }
+  .tile.on { border-color: var(--accent); }
+  .art { position: relative; display: grid; place-items: center; aspect-ratio: 1 / 1; overflow: hidden; border-radius: 14px;
+    background: radial-gradient(circle at 50% 38%, var(--art-hi), var(--art) 72%); }
+  .art img { position: relative; z-index: 1; width: 100%; height: 100%; object-fit: contain; }
+  .art .letter { position: absolute; color: var(--fill-2); font-size: 42px; font-weight: 800; }
+  .cap { padding: 7px 5px 3px; }
+  .name { overflow: hidden; font-size: 14.5px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+  .cap .sub { margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .split { display: flex; justify-content: space-between; gap: 6px; }
+  .mono-t { color: var(--mono); font-weight: 700; }
+  .tag { position: absolute; z-index: 2; top: 6px; padding: 3px 8px; border-radius: 999px; background: rgba(0, 0, 0, .55); color: #fff; font-size: 11.5px; font-weight: 800; }
+  .tag.tl { left: 6px; }
+  .tag.tr { right: 6px; }
+  .tag.buy, .tag.ok { background: var(--ok); }
+  .lvl { position: absolute; z-index: 2; top: 6px; left: 6px; padding: 3px 8px; border-radius: 999px; background: rgba(0, 0, 0, .55); color: #fff;
+    font-size: 11px; font-weight: 800; text-transform: capitalize; }
+  .lvl.t-high { background: #7c3aed; }
+  .lvl.t-medium { background: #2563eb; }
+  .lvl.t-low { background: #0d9488; }
+  .lvl.t-combo { background: #d97706; }
+  .check { position: absolute; z-index: 2; top: 6px; right: 6px; width: 26px; height: 26px; border: 2px solid rgba(255, 255, 255, .9); border-radius: 50%;
+    background: rgba(0, 0, 0, .28); transition: background .15s; }
+  .tile.on .check { border-color: #fff; background: var(--accent); }
+  .tile.on .check::after { content: ""; position: absolute; left: 7px; top: 3px; width: 6px; height: 11px; border: solid #fff; border-width: 0 2.5px 2.5px 0; transform: rotate(45deg); }
+
+  /* price inputs */
+  .price { display: flex; align-items: center; gap: 4px; height: 40px; padding: 0 10px; border: 1.5px solid transparent; border-radius: 11px;
+    background: var(--fill); cursor: text; transition: opacity .15s; }
+  .price input { flex: 1; width: 100%; min-width: 0; padding: 0; border: 0; outline: none; background: none; color: var(--text); font: inherit; font-weight: 700; text-align: right; }
+  .price input::placeholder { color: var(--hint); font-weight: 500; }
+  .price span { color: var(--hint); font-size: 12px; font-weight: 700; }
+  .price:focus-within { border-color: var(--accent); opacity: 1 !important; }
+  .price.bad { border-color: var(--danger); animation: shake .3s; }
+  .price.sm { height: 34px; margin-top: 7px; }
+  .off .price, .tile.pair:not(.on) .price { opacity: .5; }
+  @keyframes shake { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+
+  /* collection and model header */
+  .hero { display: flex; align-items: center; gap: 14px; margin: 0 0 14px; }
+  .hero > .art, .hero > .skel { width: 96px; height: 96px; flex: none; border-radius: 22px; }
+  .facts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .fact { padding: 4px 8px; border-radius: 8px; background: var(--fill); font-size: 12px; font-weight: 650; }
+  .fact.mono { background: rgba(165, 139, 255, .16); color: var(--mono); }
+
+  /* controls */
+  .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; padding: 3px; border-radius: 13px; background: var(--fill); }
+  .seg button { padding: 10px 6px; border: 0; border-radius: 10px; background: none; color: var(--hint); font-size: 14px; font-weight: 700; }
+  .seg button.on { background: var(--accent); color: var(--accent-text); box-shadow: 0 1px 4px rgba(0, 0, 0, .2); }
+  .switch { position: relative; width: 51px; height: 31px; flex: none; }
+  .switch input { position: absolute; width: 0; height: 0; opacity: 0; }
+  .switch span { position: absolute; inset: 0; border-radius: 999px; background: var(--fill-2); transition: background .2s; }
+  .switch span::before { content: ""; position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 50%; background: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, .25); transition: transform .2s; }
   .switch input:checked + span { background: var(--ok); }
-  .switch input:checked + span::before { transform: translateX(18px); }
-  .box { width: 26px; height: 26px; flex: none; accent-color: var(--accent); }
-  .opt { display: flex; align-items: center; gap: 10px; padding: 9px 0; border-top: 1px solid var(--line); }
-  .opt:first-of-type { border-top: 0; }
-  .field { margin: 12px 0; }
-  .field label { display: block; font-size: 13px; color: var(--hint); margin-bottom: 5px; }
-  .check { display: flex; gap: 8px; align-items: flex-start; padding: 5px 0; }
-  .stat { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 10px 0 4px; }
-  .stat div { background: var(--box); border-radius: 12px; padding: 8px 4px; text-align: center; }
-  .stat b { display: block; font-size: 16px; }
-  .stat span { font-size: 11px; color: var(--hint); }
-  .savebar { position: fixed; left: 0; right: 0; bottom: 0; padding: 10px 14px calc(10px + env(safe-area-inset-bottom));
-    background: linear-gradient(transparent, var(--bg) 30%); z-index: 5; max-width: 720px; margin: 0 auto; }
-  .toast { position: fixed; left: 50%; bottom: 90px; transform: translateX(-50%); background: #000d; color: #fff; padding: 10px 16px;
-    border-radius: 12px; z-index: 20; font-size: 14px; display: none; max-width: 90vw; text-align: center; }
-  .empty { text-align: center; color: var(--hint); padding: 30px 10px; }
-  .spinner { width: 26px; height: 26px; border: 3px solid var(--line); border-top-color: var(--accent); border-radius: 50%;
-    animation: spin .8s linear infinite; margin: 30px auto; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  a { color: var(--link); }
+  .switch input:checked + span::before { transform: translateX(20px); }
+  .switch input:disabled + span { opacity: .5; }
+  .btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 13px 16px; border: 0; border-radius: 12px;
+    background: var(--accent); color: var(--accent-text); font-size: 15px; font-weight: 700; }
+  .btn.small { width: auto; height: 40px; padding: 0 16px; font-size: 14px; }
+  .btn.soft { background: var(--fill); color: var(--text); }
+  .btn.danger { background: rgba(240, 82, 82, .12); color: var(--danger); }
+  .btn:disabled { opacity: .55; }
+  .link { padding: 4px 0; border: 0; background: none; color: var(--link); font-weight: 650; }
+
+  /* cards and lists */
+  .card { margin-bottom: 12px; padding: 2px 14px; border-radius: 16px; background: var(--surface); box-shadow: var(--shadow); }
+  .line { display: flex; align-items: center; gap: 12px; padding: 12px 0; }
+  .line + .line { border-top: 1px solid var(--line); }
+  .line b { font-weight: 650; }
+  .line .price { width: 120px; flex: none; }
+  .rowbtn { display: flex; align-items: center; gap: 12px; width: 100%; margin: 12px 0; padding: 13px 14px; border: 0; border-radius: 16px;
+    background: var(--surface); text-align: left; box-shadow: var(--shadow); }
+  .chev { color: var(--hint); font-size: 24px; line-height: 1; }
+  .label { margin: 20px 4px 8px; color: var(--hint); font-size: 13px; font-weight: 650; letter-spacing: .04em; text-transform: uppercase; }
+  .sect { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 20px 2px 10px; }
+  .sect h3 i { margin-left: 5px; color: var(--hint); font-style: normal; font-weight: 600; }
+  .hint { margin: 8px 4px 12px; color: var(--hint); font-size: 12.5px; }
+  .bulk { display: flex; gap: 8px; margin: 0 0 12px; }
+  .bulk .price { flex: 1; }
+  .banner { display: flex; align-items: center; gap: 10px; width: 100%; margin: 4px 0 12px; padding: 11px 13px; border: 0; border-radius: 14px;
+    background: rgba(233, 169, 28, .14); text-align: left; font-size: 14px; }
+  .banner .chev { font-size: 20px; }
+  .mode { margin-bottom: 12px; padding: 14px; border-radius: 16px; background: var(--surface); box-shadow: var(--shadow); }
+  .mode b { display: block; margin-bottom: 3px; font-size: 16px; }
+  .mode.live { background: rgba(47, 191, 113, .13); }
+  .mode.dry_run { background: rgba(233, 169, 28, .13); }
+  .mode.stop { background: rgba(240, 82, 82, .13); }
+  .ck { display: flex; align-items: center; gap: 10px; padding: 11px 0; font-size: 14px; }
+  .ck + .ck { border-top: 1px solid var(--line); }
+  .ck .mark { display: grid; place-items: center; width: 22px; height: 22px; flex: none; border-radius: 50%; background: var(--warn); color: #fff; font-size: 12px; font-weight: 800; }
+  .ck.ok .mark { background: var(--ok); }
+  .ck.ok .grow { color: var(--hint); }
+  .rcard { margin-bottom: 12px; padding: 12px 14px; border-radius: 16px; background: var(--surface); box-shadow: var(--shadow); }
+  .rcard.paused .rhead, .rcard.paused .picks { opacity: .55; }
+  .rhead { display: flex; align-items: center; gap: 12px; }
+  .rhead b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .thumb { position: relative; display: grid; place-items: center; width: 48px; height: 48px; flex: none; overflow: hidden; border-radius: 12px; background: var(--fill); }
+  .thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+  .thumb .letter { color: var(--hint); font-weight: 800; }
+  .picks { margin-top: 10px; }
+  .pk { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; border-top: 1px solid var(--line); font-size: 13.5px; }
+  .pk .pr { color: var(--hint); font-weight: 700; white-space: nowrap; }
+  .ractions { display: flex; gap: 6px; margin-top: 10px; }
+  .pbtn { flex: 1; padding: 10px 6px; border: 0; border-radius: 10px; background: var(--fill); font-size: 13px; font-weight: 650; }
+  .pbtn.danger { color: var(--danger); }
+  .total { margin: 0 4px 12px; color: var(--hint); font-size: 14px; }
+  .total b { color: var(--text); }
+  .day { margin: 16px 4px 8px; color: var(--hint); font-size: 13px; font-weight: 650; }
+  .hrow { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; padding: 10px 12px; border-radius: 16px; background: var(--surface); box-shadow: var(--shadow); }
+  .hrow .right { flex: none; text-align: right; }
+  .st { display: inline-block; margin-top: 4px; padding: 2px 8px; border-radius: 999px; background: var(--fill); color: var(--hint); font-size: 11.5px; font-weight: 700; }
+  .st.confirmed { background: rgba(47, 191, 113, .16); color: var(--ok); }
+  .st.dry_run { background: rgba(233, 169, 28, .16); color: var(--warn); }
+  .st.failed, .st.cancelled { background: rgba(240, 82, 82, .14); color: var(--danger); }
+  .empty { padding: 36px 16px; color: var(--hint); text-align: center; }
+  .empty .big { margin-bottom: 8px; font-size: 44px; }
+  .empty b { display: block; margin-bottom: 4px; color: var(--text); font-size: 16px; }
+  .empty .btn { display: inline-flex; width: auto; margin-top: 16px; }
+  .foot { margin: 20px 4px; color: var(--hint); font-size: 12.5px; text-align: center; }
+
+  /* loading placeholders */
+  .skel { border-radius: 18px; background: linear-gradient(100deg, var(--surface) 30%, var(--fill-2) 50%, var(--surface) 70%);
+    background-size: 300% 100%; animation: sk 1.3s linear infinite; }
+  .skel.stile { aspect-ratio: .8; }
+  .skel.srow { height: 76px; margin-bottom: 10px; }
+  .skel.sline { height: 16px; border-radius: 8px; }
+  @keyframes sk { from { background-position: 100% 0; } to { background-position: 0 0; } }
+
+  /* bottom navigation, save bar, sheet, toast */
+  .tabbar { position: fixed; z-index: 30; left: 0; right: 0; bottom: 0; display: grid; grid-template-columns: repeat(4, 1fr); max-width: 720px; margin: 0 auto;
+    padding: 6px 6px calc(6px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); background: var(--surface); }
+  .tabbar button { position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 3px 0; border: 0; background: none;
+    color: var(--hint); font-size: 11px; font-weight: 650; }
+  .tabbar button.on { color: var(--accent); }
+  .tabbar svg { width: 25px; height: 25px; }
+  .tabbar .count { position: absolute; top: -2px; left: calc(50% + 6px); min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px;
+    background: var(--accent); color: var(--accent-text); font-size: 10.5px; font-weight: 800; line-height: 18px; text-align: center; }
+  .tabbar .dot { position: absolute; top: 1px; left: calc(50% + 7px); width: 11px; height: 11px; border: 2px solid var(--surface); border-radius: 50%; background: var(--warn); }
+  .savebar { position: fixed; z-index: 29; left: 0; right: 0; bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom)); max-width: 720px; margin: 0 auto;
+    padding: 10px 16px 8px; background: linear-gradient(transparent, var(--bg) 30%); }
+  body.typing .tabbar, body.typing .savebar { display: none; }
+  .sheet-bg { position: fixed; z-index: 40; inset: 0; background: rgba(0, 0, 0, .45); opacity: 0; pointer-events: none; transition: opacity .2s; }
+  .sheet-bg.open { opacity: 1; pointer-events: auto; }
+  .sheet { position: fixed; z-index: 41; left: 0; right: 0; bottom: 0; max-width: 720px; max-height: 86vh; margin: 0 auto; padding: 8px 16px calc(18px + env(safe-area-inset-bottom));
+    overflow-y: auto; border-radius: 22px 22px 0 0; background: var(--bg); transform: translateY(105%); visibility: hidden;
+    transition: transform .25s cubic-bezier(.2, .8, .2, 1), visibility 0s .25s; }
+  .sheet.open { transform: none; visibility: visible; transition: transform .25s cubic-bezier(.2, .8, .2, 1); }
+  .grab { width: 38px; height: 5px; margin: 0 auto 12px; border-radius: 3px; background: var(--fill-2); }
+  .sheet h3 { margin: 0 2px 2px; font-size: 19px; }
+  .opt-line { display: flex; align-items: center; width: 100%; padding: 14px 4px; border: 0; border-bottom: 1px solid var(--line); background: none; text-align: left; font-size: 15px; }
+  .opt-line .tick { margin-left: auto; color: var(--accent); font-weight: 800; }
+  .toast { position: fixed; z-index: 50; left: 50%; bottom: calc(var(--tabbar-h) + 22px + env(safe-area-inset-bottom)); max-width: 88vw; padding: 10px 16px;
+    border-radius: 12px; background: rgba(20, 20, 24, .94); color: #fff; font-size: 14px; text-align: center; opacity: 0; pointer-events: none;
+    transform: translate(-50%, 10px); transition: opacity .2s, transform .2s; }
+  .toast.show { opacity: 1; transform: translate(-50%, 0); }
 </style>
 </head>
 <body>
-<h1><span>Монохромы <span class="brand">MRKT</span></span><span id="mode" class="pill"></span></h1>
-<div class="tabs" id="tabs">
-  <button class="tab active" data-tab="collections">Коллекции</button>
-  <button class="tab" data-tab="rules">Что берёт бот</button>
-  <button class="tab" data-tab="settings">Лимиты</button>
-  <button class="tab" data-tab="history">История</button>
-</div>
-<div id="view"><div class="spinner"></div></div>
+<main id="view"></main>
+<div class="savebar" id="savebar" hidden><button class="btn" id="savebtn">Сохранить</button></div>
+<nav class="tabbar" id="tabbar">
+  <button data-tab="collections" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/></svg>Коллекции</button>
+  <button data-tab="rules"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M5 8h14l-1.2 12.1a1 1 0 0 1-1 .9H7.2a1 1 0 0 1-1-.9z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8" stroke-linecap="round"/></svg>Берёт бот<i class="count" id="tab-count" hidden></i></button>
+  <button data-tab="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2.2"/><circle cx="9" cy="17" r="2.2"/></svg>Лимиты<i class="dot" id="tab-dot" hidden></i></button>
+  <button data-tab="history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>История</button>
+</nav>
+<div class="sheet-bg" id="sheet-bg"></div>
+<div class="sheet" id="sheet" role="dialog"><div class="grab"></div><div id="sheet-body"></div></div>
 <div class="toast" id="toast"></div>
 
 <script>
 "use strict";
 const tg = window.Telegram && window.Telegram.WebApp;
-if (tg) { tg.ready(); tg.expand(); if (tg.setHeaderColor) try { tg.setHeaderColor("#0f1115"); tg.setBackgroundColor("#0f1115"); } catch (e) { /* old clients */ } }
-const S = { me: null, collections: null, sort: "taken", query: "", tab: "collections", col: null, page: "list" };
 const view = document.getElementById("view");
+const $ = (sel, root = document) => root.querySelector(sel);
+const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+const S = {
+  me: null, collections: null, loading: null,
+  tab: "collections", page: "list",                       // collections tab: list → collection → model
+  list: { q: "", filter: "all", sort: "taken", scroll: 0 },
+  col: null, colView: { q: "", filter: "all", scroll: 0 },
+  model: null, draft: null, initial: "",
+};
 
 // ------------------------------------------------------------------ helpers
 const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 const num = (v, d = 3) => (+v).toLocaleString("ru-RU", { maximumFractionDigits: d });
-const ton = (v) => v == null ? "—" : `${num(v)} TON`;
-const pct = (v) => v == null ? "—" : `${num(v, v < 10 ? 2 : 1)}%`;
-const haptic = () => tg && tg.HapticFeedback && tg.HapticFeedback.selectionChanged();
-const LEVELS = ["high", "medium", "low", "combo"];
+const ton = (v) => (v == null ? "—" : `${num(v)} TON`);
+const pct = (v) => (v == null ? "—" : `${num(v, v < 10 ? 2 : 1)}%`);
 const COLOR = /^#[0-9a-f]{6}$/i;
+const LEVELS = ["high", "medium", "low", "combo"];
+const ICON = {
+  search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
+  sort: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v16M3 16l4 4 4-4M17 20V4M13 8l4-4 4 4"/></svg>',
+  back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
+};
+function plural(n, one, few, many) {
+  const a = n % 10, b = n % 100;
+  return a === 1 && b !== 11 ? one : a >= 2 && a <= 4 && (b < 10 || b >= 20) ? few : many;
+}
+function haptic(kind) {
+  const h = tg && tg.HapticFeedback;
+  try { if (h) kind ? h.notificationOccurred(kind) : h.selectionChanged(); } catch (e) { /* old clients */ }
+}
 function toast(text) {
-  const el = document.getElementById("toast");
-  el.textContent = text; el.style.display = "block";
-  clearTimeout(toast.t); toast.t = setTimeout(() => (el.style.display = "none"), 2600);
+  const el = $("#toast");
+  el.textContent = text; el.classList.add("show");
+  clearTimeout(toast.t); toast.t = setTimeout(() => el.classList.remove("show"), 2600);
 }
 async function api(path, method = "GET", body) {
   const res = await fetch("/api" + path, {
@@ -147,374 +310,762 @@ async function api(path, method = "GET", body) {
   if (!res.ok) throw new Error(data.error || `Ошибка ${res.status}`);
   return data;
 }
-function spinner() { view.innerHTML = '<div class="spinner"></div>'; }
-function fail(err) { view.innerHTML = `<div class="card"><b>Не получилось загрузить</b><div class="muted">${esc(err.message)}</div></div>`; }
+function popup(message, buttons, fallback) {
+  return new Promise((resolve) => {
+    if (tg && tg.showPopup && tg.isVersionAtLeast && tg.isVersionAtLeast("6.2")) tg.showPopup({ message, buttons }, (id) => resolve(id || ""));
+    else resolve(fallback());
+  });
+}
+const confirmBox = (text) => popup(text, [{ id: "yes", type: "destructive", text: "Да" }, { type: "cancel" }],
+  () => (window.confirm(text) ? "yes" : "")).then((id) => id === "yes");
+function openLink(url) {
+  if (tg && tg.openTelegramLink && /^https:\/\/t\.me\//.test(url)) tg.openTelegramLink(url);
+  else window.open(url, "_blank");
+}
+let screen = 0;  // a slow request must not draw over the screen the user has moved on to
+const newScreen = () => ++screen;
+const stale = (id) => id !== screen;
+
+// ------------------------------------------------------------------ pictures
 // a picture that falls back to a second URL, then disappears (the letter behind it stays)
 function pic(src, fallback) {
   const first = src || fallback;
   if (!first) return "";
   const fb = src && fallback ? ` data-fb="${esc(fallback)}"` : "";
-  return `<img src="${esc(first)}"${fb} loading="lazy" onload="imgOk(this)" onerror="imgFail(this)">`;
+  return `<img src="${esc(first)}"${fb} alt="" loading="lazy" onload="imgOk(this)" onerror="imgFail(this)">`;
 }
 window.imgFail = (el) => { const fb = el.dataset.fb; if (fb) { delete el.dataset.fb; el.src = fb; } else el.remove(); };
-window.imgOk = (el) => { const letter = el.parentElement && el.parentElement.querySelector(".initial"); if (letter) letter.remove(); };
-function backdrop(center, edge) {
-  if (!COLOR.test(center || "")) return "";
-  const outer = COLOR.test(edge || "") ? edge : center;
-  return ` style="background: radial-gradient(circle at 50% 45%, ${center} 0%, ${outer} 78%)"`;
+window.imgOk = (el) => { const letter = el.parentElement && el.parentElement.querySelector(".letter"); if (letter) letter.remove(); };
+function art(src, fallback, letter, center, edge, extra = "") {
+  let style = "";
+  if (COLOR.test(center || "")) {
+    const outer = COLOR.test(edge || "") ? edge : center;
+    style = ` style="background: radial-gradient(circle at 50% 42%, ${center} 0%, ${outer} 80%)"`;
+  }
+  return `<div class="art"${style}><span class="letter">${esc((letter || "?")[0])}</span>${pic(src, fallback)}${extra}</div>`;
 }
+const thumb = (src, title) => `<div class="thumb"><span class="letter">${esc((title || "?")[0])}</span>${pic(src)}</div>`;
 function level(type) {
   const t = LEVELS.includes(type) ? type : "low";
   return `<span class="lvl t-${t}">${esc(type || "?")}</span>`;
 }
-function confirmBox(text) {
-  return new Promise((resolve) => tg && tg.showConfirm ? tg.showConfirm(text, resolve) : resolve(window.confirm(text)));
+const skeletonTiles = (n) => `<div class="grid">${'<div class="skel stile"></div>'.repeat(n)}</div>`;
+const skeletonRows = (n) => '<div class="skel srow"></div>'.repeat(n);
+const skeletonHero = () => `<div class="hero"><div class="skel"></div><div class="grow"><div class="skel sline" style="width:70%;height:22px"></div>
+  <div class="skel sline" style="width:45%;margin-top:12px"></div></div></div>`;
+function empty(icon, title, text, button = "") {
+  return `<div class="empty"><div class="big">${icon}</div><b>${esc(title)}</b>${esc(text)}${button ? `<br>${button}` : ""}</div>`;
 }
+function fail(err, retry, backTo) {
+  view.innerHTML = (backTo ? topbar(backTo) : "") + empty("😕", "Не получилось загрузить", err.message, '<button class="btn" id="retry">Повторить</button>');
+  $("#retry").onclick = retry;
+}
+
+// ------------------------------------------------------------------ price fields and switches
+function priceField(attrs, value, placeholder = "цена", cls = "") {
+  return `<label class="price ${cls}"><input ${attrs} inputmode="decimal" autocomplete="off" enterkeyhint="done"
+    placeholder="${esc(placeholder)}" value="${esc(value)}"><span>TON</span></label>`;
+}
+function optRow(key, title, sub, o) {
+  return `<div class="line${o.on ? "" : " off"}" data-opt="${key}">
+    <label class="switch"><input type="checkbox" ${o.on ? "checked" : ""}><span></span></label>
+    <div class="grow"><b>${esc(title)}</b><div class="sub">${esc(sub)}</div></div>${priceField("", o.price)}</div>`;
+}
+// a switch with a price: typing a price turns the switch on, turning it on asks for a price
+function bindOptions(root, draft, changed) {
+  $$("[data-opt]", root).forEach((row) => {
+    const o = draft[row.dataset.opt], box = $("input[type=checkbox]", row), input = $(".price input", row);
+    box.onchange = () => { o.on = box.checked; haptic(); if (o.on && !input.value.trim()) input.focus(); changed(); };
+    input.oninput = () => { o.price = input.value; if (o.price.trim() && !o.on) { o.on = box.checked = true; } changed(); };
+  });
+}
+function syncOptions(root, draft) {
+  $$("[data-opt]", root).forEach((row) => row.classList.toggle("off", !draft[row.dataset.opt].on));
+}
+function markBad(field, message) {
+  if (!field) return;
+  field.classList.add("bad");
+  field.scrollIntoView({ block: "center", behavior: "smooth" });
+  const input = $("input", field);
+  input.addEventListener("input", () => field.classList.remove("bad"), { once: true });
+  toast(message); haptic("error");
+}
+const option = (price) => ({ on: price != null, price: price != null ? String(price) : "" });
+
+// ------------------------------------------------------------------ save button (Telegram's MainButton)
+const Save = {
+  fn: null, running: false,
+  native: !!(tg && tg.MainButton && tg.initData),
+  show(text, fn) {
+    this.fn = fn;
+    if (this.native) tg.MainButton.setParams({ text, is_visible: true, is_active: true });
+    else { $("#savebtn").textContent = text; $("#savebar").hidden = false; document.body.classList.add("has-savebar"); }
+    try { if (tg && tg.enableClosingConfirmation) tg.enableClosingConfirmation(); } catch (e) { /* old clients */ }
+  },
+  hide() {
+    this.fn = null;
+    if (this.native) tg.MainButton.hide();
+    $("#savebar").hidden = true; document.body.classList.remove("has-savebar");
+    try { if (tg && tg.disableClosingConfirmation) tg.disableClosingConfirmation(); } catch (e) { /* old clients */ }
+  },
+  busy(on) {
+    if (this.native) on ? tg.MainButton.showProgress(false) : tg.MainButton.hideProgress();
+    $("#savebtn").disabled = on;
+  },
+  async run() {
+    if (!this.fn || this.running) return;
+    this.running = true;
+    try { await this.fn(); } finally { this.running = false; }
+  },
+};
+if (Save.native) tg.MainButton.onClick(() => Save.run());
+$("#savebtn").onclick = () => Save.run();
+// unsaved changes: save, drop or stay
+async function leaveOk() {
+  if (!Save.fn) return true;
+  const choice = await popup("Сохранить изменения?", [
+    { id: "save", type: "default", text: "Сохранить" }, { id: "drop", type: "destructive", text: "Не сохранять" }, { type: "cancel" },
+  ], () => (window.confirm("Есть несохранённые изменения. Выйти без сохранения?") ? "drop" : ""));
+  if (choice === "save") { await Save.run(); return !Save.fn; }
+  if (choice === "drop") { Save.hide(); S.draft = null; return true; }
+  return false;
+}
+
+// ------------------------------------------------------------------ bottom sheet
+const Sheet = {
+  open(html, mount) {
+    $("#sheet-body").innerHTML = html;
+    $("#sheet").classList.add("open"); $("#sheet-bg").classList.add("open");
+    if (mount) mount($("#sheet-body"));
+    syncBack();
+  },
+  close() { $("#sheet").classList.remove("open"); $("#sheet-bg").classList.remove("open"); syncBack(); },
+  isOpen: () => $("#sheet").classList.contains("open"),
+};
+$("#sheet-bg").onclick = () => Sheet.close();
 
 // ------------------------------------------------------------------ navigation
-function setBack() {
+function syncBack() {
   if (!tg || !tg.BackButton) return;
-  S.tab === "collections" && S.page !== "list" ? tg.BackButton.show() : tg.BackButton.hide();
+  Sheet.isOpen() || (S.tab === "collections" && S.page !== "list") ? tg.BackButton.show() : tg.BackButton.hide();
 }
 if (tg && tg.BackButton) tg.BackButton.onClick(() => back());
-function back() {
-  if (S.page === "model") { S.page = "collection"; drawCollection(); }
-  else { S.page = "list"; renderCollections(); }
-  setBack(); window.scrollTo(0, 0);
+async function back() {
+  if (Sheet.isOpen()) return Sheet.close();
+  if (S.tab !== "collections" || S.page === "list" || !(await leaveOk())) return;
+  if (S.page === "model") { S.page = "collection"; render(); } else { S.page = "list"; render(); }
 }
-document.getElementById("tabs").addEventListener("click", (e) => {
-  const tab = e.target.closest(".tab"); if (!tab) return;
-  haptic(); showTab(tab.dataset.tab);
-});
-function showTab(tab) {
+async function go(tab) {
+  if (Sheet.isOpen()) Sheet.close();
+  if (!(await leaveOk())) return;
+  if (S.tab === "collections") rememberScroll();
+  if (tab === S.tab) {  // tapping the open tab goes to its start and refreshes it
+    if (tab === "collections" && S.page !== "list") S.page = "list";
+    else if (tab === "collections") S.collections = null;
+    S.list.scroll = 0;
+  }
   S.tab = tab;
-  if (tab === "collections") S.page = "list";
-  document.querySelectorAll(".tab").forEach((t) => t.classList.toggle("active", t.dataset.tab === tab));
-  setBack();
-  ({ collections: renderCollections, rules: renderRules, settings: renderSettings, history: renderHistory })[tab]();
+  render();
 }
+function rememberScroll() {
+  if (S.page === "list") S.list.scroll = window.scrollY;
+  if (S.page === "collection") S.colView.scroll = window.scrollY;
+}
+function render() {
+  $$("#tabbar button").forEach((b) => b.classList.toggle("on", b.dataset.tab === S.tab));
+  syncBack();
+  if (S.tab === "collections") {
+    if (S.page !== "list" && S.col && S.colStale) return reloadCollection();
+    if (S.page === "model" && S.col) { window.scrollTo(0, 0); return drawModel(); }
+    if (S.page === "collection" && S.col) { drawCollection(); return window.scrollTo(0, S.colView.scroll); }
+    S.page = "list";
+    return renderCollections();
+  }
+  window.scrollTo(0, 0);
+  ({ rules: renderRules, settings: renderSettings, history: renderHistory })[S.tab]();
+}
+$$("#tabbar button").forEach((b) => (b.onclick = () => { haptic(); go(b.dataset.tab); }));
 view.addEventListener("click", (e) => {
-  const go = e.target.closest("[data-goto]");
-  if (go) return showTab(go.dataset.goto);
-  const nav = e.target.closest("[data-nav]");
-  if (!nav) return;
-  if (nav.dataset.nav === "list") { S.page = "list"; renderCollections(); }
-  else { S.page = "collection"; drawCollection(); }
-  setBack(); window.scrollTo(0, 0);
+  const target = e.target.closest("[data-goto], [data-back]");
+  if (!target) return;
+  haptic();
+  if (target.dataset.goto) go(target.dataset.goto); else back();
 });
+const topbar = (label) => `<div class="topbar"><button class="back" data-back="1">${ICON.back}<span>${esc(label)}</span></button></div>`;
+const head = (title) => `<div class="head"><h1>${esc(title)}</h1>${modePill()}</div>`;
 
-// ------------------------------------------------------------------ status
-async function loadMe() {
-  S.me = await api("/me");
-  const el = document.getElementById("mode");
-  const m = S.me;
-  if (m.stopped) { el.className = "pill stop"; el.textContent = "⛔ остановлен"; }
-  else if (m.run_mode === "live") { el.className = "pill live"; el.textContent = "● live"; }
-  else { el.className = "pill test"; el.textContent = m.run_mode === "dry_run" ? "🧪 тест" : "🔔 уведомления"; }
+// ------------------------------------------------------------------ status: mode, readiness, tab badges
+async function loadMe() { S.me = await api("/me"); updateChrome(); return S.me; }
+function ensureCollections() {
+  if (S.collections) return Promise.resolve(S.collections);
+  if (!S.loading) {
+    S.loading = api("/collections")
+      .then((data) => { S.collections = data.items; updateChrome(); return S.collections; })
+      .finally(() => { S.loading = null; });
+  }
+  return S.loading;
 }
-function readiness() {
-  const m = S.me; if (!m || m.ready) return "";
-  const items = m.checklist.filter((c) => !c.ok).map((c) => `<div class="check"><b>⚠️</b><span class="grow">${esc(c.text)}</span>${
-    c.action ? `<button class="chip" data-goto="${esc(c.action)}">Настроить</button>` : ""}</div>`).join("");
-  return `<div class="card"><b>Чтобы бот начал покупать</b>${items}</div>`;
+function modePill() {
+  const m = S.me;
+  if (!m) return "";
+  const [cls, text] = m.stopped ? ["stop", "⛔ Стоп"] : m.run_mode === "live" ? ["live", "● Live"]
+    : m.run_mode === "dry_run" ? ["test", "🧪 Тест"] : ["", "🔔 Уведомления"];
+  return `<button class="pill ${cls}" data-goto="settings">${text}</button>`;
+}
+const todo = () => (S.me ? S.me.checklist.filter((c) => !c.ok && c.id !== "live") : []);
+const TODO_SHORT = {
+  limits: "задайте лимиты", rule: "выберите, что брать", modes: "включите автопокупку",
+  giftwiki: "нет данных о монохромах", stopped: "включена аварийная остановка", rights: "нет права на покупки",
+};
+function banner() {
+  const m = S.me;
+  if (!m || m.ready) return "";
+  const left = todo();
+  const text = left.length === 1 ? `Бот пока не покупает: ${TODO_SHORT[left[0].id] || left[0].text}`
+    : left.length ? `Бот пока не покупает — осталось ${left.length} ${plural(left.length, "шаг", "шага", "шагов")}`
+    : m.run_mode === "dry_run" ? "Тестовый режим: покупки только имитируются" : "Режим «только уведомления»";
+  return `<button class="banner" data-goto="settings"><span>${left.length ? "⚠️" : "🧪"}</span><span class="grow">${esc(text)}</span><span class="chev">›</span></button>`;
+}
+function updateChrome() {
+  const taken = S.collections ? S.collections.filter((c) => c.taken).length : 0;
+  const count = $("#tab-count");
+  count.textContent = taken; count.hidden = !taken;
+  $("#tab-dot").hidden = !todo().length;
+  const pill = $(".head .pill");
+  if (pill) pill.outerHTML = modePill();
+}
+// after a change: lists and readiness are reloaded; a change made outside the open collection reloads it too
+function changed(collectionFresh = false) {
+  S.collections = null;
+  if (!collectionFresh) S.colStale = true;
+  loadMe().catch(() => {});
+  ensureCollections().catch(() => {});
 }
 
 // ------------------------------------------------------------------ collections
+const byTitle = (a, b) => a.title.localeCompare(b.title, "ru");
+const SORTS = [
+  ["taken", "Сначала то, что берёт бот", (a, b) => b.taken + b.rules - (a.taken + a.rules) || b.monochrome_pairs - a.monochrome_pairs || byTitle(a, b)],
+  ["pairs", "Больше монохромных пар", (a, b) => b.monochrome_pairs - a.monochrome_pairs || byTitle(a, b)],
+  ["share", "Выше доля монохромных моделей", (a, b) => (b.monochrome_share ?? -1) - (a.monochrome_share ?? -1) || byTitle(a, b)],
+  ["cheap", "Дешевле", (a, b) => (a.floor ?? 1e12) - (b.floor ?? 1e12) || byTitle(a, b)],
+  ["name", "По названию", byTitle],
+];
 async function renderCollections() {
-  spinner();
-  try { if (!S.collections) S.collections = (await api("/collections")).items; }
-  catch (err) { return fail(err); }
-  const q = S.query.toLowerCase();
-  const items = S.collections.filter((c) => !q || c.title.toLowerCase().includes(q));
-  const sorters = {
-    taken: (a, b) => (b.taken + b.rules) - (a.taken + a.rules) || b.monochrome_pairs - a.monochrome_pairs || a.title.localeCompare(b.title),
-    pairs: (a, b) => b.monochrome_pairs - a.monochrome_pairs || a.title.localeCompare(b.title),
-    mono: (a, b) => (b.monochrome_share ?? -1) - (a.monochrome_share ?? -1) || b.monochrome_pairs - a.monochrome_pairs,
-    floor: (a, b) => (a.floor ?? 1e12) - (b.floor ?? 1e12),
-    name: (a, b) => a.title.localeCompare(b.title),
-  };
-  items.sort(sorters[S.sort]);
-  const noWiki = !S.collections.some((c) => c.monochrome_pairs);
-  const total = S.collections.reduce((s, c) => s + c.taken, 0);
-  view.innerHTML = readiness() + `
-    <div class="controls">
-      <input id="q" placeholder="поиск коллекции" value="${esc(S.query)}">
-      <select id="sort">
-        <option value="taken">сначала, что берёт бот</option><option value="pairs">по числу монохромов</option>
-        <option value="mono">по доле монохромов</option><option value="floor">по флору ↑</option><option value="name">по названию</option>
-      </select>
+  const id = newScreen();
+  view.innerHTML = head("Коллекции") + `
+    <div class="sticky">
+      <div class="search">${ICON.search}<input id="q" type="search" placeholder="Найти коллекцию" autocomplete="off" enterkeyhint="search" value="${esc(S.list.q)}">
+        <button class="iconbtn" id="sortbtn" aria-label="Сортировка">${ICON.sort}</button></div>
+      <div class="chips" id="chips"></div>
     </div>
-    <div class="muted" style="margin:0 2px 10px">Бот берёт: <b>${total}</b> пар · коллекций: ${items.length}</div>
-    ${noWiki ? '<div class="card muted">Нет данных Gift Wiki: монохромные пары не показываются. Проверьте GIFTWIKI_API_KEY. Правило «любой фон» работает и без них.</div>' : ""}
-    ${items.map((c) => `
-      <div class="gcard tap ${c.taken ? "taken" : ""}" data-col="${esc(c.name)}">
-        <div class="gimg"><span class="initial">${esc(c.title[0] || "?")}</span>${pic(c.image)}</div>
-        <div class="gbody"><div class="title">${esc(c.title)}</div>
-          <div class="muted">${c.monochrome_pairs} пар · бот берёт ${c.taken} · флор ${ton(c.floor)}</div>
-          <div class="badges">
-            ${c.monochrome_share != null ? `<span class="badge mono">⚫ моделей ${c.monochrome_models} из ${c.known_models} — ${pct(c.monochrome_share)}</span>` : ""}
-            ${c.rules ? `<span class="badge">ещё правил: ${c.rules}</span>` : ""}
-          </div></div>
-      </div>`).join("") || '<div class="empty">Ничего не найдено. Список коллекций обновляется из MRKT раз в час.</div>'}`;
-  const sort = document.getElementById("sort"); sort.value = S.sort;
-  sort.onchange = () => { S.sort = sort.value; renderCollections(); };
-  const input = document.getElementById("q");
-  input.oninput = () => { S.query = input.value; clearTimeout(input.t); input.t = setTimeout(() => {
-    renderCollections(); const n = document.getElementById("q"); n.focus(); n.setSelectionRange(n.value.length, n.value.length); }, 250); };
-  view.querySelectorAll("[data-col]").forEach((el) => el.onclick = () => { haptic(); openCollection(el.dataset.col); });
+    ${banner()}<div id="grid">${skeletonTiles(6)}</div>`;
+  const q = $("#q");
+  q.oninput = () => { S.list.q = q.value; drawCollectionsGrid(); };
+  $("#sortbtn").onclick = openSortSheet;
+  try { await ensureCollections(); } catch (err) { if (!stale(id)) fail(err, renderCollections); return; }
+  if (stale(id)) return;
+  drawCollectionsGrid();
+  window.scrollTo(0, S.list.scroll);
+}
+function drawCollectionsGrid() {
+  const q = S.list.q.trim().toLowerCase();
+  const found = S.collections.filter((c) => !q || c.title.toLowerCase().includes(q) || c.name.toLowerCase().includes(q));
+  const counts = { all: found.length, taken: found.filter((c) => c.taken).length, mono: found.filter((c) => c.monochrome_pairs).length };
+  const chips = [["all", "Все"], ["taken", "Бот берёт"], ["mono", "С монохромами"]];
+  $("#chips").innerHTML = chips.map(([k, t]) => `<button class="chip${S.list.filter === k ? " on" : ""}" data-f="${k}">${t}<i>${counts[k]}</i></button>`).join("");
+  $$("#chips [data-f]").forEach((b) => (b.onclick = () => { S.list.filter = b.dataset.f; haptic(); drawCollectionsGrid(); }));
+  $("#sortbtn").classList.toggle("on", S.list.sort !== "taken");
+  const f = S.list.filter;
+  const items = found.filter((c) => f === "all" || (f === "taken" ? c.taken : c.monochrome_pairs))
+    .sort(SORTS.find(([k]) => k === S.list.sort)[2]);
+  let none = "";
+  if (!S.collections.length) none = empty("🎁", "Коллекции ещё не загружены", "Бот получает их с MRKT раз в час — загляните чуть позже.");
+  else if (!items.length && f === "taken" && !q) none = empty("🎯", "Бот пока ничего не берёт", "Откройте коллекцию и выберите модели и фоны.");
+  else if (!items.length) none = empty("🔍", "Ничего не найдено", "Попробуйте другое название или фильтр.");
+  $("#grid").innerHTML = none || `<div class="grid">${items.map(collectionTile).join("")}</div>`;
+  $$("#grid [data-col]").forEach((el) => (el.onclick = () => { haptic(); openCollection(el.dataset.col); }));
+}
+function collectionTile(c) {
+  const tag = c.taken ? `<span class="tag tl${c.autobuy ? " buy" : ""}">${c.autobuy ? "🛒" : "🔔"} ${c.taken}</span>` : "";
+  return `<button class="tile${c.taken ? " on" : ""}" data-col="${esc(c.name)}">${art(c.image, null, c.title, null, null, tag)}
+    <div class="cap"><div class="name">${esc(c.title)}</div>
+      <div class="sub split"><span>${ton(c.floor)}</span>${c.monochrome_share != null ? `<span class="mono-t">моно ${pct(c.monochrome_share)}</span>` : ""}</div></div></button>`;
+}
+function openSortSheet() {
+  Sheet.open(`<h3>Сортировка</h3>${SORTS.map(([k, t]) => `<button class="opt-line" data-sort="${k}">${t}${S.list.sort === k ? '<span class="tick">✓</span>' : ""}</button>`).join("")}`,
+    (root) => $$("[data-sort]", root).forEach((b) => (b.onclick = () => {
+      S.list.sort = b.dataset.sort; haptic(); Sheet.close(); drawCollectionsGrid(); window.scrollTo(0, 0);
+    })));
 }
 
+// ------------------------------------------------------------------ one collection
 async function openCollection(name) {
-  S.tab = "collections"; S.page = "collection";
-  document.querySelectorAll(".tab").forEach((t) => t.classList.toggle("active", t.dataset.tab === "collections"));
-  setBack(); spinner(); window.scrollTo(0, 0);
-  try { S.col = await api("/collections/" + encodeURIComponent(name)); } catch (err) { return fail(err); }
+  if (S.tab === "collections") rememberScroll();
+  S.tab = "collections"; S.page = "collection"; S.colView = { q: "", filter: "all", scroll: 0 };
+  $$("#tabbar button").forEach((b) => b.classList.toggle("on", b.dataset.tab === "collections"));
+  syncBack();
+  const id = newScreen();
+  view.innerHTML = topbar("Коллекции") + skeletonHero() + skeletonTiles(4);
+  window.scrollTo(0, 0);
+  try {
+    const col = await api("/collections/" + encodeURIComponent(name));
+    if (stale(id)) return;
+    S.col = col; S.colStale = false;
+  } catch (err) { if (!stale(id)) fail(err, () => openCollection(name), "Коллекции"); return; }
   drawCollection();
 }
-let modelQuery = "";
-let modelFilter = "all";
+async function reloadCollection() {
+  const id = newScreen();
+  view.innerHTML = topbar("Коллекции") + skeletonHero() + skeletonTiles(4);
+  try {
+    const col = await api("/collections/" + encodeURIComponent(S.col.name));
+    if (stale(id)) return;
+    S.col = col; S.colStale = false; S.draft = null;
+  } catch (err) { if (!stale(id)) fail(err, reloadCollection, "Коллекции"); return; }
+  render();
+}
+function wholeText(w) {
+  const parts = [];
+  if (w.any != null) parts.push(`любой подарок до ${ton(w.any)}`);
+  if (w.monochrome != null) parts.push(`любой монохром до ${ton(w.monochrome)}`);
+  return parts.join(" · ") || "Не выбрано: брать любой подарок или любой монохром коллекции";
+}
 function drawCollection() {
+  newScreen();
   const c = S.col;
-  const q = modelQuery.toLowerCase();
-  const models = c.models.filter((m) => (!q || m.name.toLowerCase().includes(q))
-    && (modelFilter === "all" || (modelFilter === "mono" ? m.pairs.length : m.taken)));
-  view.innerHTML = `
-    <div class="crumbs"><a data-nav="list">Коллекции</a> › ${esc(c.title)}</div>
-    <div class="card">
-      <div class="row"><div class="grow"><div class="title">${esc(c.title)}</div>
-        <div class="muted">бот берёт ${c.taken} · флор ${ton(c.floor)}</div></div>
-        <label class="switch" title="покупать автоматически"><input type="checkbox" id="autobuy" ${c.autobuy ? "checked" : ""} ${S.me && S.me.can_purchase ? "" : "disabled"}><span></span></label></div>
-      <div class="muted" style="margin-top:4px">${c.autobuy ? "🛒 покупать автоматически" : "🔔 только уведомлять"} — для всего, что выбрано в коллекции</div>
-      <div class="stat">
-        <div><b>${c.monochrome_pairs}</b><span>монохромных пар</span></div>
-        <div><b>${c.monochrome_share != null ? pct(c.monochrome_share) : "—"}</b><span>монохромных моделей</span></div>
-        <div><b>${ton(c.floor)}</b><span>флор</span></div>
-      </div>
-      ${c.giftwiki ? "" : '<div class="muted">Gift Wiki не знает монохромов этой коллекции (или нет данных).</div>'}
-    </div>
-    <div class="card">
-      <b>Вся коллекция</b>
-      ${optionRow("w-any", "Любой подарок коллекции", c.whole.any)}
-      ${optionRow("w-mono", "Любой монохром коллекции", c.whole.monochrome)}
-      <button class="btn ghost" id="savewhole">Сохранить для всей коллекции</button>
-    </div>
-    <input id="mq" placeholder="поиск модели" value="${esc(modelQuery)}">
-    <div class="chips">
-      ${[["all", "Все"], ["mono", "С монохромом"], ["taken", "Бот берёт"]].map(([k, t]) => `<button class="chip ${modelFilter === k ? "on" : ""}" data-mf="${k}">${t}</button>`).join("")}
-    </div>
-    ${models.map((m) => { const p = m.pairs.find((x) => x.center) || {}; return `
-      <div class="gcard tap ${m.taken ? "taken" : ""}" data-model="${esc(m.name)}">
-        <div class="gimg"${backdrop(p.center, p.edge)}><span class="initial">${esc(m.name[0] || "?")}</span>${pic(m.image, c.image)}</div>
-        <div class="gbody"><div class="title">${esc(m.name)}</div>
-          <div class="muted">${m.pairs.length ? `${m.pairs.length} монохромных фон(ов)` : "нет монохромов"} · бот берёт ${m.taken} · редк. ${pct(m.rarity)}${
-            m.floor != null ? ` · флор ${ton(m.floor)}` : m.seen_floor != null ? ` · от ${ton(m.seen_floor)}` : ""}</div>
-          <div class="badges">
-            ${m.monochrome_chance != null ? `<span class="badge mono">шанс монохрома ${pct(m.monochrome_chance)}</span>` : ""}
-            ${m.any != null ? `<span class="badge rule">любой фон ≤ ${ton(m.any)}</span>` : ""}
-            ${m.monochrome != null ? `<span class="badge rule">все монохромы ≤ ${ton(m.monochrome)}</span>` : ""}
-          </div></div>
-      </div>`; }).join("") || '<div class="empty">Моделей не найдено. Бот запоминает модели, которые видит на MRKT.</div>'}`;
-  const mq = document.getElementById("mq");
-  mq.oninput = () => { modelQuery = mq.value; clearTimeout(mq.t); mq.t = setTimeout(() => {
-    drawCollection(); const n = document.getElementById("mq"); n.focus(); n.setSelectionRange(n.value.length, n.value.length); }, 250); };
-  view.querySelectorAll("[data-mf]").forEach((b) => b.onclick = () => { modelFilter = b.dataset.mf; haptic(); drawCollection(); });
-  view.querySelectorAll("[data-model]").forEach((el) => el.onclick = () => { haptic(); openModel(el.dataset.model); });
-  document.getElementById("autobuy").onchange = (e) => setAutobuy(e.target.checked);
-  document.getElementById("savewhole").onclick = (e) => savePicks(e.target, () => ({
-    model: null, any_price_ton: optionValue("w-any"), monochrome_price_ton: optionValue("w-mono"), pairs: [] }));
+  const pairs = c.monochrome_pairs;
+  view.innerHTML = topbar("Коллекции") + `
+    <section class="hero">${art(c.image, null, c.title)}
+      <div class="grow"><h2>${esc(c.title)}</h2>
+        <div class="facts"><span class="fact">флор ${ton(c.floor)}</span>
+          ${pairs ? `<span class="fact mono">⚫ ${pairs} ${plural(pairs, "монохромная пара", "монохромные пары", "монохромных пар")}</span>` : ""}
+          ${c.monochrome_share != null ? `<span class="fact">моно ${c.monochrome_models} из ${c.known_models} моделей · ${pct(c.monochrome_share)}</span>` : ""}
+        </div></div></section>
+    ${autobuySwitch(c)}
+    <button class="rowbtn" id="whole"><div class="grow"><b>Вся коллекция</b><div class="sub">${esc(wholeText(c.whole))}</div></div><span class="chev">›</span></button>
+    <div class="sect"><h3>Модели<i>${c.models.length}</i></h3></div>
+    ${c.models.length > 6 ? `<div class="search">${ICON.search}<input id="mq" type="search" placeholder="Найти модель" autocomplete="off" enterkeyhint="search" value="${esc(S.colView.q)}"></div>` : ""}
+    <div class="chips" id="mchips"></div><div id="mgrid"></div>
+    ${c.giftwiki ? "" : '<p class="hint">Для этой коллекции нет данных о монохромах — модели можно брать с любым фоном.</p>'}`;
+  $$("#seg [data-v]").forEach((b) => (b.onclick = () => setAutobuy(b.dataset.v === "1")));
+  $("#whole").onclick = () => { haptic(); openWholeSheet(); };
+  const mq = $("#mq");
+  if (mq) mq.oninput = () => { S.colView.q = mq.value; drawModelsGrid(); };
+  drawModelsGrid();
 }
-function optionRow(id, label, price) {
-  return `<div class="opt"><input type="checkbox" class="box" id="${id}-on" ${price != null ? "checked" : ""}>
-    <label class="grow" for="${id}-on">${esc(label)}</label>
-    <input class="price" id="${id}-price" inputmode="decimal" placeholder="до, TON" value="${price != null ? esc(price) : ""}"></div>`;
+function autobuySwitch(c) {
+  if (!S.me.can_purchase) return '<p class="hint">🔔 Бот только уведомляет: у вас нет права на покупки.</p>';
+  return `<div class="seg" id="seg"><button data-v="1" class="${c.autobuy ? "on" : ""}">🛒 Покупать</button><button data-v="0" class="${c.autobuy ? "" : "on"}">🔔 Уведомлять</button></div>
+    <p class="hint">${c.autobuy ? "Бот сам купит выбранное в этой коллекции — в пределах лимитов." : "Бот только пришлёт сообщение о находке, покупать не будет."}</p>`;
 }
-function optionValue(id) {
-  const on = document.getElementById(id + "-on").checked;
-  const price = document.getElementById(id + "-price").value.trim();
-  if (on && !price) throw new Error("Укажите цену");
-  return on ? price : null;
+function drawModelsGrid() {
+  const c = S.col, q = S.colView.q.trim().toLowerCase();
+  const found = c.models.filter((m) => !q || m.name.toLowerCase().includes(q));
+  const counts = { all: found.length, mono: found.filter((m) => m.pairs.length).length, taken: found.filter((m) => m.taken).length };
+  const chips = [["all", "Все"], ["mono", "С монохромом"], ["taken", "Бот берёт"]].filter(([k]) => k === "all" || counts[k] || S.colView.filter === k);
+  $("#mchips").innerHTML = chips.length > 1 ? chips.map(([k, t]) => `<button class="chip${S.colView.filter === k ? " on" : ""}" data-f="${k}">${t}<i>${counts[k]}</i></button>`).join("") : "";
+  $$("#mchips [data-f]").forEach((b) => (b.onclick = () => { S.colView.filter = b.dataset.f; haptic(); drawModelsGrid(); }));
+  const f = S.colView.filter;
+  const items = found.filter((m) => f === "all" || (f === "mono" ? m.pairs.length : m.taken));
+  $("#mgrid").innerHTML = items.length ? `<div class="grid">${items.map((m) => modelTile(c, m)).join("")}</div>`
+    : c.models.length ? empty("🔍", "Ничего не найдено", "Попробуйте другое название.")
+    : empty("🎁", "Модели ещё не известны", "Бот узнаёт модели из MRKT и из объявлений, которые видит.");
+  $$("#mgrid [data-model]").forEach((el) => (el.onclick = () => { haptic(); openModel(el.dataset.model); }));
+}
+function modelTile(c, m) {
+  const p = m.pairs.find((x) => x.center) || {};
+  const floor = m.floor ?? m.seen_floor;
+  const tags = (m.taken ? `<span class="tag tl ok">✓ ${m.taken}</span>` : "") + (m.pairs.length ? `<span class="tag tr">⚫ ${m.pairs.length}</span>` : "");
+  return `<button class="tile${m.taken ? " on" : ""}" data-model="${esc(m.name)}">${art(m.image, c.image, m.name, p.center, p.edge, tags)}
+    <div class="cap"><div class="name">${esc(m.name)}</div>
+      <div class="sub split"><span>${ton(floor)}</span>${m.rarity != null ? `<span>${pct(m.rarity)}</span>` : ""}</div>
+      ${m.monochrome_chance != null ? `<div class="sub mono-t">моно ${pct(m.monochrome_chance)}</div>` : ""}</div></button>`;
 }
 async function setAutobuy(value) {
+  const c = S.col;
+  if (c.autobuy === value) return;
   haptic();
   try {
-    if (S.col.plans.length) for (const id of S.col.plans) await api(`/rules/${id}`, "PATCH", { autobuy: value });
-    S.col.autobuy = value; toast(value ? "Будет покупать автоматически" : "Будет только уведомлять");
-    await loadMe(); drawCollection();
-  } catch (err) { toast(err.message); drawCollection(); }
+    for (const rule of c.plans) await api(`/rules/${rule}`, "PATCH", { autobuy: value });
+    c.autobuy = value;
+    toast(value ? "Бот будет покупать сам" : "Бот будет только уведомлять");
+    if (c.plans.length) changed(true);
+  } catch (err) { toast(err.message); }
+  const y = window.scrollY; drawCollection(); window.scrollTo(0, y);
 }
-async function savePicks(button, body) {
-  try { body = typeof body === "function" ? body() : body; } catch (err) { return toast(err.message); }
-  button.disabled = true;
-  try {
-    S.col = await api(`/collections/${encodeURIComponent(S.col.name)}/picks`, "PUT", { ...body, autobuy: S.col.autobuy });
-    S.collections = null; await loadMe();
-    if (tg && tg.HapticFeedback) tg.HapticFeedback.notificationOccurred("success");
-    toast("Сохранено");
-    S.page === "model" ? drawModel(body.model) : drawCollection();
-  } catch (err) { button.disabled = false; toast(err.message); }
+function openWholeSheet() {
+  const c = S.col;
+  const d = { any: option(c.whole.any), mono: option(c.whole.monochrome) };
+  Sheet.open(`<h3>Вся коллекция</h3><p class="sub" style="margin:0 2px 14px">${esc(c.title)}</p>
+    <div class="card">${optRow("any", "Любой подарок", "все модели, любой фон", d.any)}
+      ${c.monochrome_pairs ? optRow("mono", "Любой монохром", `все ${c.monochrome_pairs} монохромных пар`, d.mono) : ""}</div>
+    <p class="hint">Модели и фоны, выбранные отдельно, покупаются по своим ценам.</p>
+    <button class="btn" id="wsave">Сохранить</button>`, (root) => {
+    bindOptions(root, d, () => syncOptions(root, d));
+    $("#wsave", root).onclick = async (e) => {
+      for (const [k, title] of [["any", "Любой подарок"], ["mono", "Любой монохром"]]) {
+        if (d[k].on && !d[k].price.trim()) return markBad($(`[data-opt="${k}"] .price`, root), `Укажите цену для «${title}»`);
+      }
+      e.target.disabled = true;
+      try {
+        S.col = await api(`/collections/${encodeURIComponent(c.name)}/picks`, "PUT", {
+          model: null, pairs: [], autobuy: c.autobuy,
+          any_price_ton: d.any.on ? d.any.price.trim() : null, monochrome_price_ton: d.mono.on ? d.mono.price.trim() : null,
+        });
+        Sheet.close(); haptic("success"); toast("Сохранено"); changed(true);
+        const y = window.scrollY; drawCollection(); window.scrollTo(0, y);
+      } catch (err) { e.target.disabled = false; toast(err.message); haptic("error"); }
+    };
+  });
 }
 
-// ------------------------------------------------------------------ model: monochrome pairs with own prices
-function openModel(name) { S.page = "model"; setBack(); window.scrollTo(0, 0); drawModel(name); }
-function drawModel(name) {
-  const c = S.col;
-  const m = c.models.find((x) => x.name === name);
-  if (!m) { S.page = "collection"; return drawCollection(); }
-  view.innerHTML = `
-    <div class="crumbs"><a data-nav="list">Коллекции</a> › <a data-nav="collection">${esc(c.title)}</a> › ${esc(m.name)}</div>
-    <div class="card">
-      <div class="title">${esc(m.name)}</div>
-      <div class="muted">редкость ${pct(m.rarity)}${m.floor != null ? ` · флор модели ${ton(m.floor)}` : m.seen_floor != null ? ` · в продаже от ${ton(m.seen_floor)}` : ""}${
-        m.monochrome_chance != null ? ` · шанс монохрома ${pct(m.monochrome_chance)}` : ""}</div>
-      ${optionRow("m-any", "Любой фон", m.any)}
-      ${optionRow("m-mono", "Все монохромные фоны", m.monochrome)}
-      <div class="muted">Цена у отдельной пары ниже важнее цены «все монохромные фоны».</div>
-    </div>
-    <h3>Монохромные пары · Gift Wiki (${m.pairs.length})</h3>
-    ${m.pairs.map((p, i) => `
-      <div class="gcard ${p.price != null ? "taken" : ""}" id="pair-${i}">
-        <div class="gimg tall"${backdrop(p.center, p.edge)}><span class="initial">${esc(m.name[0] || "?")}</span>${pic(p.image, c.image)}
-          <span class="corner">${level(p.type)}</span></div>
-        <div class="gbody"><div class="title">${esc(p.backdrop)}</div>
-          <div class="muted">${esc(m.name)} · ${esc(c.title)}</div>
-          <div class="badges"><span class="badge">фон ${pct(p.rarity)}</span><span class="badge mono">монохром: ${esc(p.type || "?")}</span>
-            <span class="badge ${p.price != null ? "rule" : ""}" id="state-${i}">${p.price != null ? "бот берёт" : "бот не берёт"}</span></div>
-          <div class="opt" style="border:0"><input type="checkbox" class="box" data-pair="${i}" id="p-${i}" ${p.price != null ? "checked" : ""}>
-            <label class="grow" for="p-${i}">Брать эту пару</label>
-            <input class="price" data-price="${i}" inputmode="decimal" placeholder="вход до, TON" value="${p.price != null ? esc(p.price) : ""}"></div>
-        </div>
-      </div>`).join("") || `<div class="card muted">${c.giftwiki ? "Gift Wiki не знает монохромных фонов для этой модели." : "Нет данных Gift Wiki — монохромные пары не определяются."}</div>`}
-    <div class="savebar"><button class="btn" id="savemodel">Сохранить</button></div>`;
-  view.querySelectorAll("[data-pair]").forEach((box) => box.onchange = () => {
-    haptic();
-    const i = box.dataset.pair;
-    const price = view.querySelector(`[data-price="${i}"]`);
-    if (box.checked && !price.value) price.value = document.getElementById("m-mono-price").value || (m.floor ?? "");
-    document.getElementById("pair-" + i).classList.toggle("taken", box.checked);
-    const state = document.getElementById("state-" + i);
-    state.textContent = box.checked ? "бот берёт" : "бот не берёт"; state.classList.toggle("rule", box.checked);
-  });
-  view.querySelectorAll("[data-price]").forEach((input) => input.oninput = () => {
-    const box = view.querySelector(`[data-pair="${input.dataset.price}"]`);
-    if (input.value.trim() && !box.checked) { box.checked = true; box.onchange(); }
-  });
-  document.getElementById("savemodel").onclick = (e) => savePicks(e.target, () => ({
-    model: m.name,
-    any_price_ton: optionValue("m-any"),
-    monochrome_price_ton: optionValue("m-mono"),
-    pairs: m.pairs.map((p, i) => ({ p, i })).filter(({ i }) => view.querySelector(`[data-pair="${i}"]`).checked)
-      .map(({ p, i }) => {
-        const price = view.querySelector(`[data-price="${i}"]`).value.trim();
-        if (!price) throw new Error(`Укажите цену для фона ${p.backdrop}`);
-        return { backdrop: p.backdrop, price_ton: price };
-      }),
+// ------------------------------------------------------------------ one model: any backdrop, monochrome backdrops with own prices
+function openModel(name) {
+  rememberScroll();
+  S.page = "model"; S.model = name; S.draft = null;
+  syncBack(); window.scrollTo(0, 0);
+  drawModel();
+}
+const currentModel = () => S.col.models.find((x) => x.name === S.model);
+function initDraft(m) {
+  S.draft = { any: option(m.any), mono: option(m.monochrome), pairs: m.pairs.map((p) => option(p.price)) };
+  S.initial = draftKey(S.draft);
+}
+// what would be saved: a switched-off option with a typed price is still "nothing"
+const draftKey = (d) => JSON.stringify([d.any, d.mono, ...d.pairs].map((o) => (o.on ? o.price.trim() : null)));
+function drawModel() {
+  newScreen();
+  const c = S.col, m = currentModel();
+  if (!m) { S.page = "collection"; return render(); }
+  if (!S.draft) initDraft(m);
+  const d = S.draft, p0 = m.pairs.find((p) => p.center) || {}, n = m.pairs.length;
+  const floor = m.floor ?? m.seen_floor;
+  view.innerHTML = topbar(c.title) + `
+    <section class="hero">${art(m.image, c.image, m.name, p0.center, p0.edge)}
+      <div class="grow"><h2>${esc(m.name)}</h2><div class="sub">${esc(c.title)}</div>
+        <div class="facts">${m.rarity != null ? `<span class="fact">редкость ${pct(m.rarity)}</span>` : ""}
+          ${floor != null ? `<span class="fact">${m.floor != null ? "флор" : "в продаже от"} ${ton(floor)}</span>` : ""}
+          ${m.monochrome_chance != null ? `<span class="fact mono">⚫ шанс монохрома ${pct(m.monochrome_chance)}</span>` : ""}</div></div></section>
+    <div class="label">Что брать</div>
+    <div class="card">${optRow("any", "Любой фон", "все копии этой модели", d.any)}
+      ${n ? optRow("mono", "Все монохромы", `${n} ${plural(n, "фон", "фона", "фонов")} по одной цене`, d.mono) : ""}</div>
+    ${n ? `<div class="sect"><h3>Монохромные фоны<i>${n}</i></h3><button class="link" id="selall">Выбрать все</button></div>
+      <div class="bulk hidden" id="bulk">${priceField('id="bulkprice"', "", "Цена для отмеченных")}<button class="btn small" id="bulkapply">Применить</button></div>
+      <div class="grid">${m.pairs.map((p, i) => pairTile(c, m, p, i)).join("")}</div>
+      <p class="hint">Нажмите на фон, чтобы бот брал его по своей цене. Цена фона важнее общей цены «Все монохромы».</p>`
+    : empty("🎨", "Монохромных фонов нет", c.giftwiki ? "Для этой модели они не найдены — можно брать любой фон." : "Для этой коллекции нет данных о монохромах — можно брать любой фон.")}`;
+  bindModel(m);
+  refreshModel();
+}
+function pairTile(c, m, p, i) {
+  return `<div class="tile pair" data-pair="${i}">${art(p.image, c.image, m.name, p.center, p.edge, `${level(p.type)}<span class="check"></span>`)}
+    <div class="cap"><div class="name">${esc(p.backdrop)}</div><div class="sub">${p.rarity != null ? `фон ${pct(p.rarity)}` : "&nbsp;"}</div>
+      ${priceField(`data-price="${i}"`, S.draft.pairs[i].price, "цена", "sm")}</div></div>`;
+}
+function bindModel(m) {
+  const d = S.draft;
+  bindOptions(view, d, refreshModel);
+  $$("[data-pair]").forEach((tile) => (tile.onclick = (e) => {
+    if (e.target.closest(".price")) return;
+    const i = +tile.dataset.pair, p = d.pairs[i];
+    p.on = !p.on; haptic();
+    if (p.on && !p.price.trim()) $(`[data-price="${i}"]`).value = p.price = suggestedPrice(m);
+    refreshModel();
   }));
+  $$("[data-price]").forEach((input) => (input.oninput = () => {
+    const p = d.pairs[+input.dataset.price];
+    p.price = input.value;
+    if (p.price.trim()) p.on = true;
+    refreshModel();
+  }));
+  const all = $("#selall");
+  if (!all) return;
+  all.onclick = () => {
+    const every = d.pairs.every((p) => p.on);
+    d.pairs.forEach((p, i) => {
+      p.on = !every;
+      if (p.on && !p.price.trim()) $(`[data-price="${i}"]`).value = p.price = suggestedPrice(m);
+    });
+    haptic(); refreshModel();
+  };
+  $("#bulkapply").onclick = () => {
+    const price = $("#bulkprice").value.trim();
+    if (!price) return markBad($("#bulkprice").closest(".price"), "Введите цену");
+    d.pairs.forEach((p, i) => { if (p.on) $(`[data-price="${i}"]`).value = p.price = price; });
+    haptic(); refreshModel(); toast("Цена применена к отмеченным фонам");
+  };
+}
+// a newly ticked backdrop starts from the price typed for several, the shared monochrome price or the floor
+function suggestedPrice(m) {
+  const bulk = $("#bulkprice") ? $("#bulkprice").value.trim() : "";
+  if (bulk) return bulk;
+  if (S.draft.mono.on && S.draft.mono.price.trim()) return S.draft.mono.price.trim();
+  const floor = m.floor ?? m.seen_floor;
+  return floor != null ? String(floor) : "";
+}
+function refreshModel() {
+  const d = S.draft, shared = d.mono.on ? d.mono.price.trim() : "";
+  syncOptions(view, d);
+  d.pairs.forEach((p, i) => {
+    $(`[data-pair="${i}"]`).classList.toggle("on", p.on);
+    $(`[data-price="${i}"]`).placeholder = !p.on && shared ? `до ${shared}` : "цена";
+  });
+  const picked = d.pairs.filter((p) => p.on).length;
+  if ($("#selall")) {
+    $("#selall").textContent = picked === d.pairs.length ? "Снять все" : "Выбрать все";
+    $("#bulk").classList.toggle("hidden", picked < 2);
+  }
+  if (draftKey(d) === S.initial) return Save.hide();
+  const n = [d.any, d.mono, ...d.pairs].filter((o) => o.on).length;
+  Save.show(n ? `Сохранить · ${n} ${plural(n, "позиция", "позиции", "позиций")}` : "Сохранить: не брать эту модель", saveModel);
+}
+async function saveModel() {
+  const c = S.col, m = currentModel(), d = S.draft;
+  if (d.any.on && !d.any.price.trim()) return markBad($('[data-opt="any"] .price'), "Укажите цену для «Любой фон»");
+  if (d.mono.on && !d.mono.price.trim()) return markBad($('[data-opt="mono"] .price'), "Укажите цену для «Все монохромы»");
+  const missing = d.pairs.findIndex((p) => p.on && !p.price.trim());
+  if (missing >= 0) return markBad($(`[data-price="${missing}"]`).closest(".price"), `Укажите цену для фона ${m.pairs[missing].backdrop}`);
+  Save.busy(true);
+  try {
+    S.col = await api(`/collections/${encodeURIComponent(c.name)}/picks`, "PUT", {
+      model: m.name, autobuy: c.autobuy,
+      any_price_ton: d.any.on ? d.any.price.trim() : null,
+      monochrome_price_ton: d.mono.on ? d.mono.price.trim() : null,
+      pairs: m.pairs.map((p, i) => [p, d.pairs[i]]).filter(([, o]) => o.on).map(([p, o]) => ({ backdrop: p.backdrop, price_ton: o.price.trim() })),
+    });
+    S.draft = null; Save.hide(); haptic("success"); toast("Сохранено"); changed(true);
+    if (S.tab === "collections" && S.page === "model") { const y = window.scrollY; drawModel(); window.scrollTo(0, y); }
+  } catch (err) { toast(err.message); haptic("error"); }
+  finally { Save.busy(false); }
 }
 
 // ------------------------------------------------------------------ what the bot takes
-async function renderRules() {
-  spinner();
-  let rules;
-  try { rules = (await api("/rules")).items; } catch (err) { return fail(err); }
-  const total = rules.filter((r) => r.plan && r.enabled).reduce((s, r) => s + r.picks.length, 0);
-  view.innerHTML = readiness() + `<div class="muted" style="margin:0 2px 10px">Бот берёт: <b>${total}</b> пар и моделей</div>` + (rules.length ? rules.map((r) => `
-    <div class="card">
-      <div class="row"><div class="grow"><div style="font-weight:700">${esc(r.name)}</div>
-        <div class="muted">${r.plan ? `${r.picks.length} выбрано` : esc(r.summary.join(" · ") || "без условий")}</div></div>
-        <label class="switch" title="включено"><input type="checkbox" data-en="${r.id}" ${r.enabled ? "checked" : ""}><span></span></label></div>
-      ${r.plan ? `<div class="badges">${r.picks.slice(0, 8).map((p) => `<span class="badge">${esc(p)}</span>`).join("")}${r.picks.length > 8 ? `<span class="badge">и ещё ${r.picks.length - 8}</span>` : ""}</div>` : ""}
-      <div class="muted" style="margin-top:8px">${!r.enabled ? "⏸ выключено" : r.autobuy ? "🛒 покупает автоматически" : "🔔 только уведомления"}</div>
-      <div class="chips">
-        ${S.me && S.me.can_purchase ? `<button class="chip" data-ab="${r.id}" data-v="${r.autobuy ? 0 : 1}">${r.autobuy ? "Только уведомлять" : "Покупать автоматически"}</button>` : ""}
-        ${r.collection ? `<button class="chip" data-open="${esc(r.collection)}">Открыть коллекцию</button>` : ""}
-        <button class="chip" data-del="${r.id}">Удалить</button>
-      </div>
-    </div>`).join("") : '<div class="empty">Пока ничего не выбрано.<br>Откройте «Коллекции», выберите коллекцию, модель и пары.</div>');
-  view.querySelectorAll("[data-en]").forEach((el) => el.onchange = () => patchRule(el.dataset.en, { enabled: el.checked }));
-  view.querySelectorAll("[data-ab]").forEach((el) => el.onclick = () => patchRule(el.dataset.ab, { autobuy: el.dataset.v === "1" }));
-  view.querySelectorAll("[data-open]").forEach((el) => el.onclick = () => openCollection(el.dataset.open));
-  view.querySelectorAll("[data-del]").forEach((el) => el.onclick = async () => {
-    if (!(await confirmBox("Удалить это правило?"))) return;
-    try { await api(`/rules/${el.dataset.del}`, "DELETE"); S.collections = null; await loadMe(); toast("Удалено"); } catch (err) { toast(err.message); }
-    renderRules();
-  });
+function groupRules(items) {
+  const groups = new Map(), other = [];
+  for (const r of items) {
+    if (!r.plan || !r.collection) { other.push(r); continue; }
+    const key = r.collection.toLowerCase();
+    if (!groups.has(key)) groups.set(key, { collection: r.collection, image: r.image, rules: [], picks: [] });
+    const g = groups.get(key);
+    g.rules.push(r);
+    for (const p of r.pick_items) g.picks.push({ ...p, mono: r.kind === "monochrome" });
+  }
+  const title = (name) => (S.collections || []).find((c) => c.name === name)?.title || name;
+  const list = [...groups.values()].map((g) => ({
+    ...g, title: title(g.collection), ids: g.rules.map((r) => r.id).join(","),
+    enabled: g.rules.some((r) => r.enabled), autobuy: g.rules.some((r) => r.autobuy),
+    picks: g.picks.sort((a, b) => (a.model || "").localeCompare(b.model || "", "ru") || b.backdrops.length - a.backdrops.length),
+  }));
+  return { groups: list.sort(byTitle), other };
 }
-async function patchRule(id, body) {
+function pickLine(p) {
+  const what = p.backdrops.length ? `⚫ ${p.backdrops.join(", ")}` : p.mono ? "⚫ все монохромы" : "любой фон";
+  return `<div class="pk"><span><b>${esc(p.model || "Вся коллекция")}</b> · ${esc(what)}</span><span class="pr">до ${ton(p.price)}</span></div>`;
+}
+const stateText = (r) => (!r.enabled ? "⏸ выключено" : r.autobuy ? "🛒 покупает сам" : "🔔 только уведомляет");
+function ruleActions(r, edit) {
+  return `<div class="ractions">${edit ? `<button class="pbtn" data-edit="${esc(edit)}">Изменить</button>` : ""}
+    ${S.me.can_purchase ? `<button class="pbtn" data-ab="${r.ids}" data-v="${r.autobuy ? 0 : 1}">${r.autobuy ? "🔔 Уведомлять" : "🛒 Покупать"}</button>` : ""}
+    <button class="pbtn danger" data-del="${r.ids}">Удалить</button></div>`;
+}
+function groupCard(g) {
+  const more = g.picks.length > 6 ? `<div class="pk"><span class="sub">и ещё ${g.picks.length - 6}</span></div>` : "";
+  return `<div class="rcard${g.enabled ? "" : " paused"}">
+    <div class="rhead">${thumb(g.image, g.title)}
+      <div class="grow"><b>${esc(g.title)}</b><div class="sub">${stateText(g)} · ${g.picks.length} ${plural(g.picks.length, "позиция", "позиции", "позиций")}</div></div>
+      <label class="switch"><input type="checkbox" data-en="${g.ids}" ${g.enabled ? "checked" : ""}><span></span></label></div>
+    <div class="picks">${g.picks.slice(0, 6).map(pickLine).join("")}${more}</div>${ruleActions(g, g.collection)}</div>`;
+}
+function chatRuleCard(r) {
+  const rule = { ...r, ids: String(r.id) };
+  return `<div class="rcard${r.enabled ? "" : " paused"}">
+    <div class="rhead"><div class="grow"><b>${esc(r.name)}</b><div class="sub">${stateText(r)}</div>
+      <div class="sub">${esc(r.summary.join(" · ") || "без условий")}</div></div>
+      <label class="switch"><input type="checkbox" data-en="${rule.ids}" ${r.enabled ? "checked" : ""}><span></span></label></div>${ruleActions(rule)}</div>`;
+}
+async function renderRules() {
+  const id = newScreen();
+  view.innerHTML = head("Берёт бот") + skeletonRows(3);
+  let items;
+  try { [items] = await Promise.all([api("/rules").then((r) => r.items), ensureCollections().catch(() => null)]); }
+  catch (err) { if (!stale(id)) fail(err, renderRules); return; }
+  if (stale(id)) return;
+  const { groups, other } = groupRules(items);
+  const on = groups.filter((g) => g.enabled), picks = on.reduce((s, g) => s + g.picks.length, 0);
+  view.innerHTML = head("Берёт бот") + banner() + (groups.length || other.length ? `
+    ${groups.length ? `<p class="total">Бот берёт <b>${picks}</b> ${plural(picks, "позицию", "позиции", "позиций")} в <b>${on.length}</b> ${plural(on.length, "коллекции", "коллекциях", "коллекциях")}</p>` : ""}
+    ${groups.map(groupCard).join("")}
+    ${other.length ? `<div class="label">Фильтры из чата</div>${other.map(chatRuleCard).join("")}` : ""}
+    <button class="btn soft" data-goto="collections">＋ Выбрать в коллекциях</button>`
+    : empty("🎯", "Пока ничего не выбрано", "Откройте коллекцию, выберите модели и монохромные фоны и укажите цены.", '<button class="btn" data-goto="collections">Выбрать в коллекциях</button>'));
+  const ids = (el, key) => el.dataset[key].split(",").filter(Boolean);
+  $$("[data-en]").forEach((el) => (el.onchange = () => patchRules(ids(el, "en"), { enabled: el.checked })));
+  $$("[data-ab]").forEach((el) => (el.onclick = () => patchRules(ids(el, "ab"), { autobuy: el.dataset.v === "1" })));
+  $$("[data-edit]").forEach((el) => (el.onclick = () => { haptic(); openCollection(el.dataset.edit); }));
+  $$("[data-del]").forEach((el) => (el.onclick = async () => {
+    if (!(await confirmBox("Удалить? Бот перестанет это брать."))) return;
+    try { for (const rule of ids(el, "del")) await api(`/rules/${rule}`, "DELETE"); haptic("success"); toast("Удалено"); }
+    catch (err) { toast(err.message); }
+    changed(); rerenderRules();
+  }));
+}
+async function patchRules(ids, body) {
   haptic();
-  try { await api(`/rules/${id}`, "PATCH", body); S.collections = null; await loadMe(); }
+  try { for (const rule of ids) await api(`/rules/${rule}`, "PATCH", body); }
   catch (err) { toast(err.message); }
-  renderRules();
+  changed(); rerenderRules();
+}
+async function rerenderRules() {
+  const y = window.scrollY;
+  await renderRules();
+  if (S.tab === "rules") window.scrollTo(0, y);
 }
 
-// ------------------------------------------------------------------ limits
+// ------------------------------------------------------------------ limits and modes
+const CHECK_TARGETS = {
+  limits: ["Задать", () => scrollToId("budget")],
+  rule: ["Выбрать", () => go("collections")],
+  modes: ["Включить", () => scrollToId("modes")],
+  stopped: ["Открыть", () => scrollToId("emergency")],
+};
+function scrollToId(id) { const el = document.getElementById(id); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); }
 async function renderSettings() {
-  spinner();
-  try { await loadMe(); } catch (err) { return fail(err); }
+  const id = newScreen();
+  view.innerHTML = head("Лимиты") + skeletonRows(3);
+  try { await loadMe(); } catch (err) { if (!stale(id)) fail(err, renderSettings); return; }
+  if (stale(id)) return;
   const m = S.me, l = m.limits;
-  const modeText = { live: "💸 live — реальные покупки", dry_run: "🧪 тестовый — покупки только имитируются", notify_only: "🔔 только уведомления" }[m.run_mode] || m.run_mode;
-  view.innerHTML = readiness() + `
-    <div class="card"><b>Общие лимиты</b> <span class="muted">— обязательны для покупок, действуют на всё</span>
-      <div class="field"><label>На одну покупку, TON</label><input id="pp" inputmode="decimal" value="${esc(l.per_purchase ?? "")}" placeholder="не задан"></div>
-      <div class="field"><label>На день, TON (потрачено сегодня ${ton(m.spent.today)})</label><input id="dl" inputmode="decimal" value="${esc(l.daily ?? "")}" placeholder="не задан"></div>
-      <div class="field"><label>Всего, TON (потрачено ${ton(m.spent.total)})</label><input id="tt" inputmode="decimal" value="${esc(l.total ?? "")}" placeholder="не задан"></div>
-      <button class="btn" id="savelim">Сохранить лимиты</button>
-    </div>
-    <div class="card">
-      ${[["autobuy_enabled", "Автопокупка подарков", "«любой фон» и обычные правила"],
-         ["monochrome_autobuy_enabled", "Автопокупка монохромов", "монохромные пары и «все монохромы»"],
-         ["purchases_paused", "Пауза покупок", "временно ничего не покупать"]].map(([k, t, d]) => `
-        <div class="row field"><div class="grow"><b>${t}</b><div class="muted">${d}</div></div>
-          <label class="switch"><input type="checkbox" data-pref="${k}" ${m[k] ? "checked" : ""}><span></span></label></div>`).join("")}
-    </div>
-    <div class="card"><b>Режим работы</b><div class="muted" style="margin-top:4px">${esc(modeText)}.
-      ${m.run_mode !== "live" ? " Чтобы покупать по-настоящему, поменяйте RUN_MODE=live в файле .env и перезапустите бота (docker compose up -d)." : ""}</div>
-      <div class="muted" style="margin-top:6px">Gift Wiki: ${m.giftwiki.records ? `${m.giftwiki.records} монохромных записей` : "нет данных"}</div>
-      ${m.stopped
-        ? (m.is_admin ? '<button class="btn" id="resume">Снять аварийную остановку</button>' : '<div class="muted">Аварийная остановка включена. Снять её может администратор.</div>')
-        : '<button class="btn danger" id="stop">⛔ Аварийно остановить все покупки</button>'}
-    </div>`;
-  document.getElementById("savelim").onclick = async (e) => {
-    e.target.disabled = true;
-    const val = (id) => document.getElementById(id).value.trim() || null;
-    try { await api("/settings", "PUT", { per_purchase_ton: val("pp"), daily_ton: val("dl"), total_ton: val("tt") }); toast("Лимиты сохранены"); renderSettings(); }
-    catch (err) { e.target.disabled = false; toast(err.message); }
-  };
-  view.querySelectorAll("[data-pref]").forEach((el) => el.onchange = async () => {
+  const limit = (key, title, value, sub) => `<div class="line"><div class="grow"><b>${title}</b>${sub ? `<div class="sub">${sub}</div>` : ""}</div>
+    ${priceField(`data-limit="${key}"`, value ?? "", "—")}</div>`;
+  const pref = (key, title, sub) => `<div class="line"><div class="grow"><b>${title}</b><div class="sub">${sub}</div></div>
+    <label class="switch"><input type="checkbox" data-pref="${key}" ${m[key] ? "checked" : ""}><span></span></label></div>`;
+  view.innerHTML = head("Лимиты") + `<div id="status"></div>
+    <div class="label" id="budget">Бюджет</div>
+    <div class="card">${limit("per_purchase_ton", "На одну покупку", l.per_purchase, "")}
+      ${limit("daily_ton", "В день", l.daily, `потрачено сегодня ${ton(m.spent.today)}`)}
+      ${limit("total_ton", "Всего", l.total, `потрачено всего ${ton(m.spent.total)}`)}</div>
+    <p class="hint">Без всех трёх лимитов бот ничего не покупает — даже в тестовом режиме.</p>
+    <div class="label" id="modes">Автопокупка</div>
+    <div class="card">${pref("autobuy_enabled", "Обычные подарки", "любой фон и фильтры из чата")}
+      ${pref("monochrome_autobuy_enabled", "Монохромы", "монохромные фоны")}
+      ${pref("purchases_paused", "Пауза", "временно ничего не покупать")}</div>
+    <div id="emergency"></div>
+    <div class="foot" id="datainfo"></div>`;
+  drawStatus();
+  const initial = JSON.stringify($$("[data-limit]").map((i) => i.value.trim()));
+  $$("[data-limit]").forEach((input) => (input.oninput = () => {
+    JSON.stringify($$("[data-limit]").map((i) => i.value.trim())) === initial ? Save.hide() : Save.show("Сохранить лимиты", saveLimits);
+  }));
+  $$("[data-pref]").forEach((el) => (el.onchange = async () => {
     haptic();
-    try { await api("/settings", "PUT", { [el.dataset.pref]: el.checked }); } catch (err) { toast(err.message); }
-    renderSettings();
-  });
-  const stop = document.getElementById("stop");
-  if (stop) stop.onclick = async () => { if (await confirmBox("Остановить все автопокупки?")) { try { await api("/stop", "POST"); toast("Покупки остановлены"); } catch (err) { toast(err.message); } renderSettings(); } };
-  const resume = document.getElementById("resume");
-  if (resume) resume.onclick = async () => { try { await api("/resume", "POST"); toast("Остановка снята"); } catch (err) { toast(err.message); } renderSettings(); };
+    try { S.me = await api("/settings", "PUT", { [el.dataset.pref]: el.checked }); updateChrome(); drawStatus(); }
+    catch (err) { el.checked = !el.checked; toast(err.message); }
+  }));
+}
+function drawStatus() {
+  const m = S.me;
+  const modes = {
+    live: ["💸 Боевой режим", "Бот покупает по-настоящему, в пределах лимитов."],
+    dry_run: ["🧪 Тестовый режим", "Покупки только имитируются: бот пришлёт «был бы куплен». Для настоящих покупок поставьте RUN_MODE=live в файле .env и перезапустите бота."],
+    notify_only: ["🔔 Только уведомления", "Бот ничего не покупает, только присылает находки."],
+  };
+  const [title, text] = m.stopped ? ["⛔ Все покупки остановлены", m.is_admin ? "Аварийная остановка. Снять её можно внизу страницы." : "Аварийная остановка. Снять её может администратор."]
+    : modes[m.run_mode] || [m.run_mode, ""];
+  const checks = m.ready ? "" : `<div class="label">Чтобы бот начал покупать</div><div class="card">${m.checklist.map((c) => {
+    const target = !c.ok && CHECK_TARGETS[c.id];
+    return `<div class="ck${c.ok ? " ok" : ""}"><span class="mark">${c.ok ? "✓" : "!"}</span><span class="grow">${esc(c.text)}</span>
+      ${target ? `<button class="link" data-check="${esc(c.id)}">${target[0]}</button>` : ""}</div>`;
+  }).join("")}</div>`;
+  $("#status").innerHTML = `<div class="mode ${m.stopped ? "stop" : esc(m.run_mode)}"><b>${esc(title)}</b><div class="sub">${esc(text)}</div></div>${checks}`;
+  $$("#status [data-check]").forEach((b) => (b.onclick = () => { haptic(); CHECK_TARGETS[b.dataset.check][1](); }));
+  $("#emergency").innerHTML = m.stopped
+    ? (m.is_admin ? '<button class="btn" id="resume">Снять аварийную остановку</button>' : "")
+    : '<button class="btn danger" id="stop">⛔ Остановить все покупки</button>';
+  const stop = $("#stop"), resume = $("#resume");
+  if (stop) stop.onclick = async () => {
+    if (!(await confirmBox("Остановить все автопокупки?"))) return;
+    try { S.me = await api("/stop", "POST"); haptic("warning"); toast("Покупки остановлены"); } catch (err) { toast(err.message); }
+    updateChrome(); drawStatus();
+  };
+  if (resume) resume.onclick = async () => {
+    try { S.me = await api("/resume", "POST"); haptic("success"); toast("Остановка снята"); } catch (err) { toast(err.message); }
+    updateChrome(); drawStatus();
+  };
+  const g = m.giftwiki;
+  const age = g.age_hours == null ? "" : g.age_hours < 1 ? " · обновлены меньше часа назад" : ` · обновлены ${Math.round(g.age_hours)} ч назад`;
+  $("#datainfo").textContent = g.records ? `Монохромных пар в базе: ${num(g.records, 0)}${age}` : "Данные о монохромах ещё не загружены";
+}
+async function saveLimits() {
+  const body = {};
+  $$("[data-limit]").forEach((input) => (body[input.dataset.limit] = input.value.trim() || null));
+  Save.busy(true);
+  try {
+    S.me = await api("/settings", "PUT", body);
+    Save.hide(); haptic("success"); toast("Лимиты сохранены"); updateChrome();
+    if (S.tab === "settings") renderSettings();
+  } catch (err) { toast(err.message); haptic("error"); }
+  finally { Save.busy(false); }
 }
 
 // ------------------------------------------------------------------ history
+function dayLabel(d) {
+  const today = new Date(), yesterday = new Date();
+  yesterday.setDate(today.getDate() - 1);
+  if (d.toDateString() === today.toDateString()) return "Сегодня";
+  if (d.toDateString() === yesterday.toDateString()) return "Вчера";
+  return d.toLocaleDateString("ru-RU", { day: "numeric", month: "long" });
+}
 async function renderHistory() {
-  spinner();
+  const id = newScreen();
+  view.innerHTML = head("История") + skeletonRows(4);
   let items;
-  try { items = (await api("/history")).items; } catch (err) { return fail(err); }
-  view.innerHTML = items.length ? items.map((a) => `
-    <div class="card"><div class="row"><div class="grow">
-      <div style="font-weight:700">${a.url ? `<a href="${esc(a.url)}" data-tme>${esc(a.title)}</a>` : esc(a.title)}</div>
-      <div class="muted">${new Date(a.created_at).toLocaleString("ru-RU", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })} · ${esc(a.model || "")}${a.backdrop ? " · " + esc(a.backdrop) : ""}</div></div>
-      <div style="text-align:right"><b>${ton(a.price)}</b><div class="badges" style="justify-content:flex-end">
-        <span class="badge ${a.status === "confirmed" ? "ok" : ""}">${esc(a.status_label)}</span></div></div></div></div>`).join("")
-    : '<div class="empty">Покупок пока не было.</div>';
-  view.querySelectorAll("[data-tme]").forEach((a) => a.onclick = (e) => {
-    if (tg && tg.openTelegramLink) { e.preventDefault(); tg.openTelegramLink(a.href); }
-  });
+  try { items = (await api("/history")).items; } catch (err) { if (!stale(id)) fail(err, renderHistory); return; }
+  if (stale(id)) return;
+  items.sort((a, b) => b.created_at.localeCompare(a.created_at));
+  let day = "";
+  view.innerHTML = head("История") + (items.length ? items.map((a) => {
+    const d = new Date(a.created_at), label = dayLabel(d);
+    const sep = label !== day ? `<div class="day">${label}</div>` : "";
+    day = label;
+    return sep + `<div class="hrow"${a.url ? ` data-url="${esc(a.url)}"` : ""}>
+      ${thumb(a.image, a.title)}
+      <div class="grow"><div class="name">${esc(a.title)}</div>
+        <div class="sub">${esc([a.model, a.backdrop].filter(Boolean).join(" · "))}</div>
+        <div class="sub">${d.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}${a.rule ? " · " + esc(a.rule.replace(/^📱\s*/u, "")) : ""}</div></div>
+      <div class="right"><b>${ton(a.price)}</b><br><span class="st ${esc(a.status)}">${esc(a.status_label)}</span></div></div>`;
+  }).join("") : empty("🧾", "Покупок пока не было", "Здесь появятся покупки и тестовые «был бы куплен»."));
+  $$("[data-url]").forEach((el) => (el.onclick = () => openLink(el.dataset.url)));
 }
 
 // ------------------------------------------------------------------ start
+function applyTheme() {
+  document.documentElement.dataset.theme = tg && tg.colorScheme === "light" ? "light" : "dark";
+  if (!tg || !tg.isVersionAtLeast) return;
+  try {
+    if (tg.isVersionAtLeast("6.1")) { tg.setHeaderColor("secondary_bg_color"); tg.setBackgroundColor("secondary_bg_color"); }
+    if (tg.isVersionAtLeast("7.10") && tg.setBottomBarColor) tg.setBottomBarColor("secondary_bg_color");
+  } catch (e) { /* old clients */ }
+}
+// on phones the keyboard would push the bottom bar over the field being typed in
+if (tg && ["android", "ios"].includes(tg.platform)) {
+  document.addEventListener("focusin", (e) => { if (e.target.matches("input:not([type=checkbox])")) document.body.classList.add("typing"); });
+  document.addEventListener("focusout", () => setTimeout(() => {
+    if (!document.activeElement || !document.activeElement.matches("input:not([type=checkbox])")) document.body.classList.remove("typing");
+  }, 60));
+}
+document.addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target.matches("input")) e.target.blur(); });
 (async () => {
+  applyTheme();
   if (!tg || !tg.initData) {
-    view.innerHTML = '<div class="card"><b>Откройте приложение из Telegram</b><div class="muted">Кнопка «Снайпер» в чате с ботом или команда /app.</div></div>';
+    $("#tabbar").hidden = true;
+    view.innerHTML = empty("📱", "Откройте приложение из Telegram", "Кнопка «Снайпер» в чате с ботом или команда /app.");
     return;
   }
-  try { await loadMe(); } catch (err) { return fail(err); }
-  showTab("collections");
+  tg.ready(); tg.expand();
+  if (tg.onEvent) tg.onEvent("themeChanged", applyTheme);
+  try { await loadMe(); } catch (err) { return fail(err, () => location.reload()); }
+  render();
 })();
 </script>
 </body>

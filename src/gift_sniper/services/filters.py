@@ -58,8 +58,9 @@ class Pick(BaseModel):
             return False
         return not self.backdrops or _name_in(listing.backdrop_name, self.backdrops)
 
-    def label(self) -> str:
-        backdrops = ", ".join(self.backdrops) if self.backdrops else "любой фон"
+    def label(self, *, monochrome: bool = False) -> str:
+        anything = "все монохромные фоны" if monochrome else "любой фон"
+        backdrops = ", ".join(self.backdrops) if self.backdrops else anything
         return f"{self.model or 'все модели'} · {backdrops} ≤ {format_ton(self.max_price_nano)}"
 
 
@@ -293,7 +294,7 @@ def describe_criteria(kind: FilterKind, c: FilterCriteria) -> list[str]:
                 f"{label}: {low if low is not None else '—'}‰ … {high if high is not None else '—'}‰"
             )
     if c.picks:
-        shown = [p.label() for p in c.picks[:5]]
+        shown = [p.label(monochrome=kind is FilterKind.MONOCHROME) for p in c.picks[:5]]
         more = f" и ещё {len(c.picks) - 5}" if len(c.picks) > 5 else ""
         lines.append(f"Выбрано ({len(c.picks)}): " + "; ".join(shown) + more)
     if c.only_new_listings:

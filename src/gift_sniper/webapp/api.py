@@ -243,10 +243,26 @@ class MiniAppApi:
         )
         can_purchase = self.settings.can_purchase(user_id)
         checklist = [
-            {"ok": limits_ok, "text": "Общие лимиты: на покупку, на день и всего", "action": "settings"},
-            {"ok": bool(buying), "text": "Хотя бы одно правило с автопокупкой", "action": "collections"},
-            {"ok": bool(buying) and modes_ok, "text": "Автопокупка включена", "action": "settings"},
             {
+                "id": "limits",
+                "ok": limits_ok,
+                "text": "Общие лимиты: на покупку, на день и всего",
+                "action": "settings",
+            },
+            {
+                "id": "rule",
+                "ok": bool(buying),
+                "text": "Хотя бы одно правило с автопокупкой",
+                "action": "collections",
+            },
+            {
+                "id": "modes",
+                "ok": bool(buying) and modes_ok,
+                "text": "Автопокупка включена",
+                "action": "settings",
+            },
+            {
+                "id": "live",
                 "ok": run_mode == "live",
                 "text": "Режим live (сейчас покупки только имитируются)"
                 if run_mode != "live"
@@ -257,6 +273,7 @@ class MiniAppApi:
         if FilterKind.MONOCHROME.value in kinds or not snapshot.records_count:
             checklist.append(
                 {
+                    "id": "giftwiki",
                     "ok": bool(snapshot.records_count),
                     "text": "Данные Gift Wiki для монохромов"
                     + (f" — последняя загрузка не удалась: {sync_error}" if sync_error else ""),
@@ -264,9 +281,13 @@ class MiniAppApi:
                 }
             )
         if stopped:
-            checklist.append({"ok": False, "text": "Аварийная остановка включена", "action": "settings"})
+            checklist.append(
+                {"id": "stopped", "ok": False, "text": "Аварийная остановка включена", "action": "settings"}
+            )
         if not can_purchase:
-            checklist.append({"ok": False, "text": "У вас нет права на покупки", "action": None})
+            checklist.append(
+                {"id": "rights", "ok": False, "text": "У вас нет права на покупки", "action": None}
+            )
         return {
             "user_id": user_id,
             "is_admin": self.settings.is_admin(user_id),
@@ -299,6 +320,7 @@ class MiniAppApi:
             slugs = await listings_repo.collection_slugs(session)
         snapshot = self.store.snapshot
         taken: dict[str, int] = {}
+        buying: dict[str, bool] = {}
         other_rules: dict[str, int] = {}
         for rule in rules:
             if not rule.enabled:
@@ -308,6 +330,7 @@ class MiniAppApi:
                 key = normalize_name(collection_name)
                 if criteria.picks:
                     taken[key] = taken.get(key, 0) + len(criteria.picks)
+                    buying[key] = buying.get(key, False) or rule.autobuy
                 else:
                     other_rules[key] = other_rules.get(key, 0) + 1
         items = []
@@ -328,6 +351,7 @@ class MiniAppApi:
                     "known_models": share.denominator if share else len(observed),
                     "monochrome_share": share.percent if share else None,
                     "taken": taken.get(key, 0),
+                    "autobuy": buying.get(key),
                     "rules": other_rules.get(key, 0),
                 }
             )
@@ -562,14 +586,24 @@ class MiniAppApi:
             "max_count": spec.limits.max_count,
             "simple": simple and not c.picks,
             "plan": bool(c.picks),
-            "picks": [p.label() for p in c.picks],
+            "picks": [p.label(monochrome=spec.kind is FilterKind.MONOCHROME) for p in c.picks],
+            "pick_items": [
+                {"model": p.model, "backdrops": p.backdrops, "price": ton(p.max_price_nano)} for p in c.picks
+            ],
             "summary": describe_criteria(spec.kind, c),
         }
 
     async def rules(self, user_id: int) -> dict[str, Any]:
         async with self.sessionmaker() as session:
             rows = await filters_repo.list_filters(session, user_id)
-        return {"items": [self._rule_view(r) for r in rows]}
+            slugs = await listings_repo.collection_slugs(session)
+        items = []
+        for row in rows:
+            view = self._rule_view(row)
+            name = view["collection"]
+            view["image"] = collection_thumb(giftname(name, slug=slugs.get(name))) if name else None
+            items.append(view)
+        return {"items": items}
 
     def _apply_rule(self, row: Filter, data: RuleInput, title: str, *, can_purchase: bool) -> None:
         if data.backdrop_mode == "selected" and not data.backdrops:
@@ -716,6 +750,7 @@ class MiniAppApi:
                     "id": a.id,
                     "title": title,
                     "url": nft_url(names.get(a.gift_id)),
+                    "image": gift_image(names.get(a.gift_id)),
                     "model": a.model_name,
                     "backdrop": a.backdrop_name,
                     "price": ton(a.final_price_nano or a.expected_price_nano),
