@@ -50,6 +50,9 @@ def _split_ints(value: Any) -> list[int]:
 
 IntList = Annotated[list[int], NoDecode]
 
+# The link of MRKT's "Поделиться" button on a gift card: the gift's MRKT id without dashes.
+MRKT_GIFT_LINK = "https://t.me/mrkt/app?startapp={gift_id_hex}"
+
 
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
@@ -91,7 +94,7 @@ class Settings(BaseSettings):
     mrkt_feed_page_size: int = 20
     mrkt_feed_max_pages: int = 5
     mrkt_app_url: str = "https://t.me/mrkt/app"
-    mrkt_listing_url_template: str = ""
+    mrkt_listing_url_template: str = MRKT_GIFT_LINK
 
     # --- Gift Wiki ----------------------------------------------------------------------
     giftwiki_api_base_url: str = "https://api.giftwiki.tg"
@@ -163,6 +166,12 @@ class Settings(BaseSettings):
         if isinstance(value, str) and not value.strip():
             return None
         return value.strip() if isinstance(value, str) else value
+
+    @field_validator("mrkt_listing_url_template", mode="before")
+    @classmethod
+    def _gift_link(cls, value: Any) -> Any:
+        # older .env files have the variable empty
+        return MRKT_GIFT_LINK if value is None or (isinstance(value, str) and not value.strip()) else value
 
     @field_validator("mrkt_auth_header_format")
     @classmethod

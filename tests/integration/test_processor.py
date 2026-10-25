@@ -62,11 +62,11 @@ async def test_new_listing_matches_filter_publishes_purchase_and_notifies(env: E
     # the title links to the gift in Telegram, and the notification shows the gift card
     assert '<a href="https://t.me/nft/PlushPepe-100">Plush Pepe #100</a>' in texts[0]
     assert env.sender.previews == ["https://t.me/nft/PlushPepe-100"]
-    # buying comes first; without a known gift link there is no button that would open only the market
+    # buying comes first, then the gift in Telegram and the gift itself in MRKT
     rows = env.sender.keyboards[0].inline_keyboard
     assert rows[0][0].text == "🛒 Купить" and rows[0][0].callback_data.startswith("mb:")
     assert rows[0][1].url == "https://t.me/nft/PlushPepe-100"
-    assert [b.text for b in rows[1]] == ["Подробнее"]
+    assert [b.text for b in rows[1]] == ["Подробнее", "Открыть в MRKT"]
     assert await count(env, Listing) == 1 and await count(env, Gift) == 1
     assert await count(env, FilterHit) == 1 and await count(env, PriceHistory) == 1
 
@@ -186,15 +186,15 @@ async def test_all_listings_mode_notifies_without_filters(env: Env) -> None:
     assert texts and "Не подходит под ваши фильтры" in texts[0]
 
 
-async def test_listing_link_template_adds_open_in_mrkt(env: Env, monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.setattr(
-        env.settings, "mrkt_listing_url_template", "https://t.me/mrkt/app?startapp={gift_id_hex}"
-    )
+async def test_open_in_mrkt_is_the_share_link_of_the_gift(env: Env) -> None:
+    """MRKT's "Поделиться" button gives t.me/mrkt/app?startapp=<the gift's MRKT id without dashes>."""
     await env.add_user(UID)
     await env.add_filter(UID)
-    await processor(env, MemoryQueue()).process(event("e1", gift_id="ab-12"), detected_at=datetime.now(UTC))
-    rows = env.sender.keyboards[0].inline_keyboard
-    assert rows[1][1].text == "Открыть в MRKT" and rows[1][1].url == "https://t.me/mrkt/app?startapp=ab12"
+    gift_id = "B75C3FCC-B6F6-4A3B-85D4-20B4B3790A7B"
+    await processor(env, MemoryQueue()).process(event("e1", gift_id=gift_id), detected_at=datetime.now(UTC))
+    button = env.sender.keyboards[0].inline_keyboard[1][1]
+    assert button.text == "Открыть в MRKT"
+    assert button.url == "https://t.me/mrkt/app?startapp=b75c3fccb6f64a3b85d420b4b3790a7b"
 
 
 def test_payload_roundtrip() -> None:

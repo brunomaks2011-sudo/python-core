@@ -16,7 +16,7 @@ from gift_sniper.bot.parsing import (
     parse_ton_range,
 )
 from gift_sniper.bot.ui import MAIN_SECTIONS, main_menu_kb
-from gift_sniper.config import RunMode
+from gift_sniper.config import MRKT_GIFT_LINK, RunMode
 from gift_sniper.domain.money import MoneyParseError, format_ton, ton_to_nano
 from tests.factories import TON, make_settings
 
@@ -97,6 +97,12 @@ class TestConfig:
         from gift_sniper.config import Settings
 
         assert Settings.model_fields["run_mode"].default is RunMode.DRY_RUN
+
+    def test_empty_gift_link_template_means_the_mrkt_share_link(self) -> None:
+        assert make_settings(mrkt_listing_url_template="").mrkt_listing_url_template == MRKT_GIFT_LINK
+        assert make_settings().mrkt_listing_url_template == "https://t.me/mrkt/app?startapp={gift_id_hex}"
+        custom = "https://example.com/{gift_id}"
+        assert make_settings(mrkt_listing_url_template=custom).mrkt_listing_url_template == custom
 
 
 class TestKeyboards:

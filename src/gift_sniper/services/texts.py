@@ -23,17 +23,15 @@ def e(value: object | None) -> str:
 
 
 def listing_url(settings: Settings, listing: ListingSnapshot) -> str | None:
-    """Link that opens this gift in MRKT, from MRKT_LISTING_URL_TEMPLATE.
-
-    MRKT does not document such links, so without a template there is none: a button that only opens the
-    market's main page is not offered as "open the gift".
+    """Link that opens this gift in MRKT, from MRKT_LISTING_URL_TEMPLATE (by default the format of MRKT's
+    "Поделиться" button). A template that cannot be filled gives no link rather than the market's main page.
     """
     if not settings.mrkt_listing_url_template:
         return None
     try:
         return settings.mrkt_listing_url_template.format(
             gift_id=listing.gift_id,
-            gift_id_hex=listing.gift_id.replace("-", ""),
+            gift_id_hex=listing.gift_id.replace("-", "").lower(),
             slug=listing.telegram_slug or "",
             number=listing.number or "",
         )
