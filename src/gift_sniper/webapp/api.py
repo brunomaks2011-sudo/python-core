@@ -194,6 +194,21 @@ def _pick_rule(picks: list[Pick], model_norm: str | None, backdrop_norm: str | N
     return pick.price_rule.value if pick is not None and pick.price_rule is not PriceRule.FIXED else None
 
 
+def _same_picks(a: list[Pick], b: list[Pick]) -> bool:
+    def key(picks: list[Pick]) -> list[str]:
+        return sorted(json.dumps(p.model_dump(mode="json"), sort_keys=True) for p in picks)
+
+    return key(a) == key(b)
+
+
+def _whole_floor_pick(picks: list[Pick]) -> Pick | None:
+    """The pick "any monochrome of the collection up to a floor", if there is one."""
+    return next(
+        (p for p in picks if p.model is None and not p.backdrops and p.price_rule is not PriceRule.FIXED),
+        None,
+    )
+
+
 def _floor_pick(model: str | None, rule: str, backdrops: list[str] | None = None) -> Pick:
     return Pick(model=model, backdrops=backdrops or [], price_rule=PriceRule(rule))
 
@@ -301,7 +316,7 @@ class MiniAppApi:
                 "text": {
                     "live": "Реальные покупки",
                     "dry_run": "Реальные покупки (сейчас покупки только имитируются)",
-                    "notify_only": "Реальные покупки (сейчас бот не покупает)",
+                    "notify_only": "Реальные покупки (сейчас «Покупать» выключено)",
                 }.get(run_mode, "Реальные покупки"),
                 "action": None,
             },
@@ -365,10 +380,12 @@ class MiniAppApi:
         taken: dict[str, int] = {}
         buying: dict[str, bool] = {}
         other_rules: dict[str, int] = {}
+        floor_rule: dict[str, str] = {}  # "any monochrome up to the floor" of the collection
         for rule in rules:
             if not rule.enabled:
                 continue
             criteria = FilterCriteria.model_validate(rule.criteria or {})
+            whole = _whole_floor_pick(criteria.picks) if rule.kind == FilterKind.MONOCHROME.value else None
             for collection_name in criteria.collections:
                 key = normalize_name(collection_name)
                 if criteria.picks:
@@ -376,6 +393,8 @@ class MiniAppApi:
                     buying[key] = buying.get(key, False) or rule.autobuy
                 else:
                     other_rules[key] = other_rules.get(key, 0) + 1
+                if whole is not None:
+                    floor_rule[key] = whole.price_rule.value
         items = []
         for row in rows:
             records = self._records(snapshot, row.name, row.title)
@@ -396,9 +415,78 @@ class MiniAppApi:
                     "taken": taken.get(key, 0),
                     "autobuy": buying.get(key),
                     "rules": other_rules.get(key, 0),
+                    "monochrome_floor": floor_rule.get(key),
                 }
             )
         return {"items": items, "giftwiki_records": snapshot.records_count}
+
+    async def monochromes_everywhere(self, user_id: int, payload: dict[str, Any]) -> dict[str, Any]:
+        """Any monochrome up to the collection or model floor in every collection with monochrome data
+        (rule: null turns these off again). Models and backdrops chosen one by one keep their own prices."""
+        raw = payload.get("rule")
+        if raw not in (None, PriceRule.COLLECTION_FLOOR.value, PriceRule.MODEL_FLOOR.value):
+            raise ApiError("Неизвестное правило цены")
+        rule = PriceRule(raw) if raw else None
+        await self.store.maybe_reload(min_interval=5)
+        snapshot = self.store.snapshot
+        can_purchase = self.settings.can_purchase(user_id)
+        changed, error = 0, None
+        async with self.sessionmaker() as session, session.begin():
+            rows = await listings_repo.market_collections(session)
+            rules = await filters_repo.list_filters(session, user_id)
+            targets = [row for row in rows if self._records(snapshot, row.name, row.title)]
+            for row in targets:
+                plans = self._plans(rules, row.name)
+                plan = plans.get(FilterKind.MONOCHROME)
+                current = _picks_of(plan)
+                # turning on replaces "any monochrome" of the collection; turning off removes only a floor one
+                picks = [
+                    p
+                    for p in current
+                    if not (
+                        p.model is None
+                        and not p.backdrops
+                        and (rule is not None or p.price_rule is not PriceRule.FIXED)
+                    )
+                ]
+                if rule is not None:
+                    picks.append(Pick(price_rule=rule))
+                if _same_picks(picks, current) and (plan is None or plan.enabled or rule is None):
+                    continue
+                if not picks:
+                    if plan is not None:
+                        await filters_repo.delete_filter(session, plan)
+                        changed += 1
+                    continue
+                title = row.title or row.name
+                if plan is None:
+                    try:
+                        plan = await filters_repo.create_filter(
+                            session, user_id, title, FilterKind.MONOCHROME, plan=True
+                        )
+                    except ValueError as exc:
+                        error = str(exc)
+                        break
+                    plan.autobuy = (
+                        any(r.autobuy for r in plans.values()) if plans else True
+                    ) and can_purchase
+                criteria = FilterCriteria.model_validate(
+                    {"collections": [row.name], "picks": [p.model_dump() for p in picks]}
+                )
+                filters_repo.update_criteria(plan, criteria)
+                plan.name = f"📱 {title} · монохромы"[:64]
+                filters_repo.set_enabled(plan, True)
+                await self._enable_mode(session, user_id, plan)
+                changed += 1
+            await misc.audit(
+                session,
+                "webapp_monochromes_everywhere",
+                user_id=user_id,
+                rule=rule.value if rule else None,
+                changed=changed,
+            )
+        await self.filter_cache.invalidate()
+        return {"changed": changed, "collections": len(targets), "error": error}
 
     async def collection(self, user_id: int, name: str) -> dict[str, Any]:
         await self.store.maybe_reload(min_interval=5)

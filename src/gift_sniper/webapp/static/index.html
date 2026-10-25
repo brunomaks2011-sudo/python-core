@@ -516,7 +516,7 @@ function modePill() {
   const m = S.me;
   if (!m) return "";
   const [cls, text] = m.stopped ? ["stop", "⛔ Стоп"] : m.run_mode === "live" ? ["live", "● Покупает"]
-    : m.run_mode === "dry_run" ? ["test", "🧪 Тест"] : ["", "⏸ Не покупает"];
+    : m.run_mode === "dry_run" ? ["test", "🧪 Тест"] : m.notify.matching_only ? ["", "🔔 Листинги"] : ["", "⏸ Выключен"];
   return `<button class="pill ${cls}" data-goto="settings">${text}</button>`;
 }
 const todo = () => (S.me ? S.me.checklist.filter((c) => !c.ok && c.id !== "live") : []);
@@ -531,7 +531,8 @@ function banner() {
   const left = todo();
   const text = left.length === 1 ? `Бот пока не покупает: ${TODO_SHORT[left[0].id] || left[0].text}`
     : left.length ? `Бот пока не покупает — осталось ${left.length} ${plural(left.length, "шаг", "шага", "шагов")}`
-    : m.run_mode === "dry_run" ? "Тестовый режим: покупки только имитируются" : "Бот не покупает: включите «Покупать» в настройках";
+    : m.run_mode === "dry_run" ? "Тестовый режим: покупки только имитируются"
+    : m.notify.matching_only ? "Покупки выключены: бот только присылает листинги" : "Бот выключен: не покупает и не присылает листинги";
   return `<button class="banner" data-goto="settings"><span>${left.length ? "⚠️" : "🧪"}</span><span class="grow">${esc(text)}</span><span class="chev">›</span></button>`;
 }
 function updateChrome() {
@@ -567,14 +568,59 @@ async function renderCollections() {
         <button class="iconbtn" id="sortbtn" aria-label="Сортировка">${ICON.sort}</button></div>
       <div class="chips" id="chips"></div>
     </div>
-    ${banner()}<div id="grid">${skeletonTiles(6)}</div>`;
+    ${banner()}<div id="monoall"></div><div id="grid">${skeletonTiles(6)}</div>`;
   const q = $("#q");
   q.oninput = () => { S.list.q = q.value; drawCollectionsGrid(); };
   $("#sortbtn").onclick = openSortSheet;
   try { await ensureCollections(); } catch (err) { if (!stale(id)) fail(err, renderCollections); return; }
   if (stale(id)) return;
+  drawMonoAll();
   drawCollectionsGrid();
   window.scrollTo(0, S.list.scroll);
+}
+function drawMonoAll() {
+  const withMono = S.collections.filter((c) => c.monochrome_pairs), on = withMono.filter((c) => c.monochrome_floor);
+  const rule = on.length ? on[0].monochrome_floor : null;
+  $("#monoall").innerHTML = withMono.length ? `<button class="rowbtn" id="monoallbtn"><div class="grow"><b>⚫ Все монохромы по флору</b>
+    <div class="sub">${on.length ? `включено в ${on.length} из ${withMono.length} · ${RULE_UPTO[rule]}` : `выключено · коллекций с монохромами: ${withMono.length}`}</div></div>
+    <span class="chev">›</span></button>` : "";
+  if (withMono.length) $("#monoallbtn").onclick = () => { haptic(); openMonoAllSheet(); };
+}
+// one tap for every collection with monochrome data: any monochrome up to its collection or model floor
+function openMonoAllSheet() {
+  const withMono = S.collections.filter((c) => c.monochrome_pairs), on = withMono.filter((c) => c.monochrome_floor);
+  const n = withMono.length, where = `${n} ${plural(n, "коллекции", "коллекциях", "коллекциях")}`;
+  let rule = on.length ? on[0].monochrome_floor : "collection_floor";
+  Sheet.open(`<h3>⚫ Все монохромы по флору</h3>
+    <p class="sub" style="margin:0 2px 14px">Бот будет брать любой монохром во всех коллекциях с данными о монохромах (${n}), если он не дороже флора.</p>
+    <div class="seg" id="allrule"><button data-rule="collection_floor">Флор коллекции</button><button data-rule="model_floor">Флор модели</button></div>
+    <p class="hint" id="allhint"></p>
+    <p class="hint">Заменяет «Любой монохром» в каждой коллекции. Модели и фоны, выбранные отдельно, покупаются по своим ценам. Общие лимиты действуют.</p>
+    <button class="btn" id="allon">Включить в ${where}</button>
+    ${on.length ? `<button class="btn danger" id="alloff" style="margin-top:8px">Выключить везде (${on.length})</button>` : ""}`, (root) => {
+    const sync = () => {
+      $$("#allrule [data-rule]", root).forEach((b) => b.classList.toggle("on", b.dataset.rule === rule));
+      $("#allhint", root).textContent = rule === "collection_floor"
+        ? "Флор коллекции — самый дешёвый другой подарок этой коллекции на MRKT."
+        : "Флор модели — самая дешёвая другая копия той же модели на MRKT.";
+    };
+    $$("#allrule [data-rule]", root).forEach((b) => (b.onclick = () => { rule = b.dataset.rule; haptic(); sync(); }));
+    sync();
+    const apply = async (button, value) => {
+      if (value && !(await confirmBox(`Бот будет покупать любой монохром ${RULE_UPTO[value]} в ${where} — в пределах лимитов. Включить?`))) return;
+      button.disabled = true;
+      try {
+        const res = await api("/monochromes", "PUT", { rule: value });
+        Sheet.close(); haptic("success");
+        toast(res.error || (value ? `Включено в ${res.changed} ${plural(res.changed, "коллекции", "коллекциях", "коллекциях")}` : "Выключено"));
+        changed();
+        await ensureCollections();
+        if (S.tab === "collections" && S.page === "list") { drawMonoAll(); drawCollectionsGrid(); }
+      } catch (err) { button.disabled = false; toast(err.message); haptic("error"); }
+    };
+    $("#allon", root).onclick = (e) => apply(e.target, rule);
+    if ($("#alloff", root)) $("#alloff", root).onclick = (e) => apply(e.target, null);
+  });
 }
 function drawCollectionsGrid() {
   const q = S.list.q.trim().toLowerCase();
@@ -664,11 +710,12 @@ function drawCollection() {
   drawModelsGrid();
 }
 function autobuySwitch(c) {
-  if (!S.me.can_purchase) return '<p class="hint">🔔 Бот только уведомляет: у вас нет права на покупки.</p>';
-  const global = S.me.run_mode === "notify_only" ? " Сейчас бот не покупает ничего: в настройках выбрано «Не покупать»."
+  if (!S.me.can_purchase) return '<p class="hint">🔔 Бот только присылает листинги: у вас нет права на покупки.</p>';
+  const global = S.me.run_mode === "notify_only" ? " Сейчас в настройках «Покупать» выключено — бот ничего не покупает."
     : S.me.run_mode === "dry_run" ? " Сейчас тестовый режим: покупки только имитируются." : "";
-  return `<div class="seg" id="seg"><button data-v="1" class="${c.autobuy ? "on" : ""}">🛒 Покупать</button><button data-v="0" class="${c.autobuy ? "" : "on"}">🔔 Уведомлять</button></div>
-    <p class="hint">${c.autobuy ? "Бот сам купит выбранное в этой коллекции — в пределах лимитов." : "Бот только пришлёт сообщение о находке, покупать не будет."}${c.autobuy ? esc(global) : ""}</p>`;
+  const silent = !c.autobuy && !S.me.notify.matching_only ? " Включите «Листинги» в настройках, иначе сообщений не будет." : "";
+  return `<div class="seg" id="seg"><button data-v="1" class="${c.autobuy ? "on" : ""}">🛒 Покупать</button><button data-v="0" class="${c.autobuy ? "" : "on"}">🔔 Листинги</button></div>
+    <p class="hint">${c.autobuy ? "Бот сам купит выбранное в этой коллекции — в пределах лимитов." : "Бот только пришлёт листинг того, что выбрано, покупать не будет."}${esc(c.autobuy ? global : silent)}</p>`;
 }
 function drawModelsGrid() {
   const c = S.col, q = S.colView.q.trim().toLowerCase();
@@ -700,7 +747,7 @@ async function setAutobuy(value) {
   try {
     for (const rule of c.plans) await api(`/rules/${rule}`, "PATCH", { autobuy: value });
     c.autobuy = value;
-    toast(value ? "Бот будет покупать сам" : "Бот будет только уведомлять");
+    toast(value ? "Бот будет покупать сам" : "Бот будет присылать листинги");
     if (c.plans.length) changed(true);
   } catch (err) { toast(err.message); }
   const y = window.scrollY; drawCollection(); window.scrollTo(0, y);
@@ -922,10 +969,10 @@ function pickLine(p) {
   const limit = RULE_UPTO[p.rule] || `до ${ton(p.price)}`;
   return `<div class="pk"><span><b>${esc(p.model || "Вся коллекция")}</b> · ${esc(what)}</span><span class="pr">${esc(limit)}</span></div>`;
 }
-const stateText = (r) => (!r.enabled ? "⏸ выключено" : r.autobuy ? "🛒 покупает сам" : "🔔 только уведомляет");
+const stateText = (r) => (!r.enabled ? "⏸ выключено" : r.autobuy ? "🛒 покупает сам" : "🔔 присылает листинги");
 function ruleActions(r, edit) {
   return `<div class="ractions">${edit ? `<button class="pbtn" data-edit="${esc(edit)}">Изменить</button>` : ""}
-    ${S.me.can_purchase ? `<button class="pbtn" data-ab="${r.ids}" data-v="${r.autobuy ? 0 : 1}">${r.autobuy ? "🔔 Уведомлять" : "🛒 Покупать"}</button>` : ""}
+    ${S.me.can_purchase ? `<button class="pbtn" data-ab="${r.ids}" data-v="${r.autobuy ? 0 : 1}">${r.autobuy ? "🔔 Листинги" : "🛒 Покупать"}</button>` : ""}
     <button class="pbtn danger" data-del="${r.ids}">Удалить</button></div>`;
 }
 function groupCard(g) {
@@ -991,27 +1038,27 @@ const CHECK_TARGETS = {
   stopped: ["Открыть", () => scrollToId("emergency")],
 };
 // the run mode goes up to RUN_MODE from .env; real purchases are allowed there once, on the bot's computer
-const RUN_MODES = [["live", "💸 Покупать"], ["notify_only", "⏸ Не покупать"]];
 const MODE_RANK = { notify_only: 0, dry_run: 1, live: 2 };
 const LIVE_HOWTO = "Реальные покупки включаются один раз на компьютере с ботом: в папке проекта выполните "
-  + "scripts\\live.cmd (Windows) или ./scripts/live.sh. После этого здесь можно нажать «Покупать».";
+  + "scripts\\live.cmd (Windows) или ./scripts/live.sh. После этого здесь можно включить «Покупать».";
 const NOTIFY = [
   ["purchases", "Покупки", "куплено и «был бы куплен»"],
   ["errors", "Неудачные покупки", "не хватило лимита, подарок не купился"],
-  ["matching_only", "Находки по вашему выбору", "подходят под выбранное, но бот их не покупает"],
   ["monochrome", "Все монохромы рынка", "любой подтверждённый монохром, даже не из вашего выбора"],
   ["all_listings", "Все новые листинги", "вообще всё, что выставляют на MRKT"],
   ["price_drops", "Снижение цены", "у того, что подходит под ваш выбор"],
 ];
-function modeSwitch(m) {
-  if (!m.is_admin) return '<p class="hint">Режим работы меняет администратор.</p>';
-  const max = MODE_RANK[m.max_run_mode] ?? 0;
-  const hint = max < MODE_RANK.live ? LIVE_HOWTO
-    : m.run_mode === "live" ? "«Не покупать» — бот только присылает находки и ничего не покупает."
-    : "Нажмите «Покупать», чтобы бот покупал выбранное по-настоящему.";
-  return `<div class="seg" id="modeseg">${RUN_MODES.map(([k, title]) => `<button data-mode="${k}"
-    class="${m.run_mode === k ? "on" : ""}${MODE_RANK[k] > max ? " locked" : ""}">${title}</button>`).join("")}</div>
-    <p class="hint">${esc(hint)}</p>`;
+// buying and listings are separate switches: both can be on, then what is not bought comes as a listing
+function workCard(m) {
+  const allowed = (MODE_RANK[m.max_run_mode] ?? 0) >= MODE_RANK.live;
+  const buying = m.run_mode === "live";
+  return `<div class="card" id="work">
+    <div class="line"><div class="grow"><b>💸 Покупать</b><div class="sub">${allowed ? "бот сам покупает выбранное, в пределах лимитов"
+      : "реальные покупки ещё не разрешены — нажмите, чтобы узнать, как их включить"}</div></div>
+      <label class="switch"><input type="checkbox" id="buyswitch" ${buying ? "checked" : ""} ${m.is_admin ? "" : "disabled"}><span></span></label></div>
+    <div class="line"><div class="grow"><b>🔔 Листинги</b><div class="sub">бот присылает листинги подарков по вашему выбору${buying ? ", которые не покупает сам" : ""}</div></div>
+      <label class="switch"><input type="checkbox" data-notify="matching_only" ${m.notify.matching_only ? "checked" : ""}><span></span></label></div>
+    </div>${m.is_admin ? "" : '<p class="hint">Покупки включает администратор.</p>'}`;
 }
 async function setMode(mode) {
   const m = S.me;
@@ -1024,7 +1071,7 @@ async function setMode(mode) {
   try {
     S.me = await api("/mode", "PUT", { mode });
     haptic("success");
-    toast({ live: "Бот покупает по-настоящему", dry_run: "Тестовый режим", notify_only: "Бот не покупает" }[mode]);
+    toast({ live: "Бот покупает по-настоящему", dry_run: "Тестовый режим", notify_only: "Покупки выключены" }[mode]);
   } catch (err) { toast(err.message); haptic("error"); }
   updateChrome(); drawStatus();
 }
@@ -1062,7 +1109,7 @@ async function renderSettings() {
       ${limit("total_ton", "Всего", l.total, `потрачено всего ${ton(m.spent.total)}`)}</div>
     <p class="hint">Без всех трёх лимитов бот ничего не покупает — даже в тестовом режиме.</p>
     <div class="label" id="notify">Уведомления</div>
-    <div class="card">${NOTIFY.map(([key, title, sub]) => toggle("data-notify", key, m.notify[key], title, sub)).join("")}</div>
+    <div class="card" id="notifycard">${NOTIFY.map(([key, title, sub]) => toggle("data-notify", key, m.notify[key], title, sub)).join("")}</div>
     <p class="hint">Подарок, который бот покупает сам, приходит одним сообщением — с результатом покупки.</p>
     <div class="label" id="modes">Автопокупка</div>
     <div class="card">${toggle("data-pref", "autobuy_enabled", m.autobuy_enabled, "Обычные подарки", "любой фон и фильтры из чата")}
@@ -1076,26 +1123,33 @@ async function renderSettings() {
     JSON.stringify($$("[data-limit]").map((i) => i.value.trim())) === initial ? Save.hide() : Save.show("Сохранить лимиты", saveLimits);
   }));
   $$("[data-pref]").forEach((el) => (el.onchange = () => savePrefs({ [el.dataset.pref]: el.checked })));
-  $$("[data-notify]").forEach((el) => (el.onchange = () => savePrefs({ notify: { [el.dataset.notify]: el.checked } })));
+  $$("#notifycard [data-notify]").forEach((el) => (el.onchange = () => savePrefs({ notify: { [el.dataset.notify]: el.checked } })));
 }
 function drawStatus() {
   const m = S.me;
-  const modes = {
-    live: ["💸 Бот покупает", "Реальные покупки за TON с баланса MRKT, в пределах лимитов."],
-    dry_run: ["🧪 Тестовый режим", "Покупки только имитируются: бот пришлёт «был бы куплен»."],
-    notify_only: ["⏸ Бот не покупает", "Только присылает находки — какие именно, задаётся в «Уведомлениях» ниже."],
-  };
+  const buying = m.run_mode === "live", listings = !!m.notify.matching_only;
   const [title, text] = m.stopped ? ["⛔ Все покупки остановлены", m.is_admin ? "Аварийная остановка. Снять её можно внизу страницы." : "Аварийная остановка. Снять её может администратор."]
-    : modes[m.run_mode] || [m.run_mode, ""];
+    : m.run_mode === "dry_run" ? ["🧪 Тестовый режим", "Покупки только имитируются: бот пришлёт «был бы куплен»."]
+    : buying && listings ? ["💸 Покупает и 🔔 присылает листинги", "Что отмечено «Покупать», бот покупает сам; остальное по вашему выбору присылает листингом."]
+    : buying ? ["💸 Покупает", "Бот покупает выбранное за TON с баланса MRKT, в пределах лимитов. Листинги не присылает."]
+    : listings ? ["🔔 Только листинги", "Бот ничего не покупает и присылает листинги подарков по вашему выбору."]
+    : ["⏸ Выключен", "Бот не покупает и не присылает листинги."];
+  const cls = m.stopped ? "stop" : m.run_mode === "dry_run" ? "dry_run" : buying ? "live" : "notify_only";
   const checks = m.ready ? "" : `<div class="label">Чтобы бот начал покупать</div><div class="card">${m.checklist.map((c) => {
     const target = !c.ok && (c.id !== "live" || m.is_admin) && CHECK_TARGETS[c.id];
     return `<div class="ck${c.ok ? " ok" : ""}"><span class="mark">${c.ok ? "✓" : "!"}</span><span class="grow">${esc(c.text)}</span>
       ${target ? `<button class="link" data-check="${esc(c.id)}">${target[0]}</button>` : ""}</div>`;
   }).join("")}</div>`;
-  $("#status").innerHTML = `<div class="mode ${m.stopped ? "stop" : esc(m.run_mode)}"><b>${esc(title)}</b><div class="sub">${esc(text)}</div></div>
-    ${modeSwitch(m)}${checks}`;
+  $("#status").innerHTML = `<div class="mode ${cls}"><b>${esc(title)}</b><div class="sub">${esc(text)}</div></div>
+    ${workCard(m)}${checks}`;
   $$("#status [data-check]").forEach((b) => (b.onclick = () => { haptic(); CHECK_TARGETS[b.dataset.check][1](); }));
-  $$("#modeseg [data-mode]").forEach((b) => (b.onclick = () => setMode(b.dataset.mode)));
+  const buy = $("#buyswitch");
+  buy.onchange = () => {
+    const want = buy.checked;
+    buy.checked = !want;  // shown as the bot has it until the change is saved
+    setMode(want ? "live" : "notify_only");
+  };
+  $("#work [data-notify]").onchange = (e) => savePrefs({ notify: { matching_only: e.target.checked } });
   $("#emergency").innerHTML = m.stopped
     ? (m.is_admin ? '<button class="btn" id="resume">Снять аварийную остановку</button>' : "")
     : '<button class="btn danger" id="stop">⛔ Остановить все покупки</button>';

@@ -239,6 +239,38 @@ async def test_monochromes_up_to_a_floor_from_the_mini_app(client: TestClient, e
     assert unknown.status == 400
 
 
+async def test_every_monochrome_up_to_the_floor_in_one_tap(client: TestClient, env: Env) -> None:  # type: ignore[type-arg]
+    await env.add_giftwiki("Plush Pepe", [("Onyx", "Black", "high")])  # Lol Pop has no monochrome data
+    pair = {"model": "Onyx", "pairs": [{"backdrop": "Black", "price_ton": "9"}]}
+    await client.put(PEPE + "/picks", headers=auth(), json=pair)
+
+    on = await (
+        await client.put("/api/monochromes", headers=auth(), json={"rule": "collection_floor"})
+    ).json()
+    assert on == {"changed": 1, "collections": 1, "error": None}
+    listing = {
+        c["name"]: c for c in (await (await client.get("/api/collections", headers=auth())).json())["items"]
+    }
+    assert (listing["Plush Pepe"]["monochrome_floor"], listing["Lol Pop"]["monochrome_floor"]) == (
+        "collection_floor",
+        None,
+    )
+    detail = await (await client.get(PEPE, headers=auth())).json()
+    assert detail["whole"]["monochrome_rule"] == "collection_floor"
+    onyx = next(m for m in detail["models"] if m["name"] == "Onyx")
+    assert [(p["backdrop"], p["price"]) for p in onyx["pairs"]] == [("Black", 9)]  # chosen one by one: kept
+    again = await (
+        await client.put("/api/monochromes", headers=auth(), json={"rule": "collection_floor"})
+    ).json()
+    assert again["changed"] == 0
+
+    off = await (await client.put("/api/monochromes", headers=auth(), json={"rule": None})).json()
+    assert off["changed"] == 1
+    detail = await (await client.get(PEPE, headers=auth())).json()
+    assert detail["whole"]["monochrome_rule"] is None and detail["taken"] == 1
+    assert (await client.put("/api/monochromes", headers=auth(), json={"rule": "fixed"})).status == 400
+
+
 async def test_notification_switches_and_what_blocks_buying(client: TestClient, env: Env) -> None:  # type: ignore[type-arg]
     me = await (await client.get("/api/me", headers=auth())).json()
     assert me["notify"] == {
