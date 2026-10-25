@@ -15,6 +15,7 @@ from gift_sniper.db.models import PurchaseAttempt
 from gift_sniper.db.repo import purchases as purchases_repo
 from gift_sniper.domain.enums import BudgetScope, FilterKind, PurchaseMode, PurchaseRunMode, PurchaseStatus
 from gift_sniper.integrations.mrkt import BuyOutcome, BuyOutcomeKind, MrktError
+from gift_sniper.services.floors import FloorService
 from tests.factories import TON, make_listing
 from tests.integration.conftest import Env
 
@@ -31,6 +32,30 @@ async def setup_regular(env: Env, *, price: int = 10 * TON, gift_id: str = "g1",
 
 async def statuses(env: Env) -> list[str]:
     return [a.status for a in await env.attempts()]
+
+
+async def test_floor_priced_monochrome_is_rechecked_against_the_floor(env: Env) -> None:
+    await env.add_user(UID)
+    await env.add_giftwiki("Plush Pepe", [("Onyx", "Black", "high")])
+    plan = await env.add_filter(
+        UID,
+        FilterKind.MONOCHROME,
+        criteria={"collections": ["Plush Pepe"], "picks": [{"model": "Onyx", "price_rule": "model_floor"}]},
+    )
+    mono = make_listing("m1", price_nano=8 * TON)  # Onyx on Black: a confirmed monochrome
+    env.mrkt.add(mono)
+    env.mrkt.market = [mono, make_listing("other", backdrop_name="White", price_nano=9 * TON)]
+    request = env.request(UID, "m1", 8 * TON, filter_id=plan, mode=PurchaseMode.MONOCHROME)
+    assert (await env.service.execute(request)).status is PurchaseStatus.CONFIRMED
+
+    cheaper = make_listing("m2", number=101, price_nano=8 * TON)
+    env.mrkt.add(cheaper)
+    env.mrkt.market = [cheaper, make_listing("undercut", backdrop_name="White", price_nano=7 * TON)]
+    env.service.floors = FloorService(env.mrkt)  # a fresh look at the market
+    request = env.request(UID, "m2", 8 * TON, filter_id=plan, mode=PurchaseMode.MONOCHROME)
+    result = await env.service.execute(request)
+    assert result.status is PurchaseStatus.CANCELLED and "флор модели" in result.reason
+    assert env.mrkt.buy_calls == ["m1"]
 
 
 async def test_confirmed_purchase_is_recorded_and_notified(env: Env) -> None:

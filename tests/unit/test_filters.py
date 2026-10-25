@@ -2,11 +2,23 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import UTC, datetime, timedelta
+
+import pytest
+from pydantic import ValidationError
 
 from gift_sniper.domain.enums import FilterKind, GiftWikiMonochromeType, MonochromeStatus
 from gift_sniper.domain.types import Share
-from gift_sniper.services.filters import FilterCriteria, MatchContext, Pick, describe_criteria, evaluate
+from gift_sniper.services.filters import (
+    FilterCriteria,
+    MatchContext,
+    Pick,
+    PriceRule,
+    describe_criteria,
+    evaluate,
+    floor_rules,
+)
 from tests.factories import TON, make_enrichment, make_listing
 
 NOW = datetime.now(UTC)
@@ -166,3 +178,40 @@ def test_monochrome_picks_still_require_gift_wiki_confirmation() -> None:
         backdrop_name="Black",
         price_nano=TON,
     ).matched
+
+
+def test_monochromes_up_to_the_collection_or_model_floor() -> None:
+    by_model = Pick(model="Onyx", price_rule=PriceRule.MODEL_FLOOR)
+    c = FilterCriteria(collections=["Plush Pepe"], picks=[by_model])
+    mono = make_enrichment(MonochromeStatus.MONOCHROME)
+    floors = replace(mono, model_floor_nano=10 * TON, collection_floor_nano=4 * TON)
+
+    def judge(enrichment, price):
+        return check(
+            c, kind=FilterKind.MONOCHROME, enrichment=enrichment, model_name="Onyx", price_nano=price
+        )
+
+    assert judge(floors, 10 * TON).matched  # not above the cheapest other Onyx
+    above = judge(floors, 11 * TON)
+    assert not above.matched and "10 TON" in above.failed[0] and "флор модели" in above.failed[0]
+    unknown = judge(mono, TON)  # no floor known: nothing is bought
+    assert not unknown.matched and "флор модели неизвестен" in unknown.failed[0]
+
+    by_collection = FilterCriteria(picks=[Pick(price_rule=PriceRule.COLLECTION_FLOOR)])
+    assert check(by_collection, kind=FilterKind.MONOCHROME, enrichment=floors, price_nano=4 * TON).matched
+    assert not check(by_collection, kind=FilterKind.MONOCHROME, enrichment=floors, price_nano=5 * TON).matched
+
+    capped = Pick(model="Onyx", price_rule=PriceRule.MODEL_FLOOR, max_price_nano=8 * TON)
+    assert capped.limit_nano(floors) == 8 * TON  # a cap below the floor wins
+    assert floor_rules(c, make_listing(model_name="Onyx")) == {PriceRule.MODEL_FLOOR}
+    assert floor_rules(c, make_listing(model_name="Ivory")) == set()  # the pick does not concern this model
+    summary = describe_criteria(FilterKind.MONOCHROME, c)
+    assert any("Onyx · все монохромные фоны ≤ флор модели" in line for line in summary)
+
+
+def test_a_fixed_price_pick_needs_its_price() -> None:
+    with pytest.raises(ValidationError):
+        Pick(model="Onyx")
+    assert Pick(model="Onyx", price_rule=PriceRule.MODEL_FLOOR).max_price_nano is None
+    old = FilterCriteria.model_validate({"picks": [{"model": "Onyx", "max_price_nano": 5 * TON}]})
+    assert old.picks[0].price_rule is PriceRule.FIXED  # picks saved before the floor rules

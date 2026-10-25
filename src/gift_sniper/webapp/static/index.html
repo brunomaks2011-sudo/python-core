@@ -140,6 +140,12 @@
   .seg button { padding: 10px 6px; border: 0; border-radius: 10px; background: none; color: var(--hint); font-size: 14px; font-weight: 700; }
   .seg button.on { background: var(--accent); color: var(--accent-text); box-shadow: 0 1px 4px rgba(0, 0, 0, .2); }
   .seg button.locked { opacity: .4; }
+  .seg.seg3 { grid-template-columns: repeat(3, 1fr); }
+  .seg.seg3 button { padding: 10px 2px; font-size: 13px; }
+  .floor-note { display: none; color: var(--mono); font-size: 12.5px; font-weight: 700; }
+  .line.floorpriced .price, .grid.floorpriced .price { display: none; }
+  .line.floorpriced .floor-note { display: block; flex: none; white-space: nowrap; }
+  .grid.floorpriced .floor-note { display: block; min-height: 34px; margin-top: 7px; padding: 8px 2px 0; }
   .switch { position: relative; width: 51px; height: 31px; flex: none; }
   .switch input { position: absolute; width: 0; height: 0; opacity: 0; }
   .switch span { position: absolute; inset: 0; border-radius: 999px; background: var(--fill-2); transition: background .2s; }
@@ -367,10 +373,10 @@ function priceField(attrs, value, placeholder = "цена", cls = "") {
   return `<label class="price ${cls}"><input ${attrs} inputmode="decimal" autocomplete="off" enterkeyhint="done"
     placeholder="${esc(placeholder)}" value="${esc(value)}"><span>TON</span></label>`;
 }
-function optRow(key, title, sub, o) {
+function optRow(key, title, sub, o, floorNote = false) {
   return `<div class="line${o.on ? "" : " off"}" data-opt="${key}">
     <label class="switch"><input type="checkbox" ${o.on ? "checked" : ""}><span></span></label>
-    <div class="grow"><b>${esc(title)}</b><div class="sub">${esc(sub)}</div></div>${priceField("", o.price)}</div>`;
+    <div class="grow"><b>${esc(title)}</b><div class="sub">${esc(sub)}</div></div>${floorNote ? '<span class="floor-note"></span>' : ""}${priceField("", o.price)}</div>`;
 }
 // a switch with a price: typing a price turns the switch on, turning it on asks for a price
 function bindOptions(root, draft, changed) {
@@ -630,7 +636,8 @@ async function reloadCollection() {
 function wholeText(w) {
   const parts = [];
   if (w.any != null) parts.push(`любой подарок до ${ton(w.any)}`);
-  if (w.monochrome != null) parts.push(`любой монохром до ${ton(w.monochrome)}`);
+  if (w.monochrome_rule) parts.push(`любой монохром ${RULE_UPTO[w.monochrome_rule]}`);
+  else if (w.monochrome != null) parts.push(`любой монохром до ${ton(w.monochrome)}`);
   return parts.join(" · ") || "Не выбрано: брать любой подарок или любой монохром коллекции";
 }
 function drawCollection() {
@@ -699,23 +706,35 @@ async function setAutobuy(value) {
   const y = window.scrollY; drawCollection(); window.scrollTo(0, y);
 }
 function openWholeSheet() {
-  const c = S.col;
-  const d = { any: option(c.whole.any), mono: option(c.whole.monochrome) };
+  const c = S.col, w = c.whole;
+  const d = { any: option(w.any), mono: picked(w.monochrome, w.monochrome_rule), rule: w.monochrome_rule || "fixed" };
   Sheet.open(`<h3>Вся коллекция</h3><p class="sub" style="margin:0 2px 14px">${esc(c.title)}</p>
     <div class="card">${optRow("any", "Любой подарок", "все модели, любой фон", d.any)}
-      ${c.monochrome_pairs ? optRow("mono", "Любой монохром", `все ${c.monochrome_pairs} монохромных пар`, d.mono) : ""}</div>
+      ${c.monochrome_pairs ? optRow("mono", "Любой монохром", `все ${c.monochrome_pairs} монохромных пар`, d.mono, true) : ""}</div>
+    ${c.monochrome_pairs ? `<div class="label">Цена монохромов</div>${ruleSwitch("wrule", d.rule)}<p class="hint" id="wrulehint"></p>` : ""}
     <p class="hint">Модели и фоны, выбранные отдельно, покупаются по своим ценам.</p>
     <button class="btn" id="wsave">Сохранить</button>`, (root) => {
-    bindOptions(root, d, () => syncOptions(root, d));
+    const sync = () => {
+      syncOptions(root, d);
+      const row = $('[data-opt="mono"]', root);
+      if (row) { row.classList.toggle("floorpriced", d.rule !== "fixed"); $(".floor-note", row).textContent = RULE_UPTO[d.rule] || ""; }
+      $$("#wrule [data-rule]", root).forEach((b) => b.classList.toggle("on", b.dataset.rule === d.rule));
+      if ($("#wrulehint", root)) $("#wrulehint", root).textContent = ruleHint(d.rule, c, null);
+    };
+    bindOptions(root, d, sync);
+    $$("#wrule [data-rule]", root).forEach((b) => (b.onclick = () => { d.rule = b.dataset.rule; haptic(); sync(); }));
+    sync();
     $("#wsave", root).onclick = async (e) => {
-      for (const [k, title] of [["any", "Любой подарок"], ["mono", "Любой монохром"]]) {
-        if (d[k].on && !d[k].price.trim()) return markBad($(`[data-opt="${k}"] .price`, root), `Укажите цену для «${title}»`);
-      }
+      const byFloor = d.rule !== "fixed";
+      if (d.any.on && !d.any.price.trim()) return markBad($('[data-opt="any"] .price', root), "Укажите цену для «Любой подарок»");
+      if (d.mono.on && !byFloor && !d.mono.price.trim()) return markBad($('[data-opt="mono"] .price', root), "Укажите цену для «Любой монохром»");
       e.target.disabled = true;
       try {
         S.col = await api(`/collections/${encodeURIComponent(c.name)}/picks`, "PUT", {
           model: null, pairs: [], autobuy: c.autobuy,
-          any_price_ton: d.any.on ? d.any.price.trim() : null, monochrome_price_ton: d.mono.on ? d.mono.price.trim() : null,
+          any_price_ton: d.any.on ? d.any.price.trim() : null,
+          monochrome_price_ton: d.mono.on && !byFloor ? d.mono.price.trim() : null,
+          monochrome_rule: d.mono.on && byFloor ? d.rule : null,
         });
         Sheet.close(); haptic("success"); toast("Сохранено"); changed(true);
         const y = window.scrollY; drawCollection(); window.scrollTo(0, y);
@@ -725,6 +744,23 @@ function openWholeSheet() {
 }
 
 // ------------------------------------------------------------------ one model: any backdrop, monochrome backdrops with own prices
+// monochromes go up to a fixed price, or up to the cheapest other listing of the collection or of the model
+const PRICE_RULES = [["fixed", "Своя цена"], ["collection_floor", "Флор коллекции"], ["model_floor", "Флор модели"]];
+const RULE_UPTO = { collection_floor: "до флора коллекции", model_floor: "до флора модели" };
+const ruleSwitch = (id, rule) => `<div class="seg seg3" id="${id}">${PRICE_RULES.map(([k, title]) =>
+  `<button data-rule="${k}" class="${rule === k ? "on" : ""}">${title}</button>`).join("")}</div>`;
+function ruleHint(rule, c, m) {
+  if (rule === "collection_floor") {
+    return "Бот купит монохром, если он не дороже самого дешёвого другого подарка коллекции на MRKT"
+      + (c.floor != null ? ` (сейчас ≈ ${ton(c.floor)}).` : ".");
+  }
+  if (rule === "model_floor") {
+    const floor = m ? m.floor ?? m.seen_floor : null;
+    return `Бот купит монохром, если он не дороже самой дешёвой другой копии ${m ? `«${m.name}»` : "той же модели"} на MRKT`
+      + (floor != null ? ` (сейчас ≈ ${ton(floor)}).` : ".");
+  }
+  return "У «Все монохромы» и у каждого фона — своя цена в TON.";
+}
 function openModel(name) {
   rememberScroll();
   S.page = "model"; S.model = name; S.draft = null;
@@ -732,12 +768,16 @@ function openModel(name) {
   drawModel();
 }
 const currentModel = () => S.col.models.find((x) => x.name === S.model);
+// a saved pick has a price or follows a floor
+const picked = (price, rule) => ({ on: price != null || !!rule, price: price != null ? String(price) : "" });
 function initDraft(m) {
-  S.draft = { any: option(m.any), mono: option(m.monochrome), pairs: m.pairs.map((p) => option(p.price)) };
+  const rule = m.monochrome_rule || (m.pairs.find((p) => p.rule) || {}).rule || "fixed";
+  S.draft = { any: option(m.any), mono: picked(m.monochrome, m.monochrome_rule), rule, pairs: m.pairs.map((p) => picked(p.price, p.rule)) };
   S.initial = draftKey(S.draft);
 }
-// what would be saved: a switched-off option with a typed price is still "nothing"
-const draftKey = (d) => JSON.stringify([d.any, d.mono, ...d.pairs].map((o) => (o.on ? o.price.trim() : null)));
+// what would be saved: a switched-off option with a typed price is still "nothing"; a floor needs no price
+const draftKey = (d) => JSON.stringify([d.any.on ? d.any.price.trim() : null,
+  ...[d.mono, ...d.pairs].map((o) => (!o.on ? null : d.rule === "fixed" ? o.price.trim() : d.rule))]);
 function drawModel() {
   newScreen();
   const c = S.col, m = currentModel();
@@ -753,11 +793,12 @@ function drawModel() {
           ${m.monochrome_chance != null ? `<span class="fact mono">⚫ шанс монохрома ${pct(m.monochrome_chance)}</span>` : ""}</div></div></section>
     <div class="label">Что брать</div>
     <div class="card">${optRow("any", "Любой фон", "все копии этой модели", d.any)}
-      ${n ? optRow("mono", "Все монохромы", `${n} ${plural(n, "фон", "фона", "фонов")} по одной цене`, d.mono) : ""}</div>
-    ${n ? `<div class="sect"><h3>Монохромные фоны<i>${n}</i></h3><button class="link" id="selall">Выбрать все</button></div>
+      ${n ? optRow("mono", "Все монохромы", `${n} ${plural(n, "фон", "фона", "фонов")} по одной цене`, d.mono, true) : ""}</div>
+    ${n ? `<div class="label">Цена монохромов</div>${ruleSwitch("ruleseg", d.rule)}<p class="hint" id="rulehint"></p>
+      <div class="sect"><h3>Монохромные фоны<i>${n}</i></h3><button class="link" id="selall">Выбрать все</button></div>
       <div class="bulk hidden" id="bulk">${priceField('id="bulkprice"', "", "Цена для отмеченных")}<button class="btn small" id="bulkapply">Применить</button></div>
-      <div class="grid">${m.pairs.map((p, i) => pairTile(c, m, p, i)).join("")}</div>
-      <p class="hint">Нажмите на фон, чтобы бот брал его по своей цене. Цена фона важнее общей цены «Все монохромы».</p>`
+      <div class="grid" id="pgrid">${m.pairs.map((p, i) => pairTile(c, m, p, i)).join("")}</div>
+      <p class="hint" id="pairhint"></p>`
     : empty("🎨", "Монохромных фонов нет", c.giftwiki ? "Для этой модели они не найдены — можно брать любой фон." : "Для этой коллекции нет данных о монохромах — можно брать любой фон.")}`;
   bindModel(m);
   refreshModel();
@@ -765,16 +806,19 @@ function drawModel() {
 function pairTile(c, m, p, i) {
   return `<div class="tile pair" data-pair="${i}">${art(p.image, c.image, m.name, p.center, p.edge, `${level(p.type)}<span class="check"></span>`)}
     <div class="cap"><div class="name">${esc(p.backdrop)}</div><div class="sub">${p.rarity != null ? `фон ${pct(p.rarity)}` : "&nbsp;"}</div>
-      ${priceField(`data-price="${i}"`, S.draft.pairs[i].price, "цена", "sm")}</div></div>`;
+      ${priceField(`data-price="${i}"`, S.draft.pairs[i].price, "цена", "sm")}<div class="floor-note"></div></div></div>`;
 }
 function bindModel(m) {
   const d = S.draft;
+  const tick = (p, i) => {  // with an own price, a newly ticked backdrop starts from a suggested one
+    if (p.on && d.rule === "fixed" && !p.price.trim()) $(`[data-price="${i}"]`).value = p.price = suggestedPrice(m);
+  };
   bindOptions(view, d, refreshModel);
+  $$("#ruleseg [data-rule]").forEach((b) => (b.onclick = () => { d.rule = b.dataset.rule; haptic(); d.pairs.forEach(tick); refreshModel(); }));
   $$("[data-pair]").forEach((tile) => (tile.onclick = (e) => {
     if (e.target.closest(".price")) return;
     const i = +tile.dataset.pair, p = d.pairs[i];
-    p.on = !p.on; haptic();
-    if (p.on && !p.price.trim()) $(`[data-price="${i}"]`).value = p.price = suggestedPrice(m);
+    p.on = !p.on; haptic(); tick(p, i);
     refreshModel();
   }));
   $$("[data-price]").forEach((input) => (input.oninput = () => {
@@ -787,10 +831,7 @@ function bindModel(m) {
   if (!all) return;
   all.onclick = () => {
     const every = d.pairs.every((p) => p.on);
-    d.pairs.forEach((p, i) => {
-      p.on = !every;
-      if (p.on && !p.price.trim()) $(`[data-price="${i}"]`).value = p.price = suggestedPrice(m);
-    });
+    d.pairs.forEach((p, i) => { p.on = !every; tick(p, i); });
     haptic(); refreshModel();
   };
   $("#bulkapply").onclick = () => {
@@ -809,34 +850,47 @@ function suggestedPrice(m) {
   return floor != null ? String(floor) : "";
 }
 function refreshModel() {
-  const d = S.draft, shared = d.mono.on ? d.mono.price.trim() : "";
+  const d = S.draft, byFloor = d.rule !== "fixed", upto = RULE_UPTO[d.rule] || "";
+  const shared = !byFloor && d.mono.on ? d.mono.price.trim() : "";
   syncOptions(view, d);
+  const monoRow = $('[data-opt="mono"]');
+  if (monoRow) { monoRow.classList.toggle("floorpriced", byFloor); $(".floor-note", monoRow).textContent = upto; }
+  $$("#ruleseg [data-rule]").forEach((b) => b.classList.toggle("on", b.dataset.rule === d.rule));
+  if ($("#rulehint")) $("#rulehint").textContent = ruleHint(d.rule, S.col, currentModel());
+  if ($("#pgrid")) $("#pgrid").classList.toggle("floorpriced", byFloor);
   d.pairs.forEach((p, i) => {
     $(`[data-pair="${i}"]`).classList.toggle("on", p.on);
     $(`[data-price="${i}"]`).placeholder = !p.on && shared ? `до ${shared}` : "цена";
+    $(`[data-pair="${i}"] .floor-note`).textContent = p.on || d.mono.on ? upto : "";
   });
-  const picked = d.pairs.filter((p) => p.on).length;
+  const ticked = d.pairs.filter((p) => p.on).length;
   if ($("#selall")) {
-    $("#selall").textContent = picked === d.pairs.length ? "Снять все" : "Выбрать все";
-    $("#bulk").classList.toggle("hidden", picked < 2);
+    $("#selall").textContent = ticked === d.pairs.length ? "Снять все" : "Выбрать все";
+    $("#bulk").classList.toggle("hidden", byFloor || ticked < 2);
+    $("#pairhint").textContent = byFloor ? "Нажмите на фон, чтобы бот брал его до флора. «Все монохромы» включает сразу все фоны модели."
+      : "Нажмите на фон, чтобы бот брал его по своей цене. Цена фона важнее общей цены «Все монохромы».";
   }
   if (draftKey(d) === S.initial) return Save.hide();
   const n = [d.any, d.mono, ...d.pairs].filter((o) => o.on).length;
   Save.show(n ? `Сохранить · ${n} ${plural(n, "позиция", "позиции", "позиций")}` : "Сохранить: не брать эту модель", saveModel);
 }
 async function saveModel() {
-  const c = S.col, m = currentModel(), d = S.draft;
+  const c = S.col, m = currentModel(), d = S.draft, floor = d.rule !== "fixed" ? d.rule : null;
   if (d.any.on && !d.any.price.trim()) return markBad($('[data-opt="any"] .price'), "Укажите цену для «Любой фон»");
-  if (d.mono.on && !d.mono.price.trim()) return markBad($('[data-opt="mono"] .price'), "Укажите цену для «Все монохромы»");
-  const missing = d.pairs.findIndex((p) => p.on && !p.price.trim());
-  if (missing >= 0) return markBad($(`[data-price="${missing}"]`).closest(".price"), `Укажите цену для фона ${m.pairs[missing].backdrop}`);
+  if (!floor) {
+    if (d.mono.on && !d.mono.price.trim()) return markBad($('[data-opt="mono"] .price'), "Укажите цену для «Все монохромы»");
+    const missing = d.pairs.findIndex((p) => p.on && !p.price.trim());
+    if (missing >= 0) return markBad($(`[data-price="${missing}"]`).closest(".price"), `Укажите цену для фона ${m.pairs[missing].backdrop}`);
+  }
   Save.busy(true);
   try {
     S.col = await api(`/collections/${encodeURIComponent(c.name)}/picks`, "PUT", {
       model: m.name, autobuy: c.autobuy,
       any_price_ton: d.any.on ? d.any.price.trim() : null,
-      monochrome_price_ton: d.mono.on ? d.mono.price.trim() : null,
-      pairs: m.pairs.map((p, i) => [p, d.pairs[i]]).filter(([, o]) => o.on).map(([p, o]) => ({ backdrop: p.backdrop, price_ton: o.price.trim() })),
+      monochrome_price_ton: d.mono.on && !floor ? d.mono.price.trim() : null,
+      monochrome_rule: d.mono.on && floor ? floor : null,
+      pairs: m.pairs.map((p, i) => [p, d.pairs[i]]).filter(([, o]) => o.on)
+        .map(([p, o]) => (floor ? { backdrop: p.backdrop, rule: floor } : { backdrop: p.backdrop, price_ton: o.price.trim() })),
     });
     S.draft = null; Save.hide(); haptic("success"); toast("Сохранено"); changed(true);
     if (S.tab === "collections" && S.page === "model") { const y = window.scrollY; drawModel(); window.scrollTo(0, y); }
@@ -865,7 +919,8 @@ function groupRules(items) {
 }
 function pickLine(p) {
   const what = p.backdrops.length ? `⚫ ${p.backdrops.join(", ")}` : p.mono ? "⚫ все монохромы" : "любой фон";
-  return `<div class="pk"><span><b>${esc(p.model || "Вся коллекция")}</b> · ${esc(what)}</span><span class="pr">до ${ton(p.price)}</span></div>`;
+  const limit = RULE_UPTO[p.rule] || `до ${ton(p.price)}`;
+  return `<div class="pk"><span><b>${esc(p.model || "Вся коллекция")}</b> · ${esc(what)}</span><span class="pr">${esc(limit)}</span></div>`;
 }
 const stateText = (r) => (!r.enabled ? "⏸ выключено" : r.autobuy ? "🛒 покупает сам" : "🔔 только уведомляет");
 function ruleActions(r, edit) {

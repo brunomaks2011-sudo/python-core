@@ -27,6 +27,7 @@ from gift_sniper.services.container import Services
 from gift_sniper.services.control import ControlService
 from gift_sniper.services.enrichment import Enricher, ReferenceStore
 from gift_sniper.services.filter_cache import FilterCache
+from gift_sniper.services.floors import FloorService
 from gift_sniper.services.giftwiki_sync import GiftWikiSync
 from gift_sniper.services.monitor import ListingMonitor
 from gift_sniper.services.notifications import MessageSender, Notifier, TelegramSender
@@ -98,7 +99,8 @@ class Application:
         enricher = Enricher(s, store, sessionmaker)
         filter_cache = FilterCache(sessionmaker, redis, s.redis_prefix)
         notifier = Notifier(s, sender, sessionmaker, redis)
-        purchase = PurchaseService(s, sessionmaker, redis, mrkt, control, enricher, notifier)
+        floors = FloorService(mrkt)
+        purchase = PurchaseService(s, sessionmaker, redis, mrkt, control, enricher, notifier, floors=floors)
         events_queue = StreamQueue(redis, f"{s.redis_prefix}:events", "processors")
         purchase_queue = StreamQueue(redis, f"{s.redis_prefix}:purchases", "buyers", max_deliveries=3)
         monitor = ListingMonitor(s, mrkt, events_queue, redis, notifier) if mrkt.configured else None
@@ -123,7 +125,7 @@ class Application:
             events_queue=events_queue,
         )
         self.processor = ListingProcessor(
-            s, sessionmaker, enricher, filter_cache, notifier, purchase_queue, control=control
+            s, sessionmaker, enricher, filter_cache, notifier, purchase_queue, control=control, floors=floors
         )
         return self.services
 

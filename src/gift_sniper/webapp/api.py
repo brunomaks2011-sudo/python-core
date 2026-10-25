@@ -29,7 +29,7 @@ from gift_sniper.domain.enums import BudgetScope, FilterKind, PurchaseMode, Purc
 from gift_sniper.domain.money import NANO_PER_TON, ton_to_nano
 from gift_sniper.domain.normalize import normalize_name
 from gift_sniper.integrations.mrkt import MrktAttribute, MrktError
-from gift_sniper.services.filters import FilterCriteria, FilterLimits, Pick, describe_criteria
+from gift_sniper.services.filters import FilterCriteria, FilterLimits, Pick, PriceRule, describe_criteria
 from gift_sniper.services.percentages import monochrome_model_share
 from gift_sniper.services.reference import ReferenceSnapshot, RefRecord
 from gift_sniper.services.texts import nft_url
@@ -139,11 +139,15 @@ class LimitsInput(BaseModel):
     notify: dict[str, bool] = Field(default_factory=dict)  # NOTIFY_SWITCHES that change
 
 
+FloorRule = Literal["collection_floor", "model_floor"]
+
+
 class PairPick(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
     backdrop: str = Field(min_length=1, max_length=128)
     price_ton: str | float | None = None
+    rule: FloorRule | None = None  # instead of a price: up to the collection or model floor
 
 
 class ModelPicks(BaseModel):
@@ -154,6 +158,7 @@ class ModelPicks(BaseModel):
     model: str | None = Field(default=None, max_length=128)
     any_price_ton: str | float | None = None  # every copy of the model, any backdrop
     monochrome_price_ton: str | float | None = None  # every pair Gift Wiki confirms as monochrome
+    monochrome_rule: FloorRule | None = None  # the same up to the collection or model floor instead
     pairs: list[PairPick] = Field(default_factory=list, max_length=200)  # single monochrome pairs
     autobuy: bool | None = None
 
@@ -167,15 +172,30 @@ def _picks_of(row: Filter | None) -> list[Pick]:
     return FilterCriteria.model_validate(row.criteria or {}).picks if row is not None else []
 
 
-def _pick_price(picks: list[Pick], model_norm: str | None, backdrop_norm: str | None) -> float | None:
-    """Price of the pick for exactly this model (None: whole collection) and backdrop (None: no backdrop)."""
+def _find_pick(picks: list[Pick], model_norm: str | None, backdrop_norm: str | None) -> Pick | None:
+    """The pick for exactly this model (None: whole collection) and backdrop (None: no backdrop)."""
     wanted = [backdrop_norm] if backdrop_norm else []
     for pick in picks:
         if (normalize_name(pick.model) if pick.model else None) == model_norm and [
             normalize_name(b) for b in pick.backdrops
         ] == wanted:
-            return ton(pick.max_price_nano)
+            return pick
     return None
+
+
+def _pick_price(picks: list[Pick], model_norm: str | None, backdrop_norm: str | None) -> float | None:
+    pick = _find_pick(picks, model_norm, backdrop_norm)
+    return ton(pick.max_price_nano) if pick is not None and pick.price_rule is PriceRule.FIXED else None
+
+
+def _pick_rule(picks: list[Pick], model_norm: str | None, backdrop_norm: str | None) -> str | None:
+    """The floor the pick follows instead of a price, if it does."""
+    pick = _find_pick(picks, model_norm, backdrop_norm)
+    return pick.price_rule.value if pick is not None and pick.price_rule is not PriceRule.FIXED else None
+
+
+def _floor_pick(model: str | None, rule: str, backdrops: list[str] | None = None) -> Pick:
+    return Pick(model=model, backdrops=backdrops or [], price_rule=PriceRule(rule))
 
 
 def _percent(permille: int | None) -> float | None:
@@ -440,6 +460,7 @@ class MiniAppApi:
                         "center": color_hex(record.center_color) or color_hex(center),
                         "edge": color_hex(record.edge_color) or color_hex(edge),
                         "price": _pick_price(mono, norm, backdrop_norm),
+                        "rule": _pick_rule(mono, norm, backdrop_norm),
                     }
                 )
             # share of this model's copies with a monochrome backdrop, from MRKT backdrop rarities
@@ -462,6 +483,7 @@ class MiniAppApi:
                     "monochrome_chance": chance,
                     "any": _pick_price(regular, norm, None),
                     "monochrome": _pick_price(mono, norm, None),
+                    "monochrome_rule": _pick_rule(mono, norm, None),
                     "taken": sum(1 for p in [*regular, *mono] if p.model and normalize_name(p.model) == norm),
                     "pairs": pairs,
                 }
@@ -485,7 +507,11 @@ class MiniAppApi:
             "autobuy": any(r.autobuy for r in plans.values())
             if plans
             else self.settings.can_purchase(user_id),
-            "whole": {"any": _pick_price(regular, None, None), "monochrome": _pick_price(mono, None, None)},
+            "whole": {
+                "any": _pick_price(regular, None, None),
+                "monochrome": _pick_price(mono, None, None),
+                "monochrome_rule": _pick_rule(mono, None, None),
+            },
             "taken": len(regular) + len(mono),
             "plans": [r.id for r in plans.values()],
             "models": model_items,
@@ -514,9 +540,14 @@ class MiniAppApi:
         new: dict[FilterKind, list[Pick]] = {FilterKind.REGULAR: [], FilterKind.MONOCHROME: []}
         if (price := _price(data.any_price_ton)) is not None:
             new[FilterKind.REGULAR].append(Pick(model=data.model, max_price_nano=price))
-        if (price := _price(data.monochrome_price_ton)) is not None:
+        if data.monochrome_rule is not None:
+            new[FilterKind.MONOCHROME].append(_floor_pick(data.model, data.monochrome_rule))
+        elif (price := _price(data.monochrome_price_ton)) is not None:
             new[FilterKind.MONOCHROME].append(Pick(model=data.model, max_price_nano=price))
         for pair in data.pairs:
+            if pair.rule is not None:
+                new[FilterKind.MONOCHROME].append(_floor_pick(data.model, pair.rule, [pair.backdrop]))
+                continue
             price = _price(pair.price_ton)
             if price is None:
                 raise ApiError(f"Укажите цену для фона {pair.backdrop}")
@@ -611,7 +642,13 @@ class MiniAppApi:
             "plan": bool(c.picks),
             "picks": [p.label(monochrome=spec.kind is FilterKind.MONOCHROME) for p in c.picks],
             "pick_items": [
-                {"model": p.model, "backdrops": p.backdrops, "price": ton(p.max_price_nano)} for p in c.picks
+                {
+                    "model": p.model,
+                    "backdrops": p.backdrops,
+                    "price": ton(p.max_price_nano),
+                    "rule": p.price_rule.value,
+                }
+                for p in c.picks
             ],
             "summary": describe_criteria(spec.kind, c),
         }

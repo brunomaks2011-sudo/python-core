@@ -151,6 +151,7 @@ HTTP 401 (не чаще раза в `MRKT_AUTH_COOLDOWN_SECONDS`). Сессия 
 
 | Назначение | Запрос | Источник |
 |---|---|---|
+| Флор коллекции или модели для цены «до флора» | `POST /gifts/saling` с `collectionNames` (и `modelNames`), `ordering: "Price"`, `lowToHigh: true`, `count: 5`: первое объявление, кроме самого рассматриваемого подарка и лотов аукциона | boostNT, tgmrkts, amrkt |
 | Листинги с фильтрами | `POST /gifts/saling` (`collectionNames`, `modelNames`, `backdropNames`, `symbolNames`, `minPrice`, `maxPrice`, `ordering`, `lowToHigh`, `count`≤20, `cursor`) → `{"gifts": [...], "cursor": ...}` | boostNT, tgmrkts, amrkt |
 | Лента событий рынка | `POST /feed` (`type`: `listing`, `sale`, `return`, `unlisting`, `change_price`, `upload`; `ordering: "Latest"`, `count`, `cursor`) → `{"items": [{"type","id","gift","amount","date"}]}`. Проверено 2026-10-24: фильтр `type` со значением `change_price` MRKT отклоняет (HTTP 400, `Error converting value "change_price" to type 'FeedItemType'`), поэтому бот отправляет `type: []` и отбирает типы событий сам | tgmrkts, amrkt |
 | Карточка подарка (повторная проверка) | `GET /gifts/gift/{id}` | amrkt |

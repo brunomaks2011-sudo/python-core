@@ -205,6 +205,40 @@ async def test_emergency_stop_from_the_mini_app(client: TestClient, env: Env) ->
     assert not resumed["stopped"]
 
 
+async def test_monochromes_up_to_a_floor_from_the_mini_app(client: TestClient, env: Env) -> None:  # type: ignore[type-arg]
+    await env.add_giftwiki("Plush Pepe", [("Onyx", "Black", "high"), ("Onyx", "Midnight", "low")])
+    body = {
+        "model": "Onyx",
+        "monochrome_rule": "model_floor",
+        "pairs": [{"backdrop": "Black", "rule": "collection_floor"}],
+    }
+    saved = await (await client.put(PEPE + "/picks", headers=auth(), json=body)).json()
+    onyx = next(m for m in saved["models"] if m["name"] == "Onyx")
+    assert (onyx["monochrome"], onyx["monochrome_rule"], onyx["taken"]) == (None, "model_floor", 2)
+    assert [(p["backdrop"], p["price"], p["rule"]) for p in onyx["pairs"]] == [
+        ("Black", None, "collection_floor"),
+        ("Midnight", None, None),
+    ]
+    whole = await (
+        await client.put(PEPE + "/picks", headers=auth(), json={"monochrome_rule": "collection_floor"})
+    ).json()
+    assert whole["whole"] == {"any": None, "monochrome": None, "monochrome_rule": "collection_floor"}
+
+    cards = (await (await client.get("/api/rules", headers=auth())).json())["items"]
+    mono = next(r for r in cards if r["kind"] == "monochrome")
+    assert {"model": "Onyx", "backdrops": [], "price": None, "rule": "model_floor"} in mono["pick_items"]
+    assert "Onyx · все монохромные фоны ≤ флор модели" in mono["picks"]
+    async with env.sessionmaker() as session:
+        row = await filters_repo.get_filter(session, ADMIN, mono["id"])
+    assert row is not None
+    rules = {p.price_rule.value for p in filters_repo.to_spec(row).criteria.picks}
+    assert rules == {"model_floor", "collection_floor"}
+    unknown = await client.put(
+        PEPE + "/picks", headers=auth(), json={"model": "Onyx", "monochrome_rule": "cheapest"}
+    )
+    assert unknown.status == 400
+
+
 async def test_notification_switches_and_what_blocks_buying(client: TestClient, env: Env) -> None:  # type: ignore[type-arg]
     me = await (await client.get("/api/me", headers=auth())).json()
     assert me["notify"] == {
@@ -288,7 +322,7 @@ async def test_pairs_picked_with_their_own_prices(client: TestClient, env: Env) 
     assert (onyx["any"], onyx["monochrome"], onyx["taken"]) == (3, 7, 3)
     assert [(p["backdrop"], p["price"]) for p in onyx["pairs"]] == [("Black", 9), ("Midnight", None)]
     whole = await client.put(PEPE + "/picks", headers=auth(), json={"monochrome_price_ton": "4"})
-    assert (await whole.json())["whole"] == {"any": None, "monochrome": 4}
+    assert (await whole.json())["whole"] == {"any": None, "monochrome": 4, "monochrome_rule": None}
     listing = (await (await client.get("/api/collections", headers=auth())).json())["items"]
     pepe = next(c for c in listing if c["name"] == "Plush Pepe")
     assert (pepe["taken"], pepe["autobuy"]) == (4, True)
@@ -296,7 +330,7 @@ async def test_pairs_picked_with_their_own_prices(client: TestClient, env: Env) 
     cards = {r["kind"]: r for r in (await (await client.get("/api/rules", headers=auth())).json())["items"]}
     mono_card = cards["monochrome"]
     assert mono_card["image"] == "https://fragment.com/file/gifts/plushpepe/thumb.webp"
-    assert {"model": "Onyx", "backdrops": ["Black"], "price": 9} in mono_card["pick_items"]
+    assert {"model": "Onyx", "backdrops": ["Black"], "price": 9, "rule": "fixed"} in mono_card["pick_items"]
     assert "Onyx · все монохромные фоны ≤ 7 TON" in mono_card["picks"]  # not "любой фон" in a monochrome plan
     assert cards["regular"]["picks"] == ["Onyx · любой фон ≤ 3 TON"]
 

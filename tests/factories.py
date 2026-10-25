@@ -200,6 +200,18 @@ class FakeMrkt:
         return page, ("next" if pages else None)
 
     async def search_listings(self, query: Any) -> tuple[list[ListingSnapshot], str | None]:
+        self.search_queries = [*getattr(self, "search_queries", []), query]
+        market: list[ListingSnapshot] | None = getattr(self, "market", None)
+        if (
+            market is not None
+        ):  # gifts/saling over these listings: the queried collection and model, cheapest first
+            found = [
+                item
+                for item in market
+                if item.collection_name in query.collection_names
+                and (not query.model_names or item.model_name in query.model_names)
+            ]
+            return sorted(found, key=lambda item: item.price_nano or 0)[: query.count], None
         pages = getattr(self, "saling_pages", deque())
         if not pages:
             return [], None

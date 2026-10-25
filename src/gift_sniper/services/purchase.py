@@ -47,7 +47,8 @@ from gift_sniper.services import texts
 from gift_sniper.services.budget import Limits, ScopeState, check_purchase, remaining
 from gift_sniper.services.control import ControlService
 from gift_sniper.services.enrichment import Enricher
-from gift_sniper.services.filters import FilterSpec, MatchContext, evaluate
+from gift_sniper.services.filters import FilterSpec, MatchContext, evaluate, floor_rules
+from gift_sniper.services.floors import FloorService
 from gift_sniper.services.locks import RedisLock
 from gift_sniper.services.notifications import Notifier
 from gift_sniper.services.user_prefs import NotificationSettings
@@ -127,6 +128,7 @@ class PurchaseService:
         control: ControlService,
         enricher: Enricher,
         notifier: Notifier | None,
+        floors: FloorService | None = None,
     ) -> None:
         self.settings = settings
         self.sessionmaker = sessionmaker
@@ -135,6 +137,7 @@ class PurchaseService:
         self.control = control
         self.enricher = enricher
         self.notifier = notifier
+        self.floors = floors
         self.sleep = asyncio.sleep  # replaced in tests
 
     # ================================================================== entry point
@@ -194,6 +197,10 @@ class PurchaseService:
         if fresh is None:
             return await self._record_cancelled(req, prun, spec, None, problem, attempt_no, prefs)
         enrichment = await self.enricher.enrich(fresh)
+        if (
+            spec is not None and self.floors is not None
+        ):  # a floor-priced pick is re-checked against the floor
+            enrichment = await self.floors.with_floors(fresh, enrichment, floor_rules(spec.criteria, fresh))
         problem = self._recheck_problem(req, spec, fresh, enrichment)
         if problem:
             return await self._record_cancelled(

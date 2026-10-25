@@ -21,12 +21,14 @@ from gift_sniper.config import RunMode, Settings
 from gift_sniper.db.models import FilterHit
 from gift_sniper.db.repo import listings as listings_repo
 from gift_sniper.domain.enums import FeedEventType, FilterKind, ListingStatus, MonochromeStatus, PurchaseMode
+from gift_sniper.domain.normalize import normalize_name
 from gift_sniper.domain.types import Enrichment, FeedEvent, ListingSnapshot
 from gift_sniper.integrations.mrkt.parsing import parse_datetime, parse_gift
 from gift_sniper.metrics import EVENT_TO_DECISION, FILTER_PROCESSING
 from gift_sniper.services.enrichment import Enricher
 from gift_sniper.services.filter_cache import FilterCache, UserFlags
-from gift_sniper.services.filters import FilterSpec, MatchContext, evaluate
+from gift_sniper.services.filters import FilterSpec, MatchContext, PriceRule, evaluate, floor_rules
+from gift_sniper.services.floors import FloorService
 from gift_sniper.services.notifications import Notifier
 from gift_sniper.services.purchase import PurchaseRequest
 
@@ -95,6 +97,7 @@ class ListingProcessor:
         notifier: Notifier | None,
         purchase_queue: Publisher | None,
         control: RunControl | None = None,
+        floors: FloorService | None = None,
     ) -> None:
         self.settings = settings
         self.sessionmaker = sessionmaker
@@ -103,6 +106,7 @@ class ListingProcessor:
         self.notifier = notifier
         self.purchase_queue = purchase_queue
         self.control = control
+        self.floors = floors
 
     async def handle_payload(self, payload: dict[str, Any]) -> None:
         event, detected_at, backlog = payload_to_event(payload)
@@ -163,8 +167,11 @@ class ListingProcessor:
             return report
 
         enrichment = await self.enricher.enrich(listing, verdict)
-        report.enrichment = enrichment
         specs, users = await self.filter_cache.get()
+        if self.floors is not None:  # floors cost a MRKT request: only when a floor-priced pick may match
+            rules = self._floor_rules(specs, listing, enrichment)
+            enrichment = await self.floors.with_floors(listing, enrichment, rules)
+        report.enrichment = enrichment
         ctx = MatchContext(
             event_type=event.type, detected_at=detected_at, is_first_sighting=change.is_new_listing
         )
@@ -228,6 +235,22 @@ class ListingProcessor:
                 elif isinstance(res, Exception):
                     log.error("notification failed", exc_info=res, extra={"user_id": user_id})
         return report
+
+    @staticmethod
+    def _floor_rules(
+        specs: list[FilterSpec], listing: ListingSnapshot, enrichment: Enrichment
+    ) -> set[PriceRule]:
+        is_mono = enrichment.verdict.status is MonochromeStatus.MONOCHROME
+        names = {normalize_name(n) for n in (listing.collection_name, listing.collection_title) if n}
+        rules: set[PriceRule] = set()
+        for spec in specs:
+            if not spec.enabled or (spec.kind is FilterKind.MONOCHROME and not is_mono):
+                continue
+            wanted = {normalize_name(c) for c in spec.criteria.collections}
+            if wanted and not wanted & names:
+                continue
+            rules |= floor_rules(spec.criteria, listing)
+        return rules
 
     async def _buying_users(self, report: ProcessReport) -> set[int]:
         """Users whose purchase request will really run (live or test mode, no emergency stop): they hear

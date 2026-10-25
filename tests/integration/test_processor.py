@@ -11,6 +11,7 @@ from gift_sniper.config import RunMode
 from gift_sniper.db.models import FeedEventLog, FilterHit, Gift, Listing, PriceHistory
 from gift_sniper.domain.enums import FilterKind, PurchaseMode
 from gift_sniper.domain.types import FeedEvent
+from gift_sniper.services.floors import FloorService
 from gift_sniper.services.processor import ListingProcessor, event_to_payload, payload_to_event
 from gift_sniper.services.queue import MemoryQueue
 from tests.factories import TON, make_listing
@@ -34,7 +35,9 @@ def event(
     )
 
 
-def processor(env: Env, queue: MemoryQueue, *, with_control: bool = False) -> ListingProcessor:
+def processor(
+    env: Env, queue: MemoryQueue, *, with_control: bool = False, with_floors: bool = False
+) -> ListingProcessor:
     return ListingProcessor(
         env.settings,
         env.sessionmaker,
@@ -43,6 +46,7 @@ def processor(env: Env, queue: MemoryQueue, *, with_control: bool = False) -> Li
         env.notifier,
         queue,
         control=env.control if with_control else None,
+        floors=FloorService(env.mrkt) if with_floors else None,
     )
 
 
@@ -213,6 +217,37 @@ async def test_a_listing_the_bot_buys_is_not_announced_separately(env: Env) -> N
         event("e2", gift_id="g2", number=101), detected_at=datetime.now(UTC)
     )
     assert len(env.sender.texts_for(UID)) == 1  # nothing will be bought: the listing itself is notified
+
+
+async def test_monochrome_up_to_the_model_floor(env: Env) -> None:
+    """The floor is the cheapest other copy of the model on MRKT, read only when such a pick may match."""
+    await env.add_user(UID)
+    await env.add_giftwiki("Plush Pepe", [("Onyx", "Black", "high")])
+    plan = await env.add_filter(
+        UID,
+        FilterKind.MONOCHROME,
+        name="onyx at floor",
+        criteria={"collections": ["Plush Pepe"], "picks": [{"model": "Onyx", "price_rule": "model_floor"}]},
+    )
+    env.mrkt.market = [
+        make_listing("cheapest-other", model_name="Onyx", backdrop_name="White", price_nano=8 * TON)
+    ]
+    queue = MemoryQueue()
+    proc = processor(env, queue, with_floors=True)
+    at_floor = await proc.process(event("e1", gift_id="m1", price=8 * TON), detected_at=datetime.now(UTC))
+    assert at_floor.matched_filters == [plan] and queue.published[-1]["mode"] == PurchaseMode.MONOCHROME.value
+    above = await proc.process(
+        event("e2", gift_id="m2", number=101, price=9 * TON), detected_at=datetime.now(UTC)
+    )
+    assert above.matched_filters == []
+    lookups = len(env.mrkt.search_queries)
+    await proc.process(
+        event("e3", gift_id="m3", number=102, price=TON, backdrop_name="White"), detected_at=datetime.now(UTC)
+    )
+    await proc.process(
+        event("e4", gift_id="m4", number=103, model_name="Ivory"), detected_at=datetime.now(UTC)
+    )
+    assert len(env.mrkt.search_queries) == lookups  # not a monochrome / another model: no floor needed
 
 
 async def test_open_in_mrkt_is_the_share_link_of_the_gift(env: Env) -> None:

@@ -134,3 +134,6 @@ class Enrichment:
     discount_reference_nano: int | None
     discount_samples: int
     giftwiki_data_age_hours: float | None
+    # lowest asking prices on MRKT without this gift, fetched only for floor-priced picks
+    collection_floor_nano: int | None = None
+    model_floor_nano: int | None = None

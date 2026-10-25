@@ -20,6 +20,7 @@ from gift_sniper.services.control import ControlService
 from gift_sniper.services.enrichment import Enricher, ReferenceStore
 from gift_sniper.services.filter_cache import FilterCache
 from gift_sniper.services.filters import FilterCriteria, FilterLimits
+from gift_sniper.services.floors import FloorService
 from gift_sniper.services.notifications import Notifier
 from gift_sniper.services.purchase import PurchaseRequest, PurchaseService
 from tests.factories import TON, FakeMrkt, RecordingSender, make_settings
@@ -181,7 +182,16 @@ async def env(sessionmaker: async_sessionmaker[AsyncSession], redis: Any) -> Env
     enricher = Enricher(settings, store, sessionmaker, cache_ttl=0)
     sender = RecordingSender()
     notifier = Notifier(settings, sender, sessionmaker, redis)
-    service = PurchaseService(settings, sessionmaker, redis, mrkt, control, enricher, notifier)  # type: ignore[arg-type]
+    service = PurchaseService(
+        settings,
+        sessionmaker,
+        redis,
+        mrkt,  # type: ignore[arg-type]
+        control,
+        enricher,
+        notifier,
+        floors=FloorService(mrkt),
+    )
 
     async def no_sleep(_: float) -> None:
         return None

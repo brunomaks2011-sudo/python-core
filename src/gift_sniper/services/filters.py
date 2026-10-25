@@ -4,8 +4,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from datetime import datetime
+from enum import StrEnum
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, field_validator, model_validator
 
 from gift_sniper.domain.enums import FeedEventType, FilterKind, GiftWikiMonochromeType, MonochromeStatus
 from gift_sniper.domain.money import format_ton
@@ -29,15 +30,28 @@ def _clean_names(values: list[str]) -> list[str]:
     return result[:MAX_LIST_ITEMS]
 
 
+class PriceRule(StrEnum):
+    """How a pick's price limit is set: a fixed amount, or the lowest asking price on MRKT at that moment
+    (of the whole collection, or of the listing's model) without the listing itself."""
+
+    FIXED = "fixed"
+    COLLECTION_FLOOR = "collection_floor"
+    MODEL_FLOOR = "model_floor"
+
+
+PRICE_RULE_TEXT = {PriceRule.COLLECTION_FLOOR: "флор коллекции", PriceRule.MODEL_FLOOR: "флор модели"}
+
+
 class Pick(BaseModel):
     """A choice made in the Mini App inside one collection: a model (or every model) with chosen backdrops
-    (or any), bought up to its own price. A monochrome filter additionally requires MONOCHROME status."""
+    (or any), bought up to its own price or up to a floor. A monochrome filter also requires MONOCHROME."""
 
     model_config = ConfigDict(extra="ignore")
 
     model: str | None = None
     backdrops: list[str] = []
-    max_price_nano: int = Field(gt=0)
+    max_price_nano: int | None = Field(default=None, gt=0)  # the price; with a floor rule an optional cap
+    price_rule: PriceRule = PriceRule.FIXED
 
     @field_validator("model", mode="after")
     @classmethod
@@ -50,6 +64,28 @@ class Pick(BaseModel):
     def _backdrops(cls, value: list[str]) -> list[str]:
         return _clean_names(value)
 
+    @model_validator(mode="after")
+    def _has_price(self) -> Pick:
+        if self.price_rule is PriceRule.FIXED and self.max_price_nano is None:
+            raise ValueError("a pick with a fixed price needs max_price_nano")
+        return self
+
+    def limit_nano(self, enrichment: Enrichment) -> int | None:
+        """The highest price this pick buys the listing at; None while the floor it follows is unknown."""
+        if self.price_rule is PriceRule.FIXED:
+            return self.max_price_nano
+        floor = (
+            enrichment.collection_floor_nano
+            if self.price_rule is PriceRule.COLLECTION_FLOOR
+            else enrichment.model_floor_nano
+        )
+        if floor is None or self.max_price_nano is None:
+            return floor
+        return min(floor, self.max_price_nano)
+
+    def price_text(self) -> str:
+        return PRICE_RULE_TEXT.get(self.price_rule) or format_ton(self.max_price_nano)
+
     def specificity(self) -> int:
         return (self.model is not None) + bool(self.backdrops)
 
@@ -61,16 +97,23 @@ class Pick(BaseModel):
     def label(self, *, monochrome: bool = False) -> str:
         anything = "все монохромные фоны" if monochrome else "любой фон"
         backdrops = ", ".join(self.backdrops) if self.backdrops else anything
-        return f"{self.model or 'все модели'} · {backdrops} ≤ {format_ton(self.max_price_nano)}"
+        return f"{self.model or 'все модели'} · {backdrops} ≤ {self.price_text()}"
 
 
-def matching_pick(picks: list[Pick], listing: ListingSnapshot) -> Pick | None:
+def matching_pick(picks: list[Pick], listing: ListingSnapshot, enrichment: Enrichment) -> Pick | None:
     """The most specific pick for the listing (model + backdrop over model only over the whole collection);
-    among equally specific ones the highest price."""
+    among equally specific ones the highest price limit."""
     candidates = [p for p in picks if p.matches(listing)]
     if not candidates:
         return None
-    return max(candidates, key=lambda p: (p.specificity(), p.max_price_nano))
+    return max(candidates, key=lambda p: (p.specificity(), p.limit_nano(enrichment) or 0))
+
+
+def floor_rules(criteria: FilterCriteria, listing: ListingSnapshot) -> set[PriceRule]:
+    """Floors the picks matching this listing need, so they are fetched only when they matter."""
+    return {
+        p.price_rule for p in criteria.picks if p.price_rule is not PriceRule.FIXED and p.matches(listing)
+    }
 
 
 class FilterCriteria(BaseModel):
@@ -206,11 +249,19 @@ def evaluate(
     if criteria.symbols and not _name_in(listing.symbol_name, criteria.symbols):
         failed.append("символ не выбран")
     if criteria.picks:
-        pick = matching_pick(criteria.picks, listing)
+        pick = matching_pick(criteria.picks, listing, enrichment)
         if pick is None:
             failed.append("модель и фон не выбраны в мини-приложении")
-        elif price is not None and price > pick.max_price_nano:
-            failed.append(f"цена выше {format_ton(pick.max_price_nano)} ({pick.model or 'все модели'})")
+        elif price is not None:
+            limit = pick.limit_nano(enrichment)
+            if limit is None:
+                failed.append(f"{pick.price_text()} неизвестен — нет других объявлений или MRKT не ответил")
+            elif price > limit:
+                failed.append(
+                    f"цена выше {format_ton(limit)} ({pick.model or 'все модели'}"
+                    + (f", {pick.price_text()}" if pick.price_rule is not PriceRule.FIXED else "")
+                    + ")"
+                )
 
     _check_range(
         failed,
