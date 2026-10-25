@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BrickGen — модель из деталей по описанию</title>
+  <meta name="description" content="Опишите модель словами: сайт соберёт её из настоящих деталей LDraw, проверит и покажет в 3D.">
+  <meta name="three-base" content="%THREE%">
+  <link rel="icon" href="/static/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/static/style.css">
+  <script type="importmap">{"imports": {"three": "%THREE%/build/three.module.min.js", "three/addons/": "%THREE%/examples/jsm/"}}</script>
+  <script type="module" src="/static/app.js"></script>
+</head>
+<body>
+  <header class="top">
+    <a class="brand" href="/" aria-label="BrickGen, на главную">
+      <svg class="logo" viewBox="0 0 32 32" aria-hidden="true"><rect x="2" y="10" width="28" height="18" rx="3"/><rect x="6" y="5" width="8" height="6" rx="2"/><rect x="18" y="5" width="8" height="6" rx="2"/></svg>
+      <span>BrickGen</span>
+    </a>
+    <nav><a href="#how">Как это работает</a></nav>
+  </header>
+
+  <main>
+    <section class="hero">
+      <h1>Модель из настоящих деталей — по&nbsp;описанию</h1>
+      <p class="lead">Опишите, что собрать. Сайт подберёт конструкцию из библиотеки LDraw, проверит её и покажет в 3D. Файлы можно скачать.</p>
+      <form id="ask" class="ask" autocomplete="off">
+        <label for="prompt" class="visually-hidden">Что собрать?</label>
+        <textarea id="prompt" name="prompt" rows="2" maxlength="300" required
+                  placeholder="Например: красная спортивная машина"></textarea>
+        <button id="submit" type="submit" class="btn primary">Собрать</button>
+      </form>
+      <p class="form-error" id="form-error" role="alert" hidden></p>
+      <div class="chips" id="themes" aria-label="Примеры"></div>
+    </section>
+
+    <section id="job" class="job" hidden aria-live="polite">
+      <div class="card status" id="status">
+        <div class="status-head">
+          <h2 id="job-prompt"></h2>
+          <span class="badge" id="job-badge"></span>
+        </div>
+        <ol class="stages" id="stages">
+          <li data-stage="plan"><span class="dot"></span><span>Понимаю запрос</span><small></small></li>
+          <li data-stage="draft"><span class="dot"></span><span>Подбираю заготовку и цвета</span><small></small></li>
+          <li data-stage="review"><span class="dot"></span><span>Собираю из деталей LDraw и проверяю</span><small></small></li>
+          <li data-stage="glb"><span class="dot"></span><span>Готовлю 3D-просмотр</span><small></small></li>
+        </ol>
+        <p class="job-error" id="job-error" hidden></p>
+      </div>
+
+      <div class="result" id="result" hidden>
+        <div class="card viewer">
+          <div class="tabs" role="tablist">
+            <button type="button" role="tab" data-view="3d" aria-selected="true">3D</button>
+            <button type="button" role="tab" data-view="image" aria-selected="false">Снимок LeoCAD</button>
+          </div>
+          <div class="stage-area" id="stage-area">
+            <canvas id="canvas" aria-label="3D-модель, вращайте мышью или пальцем"></canvas>
+            <img id="preview" alt="Снимок модели из LeoCAD" hidden>
+            <p class="viewer-msg" id="viewer-msg" hidden></p>
+          </div>
+          <p class="hint">Вращайте мышью или пальцем, колесо или щипок — масштаб.</p>
+        </div>
+
+        <aside class="card info">
+          <h2 id="result-title"></h2>
+          <p id="result-summary"></p>
+          <ul class="caveats" id="caveats"></ul>
+          <dl class="facts">
+            <div><dt>Деталей</dt><dd id="fact-parts"></dd></div>
+            <div><dt>Видов деталей</dt><dd id="fact-types"></dd></div>
+            <div><dt>Заготовка</dt><dd id="fact-template"></dd></div>
+            <div><dt>Подбор</dt><dd id="fact-planner"></dd></div>
+          </dl>
+          <div class="swatches" id="colours"></div>
+
+          <h3>Проверки</h3>
+          <ul class="checks" id="checks"></ul>
+          <details class="notes" id="notes-wrap" hidden>
+            <summary>Замечания проверки</summary>
+            <ul id="notes"></ul>
+          </details>
+
+          <div class="downloads">
+            <a class="btn primary" id="dl-mpd" href="#">Скачать LDraw (.mpd)</a>
+            <a class="btn" id="dl-glb" href="#">Скачать GLB</a>
+            <a class="btn quiet" id="dl-csv" href="#">Детали (.csv)</a>
+            <a class="btn quiet" id="dl-plan" href="#">План (.json)</a>
+          </div>
+          <button type="button" class="btn improve" disabled>Улучшить с AI · скоро</button>
+          <p class="fineprint" id="attribution"></p>
+        </aside>
+
+        <details class="card bom">
+          <summary>Список деталей</summary>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Деталь</th><th>Описание</th><th>Цвет</th><th class="num">Шт.</th></tr></thead>
+              <tbody id="bom"></tbody>
+            </table>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <section id="mine" class="mine" hidden>
+      <h2>Ваши модели</h2>
+      <div class="gallery" id="gallery"></div>
+    </section>
+
+    <section id="how" class="how">
+      <h2>Как это работает</h2>
+      <ol class="steps">
+        <li><b>Понимаем запрос.</b> Claude выбирает ближайшую проверенную заготовку и цвета. Без ключа API работает подбор по ключевым словам.</li>
+        <li><b>Собираем.</b> <a href="https://github.com/anteloc/ldraw-nova" rel="noopener">LDraw Nova</a> строит модель из настоящих деталей библиотеки LDraw.</li>
+        <li><b>Проверяем.</b> Файл, геометрия, пересечения кубиков и список деталей; LeoCAD открывает и рисует модель.</li>
+        <li><b>Отдаём.</b> 3D-просмотр в браузере, файл LDraw (.mpd) для LeoCAD или Studio и GLB для 3D-программ.</li>
+      </ol>
+      <p class="catalog-intro">Черновик сейчас умеет:</p>
+      <div class="catalog" id="catalog"></div>
+      <p class="fineprint">Проверки подтверждают детали и геометрию, но не доказывают, что модель устойчива и соберётся в реальности. LEGO® — товарный знак LEGO Group, сайт с ней не связан.</p>
+    </section>
+  </main>
+
+  <footer class="foot">
+    <span>BrickGen · черновики моделей на <a href="https://github.com/anteloc/ldraw-nova" rel="noopener">LDraw Nova</a> и библиотеке <a href="https://library.ldraw.org" rel="noopener">LDraw</a></span>
+    <span id="health"></span>
+  </footer>
+</body>
+</html>

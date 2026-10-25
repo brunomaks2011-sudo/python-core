@@ -1,0 +1,8 @@
+{
+  "name": "brickgen-web",
+  "private": true,
+  "description": "Browser libraries for the BrickGen 3D viewer, served from node_modules",
+  "dependencies": {
+    "three": "0.170.0"
+  }
+}
