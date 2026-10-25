@@ -30,9 +30,12 @@ def main_menu_kb(webapp_url: str | None = None) -> InlineKeyboardMarkup:
     for text, section in MAIN_SECTIONS:
         builder.button(text=text, callback_data=Menu(section=section))
     builder.adjust(2, 2, 2, 2, 2, 1)
-    if webapp_url:  # the simple way: choose collections and models on one screen
-        builder.row(InlineKeyboardButton(text="📱 Мини-приложение", web_app=WebAppInfo(url=webapp_url)))
-    return builder.as_markup()
+    rows = builder.export()
+    if webapp_url:  # the simple way, so it comes first: collections, models and backdrops on one screen
+        rows.insert(
+            0, [InlineKeyboardButton(text="📱 Открыть мини-приложение", web_app=WebAppInfo(url=webapp_url))]
+        )
+    return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
 def back_row(section: str = "main", text: str = "« Меню") -> list[InlineKeyboardButton]:

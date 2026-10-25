@@ -108,6 +108,11 @@ class TestKeyboards:
         for expected in ("Автопокупка подарков", "Автопокупка монохромов", "Управление ботом", "Gift Wiki"):
             assert any(expected in t for t in texts)
 
+    def test_mini_app_button_comes_first(self) -> None:
+        rows = main_menu_kb("https://sniper.example.com/app/").inline_keyboard
+        assert rows[0][0].web_app is not None and rows[0][0].web_app.url == "https://sniper.example.com/app/"
+        assert [b.text for row in rows[1:] for b in row] == [t for t, _ in MAIN_SECTIONS]
+
     def test_callback_data_fits_telegram_limit(self) -> None:
         samples = [
             FilterCb(action="delete_ok", id=2**31, field="mshare").pack(),
