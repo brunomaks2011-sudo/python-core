@@ -1,0 +1,29 @@
+[project]
+name = "brickgen"
+version = "0.1.0"
+description = "A website that turns a short description into a checked LDraw brick model with LDraw Nova"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "anthropic>=2.3,<3",
+    "fastapi>=0.115",
+    "uvicorn>=0.30",
+    "pydantic>=2.7",
+]
+
+[project.optional-dependencies]
+test = ["pytest>=8", "httpx>=0.27"]
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["brickgen", "brickgen.generators"]
+package-data = { brickgen = ["static/*"] }
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+markers = ["slow: builds real models with LDraw Nova, LeoCAD and mpd2glb (run with -m slow)"]
+addopts = "-m 'not slow'"
