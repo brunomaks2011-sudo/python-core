@@ -139,6 +139,9 @@
   .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; padding: 3px; border-radius: 13px; background: var(--fill); }
   .seg button { padding: 10px 6px; border: 0; border-radius: 10px; background: none; color: var(--hint); font-size: 14px; font-weight: 700; }
   .seg button.on { background: var(--accent); color: var(--accent-text); box-shadow: 0 1px 4px rgba(0, 0, 0, .2); }
+  .seg button:disabled { opacity: .35; }
+  .seg.seg3 { grid-template-columns: repeat(3, 1fr); margin-bottom: 4px; }
+  .seg.seg3 button { padding: 10px 2px; font-size: 13px; }
   .switch { position: relative; width: 51px; height: 31px; flex: none; }
   .switch input { position: absolute; width: 0; height: 0; opacity: 0; }
   .switch span { position: absolute; inset: 0; border-radius: 999px; background: var(--fill-2); transition: background .2s; }
@@ -927,8 +930,37 @@ const CHECK_TARGETS = {
   limits: ["Задать", () => scrollToId("budget")],
   rule: ["Выбрать", () => go("collections")],
   modes: ["Включить", () => scrollToId("modes")],
+  live: ["Включить", () => setMode("live")],
   stopped: ["Открыть", () => scrollToId("emergency")],
 };
+// the run mode goes up to RUN_MODE from .env; real purchases are allowed there once, on the bot's computer
+const RUN_MODES = [["notify_only", "🔔 Уведомления"], ["dry_run", "🧪 Тест"], ["live", "💸 Live"]];
+const MODE_RANK = { notify_only: 0, dry_run: 1, live: 2 };
+const LIVE_HOWTO = "Реальные покупки включаются один раз на компьютере с ботом: в папке проекта выполните "
+  + "scripts\\live.cmd (Windows) или ./scripts/live.sh. После этого здесь можно выбрать «Live».";
+function modeSwitch(m) {
+  if (!m.is_admin) return '<p class="hint">Режим работы меняет администратор.</p>';
+  const max = MODE_RANK[m.max_run_mode] ?? 0;
+  const hint = m.run_mode === "live" ? "Бот покупает по-настоящему. «Тест» — только имитация, «Уведомления» — без покупок."
+    : max < MODE_RANK.live ? LIVE_HOWTO : "Выберите «Live», чтобы бот покупал по-настоящему.";
+  return `<div class="seg seg3" id="modeseg">${RUN_MODES.map(([k, title]) => `<button data-mode="${k}" class="${m.run_mode === k ? "on" : ""}"
+    ${MODE_RANK[k] > max ? "disabled" : ""}>${title}</button>`).join("")}</div><p class="hint">${esc(hint)}</p>`;
+}
+async function setMode(mode) {
+  const m = S.me;
+  if (mode === m.run_mode) return;
+  if (MODE_RANK[mode] > (MODE_RANK[m.max_run_mode] ?? 0)) {
+    return popup(LIVE_HOWTO, [{ type: "ok" }], () => { window.alert(LIVE_HOWTO); return ""; });
+  }
+  if (mode === "live" && !(await confirmBox("Включить реальные покупки? Бот будет покупать за TON с баланса MRKT в пределах ваших лимитов."))) return;
+  haptic();
+  try {
+    S.me = await api("/mode", "PUT", { mode });
+    haptic("success");
+    toast({ live: "Реальные покупки включены", dry_run: "Тестовый режим", notify_only: "Только уведомления" }[mode]);
+  } catch (err) { toast(err.message); haptic("error"); }
+  updateChrome(); drawStatus();
+}
 function scrollToId(id) { const el = document.getElementById(id); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); }
 async function renderSettings() {
   const id = newScreen();
@@ -967,18 +999,20 @@ function drawStatus() {
   const m = S.me;
   const modes = {
     live: ["💸 Боевой режим", "Бот покупает по-настоящему, в пределах лимитов."],
-    dry_run: ["🧪 Тестовый режим", "Покупки только имитируются: бот пришлёт «был бы куплен». Для настоящих покупок поставьте RUN_MODE=live в файле .env и перезапустите бота."],
+    dry_run: ["🧪 Тестовый режим", "Покупки только имитируются: бот пришлёт «был бы куплен»."],
     notify_only: ["🔔 Только уведомления", "Бот ничего не покупает, только присылает находки."],
   };
   const [title, text] = m.stopped ? ["⛔ Все покупки остановлены", m.is_admin ? "Аварийная остановка. Снять её можно внизу страницы." : "Аварийная остановка. Снять её может администратор."]
     : modes[m.run_mode] || [m.run_mode, ""];
   const checks = m.ready ? "" : `<div class="label">Чтобы бот начал покупать</div><div class="card">${m.checklist.map((c) => {
-    const target = !c.ok && CHECK_TARGETS[c.id];
+    const target = !c.ok && (c.id !== "live" || m.is_admin) && CHECK_TARGETS[c.id];
     return `<div class="ck${c.ok ? " ok" : ""}"><span class="mark">${c.ok ? "✓" : "!"}</span><span class="grow">${esc(c.text)}</span>
       ${target ? `<button class="link" data-check="${esc(c.id)}">${target[0]}</button>` : ""}</div>`;
   }).join("")}</div>`;
-  $("#status").innerHTML = `<div class="mode ${m.stopped ? "stop" : esc(m.run_mode)}"><b>${esc(title)}</b><div class="sub">${esc(text)}</div></div>${checks}`;
+  $("#status").innerHTML = `<div class="mode ${m.stopped ? "stop" : esc(m.run_mode)}"><b>${esc(title)}</b><div class="sub">${esc(text)}</div></div>
+    ${modeSwitch(m)}${checks}`;
   $$("#status [data-check]").forEach((b) => (b.onclick = () => { haptic(); CHECK_TARGETS[b.dataset.check][1](); }));
+  $$("#modeseg [data-mode]").forEach((b) => (b.onclick = () => setMode(b.dataset.mode)));
   $("#emergency").innerHTML = m.stopped
     ? (m.is_admin ? '<button class="btn" id="resume">Снять аварийную остановку</button>' : "")
     : '<button class="btn danger" id="stop">⛔ Остановить все покупки</button>';

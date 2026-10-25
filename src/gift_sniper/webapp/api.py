@@ -17,7 +17,7 @@ from redis.asyncio import Redis
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from gift_sniper.config import Settings
+from gift_sniper.config import RunMode, Settings
 from gift_sniper.db.models import Filter, Gift, MarketCollection
 from gift_sniper.db.repo import filters as filters_repo
 from gift_sniper.db.repo import giftwiki as giftwiki_repo
@@ -76,6 +76,7 @@ class _Purchase(Protocol):
 
 class _Control(Protocol):
     async def run_mode(self) -> Any: ...
+    async def set_run_mode(self, mode: RunMode, *, by_user: int | None) -> Any: ...
     async def is_stopped(self) -> bool: ...
     async def stop_all(self, *, by_user: int | None, reason: str = "") -> None: ...
     async def resume(self, *, by_user: int | None) -> None: ...
@@ -293,6 +294,7 @@ class MiniAppApi:
             "is_admin": self.settings.is_admin(user_id),
             "can_purchase": can_purchase,
             "run_mode": run_mode,
+            "max_run_mode": self.settings.run_mode.value,  # RUN_MODE in .env: the mode can go up to it
             "stopped": stopped,
             "autobuy_enabled": prefs.autobuy_enabled,
             "monochrome_autobuy_enabled": prefs.monochrome_autobuy_enabled,
@@ -718,6 +720,22 @@ class MiniAppApi:
                     setattr(prefs, field, value)
             await misc.audit(session, "webapp_settings", user_id=user_id, changes=payload)
         await self.filter_cache.invalidate()
+        return await self.me(user_id)
+
+    async def set_mode(self, user_id: int, payload: dict[str, Any]) -> dict[str, Any]:
+        """Run mode switch for admins, up to RUN_MODE from .env (raising that ceiling is done on the host)."""
+        if not self.settings.is_admin(user_id):
+            raise ApiError("Режим работы меняет только администратор", 403)
+        try:
+            mode = RunMode(str(payload.get("mode", "")))
+        except ValueError as exc:
+            raise ApiError("Неизвестный режим работы") from exc
+        if mode.rank > self.settings.run_mode.rank:
+            raise ApiError(
+                f"Сейчас разрешён режим не выше {self.settings.run_mode.value}: реальные покупки включаются "
+                "на компьютере с ботом командой scripts\\live.cmd (Windows) или ./scripts/live.sh"
+            )
+        await self.control.set_run_mode(mode, by_user=user_id)
         return await self.me(user_id)
 
     async def emergency(self, user_id: int, *, stop: bool) -> dict[str, Any]:

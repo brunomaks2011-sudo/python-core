@@ -9,6 +9,7 @@ import pytest
 import pytest_asyncio
 from aiohttp.test_utils import TestClient, TestServer
 
+from gift_sniper.config import RunMode
 from gift_sniper.db.repo import filters as filters_repo
 from gift_sniper.db.repo import giftwiki as giftwiki_repo
 from gift_sniper.db.repo import listings as listings_repo
@@ -202,6 +203,28 @@ async def test_emergency_stop_from_the_mini_app(client: TestClient, env: Env) ->
     assert stopped["stopped"] and await env.control.is_stopped()
     resumed = await (await client.post("/api/resume", headers=auth())).json()
     assert not resumed["stopped"]
+
+
+async def test_run_mode_switch_goes_up_to_run_mode_from_env(
+    client: TestClient,  # type: ignore[type-arg]
+    env: Env,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    lowered = await (await client.put("/api/mode", headers=auth(), json={"mode": "dry_run"})).json()
+    assert (lowered["run_mode"], lowered["max_run_mode"]) == ("dry_run", "live")
+    assert await env.control.run_mode() is RunMode.DRY_RUN
+    raised = await (await client.put("/api/mode", headers=auth(), json={"mode": "live"})).json()
+    assert raised["run_mode"] == "live" and await env.control.run_mode() is RunMode.LIVE
+    assert (await client.put("/api/mode", headers=auth(), json={"mode": "turbo"})).status == 400
+
+    monkeypatch.setattr(env.settings, "run_mode", RunMode.DRY_RUN)  # RUN_MODE=dry_run in .env
+    above = await client.put("/api/mode", headers=auth(), json={"mode": "live"})
+    assert above.status == 400 and "live.cmd" in (await above.json())["error"]
+    assert await env.control.run_mode() is RunMode.DRY_RUN  # never above RUN_MODE
+
+    monkeypatch.setattr(env.settings, "allowed_user_ids", [7])
+    viewer = await client.put("/api/mode", headers=auth(7), json={"mode": "notify_only"})
+    assert viewer.status == 403 and "администратор" in (await viewer.json())["error"]
 
 
 async def test_pairs_picked_with_their_own_prices(client: TestClient, env: Env) -> None:  # type: ignore[type-arg]

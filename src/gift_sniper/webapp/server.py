@@ -126,6 +126,10 @@ def create_app(api: MiniAppApi, settings: Settings) -> web.Application:
         user_id = await caller(request)
         return web.json_response(await api.save_settings(user_id, await body(request)))
 
+    async def set_mode(request: web.Request) -> web.Response:
+        user_id = await caller(request)
+        return web.json_response(await api.set_mode(user_id, await body(request)))
+
     async def stop(request: web.Request) -> web.Response:
         return web.json_response(await api.emergency(await caller(request), stop=True))
 
@@ -148,6 +152,7 @@ def create_app(api: MiniAppApi, settings: Settings) -> web.Application:
     app.router.add_patch("/api/rules/{rule_id}", update_rule)
     app.router.add_delete("/api/rules/{rule_id}", delete_rule)
     app.router.add_put("/api/settings", save_settings)
+    app.router.add_put("/api/mode", set_mode)
     app.router.add_post("/api/stop", stop)
     app.router.add_post("/api/resume", resume)
     app.router.add_get("/api/history", history)

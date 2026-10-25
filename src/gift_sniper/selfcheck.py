@@ -10,6 +10,7 @@ from collections import Counter
 from typing import Any
 
 from gift_sniper.config import Settings
+from gift_sniper.domain.money import format_ton
 from gift_sniper.domain.normalize import color_candidates, normalize_name
 from gift_sniper.webapp.images import absolute_url, collection_thumb, gift_image, giftname
 
@@ -160,7 +161,7 @@ async def _check_mrkt(settings: Settings, report: Report, samples: list[tuple[st
             balance = await client.balance_nano()
             report.add(
                 OK if balance is not None else WARN,
-                "MRKT balance: " + ("получен" if balance is not None else "нет поля hard"),
+                "MRKT balance: " + (format_ton(balance) if balance is not None else "нет поля hard"),
             )
         except MrktError as exc:
             report.add(WARN, str(exc))
