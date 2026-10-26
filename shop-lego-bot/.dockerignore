@@ -1,0 +1,17 @@
+node_modules
+dist
+src/generated
+.env
+.env.*
+!.env.example
+backups
+logs
+*.log
+.git
+tests
+docs
+coverage
+.agents
+.claude
+.windsurf
+skills-lock.json

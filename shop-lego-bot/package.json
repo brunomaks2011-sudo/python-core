@@ -1,0 +1,43 @@
+{
+  "name": "shop-lego-bot",
+  "version": "1.0.0",
+  "description": "Telegram-бот магазину LEGO: каталог, замовлення, облік складу, пам’ять про покупців і Claude AI",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22.12"
+  },
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "node dist/index.js",
+    "build": "prisma generate && tsc -p tsconfig.build.json",
+    "typecheck": "prisma generate && tsc -p tsconfig.json",
+    "db:generate": "prisma generate",
+    "db:migrate:dev": "prisma migrate dev",
+    "db:migrate": "prisma migrate deploy",
+    "db:seed": "prisma db seed",
+    "db:studio": "prisma studio",
+    "test": "npm run test:unit && npm run test:integration",
+    "test:unit": "node --import tsx --test \"tests/unit/*.test.ts\"",
+    "test:integration": "node --import tsx --test --test-concurrency=1 \"tests/integration/*.test.ts\"",
+    "backup": "bash scripts/backup.sh"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "1.3.0",
+    "@prisma/adapter-pg": "7.10.1",
+    "@prisma/client": "7.10.1",
+    "dotenv": "18.0.9",
+    "pg": "8.23.1",
+    "pino": "10.4.0",
+    "prisma": "7.10.1",
+    "telegraf": "4.16.3",
+    "tsx": "4.23.15",
+    "zod": "4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "@types/pg": "8.23.1",
+    "pino-pretty": "13.2.0",
+    "typescript": "5.9.3"
+  }
+}

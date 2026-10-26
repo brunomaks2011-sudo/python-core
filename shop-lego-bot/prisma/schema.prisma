@@ -1,0 +1,418 @@
+// Схема бази даних магазину LEGO.
+// Після змін у схемі: `npm run db:migrate:dev -- --name <назва>` і `npm run db:generate`.
+// Обмеження CHECK (заборона від'ємних залишків тощо) додано вручну в SQL-міграції,
+// бо Prisma не описує їх у схемі.
+
+generator client {
+  provider               = "prisma-client"
+  output                 = "../src/generated/prisma"
+  moduleFormat           = "esm"
+  generatedFileExtension = "ts"
+  importFileExtension    = "js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ───────────────────────────── Каталог ─────────────────────────────
+
+enum ProductStatus {
+  ACTIVE // показується покупцям
+  ARCHIVED // прихований (команда /deleteproduct), історія замовлень зберігається
+}
+
+enum ProductCondition {
+  NEW // новий
+  USED // вживаний
+}
+
+enum BoxState {
+  ORIGINAL // в оригінальній коробці
+  DAMAGED // коробка пошкоджена
+  NONE // без коробки
+}
+
+enum Completeness {
+  COMPLETE // повний комплект
+  INCOMPLETE // бракує частини деталей
+  UNCHECKED // комплектність не перевірялася
+}
+
+model Product {
+  id                Int              @id @default(autoincrement())
+  name              String
+  /// Офіційний номер набору LEGO (може бути невідомим). Не унікальний: той самий
+  /// набір може продаватися і новим, і вживаним окремими позиціями.
+  setNumber         String?          @map("set_number")
+  theme             String
+  pieces            Int?
+  /// Рекомендований вік «від N років», якщо відомий.
+  ageMin            Int?             @map("age_min")
+  price             Decimal          @db.Decimal(12, 2)
+  /// Фізична кількість на складі.
+  stockOnHand       Int              @default(0) @map("stock_on_hand")
+  /// Зарезервовано під підтверджені покупцями, але ще не відправлені замовлення.
+  stockReserved     Int              @default(0) @map("stock_reserved")
+  /// При доступному залишку <= порогу статус «залишилося мало».
+  lowStockThreshold Int              @default(2) @map("low_stock_threshold")
+  imageUrl          String?          @map("image_url")
+  telegramFileId    String?          @map("telegram_file_id")
+  description       String?
+  condition         ProductCondition @default(NEW)
+  boxState          BoxState         @default(ORIGINAL) @map("box_state")
+  completeness      Completeness     @default(COMPLETE)
+  /// Примітка до стану: чого бракує, які пошкодження тощо.
+  conditionNote     String?          @map("condition_note")
+  status            ProductStatus    @default(ACTIVE)
+  createdAt         DateTime         @default(now()) @map("created_at")
+  updatedAt         DateTime         @updatedAt @map("updated_at")
+  archivedAt        DateTime?        @map("archived_at")
+
+  orderItems OrderItem[]
+  movements  StockMovement[]
+  changes    ProductChange[]
+
+  @@index([status, theme])
+  @@index([setNumber])
+  @@map("products")
+}
+
+enum ActorType {
+  SYSTEM
+  ADMIN
+  CUSTOMER
+}
+
+enum StockMovementType {
+  INITIAL // початковий залишок під час додавання товару
+  RESTOCK // надходження на склад (/addstock)
+  ADJUSTMENT // ручне коригування власником (інвентаризація, брак, списання)
+  ORDER_RESERVE // резерв під замовлення покупця
+  ORDER_RELEASE // зняття резерву при скасуванні
+  ORDER_SHIP // відвантаження: товар фізично списано зі складу
+  RETURN_RESTOCK // повернення товару на склад після підтвердження власником
+}
+
+/// Журнал усіх змін залишків. Кожен рядок фіксує дельти й підсумкові значення.
+model StockMovement {
+  id              Int               @id @default(autoincrement())
+  productId       Int               @map("product_id")
+  type            StockMovementType
+  onHandDelta     Int               @map("on_hand_delta")
+  reservedDelta   Int               @map("reserved_delta")
+  onHandAfter     Int               @map("on_hand_after")
+  reservedAfter   Int               @map("reserved_after")
+  orderId         Int?              @map("order_id")
+  actorType       ActorType         @map("actor_type")
+  actorTelegramId BigInt?           @map("actor_telegram_id")
+  note            String?
+  createdAt       DateTime          @default(now()) @map("created_at")
+
+  product Product @relation(fields: [productId], references: [id])
+  order   Order?  @relation(fields: [orderId], references: [id])
+
+  @@index([productId, createdAt])
+  @@index([orderId])
+  @@map("stock_movements")
+}
+
+/// Історія змін полів товару (ціна, назва, статус тощо).
+model ProductChange {
+  id              Int      @id @default(autoincrement())
+  productId       Int      @map("product_id")
+  field           String
+  oldValue        String?  @map("old_value")
+  newValue        String?  @map("new_value")
+  actorTelegramId BigInt?  @map("actor_telegram_id")
+  createdAt       DateTime @default(now()) @map("created_at")
+
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([productId, createdAt])
+  @@map("product_changes")
+}
+
+// ───────────────────────────── Покупці ─────────────────────────────
+
+model Customer {
+  id              Int       @id @default(autoincrement())
+  telegramId      BigInt    @unique @map("telegram_id")
+  username        String?
+  firstName       String?   @map("first_name")
+  lastName        String?   @map("last_name")
+  languageCode    String?   @map("language_code")
+  /// Дані, які покупець повідомив під час оформлення (останні використані).
+  fullName        String?   @map("full_name")
+  phone           String?
+  city            String?
+  deliveryPoint   String?   @map("delivery_point")
+  marketingOptOut Boolean   @default(false) @map("marketing_opt_out")
+  /// Покупець заблокував бота — повідомлення не надсилаються.
+  isBlocked       Boolean   @default(false) @map("is_blocked")
+  /// Сума завершених (доставлених) покупок.
+  totalSpent      Decimal   @default(0) @map("total_spent") @db.Decimal(12, 2)
+  lastOrderAt     DateTime? @map("last_order_at")
+  lastSeenAt      DateTime  @default(now()) @map("last_seen_at")
+  anonymizedAt    DateTime? @map("anonymized_at")
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+
+  orders       Order[]
+  checkout     Checkout?
+  chatMessages ChatMessage[]
+
+  @@index([lastOrderAt])
+  @@map("customers")
+}
+
+// ───────────────────────────── Замовлення ─────────────────────────────
+
+enum OrderStatus {
+  NEW // «Нове» — створене, магазин ще не отримав сповіщення
+  AWAITING_CONFIRMATION // «Очікує підтвердження магазину»
+  CONFIRMED // «Підтверджене»
+  PAID // «Оплачене»
+  PACKING // «Комплектується»
+  SHIPPED // «Відправлене»
+  DELIVERED // «Доставлене»
+  CANCELED // «Скасоване»
+  RETURNED // «Повернення»
+}
+
+/// Стан складського обліку замовлення — гарантує, що товар не буде списано
+/// чи повернено двічі незалежно від кількості змін статусу.
+enum StockState {
+  RESERVED // товар зарезервовано (доступний залишок зменшено)
+  RELEASED // резерв знято (скасування до відправлення)
+  SHIPPED // товар списано зі складу (відправлено)
+  RESTOCKED // товар повернуто на склад після повернення
+  WRITTEN_OFF // повернення без повернення на склад (наприклад, брак)
+}
+
+enum PaymentMethod {
+  CASH_ON_DELIVERY // накладений платіж
+  CARD_TRANSFER // переказ на картку
+  BANK_TRANSFER // оплата за реквізитами (IBAN)
+}
+
+model Order {
+  /// Номер замовлення (послідовність починається зі 101 — див. міграцію).
+  id              Int           @id @default(autoincrement())
+  customerId      Int           @map("customer_id")
+  status          OrderStatus   @default(NEW)
+  stockState      StockState    @default(RESERVED) @map("stock_state")
+  totalAmount     Decimal       @map("total_amount") @db.Decimal(12, 2)
+  fullName        String        @map("full_name")
+  phone           String
+  city            String
+  deliveryPoint   String        @map("delivery_point")
+  paymentMethod   PaymentMethod @map("payment_method")
+  trackingNumber  String?       @map("tracking_number")
+  adminNote       String?       @map("admin_note")
+  /// Ключ ідемпотентності: одне оформлення (checkout + nonce) = одне замовлення.
+  checkoutKey     String        @unique @map("checkout_key")
+  createdAt       DateTime      @default(now()) @map("created_at")
+  updatedAt       DateTime      @updatedAt @map("updated_at")
+  confirmedAt     DateTime?     @map("confirmed_at")
+  paidAt          DateTime?     @map("paid_at")
+  shippedAt       DateTime?     @map("shipped_at")
+  deliveredAt     DateTime?     @map("delivered_at")
+  canceledAt      DateTime?     @map("canceled_at")
+  returnedAt      DateTime?     @map("returned_at")
+  returnResolvedAt DateTime?    @map("return_resolved_at")
+
+  customer  Customer             @relation(fields: [customerId], references: [id])
+  items     OrderItem[]
+  history   OrderStatusHistory[]
+  movements StockMovement[]
+
+  @@index([customerId, createdAt])
+  @@index([status, createdAt])
+  @@map("orders")
+}
+
+model OrderItem {
+  id          Int              @id @default(autoincrement())
+  orderId     Int              @map("order_id")
+  productId   Int              @map("product_id")
+  /// Знімок даних товару на момент замовлення.
+  productName String           @map("product_name")
+  setNumber   String?          @map("set_number")
+  theme       String
+  condition   ProductCondition
+  unitPrice   Decimal          @map("unit_price") @db.Decimal(12, 2)
+  quantity    Int
+  lineTotal   Decimal          @map("line_total") @db.Decimal(12, 2)
+
+  order   Order   @relation(fields: [orderId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([orderId])
+  @@index([productId])
+  @@map("order_items")
+}
+
+model OrderStatusHistory {
+  id              Int          @id @default(autoincrement())
+  orderId         Int          @map("order_id")
+  fromStatus      OrderStatus? @map("from_status")
+  toStatus        OrderStatus  @map("to_status")
+  actorType       ActorType    @map("actor_type")
+  actorTelegramId BigInt?      @map("actor_telegram_id")
+  note            String?
+  createdAt       DateTime     @default(now()) @map("created_at")
+
+  order Order @relation(fields: [orderId], references: [id])
+
+  @@index([orderId, createdAt])
+  @@map("order_status_history")
+}
+
+enum CheckoutStatus {
+  ACTIVE // покупець зараз оформлює замовлення
+  SUBMITTED // замовлення створено
+  CANCELED // покупець скасував оформлення
+  EXPIRED // оформлення покинуто й прострочено
+}
+
+enum CheckoutStep {
+  PRODUCT
+  QUANTITY
+  REUSE_PROFILE
+  FULL_NAME
+  PHONE
+  CITY
+  DELIVERY_POINT
+  PAYMENT
+  SUMMARY
+  EDIT_MENU
+}
+
+/// Чернетка оформлення замовлення: по одній на покупця. Зберігається в БД,
+/// тому оформлення продовжується навіть після перезапуску бота.
+model Checkout {
+  id                Int            @id @default(autoincrement())
+  customerId        Int            @unique @map("customer_id")
+  /// Змінюється на кожне нове оформлення — захищає від натискання старих кнопок.
+  nonce             Int            @default(1)
+  status            CheckoutStatus @default(ACTIVE)
+  step              CheckoutStep   @default(PRODUCT)
+  /// Поле, яке покупець редагує з підсумку (після нього повертаємося до підсумку).
+  editingField      CheckoutStep?  @map("editing_field")
+  productId         Int?           @map("product_id")
+  quantity          Int?
+  fullName          String?        @map("full_name")
+  phone             String?
+  city              String?
+  deliveryPoint     String?        @map("delivery_point")
+  paymentMethod     PaymentMethod? @map("payment_method")
+  /// Ціна, показана покупцю в підсумку; при зміні ціни підсумок показується знову.
+  quotedUnitPrice   Decimal?       @map("quoted_unit_price") @db.Decimal(12, 2)
+  profileOffered    Boolean        @default(false) @map("profile_offered")
+  orderId           Int?           @map("order_id")
+  createdAt         DateTime       @default(now()) @map("created_at")
+  updatedAt         DateTime       @updatedAt @map("updated_at")
+
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  @@index([status, updatedAt])
+  @@map("checkouts")
+}
+
+// ───────────────────────────── Службові таблиці ─────────────────────────────
+
+/// Стан покрокових сценаріїв адміністратора (додавання товару, розсилка тощо).
+model UserState {
+  telegramId BigInt   @id @map("telegram_id")
+  scene      String?
+  data       Json     @default("{}")
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@map("user_states")
+}
+
+/// Оброблені оновлення Telegram — захист від повторної обробки.
+model ProcessedUpdate {
+  botId     BigInt   @map("bot_id")
+  updateId  BigInt   @map("update_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  @@id([botId, updateId])
+  @@index([createdAt])
+  @@map("processed_updates")
+}
+
+enum ChatRole {
+  USER
+  ASSISTANT
+}
+
+/// Короткий контекст діалогу для розуміння «цей набір», «а дешевше?» тощо.
+/// Автоматично видаляється через CHAT_HISTORY_RETENTION_DAYS днів.
+model ChatMessage {
+  id         Int      @id @default(autoincrement())
+  customerId Int      @map("customer_id")
+  role       ChatRole
+  text       String
+  productIds Int[]    @default([]) @map("product_ids")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  customer Customer @relation(fields: [customerId], references: [id])
+
+  @@index([customerId, createdAt])
+  @@map("chat_messages")
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  FAILED
+}
+
+/// Черга вихідних повідомлень (outbox): сповіщення не губляться при збоях
+/// Telegram чи перезапуску бота, а dedupKey не дає надіслати їх двічі.
+model Notification {
+  id            Int                @id @default(autoincrement())
+  kind          String
+  chatId        BigInt             @map("chat_id")
+  text          String
+  replyMarkup   Json?              @map("reply_markup")
+  dedupKey      String?            @unique @map("dedup_key")
+  orderId       Int?               @map("order_id")
+  status        NotificationStatus @default(PENDING)
+  attempts      Int                @default(0)
+  nextAttemptAt DateTime           @default(now()) @map("next_attempt_at")
+  lastError     String?            @map("last_error")
+  createdAt     DateTime           @default(now()) @map("created_at")
+  sentAt        DateTime?          @map("sent_at")
+
+  @@index([status, nextAttemptAt])
+  @@map("notifications")
+}
+
+enum BroadcastStatus {
+  DRAFT
+  SENDING
+  DONE
+  CANCELED
+}
+
+model Broadcast {
+  id               Int             @id @default(autoincrement())
+  adminTelegramId  BigInt          @map("admin_telegram_id")
+  text             String
+  photoFileId      String?         @map("photo_file_id")
+  status           BroadcastStatus @default(DRAFT)
+  totalRecipients  Int             @default(0) @map("total_recipients")
+  sentCount        Int             @default(0) @map("sent_count")
+  failedCount      Int             @default(0) @map("failed_count")
+  /// Курсор: id останнього обробленого покупця — розсилка продовжується після перезапуску.
+  cursorCustomerId Int             @default(0) @map("cursor_customer_id")
+  createdAt        DateTime        @default(now()) @map("created_at")
+  startedAt        DateTime?       @map("started_at")
+  finishedAt       DateTime?       @map("finished_at")
+
+  @@index([status])
+  @@map("broadcasts")
+}

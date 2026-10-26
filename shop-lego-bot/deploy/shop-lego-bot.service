@@ -1,0 +1,36 @@
+# systemd-служба для цілодобової роботи бота без Docker.
+# Встановлення (див. docs/DEPLOYMENT.md):
+#   sudo cp deploy/shop-lego-bot.service /etc/systemd/system/
+#   sudo systemctl daemon-reload && sudo systemctl enable --now shop-lego-bot
+# Логи: journalctl -u shop-lego-bot -f
+
+[Unit]
+Description=Telegram-бот магазину LEGO
+After=network-online.target postgresql.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=legobot
+Group=legobot
+WorkingDirectory=/opt/shop-lego-bot
+Environment=NODE_ENV=production
+# .env читається самим застосунком із WorkingDirectory.
+# Якщо Node.js встановлено не в /usr/bin (наприклад, через nvm), виправте шляхи.
+ExecStartPre=/usr/bin/npx prisma migrate deploy
+ExecStart=/usr/bin/node dist/index.js
+Restart=always
+RestartSec=5
+# Час на коректне завершення (дообробка оновлень, зупинка розсилки)
+TimeoutStopSec=30
+KillSignal=SIGTERM
+
+# Обмеження прав процесу
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
+ReadWritePaths=/opt/shop-lego-bot
+
+[Install]
+WantedBy=multi-user.target
