@@ -212,6 +212,8 @@ class FakeMrkt:
                 for item in market
                 if item.collection_name in query.collection_names
                 and (not query.model_names or item.model_name in query.model_names)
+                and (not query.backdrop_names or item.backdrop_name in query.backdrop_names)
+                and (not query.symbol_names or item.symbol_name in query.symbol_names)
             ]
             return sorted(found, key=lambda item: item.price_nano or 0)[: query.count], None
         pages = getattr(self, "saling_pages", deque())

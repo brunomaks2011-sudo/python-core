@@ -3,262 +3,408 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
-<meta name="color-scheme" content="dark light">
+<meta name="color-scheme" content="dark">
 <title>Снайпер MRKT</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-  /* Telegram passes the user's theme as --tg-theme-* variables; the fallbacks are a dark theme. */
+  /* A black theme with dark grey cards and purple for what is active or chosen. */
   :root {
-    --bg: var(--tg-theme-secondary-bg-color, #0e1013);
-    --surface: var(--tg-theme-section-bg-color, var(--tg-theme-bg-color, #181b21));
-    --text: var(--tg-theme-text-color, #f3f4f6);
-    --hint: var(--tg-theme-hint-color, #8b919c);
-    --accent: var(--tg-theme-button-color, #3d8bfd);
-    --accent-text: var(--tg-theme-button-text-color, #ffffff);
-    --link: var(--tg-theme-link-color, #5ea2ff);
-    --danger: var(--tg-theme-destructive-text-color, #f05252);
-    --ok: #2fbf71;
-    --warn: #e9a91c;
-    --mono: #a58bff;
-    --fill: rgba(255, 255, 255, .07);
-    --fill-2: rgba(255, 255, 255, .13);
-    --line: rgba(255, 255, 255, .08);
-    --art: rgba(255, 255, 255, .035);
-    --art-hi: rgba(255, 255, 255, .11);
-    --shadow: none;
-    --tabbar-h: 60px;
-  }
-  :root[data-theme="light"] {
-    --bg: var(--tg-theme-secondary-bg-color, #f1f2f5);
-    --surface: var(--tg-theme-section-bg-color, var(--tg-theme-bg-color, #ffffff));
-    --text: var(--tg-theme-text-color, #111318);
-    --hint: var(--tg-theme-hint-color, #707783);
-    --mono: #7c5cf0;
-    --fill: rgba(0, 0, 0, .05);
-    --fill-2: rgba(0, 0, 0, .1);
-    --line: rgba(0, 0, 0, .08);
-    --art: rgba(0, 0, 0, .05);
-    --art-hi: rgba(0, 0, 0, .015);
-    --shadow: 0 1px 2px rgba(0, 0, 0, .06);
+    --bg: #000;
+    --card: #111;
+    --card-line: #1b1b1b;
+    --well: #0b0b0b;
+    --field: #1f1f1f;
+    --field-line: #282828;
+    --dd: #292929;
+    --tile: #1f1f1f;
+    --text: #fff;
+    --text-2: #d4d4d6;
+    --hint: #8a8a8e;
+    --hint-2: #626266;
+    --line: #1d1d1d;
+    --accent: #5534f3;
+    --accent-soft: rgba(85, 52, 243, .17);
+    --link: #7b66ff;
+    --ok: #32d74b;
+    --warn: #ffb340;
+    --danger: #ff453a;
+    --mono: #b7a6ff;
+    --nav: #0d0d0d;
+    --nav-h: 68px;
+    --safe-b: max(env(safe-area-inset-bottom), var(--tg-safe-area-inset-bottom, 0px));
   }
   * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-  html { background: var(--bg); }
-  body { margin: 0 auto; max-width: 720px; min-height: 100vh; padding: 6px 16px calc(var(--tabbar-h) + 28px + env(safe-area-inset-bottom));
+  html { background: var(--bg); overflow-x: hidden; }
+  body { margin: 0 auto; max-width: 720px; min-height: 100vh; padding: 10px 16px calc(var(--nav-h) + var(--safe-b) + 28px); overflow-x: hidden;
     background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased;
-    font: 15px/1.35 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif; }
-  body.has-savebar { padding-bottom: calc(var(--tabbar-h) + 96px + env(safe-area-inset-bottom)); }
-  button { font: inherit; color: inherit; cursor: pointer; -webkit-appearance: none; appearance: none; }
+    font: 15px/1.35 -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "Segoe UI", Roboto, sans-serif; }
+  body.has-savebar { padding-bottom: calc(var(--nav-h) + var(--safe-b) + 100px); }
+  button { margin: 0; padding: 0; border: 0; background: none; font: inherit; color: inherit; cursor: pointer; -webkit-appearance: none; appearance: none; }
+  input { font: inherit; }
   a { color: var(--link); text-decoration: none; }
+  svg { display: block; }
   h2 { margin: 0; font-size: 22px; line-height: 1.15; font-weight: 800; overflow-wrap: anywhere; }
-  h3 { margin: 0; font-size: 17px; font-weight: 750; }
+  h3 { margin: 0; font-size: 18px; font-weight: 750; }
   .sub { color: var(--hint); font-size: 12.5px; }
   .grow { flex: 1; min-width: 0; }
   .hidden, [hidden] { display: none !important; }
-
-  /* headers */
-  .head { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 46px; margin: 0 0 6px; }
-  .head h1 { margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -.01em; }
-  .pill { flex: none; border: 0; border-radius: 999px; padding: 6px 11px; background: var(--fill); color: var(--hint); font-size: 12.5px; font-weight: 700; white-space: nowrap; }
-  .pill.live { background: rgba(47, 191, 113, .16); color: var(--ok); }
-  .pill.test { background: rgba(233, 169, 28, .16); color: var(--warn); }
-  .pill.stop { background: rgba(240, 82, 82, .16); color: var(--danger); }
-  .topbar { display: flex; align-items: center; min-height: 40px; margin: 0 0 6px -8px; }
-  .back { display: inline-flex; align-items: center; gap: 2px; max-width: 100%; padding: 8px; border: 0; background: none; color: var(--link); font-size: 16px; font-weight: 600; }
-  .back span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .back svg { width: 20px; height: 20px; flex: none; }
-
-  /* search and filters */
-  .sticky { position: sticky; top: 0; z-index: 10; margin: 0 -16px; padding: 6px 16px 0; background: var(--bg); }
-  .search { display: flex; align-items: center; gap: 8px; height: 42px; padding: 0 4px 0 12px; border-radius: 12px; background: var(--fill); }
-  .search > svg { width: 18px; height: 18px; flex: none; color: var(--hint); }
-  .search input { flex: 1; min-width: 0; height: 100%; border: 0; outline: none; background: none; color: var(--text); font: inherit; -webkit-appearance: none; appearance: none; }
-  .search input::placeholder { color: var(--hint); }
-  .search input::-webkit-search-cancel-button { display: none; }
-  .iconbtn { display: grid; place-items: center; width: 36px; height: 36px; flex: none; border: 0; border-radius: 10px; background: none; color: var(--hint); }
-  .iconbtn svg { width: 20px; height: 20px; }
-  .iconbtn.on { color: var(--accent); }
-  .chips { display: flex; gap: 6px; margin: 10px -16px; padding: 0 16px 2px; overflow-x: auto; scrollbar-width: none; }
-  .chips::-webkit-scrollbar { display: none; }
-  .chip { flex: none; padding: 7px 13px; border: 0; border-radius: 999px; background: var(--fill); font-size: 13.5px; font-weight: 650; }
-  .chip i { margin-left: 4px; color: var(--hint); font-style: normal; }
-  .chip.on { background: var(--accent); color: var(--accent-text); }
-  .chip.on i { color: inherit; opacity: .75; }
-
-  /* picture tiles */
-  .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
-  @media (min-width: 560px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-  .grid > .empty { grid-column: 1 / -1; }
-  .tile { position: relative; display: block; width: 100%; padding: 5px; border: 2px solid transparent; border-radius: 19px; background: var(--surface);
-    text-align: left; box-shadow: var(--shadow); transition: transform .12s, border-color .15s; }
-  .tile:active { transform: scale(.975); }
-  .tile.on { border-color: var(--accent); }
-  .art { position: relative; display: grid; place-items: center; aspect-ratio: 1 / 1; overflow: hidden; border-radius: 14px;
-    background: radial-gradient(circle at 50% 38%, var(--art-hi), var(--art) 72%); }
-  .art img { position: relative; z-index: 1; width: 100%; height: 100%; object-fit: contain; }
-  .art .letter { position: absolute; color: var(--fill-2); font-size: 42px; font-weight: 800; }
-  .cap { padding: 7px 5px 3px; }
-  .name { overflow: hidden; font-size: 14.5px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
-  .cap .sub { margin-top: 1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .split { display: flex; justify-content: space-between; gap: 6px; }
-  .mono-t { color: var(--mono); font-weight: 700; }
-  .tag { position: absolute; z-index: 2; top: 6px; padding: 3px 8px; border-radius: 999px; background: rgba(0, 0, 0, .55); color: #fff; font-size: 11.5px; font-weight: 800; }
-  .tag.tl { left: 6px; }
-  .tag.tr { right: 6px; }
-  .tag.buy, .tag.ok { background: var(--ok); }
-  .lvl { position: absolute; z-index: 2; top: 6px; left: 6px; padding: 3px 8px; border-radius: 999px; background: rgba(0, 0, 0, .55); color: #fff;
-    font-size: 11px; font-weight: 800; text-transform: capitalize; }
-  .lvl.t-high { background: #7c3aed; }
-  .lvl.t-medium { background: #2563eb; }
-  .lvl.t-low { background: #0d9488; }
-  .lvl.t-combo { background: #d97706; }
-  .check { position: absolute; z-index: 2; top: 6px; right: 6px; width: 26px; height: 26px; border: 2px solid rgba(255, 255, 255, .9); border-radius: 50%;
-    background: rgba(0, 0, 0, .28); transition: background .15s; }
-  .tile.on .check { border-color: #fff; background: var(--accent); }
-  .tile.on .check::after { content: ""; position: absolute; left: 7px; top: 3px; width: 6px; height: 11px; border: solid #fff; border-width: 0 2.5px 2.5px 0; transform: rotate(45deg); }
-
-  /* price inputs */
-  .price { display: flex; align-items: center; gap: 4px; height: 40px; padding: 0 10px; border: 1.5px solid transparent; border-radius: 11px;
-    background: var(--fill); cursor: text; transition: opacity .15s; }
-  .price input { flex: 1; width: 100%; min-width: 0; padding: 0; border: 0; outline: none; background: none; color: var(--text); font: inherit; font-weight: 700; text-align: right; }
-  .price input::placeholder { color: var(--hint); font-weight: 500; }
-  .price span { color: var(--hint); font-size: 12px; font-weight: 700; }
-  .price:focus-within { border-color: var(--accent); opacity: 1 !important; }
-  .price.bad { border-color: var(--danger); animation: shake .3s; }
-  .price.sm { height: 34px; margin-top: 7px; }
-  .off .price, .tile.pair:not(.on) .price { opacity: .5; }
   @keyframes shake { 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
 
-  /* collection and model header */
-  .hero { display: flex; align-items: center; gap: 14px; margin: 0 0 14px; }
-  .hero > .art, .hero > .skel { width: 96px; height: 96px; flex: none; border-radius: 22px; }
-  .facts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-  .fact { padding: 4px 8px; border-radius: 8px; background: var(--fill); font-size: 12px; font-weight: 650; }
-  .fact.mono { background: rgba(165, 139, 255, .16); color: var(--mono); }
+  /* headers */
+  .head { display: flex; align-items: center; justify-content: space-between; gap: 10px; min-height: 44px; margin: 2px 0 14px; }
+  .head h1 { margin: 0; font-size: 28px; font-weight: 800; letter-spacing: -.02em; }
+  .pill { flex: none; border-radius: 999px; padding: 7px 12px; background: var(--field); color: var(--hint); font-size: 12.5px; font-weight: 700; white-space: nowrap; }
+  .pill.live { background: rgba(50, 215, 75, .14); color: var(--ok); }
+  .pill.test { background: rgba(255, 179, 64, .14); color: var(--warn); }
+  .pill.stop { background: rgba(255, 69, 58, .14); color: var(--danger); }
+  .subhead { display: grid; grid-template-columns: 40px minmax(0, 1fr); align-items: center; gap: 12px; margin: 4px 0 16px; }
+  .subhead b { display: block; overflow: hidden; font-size: 19px; font-weight: 750; text-overflow: ellipsis; white-space: nowrap; }
+  .subhead .sub { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .label { margin: 22px 2px 10px; color: #808084; font-size: 13px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; }
 
-  /* controls */
-  .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; padding: 3px; border-radius: 13px; background: var(--fill); }
-  .seg button { padding: 10px 6px; border: 0; border-radius: 10px; background: none; color: var(--hint); font-size: 14px; font-weight: 700; }
-  .seg button.on { background: var(--accent); color: var(--accent-text); box-shadow: 0 1px 4px rgba(0, 0, 0, .2); }
+  /* square buttons and the collection switcher */
+  .sqbtn { display: grid; place-items: center; width: 40px; height: 40px; flex: none; border: 1px solid #383838; border-radius: 11px; background: #2c2c2c; color: #fff; }
+  .sqbtn svg { width: 22px; height: 22px; }
+  .sqbtn.dark { border-color: #262626; background: var(--field); }
+  .sqbtn:active, .colbtn:active, .dd:active, .wbtn:active, .dbtn:active, .mcard:active, .bcard:active, .scard:active { transform: scale(.97); }
+  .sw { display: grid; grid-template-columns: 40px minmax(0, 1fr) 40px; gap: 9px; margin-top: 4px; }
+  .colbtn { display: flex; align-items: center; justify-content: center; gap: 9px; min-width: 0; height: 40px; padding: 0 12px; border: 1px solid #2a2a2a; border-radius: 11px; background: #212121; }
+  .colbtn .ci { position: relative; display: grid; place-items: center; width: 28px; height: 28px; flex: none; overflow: hidden; border-radius: 8px; color: var(--hint); font-weight: 800; }
+  .colbtn .ci img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .colbtn .ct { overflow: hidden; font-size: 17px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* text fields */
+  .field { display: block; width: 100%; height: 42px; padding: 0 14px; border: 1px solid var(--card-line); border-radius: 11px; outline: none; background: var(--card); color: var(--text);
+    font-size: 16px; -webkit-appearance: none; appearance: none; }
+  .field::placeholder { color: var(--hint-2); }
+  .field:focus { border-color: var(--accent); }
+  .field.bad { border-color: var(--danger); animation: shake .3s; }
+  .search { display: flex; align-items: center; gap: 9px; height: 42px; padding: 0 12px; border: 1px solid var(--field-line); border-radius: 11px; background: var(--field); }
+  .search > svg { width: 20px; height: 20px; flex: none; color: var(--hint); }
+  .search input { flex: 1; min-width: 0; height: 100%; border: 0; outline: none; background: none; color: var(--text); font-size: 16px; -webkit-appearance: none; appearance: none; }
+  .search input::placeholder { color: var(--hint-2); }
+  .search input::-webkit-search-cancel-button { display: none; }
+
+  /* filters: three dropdowns, actions */
+  .dds { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; margin-top: 10px; }
+  .dd { display: flex; align-items: center; justify-content: space-between; gap: 2px; min-width: 0; height: 40px; padding: 0 6px 0 10px; border: 1.5px solid transparent;
+    border-radius: 11px; background: var(--dd); font-size: min(15.5px, 3.6vw); }
+  .dd span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .dd svg { width: 14px; height: 14px; flex: none; color: #c7c7cc; transition: transform .2s; }
+  .dd.on { border-color: var(--accent); }
+  .dd.on svg { transform: rotate(180deg); }
+  .dd.set span { font-weight: 650; }
+  .acts { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.18fr) 40px; gap: 9px; margin-top: 10px; }
+  .wbtn, .dbtn { height: 40px; padding: 0 6px; overflow: hidden; border-radius: 11px; font-size: min(16px, 3.75vw); font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+  .wbtn { background: #fff; color: #000; }
+  .dbtn { border: 1px solid #262626; background: var(--field); color: #fff; }
+  .wbtn:disabled, .dbtn:disabled { opacity: .6; }
+
+  /* pickers: models by rarity, backdrops by colour, patterns */
+  .panel { margin-top: 10px; padding: 14px 12px; border: 1px solid #1a1a1a; border-radius: 18px; background: var(--card); }
+  .ghead { display: flex; align-items: center; gap: 14px; margin: 16px 2px 10px; }
+  .gl { color: var(--hint); font-size: 13.5px; white-space: nowrap; }
+  .gl b { color: var(--text); font-weight: 700; }
+  .glink { color: var(--link); font-size: 16px; font-weight: 600; white-space: nowrap; }
+  .fold { display: grid; place-items: center; width: 30px; height: 30px; margin-left: auto; color: #fff; }
+  .fold svg { width: 20px; height: 20px; transition: transform .2s; }
+  .group.shut .fold svg { transform: rotate(180deg); }
+  .group.shut .mgrid { display: none; }
+  .mgrid, .bgrid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 5px; }
+  @media (max-width: 359px) { .mgrid, .bgrid { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
+  .mcard, .bcard, .scard { display: flex; flex-direction: column; align-items: center; min-width: 0; border: 1.5px solid #282828; border-radius: 11px; background: var(--tile); }
+  .mcard { gap: 3px; padding: 9px 3px 8px; }
+  .bcard, .scard { gap: 5px; padding: 9px 3px 8px; border-color: #262626; background: #1a1a1a; }
+  .mcard.on, .bcard.on, .scard.on { border-color: var(--accent); background: #1c1830; }
+  .mimg { position: relative; display: grid; place-items: center; width: 42px; height: 42px; margin-bottom: 4px; }
+  .mimg img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; border-radius: 9px; }
+  .mimg .letter { color: #4a4a4e; font-size: 20px; font-weight: 800; }
+  .mname, .bname { width: 100%; overflow: hidden; font-size: 12.5px; text-align: center; text-overflow: ellipsis; white-space: nowrap; }
+  .mname { color: #d6d6d8; }
+  .bname { font-weight: 600; }
+  .btype { max-width: 100%; margin-top: -3px; overflow: hidden; color: #77777b; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+  .tonv { display: inline-flex; align-items: center; gap: 3px; font-size: 12.5px; font-weight: 600; white-space: nowrap; }
+  .tonv svg { width: 12px; height: 12px; }
+  .sortrow { display: flex; align-items: center; gap: 4px; margin-top: 12px; }
+  .sortrow { min-width: 0; }
+  .sortpill { display: inline-flex; align-items: center; gap: 5px; height: 38px; padding: 0 min(12px, 2.8vw); border-radius: 11px; color: #8e8e93;
+    font-size: min(16px, 4vw); font-weight: 600; white-space: nowrap; }
+  .sortpill svg { width: 15px; height: 15px; transition: transform .2s; }
+  .sortpill.on { background: var(--field); color: #fff; }
+  .sortpill.on.desc svg { transform: rotate(180deg); }
+  .sortpill.solid { margin-left: auto; background: var(--field); color: #fff; }
+  .secthead { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 16px 2px 10px; color: var(--hint); font-size: 13.5px; }
+  .secthead i { color: #6c6c70; font-style: normal; font-size: 12.5px; }
+  .swatch { display: grid; place-items: center; width: 30px; height: 30px; flex: none; border-radius: 8px; background: #2a2a2a; font-size: 14px; }
+  .swatch.mono { background: #2a2540; }
+  .divider { height: 1px; margin: 14px 0; background: var(--line); }
+  .sgrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-top: 12px; }
+  .scard { padding: 10px 6px; }
+  .pempty { padding: 22px 8px 6px; color: var(--hint); font-size: 14px; text-align: center; }
+
+  /* what is chosen */
+  .selcard { padding: 14px; border: 1px solid #1a1a1a; border-radius: 18px; background: var(--card); }
+  .selhead { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .schips + .selhead { margin-top: 14px; }
+  .selhead b { font-size: 16px; font-weight: 600; }
+  .selhead .glink { font-size: 15.5px; }
+  .schips { display: flex; gap: 10px; margin: 12px -14px 0; padding: 0 14px; overflow-x: auto; scrollbar-width: none; }
+  .schips::-webkit-scrollbar { display: none; }
+  .schip { display: flex; flex-direction: column; align-items: center; gap: 6px; width: 62px; flex: none; }
+  .schip .mimg { width: 44px; height: 44px; margin: 0; }
+  .schip .swatch { width: 44px; height: 44px; border-radius: 11px; font-size: 18px; }
+  .schip .nm { max-width: 62px; overflow: hidden; color: #cfcfd2; font-size: 12.5px; text-overflow: ellipsis; white-space: nowrap; }
+
+  /* prices */
+  .pbox { margin-top: 10px; padding: 9px; border: 1px solid #1a1a1a; border-radius: 16px; background: var(--card); }
+  .pcells { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(calc((100% - 16px) / 3), 1fr); gap: 8px; overflow-x: auto; scrollbar-width: none; }
+  .pcells::-webkit-scrollbar { display: none; }
+  .pcell { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 9px; min-width: 0; min-height: 66px; padding: 10px 6px; border-radius: 11px; background: var(--well); }
+  .pt { display: flex; align-items: center; justify-content: center; gap: 6px; max-width: 100%; font-size: 13.5px; font-weight: 500; }
+  .pt > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pt .pic { position: relative; display: grid; place-items: center; width: 20px; height: 20px; flex: none; overflow: hidden; border-radius: 50%; background: #1d1d1d; color: var(--hint); font-size: 11px; }
+  .pt .pic img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .pt .swatch { width: 20px; height: 20px; border-radius: 50%; }
+  .pv { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 13.5px; white-space: nowrap; }
+  .pv span { display: inline-flex; align-items: center; gap: 4px; }
+  .pv svg { width: 15px; height: 15px; }
+  .pv .ton svg { color: #4f9dff; }
+  .pv .ls { color: var(--hint); }
+  .pnote { margin: 9px 4px 1px; color: #6c6c70; font-size: 12px; line-height: 1.5; }
+  .pnote svg { display: inline-block; width: 12px; height: 12px; vertical-align: -2px; }
+
+  /* subscription form */
+  .subcard { padding: 14px; border: 1px solid #1c1c1c; border-radius: 20px; background: var(--card); }
+  .subcard > .field { border-color: var(--field-line); background: var(--field); }
+  .what { margin: 8px 2px 0; color: var(--hint); font-size: 13px; line-height: 1.4; }
+  .trow { display: flex; align-items: center; gap: 12px; margin-top: 10px; padding: 13px 14px; border-radius: 14px; background: var(--well); cursor: pointer; }
+  .trow .ttl { font-size: min(17px, 4.1vw); font-weight: 500; }
+  .trow .tsub { margin-top: 4px; color: #6e6e72; font-size: 12.5px; }
+  .trow.prow { padding: 9px 9px 9px 14px; cursor: default; }
+  .trow.prow .range { flex: 1; }
+  .fhint { margin: 10px 4px 0; color: var(--warn); font-size: 13px; }
+  .fhint:empty { display: none; }
+
+  /* buttons and switches */
+  .btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; height: 48px; padding: 0 16px; border-radius: 12px; background: var(--accent);
+    color: #fff; font-size: 17px; font-weight: 700; }
+  .subcard > .btn { margin-top: 12px; }
+  .btn.ghost { height: 44px; margin-top: 6px; background: none; color: var(--hint); font-size: 15px; font-weight: 600; }
+  .btn.soft { background: var(--field); font-size: 15px; }
+  .btn.danger { background: rgba(255, 69, 58, .12); color: var(--danger); font-size: 15px; }
+  .btn.small { width: auto; height: 40px; font-size: 14px; }
+  .btn:disabled { opacity: .55; }
+  .link { padding: 4px 0; color: var(--link); font-weight: 650; }
+  .switch { position: relative; display: inline-block; width: 51px; height: 31px; flex: none; }
+  .switch input { position: absolute; width: 0; height: 0; opacity: 0; }
+  .switch span { position: absolute; inset: 0; border-radius: 999px; background: #3a3a3c; transition: background .2s; }
+  .switch span::before { content: ""; position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 50%; background: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, .3); transition: transform .2s; }
+  .switch input:checked + span { background: var(--accent); }
+  .switch input:checked + span::before { transform: translateX(20px); }
+  .switch input:disabled + span { opacity: .45; }
+  .seg { display: grid; grid-template-columns: 1fr 1fr; gap: 3px; padding: 3px; border: 1px solid #1a1a1a; border-radius: 13px; background: var(--card); }
+  .seg button { padding: 10px 6px; border-radius: 10px; color: var(--hint); font-size: 14px; font-weight: 700; }
+  .seg button.on { background: var(--accent); color: #fff; }
   .seg button.locked { opacity: .4; }
   .seg.seg3 { grid-template-columns: repeat(3, 1fr); }
   .seg.seg3 button { padding: 10px 2px; font-size: 13px; }
   .seg button small { display: block; margin-top: 2px; font-size: 11px; font-weight: 600; opacity: .75; }
-  .floor-note { display: none; color: var(--mono); font-size: 12.5px; font-weight: 700; }
-  .floorpriced .range, .grid.floorpriced .range { display: none; }
-  .opt.floorpriced .floor-note { display: block; flex: none; white-space: nowrap; }
-  .grid.floorpriced .floor-note { display: block; min-height: 34px; margin-top: 7px; padding: 8px 2px 0; }
-  .switch { position: relative; width: 51px; height: 31px; flex: none; }
-  .switch input { position: absolute; width: 0; height: 0; opacity: 0; }
-  .switch span { position: absolute; inset: 0; border-radius: 999px; background: var(--fill-2); transition: background .2s; }
-  .switch span::before { content: ""; position: absolute; top: 2px; left: 2px; width: 27px; height: 27px; border-radius: 50%; background: #fff;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, .25); transition: transform .2s; }
-  .switch input:checked + span { background: var(--ok); }
-  .switch input:checked + span::before { transform: translateX(20px); }
-  .switch input:disabled + span { opacity: .5; }
-  .btn { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; padding: 13px 16px; border: 0; border-radius: 12px;
-    background: var(--accent); color: var(--accent-text); font-size: 15px; font-weight: 700; }
-  .btn.small { width: auto; height: 40px; padding: 0 16px; font-size: 14px; }
-  .btn.soft { background: var(--fill); color: var(--text); }
-  .btn.danger { background: rgba(240, 82, 82, .12); color: var(--danger); }
-  .btn:disabled { opacity: .55; }
-  .link { padding: 4px 0; border: 0; background: none; color: var(--link); font-weight: 650; }
+
+  /* price inputs */
+  .price { display: flex; align-items: center; gap: 4px; min-width: 0; height: 40px; padding: 0 10px; border: 1.5px solid transparent; border-radius: 10px;
+    background: var(--field); cursor: text; transition: opacity .15s; }
+  .price input { flex: 1; width: 100%; min-width: 0; padding: 0; border: 0; outline: none; background: none; color: var(--text); font-size: 16px; font-weight: 650; text-align: right; }
+  .price input::placeholder { color: var(--hint-2); font-weight: 500; }
+  .price span { color: var(--hint); font-size: 12px; font-weight: 700; }
+  .price:focus-within { border-color: var(--accent); opacity: 1 !important; }
+  .price.bad { border-color: var(--danger); animation: shake .3s; }
+  .price.sm { height: 34px; margin-top: 7px; padding: 0 8px; }
+  .off .price, .tile.pair:not(.on) .price { opacity: .5; }
+  .range { display: flex; align-items: center; gap: 6px; }
+  .range .price { flex: 1; }
+  .range .dash { color: var(--hint); }
 
   /* cards and lists */
-  .card { margin-bottom: 12px; padding: 2px 14px; border-radius: 16px; background: var(--surface); box-shadow: var(--shadow); }
-  .line { display: flex; align-items: center; gap: 12px; padding: 12px 0; }
+  .card { margin-bottom: 12px; padding: 2px 14px; border: 1px solid #1a1a1a; border-radius: 18px; background: var(--card); }
+  .line { display: flex; align-items: center; gap: 12px; padding: 13px 0; }
   .line + .line { border-top: 1px solid var(--line); }
-  .line b { font-weight: 650; }
+  .line b { font-weight: 600; }
   .opt + .opt { border-top: 1px solid var(--line); }
   .opt > .line { padding-bottom: 8px; }
-  .range { display: flex; align-items: center; gap: 6px; }
-  .range .price { flex: 1; min-width: 0; }
-  .range .dash { color: var(--hint); }
   .opt .range { padding: 0 0 12px 63px; }
-  .tile .range { margin-top: 7px; }
-  .tile .range .price.sm { margin-top: 0; padding: 0 8px; }
-  .rowbtn { display: flex; align-items: center; gap: 12px; width: 100%; margin: 12px 0; padding: 13px 14px; border: 0; border-radius: 16px;
-    background: var(--surface); text-align: left; box-shadow: var(--shadow); }
+  .rowbtn { display: flex; align-items: center; gap: 12px; width: 100%; margin: 12px 0; padding: 14px; border: 1px solid #1a1a1a; border-radius: 18px; background: var(--card); text-align: left; }
   .chev { color: var(--hint); font-size: 24px; line-height: 1; }
-  .label { margin: 20px 4px 8px; color: var(--hint); font-size: 13px; font-weight: 650; letter-spacing: .04em; text-transform: uppercase; }
-  .sect { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 20px 2px 10px; }
-  .sect h3 i { margin-left: 5px; color: var(--hint); font-style: normal; font-weight: 600; }
   .hint { margin: 8px 4px 12px; color: var(--hint); font-size: 12.5px; }
-  .bulk { display: flex; gap: 8px; margin: 0 0 12px; }
-  .bulk .price { flex: 1; }
-  .banner { display: flex; align-items: center; gap: 10px; width: 100%; margin: 4px 0 12px; padding: 11px 13px; border: 0; border-radius: 14px;
-    background: rgba(233, 169, 28, .14); text-align: left; font-size: 14px; }
+  .banner { display: flex; align-items: center; gap: 10px; width: 100%; margin: 0 0 12px; padding: 12px 14px; border: 1px solid rgba(255, 179, 64, .25); border-radius: 16px;
+    background: rgba(255, 179, 64, .1); text-align: left; font-size: 14px; }
   .banner .chev { font-size: 20px; }
-  .mode { margin-bottom: 12px; padding: 14px; border-radius: 16px; background: var(--surface); box-shadow: var(--shadow); }
+  .mode { margin: 12px 0; padding: 14px; border: 1px solid #1a1a1a; border-radius: 18px; background: var(--card); }
   .mode b { display: block; margin-bottom: 3px; font-size: 16px; }
-  .mode.live { background: rgba(47, 191, 113, .13); }
-  .mode.dry_run { background: rgba(233, 169, 28, .13); }
-  .mode.stop { background: rgba(240, 82, 82, .13); }
-  .ck { display: flex; align-items: center; gap: 10px; padding: 11px 0; font-size: 14px; }
-  .ck + .ck { border-top: 1px solid var(--line); }
-  .ck .mark { display: grid; place-items: center; width: 22px; height: 22px; flex: none; border-radius: 50%; background: var(--warn); color: #fff; font-size: 12px; font-weight: 800; }
-  .ck.ok .mark { background: var(--ok); }
-  .ck.ok .grow { color: var(--hint); }
-  .rcard { margin-bottom: 12px; padding: 12px 14px; border-radius: 16px; background: var(--surface); box-shadow: var(--shadow); }
-  .rcard.paused .rhead, .rcard.paused .picks { opacity: .55; }
+  .mode.live { border-color: rgba(50, 215, 75, .3); background: rgba(50, 215, 75, .08); }
+  .mode.dry_run { border-color: rgba(255, 179, 64, .3); background: rgba(255, 179, 64, .08); }
+  .mode.stop { border-color: rgba(255, 69, 58, .3); background: rgba(255, 69, 58, .08); }
+  .lrow { display: flex; align-items: center; gap: 12px; width: 100%; padding: 10px 12px; border: 1px solid #191919; border-radius: 16px; background: var(--card); text-align: left; }
+  .lrow + .lrow { margin-top: 8px; }
+  .lrow:active { background: #161616; }
+  .lt { overflow: hidden; font-size: 15px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+  .lrow .sub { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lr { flex: none; text-align: right; }
+  .lr b { display: inline-flex; align-items: center; gap: 4px; font-size: 15px; }
+  .lr b svg { width: 14px; height: 14px; }
+  .lr .sub { margin-top: 2px; }
+  .gimg { position: relative; display: grid; place-items: center; width: 50px; height: 50px; flex: none; overflow: hidden; border-radius: 12px; background: var(--field); }
+  .gimg img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .gimg .letter, .thumb .letter { color: #4a4a4e; font-weight: 800; }
+  .mono-badge { display: inline-block; margin-right: 2px; padding: 1px 7px; border-radius: 999px; background: var(--accent-soft); color: var(--mono); font-size: 11px; font-weight: 700; vertical-align: 1px; }
+  .rank { display: grid; place-items: center; width: 26px; height: 26px; flex: none; border-radius: 50%; background: var(--field); color: var(--hint); font-size: 13px; font-weight: 800; }
+  .rank.r1 { background: #f5c542; color: #000; }
+  .rank.r2 { background: #c9ced6; color: #000; }
+  .rank.r3 { background: #d08b4f; color: #000; }
+  .thumb { position: relative; display: grid; place-items: center; width: 44px; height: 44px; flex: none; overflow: hidden; border-radius: 12px; background: var(--field); }
+  .thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .rcard { margin-bottom: 12px; padding: 14px; border: 1px solid #1a1a1a; border-radius: 18px; background: var(--card); }
+  .rcard.paused .rhead, .rcard.paused .picks, .rcard.paused .tpills { opacity: .5; }
+  .rcard.flash { animation: flash 1.8s ease-out; }
+  @keyframes flash { 0%, 45% { border-color: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); } 100% { border-color: #1a1a1a; box-shadow: none; } }
   .rhead { display: flex; align-items: center; gap: 12px; }
-  .rhead b { display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .thumb { position: relative; display: grid; place-items: center; width: 48px; height: 48px; flex: none; overflow: hidden; border-radius: 12px; background: var(--fill); }
-  .thumb img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
-  .thumb .letter { color: var(--hint); font-weight: 800; }
+  .rhead b { display: block; overflow: hidden; font-size: 16px; text-overflow: ellipsis; white-space: nowrap; }
+  .rhead .sub { margin-top: 2px; }
   .picks { margin-top: 10px; }
   .pk { display: flex; justify-content: space-between; gap: 10px; padding: 8px 0; border-top: 1px solid var(--line); font-size: 13.5px; }
   .pk .pr { color: var(--hint); font-weight: 700; white-space: nowrap; }
-  .ractions { display: flex; gap: 6px; margin-top: 10px; }
-  .pbtn { flex: 1; padding: 10px 6px; border: 0; border-radius: 10px; background: var(--fill); font-size: 13px; font-weight: 650; }
+  .tpills { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+  .tpill { display: inline-flex; align-items: center; gap: 7px; height: 34px; padding: 0 12px; border: 1.5px solid #2a2a2a; border-radius: 10px; background: #161616;
+    color: var(--hint); font-size: 13.5px; font-weight: 650; }
+  .tpill i { width: 8px; height: 8px; border-radius: 50%; background: #48484c; }
+  .tpill.on { border-color: var(--accent); background: var(--accent-soft); color: #fff; }
+  .tpill.on i { background: #9d8bff; }
+  .ractions { display: flex; gap: 6px; margin-top: 12px; }
+  .pbtn { flex: 1; height: 38px; padding: 0 6px; border-radius: 10px; background: var(--field); font-size: 13.5px; font-weight: 650; }
   .pbtn.danger { color: var(--danger); }
   .total { margin: 0 4px 12px; color: var(--hint); font-size: 14px; }
   .total b { color: var(--text); }
-  .day { margin: 16px 4px 8px; color: var(--hint); font-size: 13px; font-weight: 650; }
-  .hrow { display: flex; align-items: center; gap: 12px; margin-bottom: 8px; padding: 10px 12px; border-radius: 16px; background: var(--surface); box-shadow: var(--shadow); }
-  .hrow .right { flex: none; text-align: right; }
-  .st { display: inline-block; margin-top: 4px; padding: 2px 8px; border-radius: 999px; background: var(--fill); color: var(--hint); font-size: 11.5px; font-weight: 700; }
-  .st.confirmed { background: rgba(47, 191, 113, .16); color: var(--ok); }
-  .st.dry_run { background: rgba(233, 169, 28, .16); color: var(--warn); }
-  .st.failed, .st.cancelled { background: rgba(240, 82, 82, .14); color: var(--danger); }
+  .day { margin: 18px 4px 8px; color: var(--hint); font-size: 13px; font-weight: 650; }
+  .st { display: inline-block; margin-top: 4px; padding: 2px 8px; border-radius: 999px; background: var(--field); color: var(--hint); font-size: 11.5px; font-weight: 700; }
+  .st.confirmed { background: rgba(50, 215, 75, .14); color: var(--ok); }
+  .st.dry_run { background: rgba(255, 179, 64, .14); color: var(--warn); }
+  .st.failed, .st.cancelled { background: rgba(255, 69, 58, .13); color: var(--danger); }
   .empty { padding: 36px 16px; color: var(--hint); text-align: center; }
   .empty .big { margin-bottom: 8px; font-size: 44px; }
   .empty b { display: block; margin-bottom: 4px; color: var(--text); font-size: 16px; }
   .empty .btn { display: inline-flex; width: auto; margin-top: 16px; }
-  .foot { margin: 20px 4px; color: var(--hint); font-size: 12.5px; text-align: center; }
+  .foot { margin: 22px 4px; color: #6c6c70; font-size: 12.5px; text-align: center; }
+  .chips { display: flex; gap: 6px; margin: 12px -16px; padding: 0 16px 2px; overflow-x: auto; scrollbar-width: none; }
+  .chips::-webkit-scrollbar { display: none; }
+  .chip { flex: none; height: 34px; padding: 0 13px; border-radius: 999px; background: var(--field); color: var(--hint); font-size: 13.5px; font-weight: 650; }
+  .chip.on { background: var(--accent); color: #fff; }
+
+  /* tasks and profile */
+  .progress { padding: 16px; border: 1px solid #1a1a1a; border-radius: 18px; background: var(--card); }
+  .ptext { color: var(--hint); font-size: 14px; }
+  .ptext b { color: var(--text); font-size: 17px; }
+  .bar { height: 8px; margin-top: 12px; overflow: hidden; border-radius: 4px; background: #222; }
+  .bar i { display: block; height: 100%; border-radius: 4px; background: linear-gradient(90deg, #5534f3, #8b6cff); }
+  .task { display: flex; align-items: center; gap: 12px; margin-top: 8px; padding: 12px 12px 12px 14px; border: 1px solid #1a1a1a; border-radius: 16px; background: var(--card); font-size: 14.5px; }
+  .task .ticon { display: grid; place-items: center; width: 36px; height: 36px; flex: none; border-radius: 11px; background: #1d1d1d; font-size: 17px; }
+  .task.done .ticon { background: rgba(50, 215, 75, .14); color: var(--ok); font-weight: 800; }
+  .task.done .grow { color: var(--hint); }
+  .tbtn { flex: none; height: 34px; padding: 0 14px; border-radius: 10px; background: var(--accent); color: #fff; font-size: 13.5px; font-weight: 700; }
+  .tok { flex: none; color: var(--ok); font-size: 13px; font-weight: 700; }
+  .kv { display: flex; justify-content: space-between; gap: 12px; padding: 12px 0; font-size: 14.5px; }
+  .kv + .kv { border-top: 1px solid var(--line); }
+  .kv span { color: var(--hint); }
+  .kv b { font-weight: 600; text-align: right; }
+  .pcard { display: flex; align-items: center; gap: 14px; padding: 16px; border: 1px solid #1a1a1a; border-radius: 20px; background: var(--card); }
+  .avatar { position: relative; display: grid; place-items: center; width: 56px; height: 56px; flex: none; overflow: hidden; border-radius: 50%;
+    background: linear-gradient(135deg, #5534f3, #9d6bff); font-size: 22px; font-weight: 800; }
+  .avatar img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .pcard b { display: block; overflow: hidden; font-size: 18px; text-overflow: ellipsis; white-space: nowrap; }
+  .stats { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin-top: 10px; }
+  .stats div { min-width: 0; padding: 12px 10px; border: 1px solid #1a1a1a; border-radius: 14px; background: var(--card); }
+  .stats span { display: block; color: var(--hint); font-size: 12px; }
+  .stats b { display: block; margin-top: 4px; overflow: hidden; font-size: 15px; text-overflow: ellipsis; white-space: nowrap; }
+  #status { margin-top: 12px; }
+
+  /* prices per model and backdrop (the plan of a collection) */
+  .grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+  .grid.pairs { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  @media (min-width: 560px) { .grid { grid-template-columns: repeat(4, minmax(0, 1fr)); } .grid.pairs { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+  .grid > .empty { grid-column: 1 / -1; }
+  .tile { position: relative; display: block; width: 100%; min-width: 0; padding: 4px; border: 1.5px solid #1f1f1f; border-radius: 16px; background: var(--card); text-align: left; transition: transform .12s, border-color .15s; }
+  .tile:active { transform: scale(.975); }
+  .tile.on { border-color: var(--accent); }
+  .art { position: relative; display: grid; place-items: center; aspect-ratio: 1 / 1; overflow: hidden; border-radius: 12px; background: radial-gradient(circle at 50% 38%, #1c1c1c, #121212 72%); }
+  .art img { position: relative; z-index: 1; width: 100%; height: 100%; object-fit: contain; }
+  .art .letter { position: absolute; color: #2c2c2e; font-size: 38px; font-weight: 800; }
+  .cap { padding: 6px 4px 3px; }
+  .name { overflow: hidden; font-size: 13.5px; font-weight: 700; text-overflow: ellipsis; white-space: nowrap; }
+  .cap .sub { margin-top: 1px; overflow: hidden; font-size: 12px; text-overflow: ellipsis; white-space: nowrap; }
+  .split { display: flex; justify-content: space-between; gap: 6px; }
+  .mono-t { color: var(--mono); font-weight: 700; }
+  .tag { position: absolute; z-index: 2; top: 5px; padding: 2px 7px; border-radius: 999px; background: rgba(0, 0, 0, .6); color: #fff; font-size: 11px; font-weight: 800; }
+  .tag.tl { left: 5px; }
+  .tag.tr { right: 5px; }
+  .tag.buy, .tag.ok { background: var(--accent); }
+  .lvl { position: absolute; z-index: 2; top: 6px; left: 6px; padding: 3px 8px; border-radius: 999px; background: rgba(0, 0, 0, .6); color: #fff; font-size: 11px; font-weight: 800; text-transform: capitalize; }
+  .lvl.t-high { background: #7c3aed; }
+  .lvl.t-medium { background: #2563eb; }
+  .lvl.t-low { background: #0d9488; }
+  .lvl.t-combo { background: #d97706; }
+  .check { position: absolute; z-index: 2; top: 6px; right: 6px; width: 26px; height: 26px; border: 2px solid rgba(255, 255, 255, .9); border-radius: 50%; background: rgba(0, 0, 0, .3); }
+  .tile.on .check { border-color: #fff; background: var(--accent); }
+  .tile.on .check::after { content: ""; position: absolute; left: 7px; top: 3px; width: 6px; height: 11px; border: solid #fff; border-width: 0 2.5px 2.5px 0; transform: rotate(45deg); }
+  .hero { display: flex; align-items: center; gap: 14px; margin: 0 0 14px; }
+  .hero > .art, .hero > .skel { width: 92px; height: 92px; flex: none; border-radius: 20px; }
+  .facts { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .fact { padding: 4px 8px; border-radius: 8px; background: var(--field); font-size: 12px; font-weight: 650; }
+  .fact.mono { background: var(--accent-soft); color: var(--mono); }
+  .sect { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; margin: 20px 2px 10px; }
+  .sect h3 i { margin-left: 5px; color: var(--hint); font-style: normal; font-weight: 600; }
+  .bulk { display: flex; gap: 8px; margin: 0 0 12px; }
+  .bulk .price { flex: 1; }
+  .floor-note { display: none; color: var(--mono); font-size: 12.5px; font-weight: 700; }
+  .floorpriced .range, .grid.floorpriced .range { display: none; }
+  .opt.floorpriced .floor-note { display: block; flex: none; white-space: nowrap; }
+  .grid.floorpriced .floor-note { display: block; min-height: 34px; margin-top: 7px; padding: 8px 2px 0; }
+  .tile .range { margin-top: 7px; }
+  .tile .range .price.sm { margin-top: 0; }
 
   /* loading placeholders */
-  .skel { border-radius: 18px; background: linear-gradient(100deg, var(--surface) 30%, var(--fill-2) 50%, var(--surface) 70%);
-    background-size: 300% 100%; animation: sk 1.3s linear infinite; }
+  .skel { border-radius: 14px; background: linear-gradient(100deg, #111 30%, #1e1e1e 50%, #111 70%); background-size: 300% 100%; animation: sk 1.3s linear infinite; }
   .skel.stile { aspect-ratio: .8; }
-  .skel.srow { height: 76px; margin-bottom: 10px; }
+  .skel.srow { height: 72px; margin-bottom: 10px; }
   .skel.sline { height: 16px; border-radius: 8px; }
   @keyframes sk { from { background-position: 100% 0; } to { background-position: 0 0; } }
 
   /* bottom navigation, save bar, sheet, toast */
-  .tabbar { position: fixed; z-index: 30; left: 0; right: 0; bottom: 0; display: grid; grid-template-columns: repeat(4, 1fr); max-width: 720px; margin: 0 auto;
-    padding: 6px 6px calc(6px + env(safe-area-inset-bottom)); border-top: 1px solid var(--line); background: var(--surface); }
-  .tabbar button { position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px; padding: 3px 0; border: 0; background: none;
-    color: var(--hint); font-size: 11px; font-weight: 650; }
-  .tabbar button.on { color: var(--accent); }
-  .tabbar svg { width: 25px; height: 25px; }
-  .tabbar .count { position: absolute; top: -2px; left: calc(50% + 6px); min-width: 18px; height: 18px; padding: 0 5px; border-radius: 9px;
-    background: var(--accent); color: var(--accent-text); font-size: 10.5px; font-weight: 800; line-height: 18px; text-align: center; }
-  .tabbar .dot { position: absolute; top: 1px; left: calc(50% + 7px); width: 11px; height: 11px; border: 2px solid var(--surface); border-radius: 50%; background: var(--warn); }
-  .savebar { position: fixed; z-index: 29; left: 0; right: 0; bottom: calc(var(--tabbar-h) + env(safe-area-inset-bottom)); max-width: 720px; margin: 0 auto;
-    padding: 10px 16px 8px; background: linear-gradient(transparent, var(--bg) 30%); }
+  .tabbar { position: fixed; z-index: 30; left: 0; right: 0; bottom: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 2px; max-width: 720px;
+    margin: 0 auto; padding: 7px 8px calc(7px + var(--safe-b)); border-top: 1px solid #161616; background: var(--nav); }
+  .tabbar button { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; padding: 7px 0 8px; border-radius: 14px;
+    color: #77777c; font-size: 12px; font-weight: 600; }
+  .tabbar button.on { background: #1d1d1d; color: #fff; }
+  .tabbar button.on::after { content: ""; position: absolute; left: 22%; right: 22%; bottom: 0; height: 3px; border-radius: 3px 3px 0 0; background: var(--accent); }
+  .tabbar svg { width: 26px; height: 26px; }
+  .tabbar .dot { position: absolute; top: 5px; left: calc(50% + 9px); width: 11px; height: 11px; border: 2px solid var(--nav); border-radius: 50%; background: var(--accent); }
+  .tabbar button.on .dot { border-color: #1d1d1d; }
+  .savebar { position: fixed; z-index: 29; left: 0; right: 0; bottom: calc(var(--nav-h) + var(--safe-b)); max-width: 720px; margin: 0 auto; padding: 10px 16px 8px;
+    background: linear-gradient(transparent, var(--bg) 30%); }
   body.typing .tabbar, body.typing .savebar { display: none; }
-  .sheet-bg { position: fixed; z-index: 40; inset: 0; background: rgba(0, 0, 0, .45); opacity: 0; pointer-events: none; transition: opacity .2s; }
+  .sheet-bg { position: fixed; z-index: 40; inset: 0; background: rgba(0, 0, 0, .6); opacity: 0; pointer-events: none; transition: opacity .2s; }
   .sheet-bg.open { opacity: 1; pointer-events: auto; }
-  .sheet { position: fixed; z-index: 41; left: 0; right: 0; bottom: 0; max-width: 720px; max-height: 86vh; margin: 0 auto; padding: 8px 16px calc(18px + env(safe-area-inset-bottom));
-    overflow-y: auto; border-radius: 22px 22px 0 0; background: var(--bg); transform: translateY(105%); visibility: hidden;
+  .sheet { position: fixed; z-index: 41; left: 0; right: 0; bottom: 0; max-width: 720px; max-height: 86vh; margin: 0 auto; padding: 8px 16px calc(18px + var(--safe-b));
+    overflow-y: auto; border: 1px solid #1d1d1d; border-bottom: 0; border-radius: 22px 22px 0 0; background: var(--card); transform: translateY(105%); visibility: hidden;
     transition: transform .25s cubic-bezier(.2, .8, .2, 1), visibility 0s .25s; }
   .sheet.open { transform: none; visibility: visible; transition: transform .25s cubic-bezier(.2, .8, .2, 1); }
-  .grab { width: 38px; height: 5px; margin: 0 auto 12px; border-radius: 3px; background: var(--fill-2); }
+  .grab { width: 38px; height: 5px; margin: 0 auto 12px; border-radius: 3px; background: #3a3a3c; }
   .sheet h3 { margin: 0 2px 2px; font-size: 19px; }
-  .opt-line { display: flex; align-items: center; width: 100%; padding: 14px 4px; border: 0; border-bottom: 1px solid var(--line); background: none; text-align: left; font-size: 15px; }
-  .opt-line .tick { margin-left: auto; color: var(--accent); font-weight: 800; }
-  .toast { position: fixed; z-index: 50; left: 50%; bottom: calc(var(--tabbar-h) + 22px + env(safe-area-inset-bottom)); max-width: 88vw; padding: 10px 16px;
-    border-radius: 12px; background: rgba(20, 20, 24, .94); color: #fff; font-size: 14px; text-align: center; opacity: 0; pointer-events: none;
+  .sheet .lrow, .sheet .card, .sheet .seg { background: #181818; }
+  .sheet .search { margin-top: 12px; }
+  .opt-line { display: flex; align-items: center; gap: 12px; width: 100%; padding: 14px 4px; border-bottom: 1px solid var(--line); text-align: left; font-size: 15px; }
+  .opt-line b { font-weight: 600; }
+  .opt-line .tick { margin-left: auto; color: var(--link); font-weight: 800; }
+  .toast { position: fixed; z-index: 50; left: 50%; bottom: calc(var(--nav-h) + 22px + var(--safe-b)); max-width: 88vw; padding: 10px 16px; border: 1px solid #262626;
+    border-radius: 12px; background: rgba(28, 28, 30, .96); color: #fff; font-size: 14px; text-align: center; opacity: 0; pointer-events: none;
     transform: translate(-50%, 10px); transition: opacity .2s, transform .2s; }
   .toast.show { opacity: 1; transform: translate(-50%, 0); }
 </style>
@@ -267,10 +413,11 @@
 <main id="view"></main>
 <div class="savebar" id="savebar" hidden><button class="btn" id="savebtn">Сохранить</button></div>
 <nav class="tabbar" id="tabbar">
-  <button data-tab="collections" class="on"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3.5" y="3.5" width="7" height="7" rx="2"/><rect x="13.5" y="3.5" width="7" height="7" rx="2"/><rect x="3.5" y="13.5" width="7" height="7" rx="2"/><rect x="13.5" y="13.5" width="7" height="7" rx="2"/></svg>Коллекции</button>
-  <button data-tab="rules"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"><path d="M5 8h14l-1.2 12.1a1 1 0 0 1-1 .9H7.2a1 1 0 0 1-1-.9z"/><path d="M9 8V6.5a3 3 0 0 1 6 0V8" stroke-linecap="round"/></svg>Берёт бот<i class="count" id="tab-count" hidden></i></button>
-  <button data-tab="settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2.2"/><circle cx="9" cy="17" r="2.2"/></svg>Настройки<i class="dot" id="tab-dot" hidden></i></button>
-  <button data-tab="history"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>История</button>
+  <button data-tab="leaders"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 1.6l1.15 2.33 2.57.37-1.86 1.82.44 2.56L12 7.47 9.7 8.68l.44-2.56-1.86-1.82 2.57-.37z"/><rect x="8.6" y="10.2" width="6.8" height="11.3" rx="1.6"/><rect x="1.8" y="14.2" width="6" height="7.3" rx="1.6"/><rect x="16.2" y="12.4" width="6" height="9.1" rx="1.6"/></svg>Лидеры</button>
+  <button data-tab="subs"><svg viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M9 2.4h6a1.6 1.6 0 0 1 1.6 1.6v.6h1.6a2.6 2.6 0 0 1 2.6 2.6v12.6a2.6 2.6 0 0 1-2.6 2.6H5.8a2.6 2.6 0 0 1-2.6-2.6V7.2a2.6 2.6 0 0 1 2.6-2.6h1.6V4A1.6 1.6 0 0 1 9 2.4zM7.6 10.4h8.8v2H7.6zm0 4.4h5.8v2H7.6z"/></svg>Подписки</button>
+  <button data-tab="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><circle cx="10.6" cy="10.6" r="7"/><path d="m20.6 20.6-4.9-4.9"/></svg>Поиск</button>
+  <button data-tab="tasks"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="13" r="8.2"/><circle cx="11" cy="13" r="3" fill="currentColor" stroke="none"/><path d="m11 13 8.6-8.6M16.3 3.8h3.9v3.9"/></svg>Задания<i class="dot" id="tab-dot" hidden></i></button>
+  <button data-tab="profile"><svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="7.4" r="4.6"/><path d="M3.4 20.4c0-4.5 3.9-7.6 8.6-7.6s8.6 3.1 8.6 7.6c0 .9-.7 1.6-1.6 1.6H5c-.9 0-1.6-.7-1.6-1.6z"/></svg>Профиль</button>
 </nav>
 <div class="sheet-bg" id="sheet-bg"></div>
 <div class="sheet" id="sheet" role="dialog"><div class="grab"></div><div id="sheet-body"></div></div>
@@ -282,12 +429,19 @@ const tg = window.Telegram && window.Telegram.WebApp;
 const view = document.getElementById("view");
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => [...root.querySelectorAll(sel)];
+const blankForm = () => ({ name: "", named: false, autobuy: false, min: "", max: "", notifyPrice: false, notifyNew: true, editing: null });
 const S = {
   me: null, collections: null, loading: null,
-  tab: "collections", page: "list",                       // collections tab: list → collection → model
-  list: { q: "", filter: "all", sort: "taken", scroll: 0 },
-  col: null, colView: { q: "", filter: "all", scroll: 0 },
-  model: null, draft: null, initial: "",
+  tab: "search", sub: null, scroll: {}, highlight: null,  // sub: a page opened inside the tab (sales, plan, model, history)
+  list: { sort: "name" },                                  // order of collections for the arrows and the list
+  q: {                                                     // search screen: the collection and what is chosen in it
+    name: null, detail: null, error: null, models: [], backdrops: [], symbols: [], mono: false, pattern: "",
+    open: null, mq: "", bq: "", sq: "", bsort: "hue", bdesc: false, collapsed: {}, prices: null,
+  },
+  form: blankForm(),
+  sales: { view: "on_sale", key: "", data: null },
+  leaders: { days: 1 },
+  col: null, colStale: false, colView: { q: "", filter: "all", scroll: 0 }, model: null, draft: null, initial: "",
 };
 
 // ------------------------------------------------------------------ helpers
@@ -295,13 +449,22 @@ const esc = (v) => String(v ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "
 const num = (v, d = 3) => (+v).toLocaleString("ru-RU", { maximumFractionDigits: d });
 const ton = (v) => (v == null ? "—" : `${num(v)} TON`);
 const pct = (v) => (v == null ? "—" : `${num(v, v < 10 ? 2 : 1)}%`);
+const norm = (v) => String(v ?? "").trim().toLowerCase();
+const has = (list, name) => list.some((x) => norm(x) === norm(name));
+const toggleIn = (list, name) => (has(list, name) ? list.filter((x) => norm(x) !== norm(name)) : [...list, name]);
 const COLOR = /^#[0-9a-f]{6}$/i;
 const LEVELS = ["high", "medium", "low", "combo"];
 const ICON = {
-  search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
-  sort: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 4v16M3 16l4 4 4-4M17 20V4M13 8l4-4 4 4"/></svg>',
-  back: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg>',
+  search: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>',
+  left: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5M11 6l-6 6 6 6"/></svg>',
+  right: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>',
+  down: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>',
+  up: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6 15 6-6 6 6"/></svg>',
+  gear: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>',
+  ton: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linejoin="round" stroke-linecap="round"><path d="M4.8 5.2h14.4L12 20.2z"/><path d="M12 5.2v15"/></svg>',
+  sale: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 8h13l-3.5-3.5M19 16H6l3.5 3.5"/></svg>',
 };
+const tonTag = (v) => (v == null ? '<span class="tonv">—</span>' : `<span class="tonv">${num(v)}${ICON.ton}</span>`);
 function plural(n, one, few, many) {
   const a = n % 10, b = n % 100;
   return a === 1 && b !== 11 ? one : a >= 2 && a <= 4 && (b < 10 || b >= 20) ? few : many;
@@ -334,12 +497,23 @@ function popup(message, buttons, fallback) {
 const confirmBox = (text) => popup(text, [{ id: "yes", type: "destructive", text: "Да" }, { type: "cancel" }],
   () => (window.confirm(text) ? "yes" : "")).then((id) => id === "yes");
 function openLink(url) {
+  if (!url) return;
   if (tg && tg.openTelegramLink && /^https:\/\/t\.me\//.test(url)) tg.openTelegramLink(url);
   else window.open(url, "_blank");
+}
+const timeOf = (iso) => new Date(iso).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+function ago(iso) {
+  const minutes = Math.max(0, Math.round((Date.now() - new Date(iso).getTime()) / 60000));
+  if (minutes < 1) return "только что";
+  if (minutes < 60) return `${minutes} мин назад`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours} ч назад`;
+  return new Date(iso).toLocaleDateString("ru-RU", { day: "numeric", month: "short" });
 }
 let screen = 0;  // a slow request must not draw over the screen the user has moved on to
 const newScreen = () => ++screen;
 const stale = (id) => id !== screen;
+function scrollToId(id) { const el = document.getElementById(id); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); }
 
 // ------------------------------------------------------------------ pictures
 // a picture that falls back to a second URL, then disappears (the letter behind it stays)
@@ -351,15 +525,21 @@ function pic(src, fallback) {
 }
 window.imgFail = (el) => { const fb = el.dataset.fb; if (fb) { delete el.dataset.fb; el.src = fb; } else el.remove(); };
 window.imgOk = (el) => { const letter = el.parentElement && el.parentElement.querySelector(".letter"); if (letter) letter.remove(); };
+const gradient = (center, edge) => (COLOR.test(center || "") ? `radial-gradient(circle at 50% 42%, ${center} 0%, ${COLOR.test(edge || "") ? edge : center} 85%)` : "");
 function art(src, fallback, letter, center, edge, extra = "") {
-  let style = "";
-  if (COLOR.test(center || "")) {
-    const outer = COLOR.test(edge || "") ? edge : center;
-    style = ` style="background: radial-gradient(circle at 50% 42%, ${center} 0%, ${outer} 80%)"`;
-  }
-  return `<div class="art"${style}><span class="letter">${esc((letter || "?")[0])}</span>${pic(src, fallback)}${extra}</div>`;
+  const bg = gradient(center, edge);
+  return `<div class="art"${bg ? ` style="background: ${bg}"` : ""}><span class="letter">${esc((letter || "?")[0])}</span>${pic(src, fallback)}${extra}</div>`;
 }
 const thumb = (src, title) => `<div class="thumb"><span class="letter">${esc((title || "?")[0])}</span>${pic(src)}</div>`;
+const mimg = (src, name) => `<span class="mimg"><span class="letter">${esc((name || "?")[0])}</span>${pic(src)}</span>`;
+function swatch(b) {
+  const bg = b ? gradient(b.center, b.edge) : "";
+  return `<span class="swatch"${bg ? ` style="background: ${bg}"` : ""}></span>`;
+}
+function giftImg(g) {
+  const bg = gradient(g.center, g.edge);
+  return `<div class="gimg"${bg ? ` style="background: ${bg}"` : ""}><span class="letter">${esc((g.title || "?")[0])}</span>${pic(g.image)}</div>`;
+}
 function level(type) {
   const t = LEVELS.includes(type) ? type : "low";
   return `<span class="lvl t-${t}">${esc(type || "?")}</span>`;
@@ -371,8 +551,8 @@ const skeletonHero = () => `<div class="hero"><div class="skel"></div><div class
 function empty(icon, title, text, button = "") {
   return `<div class="empty"><div class="big">${icon}</div><b>${esc(title)}</b>${esc(text)}${button ? `<br>${button}` : ""}</div>`;
 }
-function fail(err, retry, backTo) {
-  view.innerHTML = (backTo ? topbar(backTo) : "") + empty("😕", "Не получилось загрузить", err.message, '<button class="btn" id="retry">Повторить</button>');
+function fail(err, retry, header = "") {
+  view.innerHTML = header + empty("😕", "Не получилось загрузить", err.message, '<button class="btn" id="retry">Повторить</button>');
   $("#retry").onclick = retry;
 }
 
@@ -415,7 +595,7 @@ function markBad(field, message) {
   if (!field) return;
   field.classList.add("bad");
   field.scrollIntoView({ block: "center", behavior: "smooth" });
-  const input = $("input", field);
+  const input = field.matches("input") ? field : $("input", field);
   input.addEventListener("input", () => field.classList.remove("bad"), { once: true });
   toast(message); haptic("error");
 }
@@ -428,7 +608,7 @@ const Save = {
   native: !!(tg && tg.MainButton && tg.initData),
   show(text, fn) {
     this.fn = fn;
-    if (this.native) tg.MainButton.setParams({ text, is_visible: true, is_active: true });
+    if (this.native) tg.MainButton.setParams({ text, color: "#5534f3", text_color: "#ffffff", is_visible: true, is_active: true });
     else { $("#savebtn").textContent = text; $("#savebar").hidden = false; document.body.classList.add("has-savebar"); }
     try { if (tg && tg.enableClosingConfirmation) tg.enableClosingConfirmation(); } catch (e) { /* old clients */ }
   },
@@ -474,55 +654,55 @@ const Sheet = {
 };
 $("#sheet-bg").onclick = () => Sheet.close();
 
-// ------------------------------------------------------------------ navigation
+// ------------------------------------------------------------------ navigation: five tabs, pages inside a tab
 function syncBack() {
   if (!tg || !tg.BackButton) return;
-  Sheet.isOpen() || (S.tab === "collections" && S.page !== "list") ? tg.BackButton.show() : tg.BackButton.hide();
+  Sheet.isOpen() || S.sub ? tg.BackButton.show() : tg.BackButton.hide();
 }
 if (tg && tg.BackButton) tg.BackButton.onClick(() => back());
 async function back() {
   if (Sheet.isOpen()) return Sheet.close();
-  if (S.tab !== "collections" || S.page === "list" || !(await leaveOk())) return;
-  if (S.page === "model") { S.page = "collection"; render(); } else { S.page = "list"; render(); }
+  if (!S.sub || !(await leaveOk())) return;
+  S.sub = S.sub.kind === "model" ? { kind: "plan", name: S.sub.name } : null;
+  await render();
+  if (!S.sub) window.scrollTo(0, S.scroll[S.tab] || 0);
 }
 async function go(tab) {
   if (Sheet.isOpen()) Sheet.close();
   if (!(await leaveOk())) return;
-  if (S.tab === "collections") rememberScroll();
-  if (tab === S.tab) {  // tapping the open tab goes to its start and refreshes it
-    if (tab === "collections" && S.page !== "list") S.page = "list";
-    else if (tab === "collections") S.collections = null;
-    S.list.scroll = 0;
-  }
-  S.tab = tab;
-  render();
+  if (!S.sub) S.scroll[S.tab] = window.scrollY;
+  const again = tab === S.tab && !S.sub;  // tapping the open tab goes to its start and refreshes it
+  S.tab = tab; S.sub = null;
+  if (again) { S.scroll[tab] = 0; if (tab === "search") S.collections = null; }
+  await render();
+  window.scrollTo(0, S.scroll[tab] || 0);
 }
-function rememberScroll() {
-  if (S.page === "list") S.list.scroll = window.scrollY;
-  if (S.page === "collection") S.colView.scroll = window.scrollY;
+async function goTo(tab, anchor) {
+  await go(tab);
+  if (anchor) setTimeout(() => scrollToId(anchor), 80);
 }
 function render() {
   $$("#tabbar button").forEach((b) => b.classList.toggle("on", b.dataset.tab === S.tab));
   syncBack();
-  if (S.tab === "collections") {
-    if (S.page !== "list" && S.col && S.colStale) return reloadCollection();
-    if (S.page === "model" && S.col) { window.scrollTo(0, 0); return drawModel(); }
-    if (S.page === "collection" && S.col) { drawCollection(); return window.scrollTo(0, S.colView.scroll); }
-    S.page = "list";
-    return renderCollections();
+  if (S.sub) {
+    const page = { sales: renderSales, plan: renderPlan, model: drawModel, history: renderHistory }[S.sub.kind];
+    window.scrollTo(0, 0);
+    return Promise.resolve(page());
   }
-  window.scrollTo(0, 0);
-  ({ rules: renderRules, settings: renderSettings, history: renderHistory })[S.tab]();
+  return ({ leaders: renderLeaders, subs: renderSubs, search: renderSearch, tasks: renderTasks, profile: renderProfile })[S.tab]();
 }
 $$("#tabbar button").forEach((b) => (b.onclick = () => { haptic(); go(b.dataset.tab); }));
 view.addEventListener("click", (e) => {
-  const target = e.target.closest("[data-goto], [data-back]");
+  const target = e.target.closest("[data-goto], [data-back], [data-open]");
   if (!target) return;
   haptic();
-  if (target.dataset.goto) go(target.dataset.goto); else back();
+  if (target.dataset.goto) go(target.dataset.goto);
+  else if (target.dataset.open) openLink(target.dataset.open);
+  else back();
 });
-const topbar = (label) => `<div class="topbar"><button class="back" data-back="1">${ICON.back}<span>${esc(label)}</span></button></div>`;
 const head = (title) => `<div class="head"><h1>${esc(title)}</h1>${modePill()}</div>`;
+const subHead = (title, sub = "") => `<div class="subhead"><button class="sqbtn dark" data-back="1" aria-label="Назад">${ICON.left}</button>
+  <div class="grow"><b>${esc(title)}</b>${sub ? `<div class="sub">${esc(sub)}</div>` : ""}</div></div>`;
 
 // ------------------------------------------------------------------ status: mode, readiness, tab badges
 async function loadMe() { S.me = await api("/me"); updateChrome(); return S.me; }
@@ -540,7 +720,7 @@ function modePill() {
   if (!m) return "";
   const [cls, text] = m.stopped ? ["stop", "⛔ Стоп"] : m.run_mode === "live" ? ["live", "● Покупает"]
     : m.run_mode === "dry_run" ? ["test", "🧪 Тест"] : m.notify.matching_only ? ["", "🔔 Листинги"] : ["", "⏸ Выключен"];
-  return `<button class="pill ${cls}" data-goto="settings">${text}</button>`;
+  return `<button class="pill ${cls}" data-goto="profile">${text}</button>`;
 }
 const todo = () => (S.me ? S.me.checklist.filter((c) => !c.ok && c.id !== "live") : []);
 const TODO_SHORT = {
@@ -556,17 +736,14 @@ function banner() {
     : left.length ? `Бот пока не покупает — осталось ${left.length} ${plural(left.length, "шаг", "шага", "шагов")}`
     : m.run_mode === "dry_run" ? "Тестовый режим: покупки только имитируются"
     : m.notify.matching_only ? "Покупки выключены: бот только присылает листинги" : "Бот выключен: не покупает и не присылает листинги";
-  return `<button class="banner" data-goto="settings"><span>${left.length ? "⚠️" : "🧪"}</span><span class="grow">${esc(text)}</span><span class="chev">›</span></button>`;
+  return `<button class="banner" data-goto="${left.length ? "tasks" : "profile"}"><span>${left.length ? "⚠️" : "🧪"}</span><span class="grow">${esc(text)}</span><span class="chev">›</span></button>`;
 }
 function updateChrome() {
-  const taken = S.collections ? S.collections.filter((c) => c.taken).length : 0;
-  const count = $("#tab-count");
-  count.textContent = taken; count.hidden = !taken;
   $("#tab-dot").hidden = !todo().length;
   const pill = $(".head .pill");
   if (pill) pill.outerHTML = modePill();
 }
-// after a change: lists and readiness are reloaded; a change made outside the open collection reloads it too
+// after a change: lists and readiness are reloaded; a change made outside the open plan reloads it too
 function changed(collectionFresh = false) {
   S.collections = null;
   if (!collectionFresh) S.colStale = true;
@@ -574,142 +751,521 @@ function changed(collectionFresh = false) {
   ensureCollections().catch(() => {});
 }
 
-// ------------------------------------------------------------------ collections
+// ------------------------------------------------------------------ search: a collection, its filters, prices and a subscription
 const byTitle = (a, b) => a.title.localeCompare(b.title, "ru");
 const SORTS = [
+  ["name", "По названию", byTitle],
   ["taken", "Сначала то, что берёт бот", (a, b) => b.taken + b.rules - (a.taken + a.rules) || b.monochrome_pairs - a.monochrome_pairs || byTitle(a, b)],
   ["pairs", "Больше монохромных пар", (a, b) => b.monochrome_pairs - a.monochrome_pairs || byTitle(a, b)],
   ["share", "Выше доля монохромных моделей", (a, b) => (b.monochrome_share ?? -1) - (a.monochrome_share ?? -1) || byTitle(a, b)],
   ["cheap", "Дешевле", (a, b) => (a.floor ?? 1e12) - (b.floor ?? 1e12) || byTitle(a, b)],
-  ["name", "По названию", byTitle],
 ];
-async function renderCollections() {
+const sortedCollections = () => [...(S.collections || [])].sort(SORTS.find(([k]) => k === S.list.sort)[2]);
+const collectionOf = (name) => (S.collections || []).find((c) => c.name === name);
+const titleOf = (name) => (collectionOf(name) || {}).title || name || "";
+const modelOf = (name) => (S.q.detail ? S.q.detail.models.find((m) => norm(m.name) === norm(name)) : null);
+const backdropOf = (name) => (S.q.detail ? S.q.detail.backdrops.find((b) => norm(b.name) === norm(name)) : null);
+function remembered() {
+  try { return localStorage.getItem("sniper.collection"); } catch (e) { return null; }  // storage may be unavailable
+}
+function defaultCollection() {
+  const list = sortedCollections(), saved = remembered();
+  return (saved && list.find((c) => c.name === saved)) || list.find((c) => c.taken) || list.find((c) => c.monochrome_pairs) || list[0];
+}
+function setCollection(name) {
+  Object.assign(S.q, { name, detail: null, error: null, models: [], backdrops: [], symbols: [], mono: false, mq: "", bq: "", sq: "", prices: null, collapsed: {} });
+  S.sales.data = null;
+  if (!S.form.named) S.form.name = titleOf(name);
+  try { localStorage.setItem("sniper.collection", name); } catch (e) { /* storage may be unavailable */ }
+}
+let detailLoad = 0;
+async function loadDetail() {
+  const name = S.q.name, id = ++detailLoad;
+  try {
+    const detail = await api("/collections/" + encodeURIComponent(name));
+    if (id !== detailLoad) return;
+    S.q.detail = detail;
+  } catch (err) { if (id !== detailLoad) return; S.q.error = err.message; }
+  if (S.tab === "search" && !S.sub) { drawSelected(); drawDropdowns(); drawPanel(); drawPrices(); }
+}
+function pickCollection(name) {
+  if (name !== S.q.name) setCollection(name);
+  if (S.tab !== "search" || S.sub) { S.tab = "search"; S.sub = null; S.scroll.search = 0; render(); return; }
+  drawSearch();
+  if (!S.q.detail) loadDetail();
+}
+function stepCollection(delta) {
+  const list = sortedCollections(), i = list.findIndex((c) => c.name === S.q.name);
+  if (!list.length) return;
+  haptic();
+  pickCollection(list[(i + delta + list.length) % list.length].name);
+}
+async function renderSearch() {
   const id = newScreen();
-  view.innerHTML = head("Коллекции") + `
-    <div class="sticky">
-      <div class="search">${ICON.search}<input id="q" type="search" placeholder="Найти коллекцию" autocomplete="off" enterkeyhint="search" value="${esc(S.list.q)}">
-        <button class="iconbtn" id="sortbtn" aria-label="Сортировка">${ICON.sort}</button></div>
-      <div class="chips" id="chips"></div>
-    </div>
-    ${banner()}<div id="monoall"></div><div id="grid">${skeletonTiles(6)}</div>`;
-  const q = $("#q");
-  q.oninput = () => { S.list.q = q.value; drawCollectionsGrid(); };
-  $("#sortbtn").onclick = openSortSheet;
-  try { await ensureCollections(); } catch (err) { if (!stale(id)) fail(err, renderCollections); return; }
-  if (stale(id)) return;
-  drawMonoAll();
-  drawCollectionsGrid();
-  window.scrollTo(0, S.list.scroll);
+  if (!S.collections) {
+    view.innerHTML = '<div class="skel" style="height:40px;margin-top:4px"></div><div class="skel" style="height:42px;margin-top:40px"></div>'
+      + '<div class="skel" style="height:40px;margin-top:10px"></div><div class="skel" style="height:86px;margin-top:10px"></div>';
+    try { await ensureCollections(); } catch (err) { if (!stale(id)) fail(err, renderSearch); return; }
+    if (stale(id)) return;
+  }
+  if (!S.collections.length) {
+    view.innerHTML = empty("🎁", "Коллекции ещё не загружены", "Бот получает их с MRKT раз в час — загляните чуть позже.");
+    return;
+  }
+  if (!S.q.name || !collectionOf(S.q.name)) setCollection(defaultCollection().name);
+  drawSearch();
+  if (!S.q.detail && !S.q.error) loadDetail();
 }
-function drawMonoAll() {
-  const rule = S.me.monochrome_everywhere, withMono = S.collections.filter((c) => c.monochrome_pairs);
-  $("#monoall").innerHTML = withMono.length ? `<button class="rowbtn" id="monoallbtn"><div class="grow"><b>⚫ Все монохромы по флору</b>
-    <div class="sub">${rule ? `во всех коллекциях · ${RULE_UPTO[rule]}` : `выключено · коллекций с монохромами: ${withMono.length}`}</div></div>
-    <span class="chev">›</span></button>` : "";
-  if (withMono.length) $("#monoallbtn").onclick = () => { haptic(); openMonoAllSheet(); };
+function drawSearch() {
+  newScreen();
+  view.innerHTML = `<div class="sw" id="sw"></div>
+    <div class="label">Фильтры</div>
+    <input class="field" id="pattern" type="text" maxlength="9" autocomplete="off" autocapitalize="characters" spellcheck="false" enterkeyhint="done"
+      placeholder="Номер или паттерн (напр. AAA, ABABAB)" value="${esc(S.q.pattern)}">
+    <div id="selected"></div>
+    <div class="dds" id="dds"></div>
+    <div class="acts"><button class="wbtn" id="getprices">Получить цены</button><button class="dbtn" id="salesbtn">Смотреть продажи</button>
+      <button class="sqbtn dark" id="gear" aria-label="Настройки">${ICON.gear}</button></div>
+    <div id="panel"></div>
+    <div id="prices"></div>
+    <div id="form"></div>`;
+  const pattern = $("#pattern");
+  pattern.oninput = () => { S.q.pattern = pattern.value; pattern.classList.remove("bad"); S.sales.data = null; updateWhat(); };
+  pattern.onchange = () => validPattern();
+  $("#getprices").onclick = getPrices;
+  $("#salesbtn").onclick = openSales;
+  $("#gear").onclick = openSearchSettings;
+  drawSwitcher(); drawSelected(); drawDropdowns(); drawPanel(); drawPrices(); drawForm();
 }
-// the modes "all monochromes up to the collection / model floor" of the settings, one tap from the catalog
-function openMonoAllSheet() {
-  const current = S.me.monochrome_everywhere;
-  const own = S.collections.filter((c) => c.monochrome_floor);  // "any monochrome up to a floor" set in a collection
-  let rule = current || "collection_floor";
-  Sheet.open(`<h3>⚫ Все монохромы по флору</h3>
-    <p class="sub" style="margin:0 2px 14px">Бот будет покупать любой монохром во всех коллекциях, и в новых тоже, если он не дороже флора.</p>
-    <div class="seg" id="allrule"><button data-rule="collection_floor">Флор коллекции</button><button data-rule="model_floor">Флор модели</button></div>
-    <p class="hint" id="allhint"></p>
-    <p class="hint">Модели и фоны, выбранные в коллекциях, покупаются по своим ценам. Общие лимиты действуют. Этот же режим есть в «Настройках».</p>
-    <button class="btn" id="allon"></button>
-    ${current ? '<button class="btn danger" id="alloff" style="margin-top:8px">Выключить</button>' : ""}
-    ${own.length ? `<p class="hint" style="margin-top:16px">Ещё в ${own.length} ${plural(own.length, "коллекции", "коллекциях", "коллекциях")} «все монохромы по флору» выбраны в самой коллекции — они действуют и без этого режима.</p>
-      <button class="btn soft" id="ownoff">Убрать из коллекций</button>` : ""}`, (root) => {
-    const sync = () => {
-      $$("#allrule [data-rule]", root).forEach((b) => b.classList.toggle("on", b.dataset.rule === rule));
-      $("#allhint", root).textContent = rule === "collection_floor"
-        ? "Флор коллекции — самый дешёвый другой подарок этой коллекции на MRKT."
-        : "Флор модели — самая дешёвая другая копия той же модели на MRKT.";
-      $("#allon", root).textContent = !current ? "Включить" : current === rule ? "Включено" : "Переключить";
-      $("#allon", root).disabled = current === rule;
-    };
-    $$("#allrule [data-rule]", root).forEach((b) => (b.onclick = () => { rule = b.dataset.rule; haptic(); sync(); }));
-    sync();
-    const apply = async (button, value) => {
-      button.disabled = true;
-      if (!(await setEverywhere(value))) { button.disabled = false; return; }
-      Sheet.close();
-      if (S.tab === "collections" && S.page === "list") drawMonoAll();
-    };
-    $("#allon", root).onclick = (e) => apply(e.target, rule);
-    if ($("#alloff", root)) $("#alloff", root).onclick = (e) => apply(e.target, null);
-    if ($("#ownoff", root)) $("#ownoff", root).onclick = async (e) => {
-      if (!(await confirmBox("Убрать «все монохромы по флору» из коллекций? Модели и фоны, выбранные отдельно, останутся."))) return;
-      e.target.disabled = true;
-      try {
-        const res = await api("/monochromes", "PUT", { rule: null });
-        Sheet.close(); haptic("success");
-        toast(res.error || `Убрано из ${res.changed} ${plural(res.changed, "коллекции", "коллекций", "коллекций")}`);
-        changed();
-        await ensureCollections();
-        if (S.tab === "collections" && S.page === "list") { drawMonoAll(); drawCollectionsGrid(); }
-      } catch (err) { e.target.disabled = false; toast(err.message); haptic("error"); }
-    };
-  });
+function drawSwitcher() {
+  const c = collectionOf(S.q.name) || { title: S.q.name };
+  $("#sw").innerHTML = `<button class="sqbtn" id="prev" aria-label="Предыдущая коллекция">${ICON.left}</button>
+    <button class="colbtn" id="colpick"><span class="ci"><span class="letter">${esc((c.title || "?")[0])}</span>${pic(c.image)}</span><span class="ct">${esc(c.title)}</span></button>
+    <button class="sqbtn" id="next" aria-label="Следующая коллекция">${ICON.right}</button>`;
+  $("#prev").onclick = () => stepCollection(-1);
+  $("#next").onclick = () => stepCollection(1);
+  $("#colpick").onclick = () => { haptic(); openPicker(); };
 }
-function drawCollectionsGrid() {
-  const q = S.list.q.trim().toLowerCase();
-  const found = S.collections.filter((c) => !q || c.title.toLowerCase().includes(q) || c.name.toLowerCase().includes(q));
-  const counts = { all: found.length, taken: found.filter((c) => c.taken).length, mono: found.filter((c) => c.monochrome_pairs).length };
-  const chips = [["all", "Все"], ["taken", "Бот берёт"], ["mono", "С монохромами"]];
-  $("#chips").innerHTML = chips.map(([k, t]) => `<button class="chip${S.list.filter === k ? " on" : ""}" data-f="${k}">${t}<i>${counts[k]}</i></button>`).join("");
-  $$("#chips [data-f]").forEach((b) => (b.onclick = () => { S.list.filter = b.dataset.f; haptic(); drawCollectionsGrid(); }));
-  $("#sortbtn").classList.toggle("on", S.list.sort !== "taken");
-  const f = S.list.filter;
-  const items = found.filter((c) => f === "all" || (f === "taken" ? c.taken : c.monochrome_pairs))
-    .sort(SORTS.find(([k]) => k === S.list.sort)[2]);
-  let none = "";
-  if (!S.collections.length) none = empty("🎁", "Коллекции ещё не загружены", "Бот получает их с MRKT раз в час — загляните чуть позже.");
-  else if (!items.length && f === "taken" && !q) none = empty("🎯", "Бот пока ничего не берёт", "Откройте коллекцию и выберите модели и фоны.");
-  else if (!items.length) none = empty("🔍", "Ничего не найдено", "Попробуйте другое название или фильтр.");
-  $("#grid").innerHTML = none || `<div class="grid">${items.map(collectionTile).join("")}</div>`;
-  $$("#grid [data-col]").forEach((el) => (el.onclick = () => { haptic(); openCollection(el.dataset.col); }));
+// "Номер или паттерн": digits — exactly this number; letters — the shape of its digits (AAA, ABABAB)
+const cleanPattern = (text) => String(text || "").replace(/\s+/g, "").replace(/^[#№]/, "").toUpperCase();
+function validPattern() {
+  const value = cleanPattern(S.q.pattern);
+  if (!value || /^[0-9\p{L}]{1,7}$/u.test(value)) return true;
+  const input = $("#pattern");
+  if (input) markBad(input, "Номер или паттерн — до 7 цифр и букв, например 777 или ABABAB");
+  else toast("Номер или паттерн — до 7 цифр и букв, например 777 или ABABAB");
+  return false;
 }
-function collectionTile(c) {
-  const tag = c.taken ? `<span class="tag tl${c.autobuy ? " buy" : ""}">${c.autobuy ? "🛒" : "🔔"} ${c.taken}</span>` : "";
-  return `<button class="tile${c.taken ? " on" : ""}" data-col="${esc(c.name)}">${art(c.image, null, c.title, null, null, tag)}
-    <div class="cap"><div class="name">${esc(c.title)}</div>
-      <div class="sub split"><span>${ton(c.floor)}</span>${c.monochrome_share != null ? `<span class="mono-t">моно ${pct(c.monochrome_share)}</span>` : ""}</div></div></button>`;
+const selectionBody = () => ({ collection: S.q.name, models: S.q.models, backdrops: S.q.backdrops, symbols: S.q.symbols,
+  monochrome: S.q.mono, pattern: cleanPattern(S.q.pattern) || null });
+const listText = (list) => (list.length <= 2 ? list.join(", ") : `${list.slice(0, 2).join(", ")} и ещё ${list.length - 2}`);
+function selectionText() {
+  const q = S.q, parts = [q.models.length ? listText(q.models) : "все модели"];
+  if (q.mono) parts.push(q.backdrops.length ? `⚫ монохромы: ${listText(q.backdrops)}` : "⚫ только монохромы");
+  else parts.push(q.backdrops.length ? listText(q.backdrops) : "все фоны");
+  if (q.symbols.length) parts.push(`узор ${listText(q.symbols)}`);
+  const p = cleanPattern(q.pattern);
+  if (p) parts.push(/^\d+$/.test(p) ? `№ ${p}` : `номер ${p}`);
+  return parts.join(" · ");
 }
-function openSortSheet() {
-  Sheet.open(`<h3>Сортировка</h3>${SORTS.map(([k, t]) => `<button class="opt-line" data-sort="${k}">${t}${S.list.sort === k ? '<span class="tick">✓</span>' : ""}</button>`).join("")}`,
-    (root) => $$("[data-sort]", root).forEach((b) => (b.onclick = () => {
-      S.list.sort = b.dataset.sort; haptic(); Sheet.close(); drawCollectionsGrid(); window.scrollTo(0, 0);
-    })));
+function ddLabel(kind) {
+  const q = S.q, n = { models: q.models, backdrops: q.backdrops, symbols: q.symbols }[kind].length;
+  if (kind === "models") return n ? `${n} ${plural(n, "модель", "модели", "моделей")}` : "Все модели";
+  if (kind === "backdrops") {
+    const text = n ? `${n} ${plural(n, "фон", "фона", "фонов")}` : "";
+    return q.mono ? (text ? `⚫ ${text}` : "Монохромы") : text || "Все фоны";
+  }
+  return n ? `${n} ${plural(n, "узор", "узора", "узоров")}` : "Все узоры";
+}
+function drawDropdowns() {
+  const q = S.q, set = { models: q.models.length, backdrops: q.backdrops.length || q.mono, symbols: q.symbols.length };
+  $("#dds").innerHTML = ["models", "backdrops", "symbols"].map((k) => `<button class="dd${q.open === k ? " on" : ""}${set[k] ? " set" : ""}" data-dd="${k}">
+    <span>${esc(ddLabel(k))}</span>${ICON.down}</button>`).join("");
+  $$("#dds [data-dd]").forEach((b) => (b.onclick = () => {
+    haptic();
+    q.open = q.open === b.dataset.dd ? null : b.dataset.dd;
+    drawDropdowns(); drawPanel();
+  }));
+}
+function selectionChanged() {
+  S.sales.data = null;
+  drawSelected(); drawDropdowns(); drawPrices(); updateWhat();
+}
+function drawSelected() {
+  const q = S.q, box = $("#selected");
+  if (!box) return;
+  if (!(q.models.length || q.backdrops.length || q.symbols.length || q.mono)) { box.innerHTML = ""; return; }
+  const chip = (list, name, picture) => `<button class="schip" data-x="${list}" data-n="${esc(name)}">${picture}<span class="nm">${esc(name)}</span></button>`;
+  const sections = [];
+  if (q.models.length) sections.push(["Выбранные модели", q.models.map((n) => chip("models", n, mimg((modelOf(n) || {}).image, n)))]);
+  if (q.backdrops.length || q.mono) {
+    const mono = q.mono ? [chip("mono", "Монохромы", '<span class="swatch mono">⚫</span>')] : [];
+    sections.push(["Выбранные фоны", [...mono, ...q.backdrops.map((n) => chip("backdrops", n, swatch(backdropOf(n))))]]);
+  }
+  if (q.symbols.length) sections.push(["Выбранные узоры", q.symbols.map((n) => chip("symbols", n, '<span class="swatch">◆</span>'))]);
+  box.innerHTML = `<div class="label">Выбрано</div><div class="selcard">${sections.map(([title, chips], i) => `<div class="selhead"><b>${title}</b>
+    ${i === 0 ? '<button class="glink" id="clearsel">Очистить выбор</button>' : ""}</div><div class="schips">${chips.join("")}</div>`).join("")}</div>`;
+  $$("#selected [data-x]").forEach((el) => (el.onclick = () => {
+    haptic();
+    if (el.dataset.x === "mono") q.mono = false;
+    else q[el.dataset.x] = q[el.dataset.x].filter((n) => norm(n) !== norm(el.dataset.n));
+    drawPanelBody(); selectionChanged();
+  }));
+  $("#clearsel").onclick = () => {
+    haptic();
+    Object.assign(q, { models: [], backdrops: [], symbols: [], mono: false });
+    drawPanelBody(); selectionChanged();
+  };
 }
 
-// ------------------------------------------------------------------ one collection
-async function openCollection(name) {
-  if (S.tab === "collections") rememberScroll();
-  S.tab = "collections"; S.page = "collection"; S.colView = { q: "", filter: "all", scroll: 0 };
-  $$("#tabbar button").forEach((b) => b.classList.toggle("on", b.dataset.tab === "collections"));
-  syncBack();
+// one picker at a time under the buttons: models by rarity, backdrops by colour, patterns
+function drawPanel() {
+  const box = $("#panel"), q = S.q, k = q.open;
+  if (!box) return;
+  if (!k) { box.innerHTML = ""; return; }
+  if (!q.detail) {
+    box.innerHTML = `<div class="panel">${q.error ? `<div class="pempty">${esc(q.error)}</div>` : '<div class="skel" style="height:190px"></div>'}</div>`;
+    return;
+  }
+  const field = { models: "mq", backdrops: "bq", symbols: "sq" }[k];
+  const sorts = k !== "backdrops" ? "" : `<div class="sortrow">
+    ${[["hue", "Оттенок"], ["name", "Название"]].map(([key, title]) => `<button class="sortpill${q.bsort === key ? " on" : ""}${q.bdesc ? " desc" : ""}" data-bsort="${key}">${title}${ICON.down}</button>`).join("")}
+    <button class="sortpill solid" id="presets">Пресеты</button></div>`;
+  box.innerHTML = `<div class="panel"><div class="search">${ICON.search}<input id="pf" type="search" placeholder="Поиск..." autocomplete="off" enterkeyhint="search"
+    value="${esc(q[field])}"></div>${sorts}<div id="pbody"></div></div>`;
+  $("#pf").oninput = (e) => { q[field] = e.target.value; drawPanelBody(); };
+  $$("#panel [data-bsort]").forEach((b) => (b.onclick = () => {
+    haptic();
+    if (q.bsort === b.dataset.bsort) q.bdesc = !q.bdesc; else { q.bsort = b.dataset.bsort; q.bdesc = false; }
+    drawPanel();
+  }));
+  if ($("#presets")) $("#presets").onclick = () => { haptic(); openPresets(); };
+  $("#pbody").onclick = onPanelClick;
+  drawPanelBody();
+}
+function drawPanelBody() {
+  const body = $("#pbody"), k = S.q.open;
+  if (!body || !S.q.detail) return;
+  body.innerHTML = k === "models" ? modelsBody() : k === "backdrops" ? backdropsBody() : symbolsBody();
+}
+const rarityKey = (m) => (m.rarity == null ? "?" : String(m.rarity));
+function modelsBody() {
+  const q = S.q, d = q.detail, text = norm(q.mq);
+  if (!d.models.length) return '<div class="pempty">Модели ещё не известны: бот узнаёт их из MRKT и из объявлений.</div>';
+  const list = d.models.filter((m) => !text || norm(m.name).includes(text));
+  if (!list.length) return '<div class="pempty">Ничего не найдено</div>';
+  const groups = new Map();
+  for (const m of list) { if (!groups.has(rarityKey(m))) groups.set(rarityKey(m), []); groups.get(rarityKey(m)).push(m); }
+  const keys = [...groups.keys()].sort((a, b) => (a === "?") - (b === "?") || parseFloat(a) - parseFloat(b));
+  return keys.map((key) => {
+    const items = groups.get(key), all = items.every((m) => has(q.models, m.name));
+    return `<div class="group${q.collapsed[key] ? " shut" : ""}"><div class="ghead">
+      <span class="gl">Редкость: <b>${key === "?" ? "—" : pct(+key)}</b></span>
+      <button class="glink" data-all="${esc(key)}">${all ? "Снять все" : "Выбрать все"}</button>
+      <button class="fold" data-fold="${esc(key)}" aria-label="Свернуть">${ICON.up}</button></div>
+      <div class="mgrid">${items.map((m) => `<button class="mcard${has(q.models, m.name) ? " on" : ""}" data-m="${esc(m.name)}">${mimg(m.image, m.name)}
+        <span class="mname">${esc(m.name)}</span>${tonTag(m.floor ?? m.seen_floor)}</button>`).join("")}</div></div>`;
+  }).join("");
+}
+function hsl(hex) {
+  const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
+  const max = Math.max(r, g, b), min = Math.min(r, g, b), l = (max + min) / 2, d = max - min;
+  if (!d) return [0, 0, l];
+  const s = d / (1 - Math.abs(2 * l - 1));
+  const h = max === r ? ((g - b) / d) % 6 : max === g ? (b - r) / d + 2 : (r - g) / d + 4;
+  return [(h * 60 + 360) % 360, s, l];
+}
+// by colour: greys and black first, then around the colour wheel; backdrops without a known colour last
+function sortBackdrops(list) {
+  const q = S.q, dir = q.bdesc ? -1 : 1, byName = (a, b) => a.name.localeCompare(b.name, "ru");
+  if (q.bsort === "name") return [...list].sort((a, b) => dir * byName(a, b));
+  const key = (b) => {
+    if (!COLOR.test(b.center || "")) return [2, 0];
+    const [h, s, l] = hsl(b.center);
+    return s < 0.15 || l < 0.12 ? [0, l] : [1, h];
+  };
+  return [...list].sort((a, b) => {
+    const x = key(a), y = key(b);
+    if (x[0] === 2 || y[0] === 2) return x[0] - y[0] || byName(a, b);
+    return dir * (x[0] - y[0] || x[1] - y[1]) || byName(a, b);
+  });
+}
+const monoFor = (b) => { const chosen = S.q.models.map(norm); return b.mono.filter((p) => !chosen.length || chosen.includes(norm(p.model))); };
+const backdropCard = (b, type) => `<button class="bcard${has(S.q.backdrops, b.name) ? " on" : ""}" data-b="${esc(b.name)}">${swatch(b)}
+  <span class="bname">${esc(b.name)}</span>${type !== undefined ? `<span class="btype">${esc(type)}</span>` : ""}</button>`;
+function backdropsBody() {
+  const q = S.q, d = q.detail, text = norm(q.bq);
+  const list = sortBackdrops(d.backdrops.filter((b) => !text || norm(b.name).includes(text)));
+  const mono = list.filter((b) => monoFor(b).length);
+  const monoPart = !d.giftwiki ? "" : `<div class="secthead"><span>Монохромы</span><i>по Gift Wiki</i></div>
+    <div class="bgrid">${text ? "" : `<button class="bcard${q.mono ? " on" : ""}" id="monoall"><span class="swatch mono">⚫</span><span class="bname">Все</span><span class="btype">моно</span></button>`}
+      ${mono.map((b) => backdropCard(b, monoFor(b)[0].type || "")).join("")}</div><div class="divider"></div>`;
+  if (!d.backdrops.length) return monoPart + '<div class="pempty">Фоны ещё не известны: бот узнаёт их из MRKT и из объявлений.</div>';
+  return monoPart + (list.length ? `<div class="bgrid">${list.map((b) => backdropCard(b)).join("")}</div>` : '<div class="pempty">Ничего не найдено</div>');
+}
+function symbolsBody() {
+  const q = S.q, d = q.detail, text = norm(q.sq);
+  if (!d.symbols.length) return '<div class="pempty">Узоры появятся, когда бот увидит подарки этой коллекции на MRKT.</div>';
+  const list = d.symbols.filter((s) => !text || norm(s.name).includes(text));
+  if (!list.length) return '<div class="pempty">Ничего не найдено</div>';
+  return `<div class="sgrid">${list.map((s) => `<button class="scard${has(q.symbols, s.name) ? " on" : ""}" data-s="${esc(s.name)}">
+    <span class="bname">${esc(s.name)}</span><span class="btype">${s.rarity != null ? pct(s.rarity) : "&nbsp;"}</span></button>`).join("")}</div>`;
+}
+function onPanelClick(e) {
+  const q = S.q, d = q.detail, el = e.target.closest("[data-m], [data-b], [data-s], [data-all], [data-fold], #monoall");
+  if (!el || !d) return;
+  haptic();
+  if (el.id === "monoall") { q.mono = !q.mono; el.classList.toggle("on", q.mono); return selectionChanged(); }
+  if (el.dataset.fold !== undefined) {
+    const key = el.dataset.fold;
+    q.collapsed[key] = !q.collapsed[key];
+    el.closest(".group").classList.toggle("shut", q.collapsed[key]);
+    return;
+  }
+  if (el.dataset.all !== undefined) {
+    const text = norm(q.mq);
+    const items = d.models.filter((m) => rarityKey(m) === el.dataset.all && (!text || norm(m.name).includes(text)));
+    const every = items.every((m) => has(q.models, m.name));
+    q.models = every ? q.models.filter((n) => !items.some((m) => norm(m.name) === norm(n)))
+      : [...q.models, ...items.filter((m) => !has(q.models, m.name)).map((m) => m.name)];
+    drawPanelBody();
+    return selectionChanged();
+  }
+  const [list, key] = el.dataset.m !== undefined ? ["models", "m"] : el.dataset.b !== undefined ? ["backdrops", "b"] : ["symbols", "s"];
+  const name = el.dataset[key];
+  q[list] = toggleIn(q[list], name);
+  // a backdrop can be shown twice (among monochromes and among all)
+  $$(`#pbody [data-${key}]`).filter((x) => x.dataset[key] === name).forEach((x) => x.classList.toggle("on", has(q[list], name)));
+  if (list === "models") {
+    const group = el.closest(".group"), names = $$("[data-m]", group).map((x) => x.dataset.m);
+    $("[data-all]", group).textContent = names.every((n) => has(q.models, n)) ? "Снять все" : "Выбрать все";
+  }
+  selectionChanged();
+}
+function openPresets() {
+  const q = S.q, d = q.detail;
+  const monoNames = d.backdrops.filter((b) => monoFor(b).length).map((b) => b.name);
+  const rare = d.backdrops.filter((b) => b.rarity != null && b.rarity <= 1).map((b) => b.name);
+  const items = [
+    d.giftwiki && ["mono", "⚫ Только монохромы", "пары модели и фона, которые Gift Wiki считает монохромом"],
+    monoNames.length && ["monobd", `Монохромные фоны · ${monoNames.length}`, q.models.length ? "монохромные для выбранных моделей" : "монохромные хотя бы для одной модели"],
+    rare.length && ["rare", `Редкие фоны · ${rare.length}`, "редкость фона до 1%"],
+    (q.backdrops.length || q.mono) && ["clear", "Сбросить фоны", ""],
+  ].filter(Boolean);
+  Sheet.open(`<h3>Пресеты</h3><p class="sub" style="margin:0 2px 6px">Готовый выбор фонов в коллекции ${esc(d.title)}</p>
+    ${items.length ? items.map(([k, title, sub]) => `<button class="opt-line" data-preset="${k}"><div class="grow"><b>${title}</b>${sub ? `<div class="sub">${sub}</div>` : ""}</div></button>`).join("")
+      : '<p class="hint">Для этой коллекции пресетов нет: нет данных о монохромах и редкости фонов.</p>'}`, (root) => {
+    $$("[data-preset]", root).forEach((b) => (b.onclick = () => {
+      const k = b.dataset.preset;
+      if (k === "mono") q.mono = true;
+      if (k === "monobd") q.backdrops = [...new Set([...q.backdrops, ...monoNames])];
+      if (k === "rare") q.backdrops = [...new Set([...q.backdrops, ...rare])];
+      if (k === "clear") { q.backdrops = []; q.mono = false; }
+      haptic(); Sheet.close(); drawPanelBody(); selectionChanged();
+    }));
+  });
+}
+function openPicker() {
+  const draw = (root) => {
+    const text = norm($("#pq", root).value);
+    const items = sortedCollections().filter((c) => !text || norm(c.title).includes(text) || norm(c.name).includes(text));
+    $("#psort", root).innerHTML = SORTS.map(([k, title]) => `<button class="chip${S.list.sort === k ? " on" : ""}" data-sort="${k}">${title}</button>`).join("");
+    $("#plist", root).innerHTML = items.length ? items.map((c) => `<button class="lrow" data-col="${esc(c.name)}">${thumb(c.image, c.title)}
+      <div class="grow"><div class="lt">${esc(c.title)}</div><div class="sub">${esc([ton(c.floor), c.monochrome_share != null ? `моно ${pct(c.monochrome_share)}` : "",
+        c.taken ? `${c.autobuy ? "🛒" : "🔔"} ${c.taken}` : ""].filter(Boolean).join(" · "))}</div></div>
+      ${c.name === S.q.name ? '<span class="tick" style="color:var(--link);font-weight:800">✓</span>' : ""}</button>`).join("") : '<div class="pempty">Ничего не найдено</div>';
+    $$("#psort [data-sort]", root).forEach((b) => (b.onclick = () => { S.list.sort = b.dataset.sort; haptic(); draw(root); }));
+    $$("#plist [data-col]", root).forEach((b) => (b.onclick = () => { Sheet.close(); haptic(); pickCollection(b.dataset.col); }));
+  };
+  Sheet.open(`<h3>Коллекции</h3><div class="search">${ICON.search}<input id="pq" type="search" placeholder="Найти коллекцию" autocomplete="off" enterkeyhint="search"></div>
+    <div class="chips" id="psort"></div><div id="plist"></div>`, (root) => { $("#pq", root).oninput = () => draw(root); draw(root); });
+}
+function openSearchSettings() {
+  haptic();
+  const rule = S.me.monochrome_everywhere;
+  Sheet.open(`<h3>Настройки</h3>
+    <button class="opt-line" id="ss-plan"><div class="grow"><b>Цены по моделям и фонам</b><div class="sub">своя цена для каждой модели и монохромного фона
+      коллекции ${esc(titleOf(S.q.name))}, флор коллекции или модели</div></div><span class="chev">›</span></button>
+    <button class="opt-line" id="ss-mono"><div class="grow"><b>⚫ Все монохромы по флору</b><div class="sub">${rule ? `во всех коллекциях · ${RULE_UPTO[rule]}` : "выключено"}</div></div><span class="chev">›</span></button>
+    <div class="label">Порядок коллекций для стрелок</div>
+    ${SORTS.map(([k, title]) => `<button class="opt-line" data-sort="${k}">${title}${S.list.sort === k ? '<span class="tick">✓</span>' : ""}</button>`).join("")}`, (root) => {
+    $("#ss-plan", root).onclick = () => { Sheet.close(); openPlan(S.q.name); };
+    $("#ss-mono", root).onclick = () => openMonoAllSheet();
+    $$("[data-sort]", root).forEach((b) => (b.onclick = () => { S.list.sort = b.dataset.sort; haptic(); Sheet.close(); toast(SORTS.find(([k]) => k === S.list.sort)[1]); }));
+  });
+}
+
+// prices: the stored floors at once, MRKT's current ones and the last sales on "Получить цены"
+function staticCards(d) {
+  const q = S.q;
+  return [{ kind: "collection", title: d.title, floor: d.floor },
+    ...q.models.slice(0, 3).map((n) => { const m = modelOf(n) || {}; return { kind: "model", title: n, floor: m.floor ?? m.seen_floor ?? null }; }),
+    ...q.backdrops.slice(0, 3).map((n) => ({ kind: "backdrop", title: n, floor: (backdropOf(n) || {}).floor ?? null }))];
+}
+function priceCell(c) {
+  const d = S.q.detail;
+  const icon = c.kind === "backdrop" ? swatch(backdropOf(c.title))
+    : `<span class="pic">${c.kind === "selection" ? "≡" : `<span class="letter">${esc((c.title || "?")[0])}</span>${pic(c.kind === "collection" ? d.image : (modelOf(c.title) || {}).image)}`}</span>`;
+  const title = c.kind === "collection" ? "Флор" : c.kind === "selection" ? "Выбранное" : c.title;
+  const url = c.gift ? c.gift.url || c.gift.tg_url : "";
+  const sale = c.last_sale !== undefined ? `<span class="ls">${ICON.sale}${c.last_sale != null ? num(c.last_sale) : "—"}</span>` : "";
+  return `<button class="pcell"${url ? ` data-open="${esc(url)}"` : ""}><div class="pt">${icon}<span>${esc(title)}</span></div>
+    <div class="pv"><span class="ton">${ICON.ton}${c.floor != null ? num(c.floor) : "—"}</span>${sale}</div></button>`;
+}
+const pricesKey = () => JSON.stringify({ ...selectionBody(), pattern: null });
+function drawPrices() {
+  const box = $("#prices"), q = S.q, d = q.detail;
+  if (!box) return;
+  if (!d) { box.innerHTML = `<div class="pbox"><div class="pcells">${'<div class="pcell skel"></div>'.repeat(3)}</div></div>`; return; }
+  const live = q.prices && q.prices.key === pricesKey() ? q.prices.data : null;
+  box.innerHTML = `<div class="pbox"><div class="pcells">${(live ? live.cards : staticCards(d)).map(priceCell).join("")}</div>
+    <div class="pnote">${live ? `MRKT на ${timeOf(live.checked_at)}: ${ICON.ton} дешевле всего сейчас, ${ICON.sale} последняя продажа. Нажмите на цену — откроется этот подарок.`
+      : `${ICON.ton} флор по последним данным MRKT. «Получить цены» — проверить сейчас и узнать последние продажи.`}</div></div>`;
+}
+async function getPrices() {
+  const q = S.q;
+  if (!q.detail || !validPattern()) return;
+  const button = $("#getprices"), key = pricesKey();
+  button.disabled = true; button.textContent = "Загружаю…"; haptic();
+  try {
+    const data = await api("/prices", "POST", selectionBody());
+    q.prices = { key, data };
+    if (data.error) toast(data.error); else haptic("success");
+  } catch (err) { toast(err.message); haptic("error"); }
+  if (S.tab !== "search" || S.sub || !$("#getprices")) return;
+  $("#getprices").disabled = false; $("#getprices").textContent = "Получить цены";
+  drawPrices();
+}
+
+// subscription: the choice above becomes a filter with its own switches
+const toggleRow = (key, title, sub, on, disabled = false) => `<label class="trow"><div class="grow"><div class="ttl">${title}</div><div class="tsub">${sub}</div></div>
+  <span class="switch"><input type="checkbox" data-f="${key}" ${on ? "checked" : ""} ${disabled ? "disabled" : ""}><span></span></span></label>`;
+function drawForm() {
+  const f = S.form, box = $("#form");
+  if (!box) return;
+  if (!f.named) f.name = titleOf(S.q.name);
+  box.innerHTML = `<div class="label">${f.editing ? "Изменение подписки" : "Создание подписки"}</div>
+    <div class="subcard">
+      <input class="field" id="sname" maxlength="64" autocomplete="off" enterkeyhint="done" placeholder="Название подписки" value="${esc(f.name)}">
+      <div class="what" id="swhat"></div>
+      <div class="trow prow"><div class="ttl">Цена</div><div class="range">${priceField('id="smin"', f.min, "от", "", "")}<span class="dash">—</span>${priceField('id="smax"', f.max, "до")}</div></div>
+      ${toggleRow("autobuy", "Покупки", "Покупать автоматически при появлении", f.autobuy, !S.me.can_purchase)}
+      ${toggleRow("notifyPrice", "Уведомления об изменении цен", "Присылать, когда подходящий подарок дешевеет", f.notifyPrice)}
+      ${toggleRow("notifyNew", "Уведомления о новых", "Присылать новые подходящие подарки", f.notifyNew)}
+      <p class="fhint" id="fhint"></p>
+      <button class="btn" id="ssubmit">${f.editing ? "Сохранить" : "Создать"}</button>
+      ${f.editing ? '<button class="btn ghost" id="scancel">Отменить изменение</button>' : ""}
+    </div>`;
+  $("#sname").oninput = (e) => { f.name = e.target.value; f.named = true; };
+  $("#smin").oninput = (e) => { f.min = e.target.value; };
+  $("#smax").oninput = (e) => { f.max = e.target.value; };
+  $$("#form [data-f]").forEach((box2) => (box2.onchange = () => { f[box2.dataset.f] = box2.checked; haptic(); formHint(); }));
+  $("#ssubmit").onclick = submitSubscription;
+  if ($("#scancel")) $("#scancel").onclick = () => { haptic(); S.form = blankForm(); drawForm(); };
+  updateWhat(); formHint();
+}
+function updateWhat() {
+  const el = $("#swhat");
+  if (el) el.textContent = `${titleOf(S.q.name)} · ${selectionText()}`;
+}
+function formHint() {
+  const f = S.form, m = S.me, el = $("#fhint");
+  if (!el) return;
+  el.textContent = f.autobuy && m.stopped ? "Включена аварийная остановка — покупки не идут."
+    : f.autobuy && m.run_mode === "dry_run" ? "Сейчас тестовый режим: покупки только имитируются."
+    : f.autobuy && m.run_mode !== "live" ? "«💸 Покупать» в профиле выключено — пока бот пришлёт листинг."
+    : !f.autobuy && !f.notifyNew && !f.notifyPrice ? "Все переключатели выключены — подписка ничего не будет делать." : "";
+}
+async function submitSubscription() {
+  const f = S.form, min = f.min.trim(), max = f.max.trim();
+  if (!validPattern()) return;
+  if (f.autobuy && !max) return markBad($("#smax").closest(".price"), "Для покупок укажите цену «до»");
+  if (min && max && tonValue(min) > tonValue(max)) return markBad($("#smin").closest(".price"), "«От» больше «до»");
+  const button = $("#ssubmit");
+  button.disabled = true;
+  const body = { ...selectionBody(), name: f.name.trim(), min_price_ton: min || null, max_price_ton: max || null,
+    autobuy: f.autobuy, notify_new: f.notifyNew, notify_price: f.notifyPrice };
+  try {
+    const saved = f.editing ? await api(`/subscriptions/${f.editing}`, "PUT", body) : await api("/subscriptions", "POST", body);
+    haptic("success"); toast(f.editing ? "Подписка сохранена" : "Подписка создана");
+    S.form = blankForm(); S.highlight = saved.id;
+    changed(true);
+    go("subs");
+  } catch (err) { button.disabled = false; toast(err.message); haptic("error"); }
+}
+// "Изменить" in the list: the subscription comes back to the search screen
+function editSubscription(r) {
+  setCollection(r.collection);
+  Object.assign(S.q, { models: [...r.models], backdrops: [...r.backdrops], symbols: [...r.symbols], mono: r.kind === "monochrome", pattern: r.pattern || "" });
+  S.form = { name: r.name, named: true, autobuy: r.autobuy, min: asText(r.min_price), max: asText(r.max_price),
+    notifyNew: notifyNew(r), notifyPrice: notifyPrice(r), editing: r.id };
+  S.tab = "search"; S.sub = null;
+  render().then(() => setTimeout(() => scrollToId("form"), 60));
+}
+
+// ------------------------------------------------------------------ "Смотреть продажи": on sale now and sold
+function openSales() {
+  if (!S.q.detail || !validPattern()) return;
+  haptic();
+  S.scroll.search = window.scrollY;
+  S.sub = { kind: "sales" };
+  render();
+}
+function giftRow(g, right) {
+  const url = g.url || g.tg_url;
+  return `<button class="lrow"${url ? ` data-open="${esc(url)}"` : ""}>${giftImg(g)}
+    <div class="grow"><div class="lt">${esc(g.title)}</div>
+      <div class="sub">${g.mono ? `<span class="mono-badge">⚫ ${esc(g.mono)}</span> ` : ""}${esc([g.model, g.backdrop, g.symbol].filter(Boolean).join(" · "))}</div></div>
+    <div class="lr">${right}</div></button>`;
+}
+async function renderSales() {
+  const id = newScreen(), s = S.sales, key = JSON.stringify([s.view, selectionBody()]);
+  view.innerHTML = subHead("Продажи", `${titleOf(S.q.name)} · ${selectionText()}`) + `
+    <div class="seg" id="sview"><button data-v="on_sale" class="${s.view === "on_sale" ? "on" : ""}">На продаже</button><button data-v="sold" class="${s.view === "sold" ? "on" : ""}">Продано</button></div>
+    <div id="slist" style="margin-top:12px">${skeletonRows(5)}</div>`;
+  $$("#sview [data-v]").forEach((b) => (b.onclick = () => { if (s.view === b.dataset.v) return; haptic(); s.view = b.dataset.v; renderSales(); }));
+  if (s.key !== key || !s.data) {
+    s.data = null;
+    try { s.data = await api("/market", "POST", { ...selectionBody(), view: s.view }); s.key = key; }
+    catch (err) {
+      if (stale(id)) return;
+      $("#slist").innerHTML = empty("😕", "Не получилось загрузить", err.message, '<button class="btn" id="sretry">Повторить</button>');
+      $("#sretry").onclick = renderSales;
+      return;
+    }
+    if (stale(id)) return;
+  }
+  const data = s.data;
+  if (data.view === "sold") {
+    $("#slist").innerHTML = (data.items.length ? data.items.map((g) => giftRow(g, `<b>${num(g.price)}${ICON.ton}</b><div class="sub">${ago(g.sold_at)}</div>`)).join("")
+      : empty("🧾", "Продаж пока нет", "Бот ещё не видел продаж с таким выбором в ленте MRKT."))
+      + `<p class="foot">Продажи, которые бот видел в ленте MRKT${data.since ? ` с ${new Date(data.since).toLocaleDateString("ru-RU", { day: "numeric", month: "long" })}` : ""}.</p>`;
+    return;
+  }
+  $("#slist").innerHTML = (data.items.length ? data.items.map((g) => giftRow(g, `<b>${num(g.price)}${ICON.ton}</b><div class="sub">MRKT ›</div>`)).join("")
+    : empty("🔍", "Ничего на продаже", "Среди самых дешёвых объявлений MRKT такого нет — попробуйте другой выбор."))
+    + `<p class="foot">Самые дешёвые объявления MRKT сейчас · просмотрено ${data.scanned}${data.complete ? "" : ", есть ещё"}. Нажмите на подарок, чтобы открыть его в MRKT.</p>`;
+}
+
+// ------------------------------------------------------------------ prices per model and backdrop (the plan of one collection)
+async function openPlan(name) {
+  if (!S.sub) S.scroll[S.tab] = window.scrollY;
+  S.sub = { kind: "plan", name }; S.colView = { q: "", filter: "all", scroll: 0 };
+  if (!S.col || S.col.name !== name) S.colStale = true;
+  await render();
+}
+async function renderPlan() {
+  const name = S.sub.name;
+  if (S.col && S.col.name === name && !S.colStale) return drawCollection();
   const id = newScreen();
-  view.innerHTML = topbar("Коллекции") + skeletonHero() + skeletonTiles(4);
-  window.scrollTo(0, 0);
+  view.innerHTML = subHead("Цены по моделям и фонам", titleOf(name)) + skeletonHero() + skeletonTiles(6);
   try {
     const col = await api("/collections/" + encodeURIComponent(name));
     if (stale(id)) return;
-    S.col = col; S.colStale = false;
-  } catch (err) { if (!stale(id)) fail(err, () => openCollection(name), "Коллекции"); return; }
-  drawCollection();
-}
-async function reloadCollection() {
-  const id = newScreen();
-  view.innerHTML = topbar("Коллекции") + skeletonHero() + skeletonTiles(4);
-  try {
-    const col = await api("/collections/" + encodeURIComponent(S.col.name));
-    if (stale(id)) return;
     S.col = col; S.colStale = false; S.draft = null;
-  } catch (err) { if (!stale(id)) fail(err, reloadCollection, "Коллекции"); return; }
-  render();
+    if (S.q.name === name) S.q.detail = col;
+  } catch (err) { if (!stale(id)) fail(err, renderPlan, subHead("Цены по моделям и фонам", titleOf(name))); return; }
+  drawCollection();
 }
 function wholeText(w) {
   const parts = [];
@@ -723,7 +1279,7 @@ function drawCollection() {
   newScreen();
   const c = S.col;
   const pairs = c.monochrome_pairs;
-  view.innerHTML = topbar("Коллекции") + `
+  view.innerHTML = subHead("Цены по моделям и фонам", c.title) + `
     <section class="hero">${art(c.image, null, c.title)}
       <div class="grow"><h2>${esc(c.title)}</h2>
         <div class="facts"><span class="fact">флор ${ton(c.floor)}</span>
@@ -744,9 +1300,9 @@ function drawCollection() {
 }
 function autobuySwitch(c) {
   if (!S.me.can_purchase) return '<p class="hint">🔔 Бот только присылает листинги: у вас нет права на покупки.</p>';
-  const global = S.me.run_mode === "notify_only" ? " Сейчас в настройках «Покупать» выключено — бот ничего не покупает."
+  const global = S.me.run_mode === "notify_only" ? " Сейчас в профиле «Покупать» выключено — бот ничего не покупает."
     : S.me.run_mode === "dry_run" ? " Сейчас тестовый режим: покупки только имитируются." : "";
-  const silent = !c.autobuy && !S.me.notify.matching_only ? " Включите «Листинги» в настройках, иначе сообщений не будет." : "";
+  const silent = !c.autobuy && !S.me.notify.matching_only ? " Включите «Листинги» в профиле, иначе сообщений не будет." : "";
   return `<div class="seg" id="seg"><button data-v="1" class="${c.autobuy ? "on" : ""}">🛒 Покупать</button><button data-v="0" class="${c.autobuy ? "" : "on"}">🔔 Листинги</button></div>
     <p class="hint">${c.autobuy ? "Бот сам купит выбранное в этой коллекции — в пределах лимитов." : "Бот только пришлёт листинг того, что выбрано, покупать не будет."}${esc(c.autobuy ? global : silent)}</p>`;
 }
@@ -755,7 +1311,7 @@ function drawModelsGrid() {
   const found = c.models.filter((m) => !q || m.name.toLowerCase().includes(q));
   const counts = { all: found.length, mono: found.filter((m) => m.pairs.length).length, taken: found.filter((m) => m.taken).length };
   const chips = [["all", "Все"], ["mono", "С монохромом"], ["taken", "Бот берёт"]].filter(([k]) => k === "all" || counts[k] || S.colView.filter === k);
-  $("#mchips").innerHTML = chips.length > 1 ? chips.map(([k, t]) => `<button class="chip${S.colView.filter === k ? " on" : ""}" data-f="${k}">${t}<i>${counts[k]}</i></button>`).join("") : "";
+  $("#mchips").innerHTML = chips.length > 1 ? chips.map(([k, t]) => `<button class="chip${S.colView.filter === k ? " on" : ""}" data-f="${k}">${t} ${counts[k]}</button>`).join("") : "";
   $$("#mchips [data-f]").forEach((b) => (b.onclick = () => { S.colView.filter = b.dataset.f; haptic(); drawModelsGrid(); }));
   const f = S.colView.filter;
   const items = found.filter((m) => f === "all" || (f === "mono" ? m.pairs.length : m.taken));
@@ -828,7 +1384,7 @@ function openWholeSheet() {
   });
 }
 
-// ------------------------------------------------------------------ one model: any backdrop, monochrome backdrops with own prices
+// one model: any backdrop, monochrome backdrops with own prices
 // monochromes go up to a fixed price, or up to the cheapest other listing of the collection or of the model
 const PRICE_RULES = [["fixed", "Своя цена"], ["collection_floor", "Флор коллекции"], ["model_floor", "Флор модели"]];
 const RULE_UPTO = { collection_floor: "до флора коллекции", model_floor: "до флора модели" };
@@ -847,8 +1403,7 @@ function ruleHint(rule, c, m) {
   return "У «Все монохромы» и у каждого фона — своя цена в TON.";
 }
 function openModel(name) {
-  rememberScroll();
-  S.page = "model"; S.model = name; S.draft = null;
+  S.sub = { kind: "model", name: S.col.name }; S.model = name; S.draft = null;
   syncBack(); window.scrollTo(0, 0);
   drawModel();
 }
@@ -869,12 +1424,12 @@ const draftKey = (d) => JSON.stringify([d.any.on ? rangeOf(d.any) : null,
   ...[d.mono, ...d.pairs].map((o) => (!o.on ? null : d.rule === "fixed" ? rangeOf(o) : d.rule))]);
 function drawModel() {
   newScreen();
-  const c = S.col, m = currentModel();
-  if (!m) { S.page = "collection"; return render(); }
+  const c = S.col, m = c && currentModel();
+  if (!m) { S.sub = S.col ? { kind: "plan", name: S.col.name } : null; return render(); }
   if (!S.draft) initDraft(m);
   const d = S.draft, p0 = m.pairs.find((p) => p.center) || {}, n = m.pairs.length;
   const floor = m.floor ?? m.seen_floor;
-  view.innerHTML = topbar(c.title) + `
+  view.innerHTML = subHead(m.name, c.title) + `
     <section class="hero">${art(m.image, c.image, m.name, p0.center, p0.edge)}
       <div class="grow"><h2>${esc(m.name)}</h2><div class="sub">${esc(c.title)}</div>
         <div class="facts">${m.rarity != null ? `<span class="fact">редкость ${pct(m.rarity)}</span>` : ""}
@@ -886,7 +1441,7 @@ function drawModel() {
     ${n ? `<div class="label">Цена монохромов</div>${ruleSwitch("ruleseg", d.rule)}<p class="hint" id="rulehint"></p>
       <div class="sect"><h3>Монохромные фоны<i>${n}</i></h3><button class="link" id="selall">Выбрать все</button></div>
       <div class="bulk hidden" id="bulk">${priceField('id="bulkmin"', "", "от", "", "")}${priceField('id="bulkprice"', "", "до")}<button class="btn small" id="bulkapply">Всем</button></div>
-      <div class="grid" id="pgrid">${m.pairs.map((p, i) => pairTile(c, m, p, i)).join("")}</div>
+      <div class="grid pairs" id="pgrid">${m.pairs.map((p, i) => pairTile(c, m, p, i)).join("")}</div>
       <p class="hint" id="pairhint"></p>`
     : empty("🎨", "Монохромных фонов нет", c.giftwiki ? "Для этой модели они не найдены — можно брать любой фон." : "Для этой коллекции нет данных о монохромах — можно брать любой фон.")}`;
   bindModel(m);
@@ -1001,12 +1556,12 @@ async function saveModel() {
         : { backdrop: p.backdrop, price_ton: o.price.trim(), min_ton: o.min.trim() || null })),
     });
     S.draft = null; Save.hide(); haptic("success"); toast("Сохранено"); changed(true);
-    if (S.tab === "collections" && S.page === "model") { const y = window.scrollY; drawModel(); window.scrollTo(0, y); }
+    if (S.sub && S.sub.kind === "model") { const y = window.scrollY; drawModel(); window.scrollTo(0, y); }
   } catch (err) { toast(err.message); haptic("error"); }
   finally { Save.busy(false); }
 }
 
-// ------------------------------------------------------------------ what the bot takes
+// ------------------------------------------------------------------ subscriptions: everything the bot watches and buys
 function groupRules(items) {
   const groups = new Map(), other = [], everywhere = [];
   for (const r of items) {
@@ -1018,9 +1573,8 @@ function groupRules(items) {
     g.rules.push(r);
     for (const p of r.pick_items) g.picks.push({ ...p, mono: r.kind === "monochrome" });
   }
-  const title = (name) => (S.collections || []).find((c) => c.name === name)?.title || name;
   const list = [...groups.values()].map((g) => ({
-    ...g, title: title(g.collection), ids: g.rules.map((r) => r.id).join(","),
+    ...g, title: titleOf(g.collection), ids: g.rules.map((r) => r.id).join(","),
     enabled: g.rules.some((r) => r.enabled), autobuy: g.rules.some((r) => r.autobuy),
     picks: g.picks.sort((a, b) => (a.model || "").localeCompare(b.model || "", "ru") || b.backdrops.length - a.backdrops.length),
   }));
@@ -1033,6 +1587,9 @@ function pickLine(p) {
   return `<div class="pk"><span><b>${esc(p.model || "Вся коллекция")}</b> · ${esc(what)}</span><span class="pr">${esc(limit)}</span></div>`;
 }
 const stateText = (r) => (!r.enabled ? "⏸ выключено" : r.autobuy ? "🛒 покупает сам" : "🔔 присылает листинги");
+// a subscription's own notification switch, or the common one from the profile when it has none
+const notifyNew = (r) => r.notify_new ?? !!(S.me.notify.matching_only || S.me.notify.all_listings);
+const notifyPrice = (r) => r.notify_price ?? !!S.me.notify.price_drops;
 function ruleActions(r, edit) {
   return `<div class="ractions">${edit ? `<button class="pbtn" data-edit="${esc(edit)}">Изменить</button>` : ""}
     ${S.me.can_purchase ? `<button class="pbtn" data-ab="${r.ids}" data-v="${r.autobuy ? 0 : 1}">${r.autobuy ? "🔔 Листинги" : "🛒 Покупать"}</button>` : ""}
@@ -1055,6 +1612,27 @@ function everywhereCard(r) {
     <div class="picks"><div class="pk"><span><b>Все коллекции</b> · ⚫ любой монохром</span><span class="pr">${esc(top)}</span></div></div>
     ${ruleActions(rule)}</div>`;
 }
+function subText(r) {
+  const parts = [titleOf(r.collection), r.models.length ? listText(r.models) : "все модели"];
+  if (r.kind === "monochrome") parts.push(r.backdrops.length ? `⚫ ${listText(r.backdrops)}` : "⚫ монохромы");
+  else parts.push(r.backdrops.length ? listText(r.backdrops) : "все фоны");
+  if (r.symbols.length) parts.push(`узор ${listText(r.symbols)}`);
+  if (r.pattern) parts.push(/^\d+$/.test(r.pattern) ? `№ ${r.pattern}` : `номер ${r.pattern}`);
+  if (r.max_price != null || r.min_price != null) {
+    parts.push(r.min_price != null ? `от ${ton(r.min_price)}${r.max_price != null ? ` до ${ton(r.max_price)}` : ""}` : `до ${ton(r.max_price)}`);
+  }
+  return parts.join(" · ");
+}
+function subCard(r) {
+  const c = collectionOf(r.collection) || {};
+  const pill = (key, on, title) => `<button class="tpill${on ? " on" : ""}" data-tp="${key}" data-id="${r.id}" data-v="${on ? 0 : 1}"><i></i>${title}</button>`;
+  return `<div class="rcard${r.enabled ? "" : " paused"}" data-card="${r.id}">
+    <div class="rhead">${thumb(c.image, c.title || r.collection)}
+      <div class="grow"><b>${esc(r.name)}</b><div class="sub">${esc(subText(r))}</div></div>
+      <label class="switch"><input type="checkbox" data-en="${r.id}" ${r.enabled ? "checked" : ""}><span></span></label></div>
+    <div class="tpills">${S.me.can_purchase ? pill("autobuy", r.autobuy, "Покупки") : ""}${pill("notify_price", notifyPrice(r), "Цены")}${pill("notify_new", notifyNew(r), "Новые")}</div>
+    <div class="ractions"><button class="pbtn" data-subedit="${r.id}">Изменить</button><button class="pbtn danger" data-del="${r.id}">Удалить</button></div></div>`;
+}
 function chatRuleCard(r) {
   const rule = { ...r, ids: String(r.id) };
   return `<div class="rcard${r.enabled ? "" : " paused"}">
@@ -1062,53 +1640,60 @@ function chatRuleCard(r) {
       <div class="sub">${esc(r.summary.join(" · ") || "без условий")}</div></div>
       <label class="switch"><input type="checkbox" data-en="${rule.ids}" ${r.enabled ? "checked" : ""}><span></span></label></div>${ruleActions(rule)}</div>`;
 }
-async function renderRules() {
+async function renderSubs() {
   const id = newScreen();
-  view.innerHTML = head("Берёт бот") + skeletonRows(3);
+  view.innerHTML = head("Подписки") + skeletonRows(3);
   let items;
   try { [items] = await Promise.all([api("/rules").then((r) => r.items), ensureCollections().catch(() => null)]); }
-  catch (err) { if (!stale(id)) fail(err, renderRules); return; }
+  catch (err) { if (!stale(id)) fail(err, renderSubs, head("Подписки")); return; }
   if (stale(id)) return;
   const { groups, other, everywhere } = groupRules(items);
-  const on = groups.filter((g) => g.enabled), picks = on.reduce((s, g) => s + g.picks.length, 0);
-  view.innerHTML = head("Берёт бот") + banner() + (groups.length || other.length || everywhere.length ? `
+  const subs = other.filter((r) => r.editable), chat = other.filter((r) => !r.editable);
+  view.innerHTML = head("Подписки") + banner() + (items.length ? `
     ${everywhere.map(everywhereCard).join("")}
-    ${groups.length ? `<p class="total">Бот берёт <b>${picks}</b> ${plural(picks, "позицию", "позиции", "позиций")} в <b>${on.length}</b> ${plural(on.length, "коллекции", "коллекциях", "коллекциях")}</p>` : ""}
-    ${groups.map(groupCard).join("")}
-    ${other.length ? `<div class="label">Фильтры из чата</div>${other.map(chatRuleCard).join("")}` : ""}
-    <button class="btn soft" data-goto="collections">＋ Выбрать в коллекциях</button>`
-    : empty("🎯", "Пока ничего не выбрано", "Откройте коллекцию, выберите модели и монохромные фоны и укажите цены.", '<button class="btn" data-goto="collections">Выбрать в коллекциях</button>'));
+    ${subs.length ? `<div class="label">Подписки · ${subs.length}</div>${subs.map(subCard).join("")}` : ""}
+    ${groups.length ? `<div class="label">Цены по моделям и фонам</div>${groups.map(groupCard).join("")}` : ""}
+    ${chat.length ? `<div class="label">Фильтры из чата</div>${chat.map(chatRuleCard).join("")}` : ""}
+    <button class="btn soft" data-goto="search" style="margin-top:16px">＋ Новая подписка</button>`
+    : empty("📋", "Подписок пока нет", "На вкладке «Поиск» выберите коллекцию, модели и фоны — и создайте подписку.", '<button class="btn" data-goto="search">Перейти к поиску</button>'));
   const ids = (el, key) => el.dataset[key].split(",").filter(Boolean);
   $$("[data-en]").forEach((el) => (el.onchange = () => patchRules(ids(el, "en"), { enabled: el.checked })));
   $$("[data-ab]").forEach((el) => (el.onclick = () => patchRules(ids(el, "ab"), { autobuy: el.dataset.v === "1" })));
-  $$("[data-edit]").forEach((el) => (el.onclick = () => { haptic(); openCollection(el.dataset.edit); }));
+  $$("[data-tp]").forEach((el) => (el.onclick = () => patchRules([el.dataset.id], { [el.dataset.tp]: el.dataset.v === "1" })));
+  $$("[data-edit]").forEach((el) => (el.onclick = () => { haptic(); openPlan(el.dataset.edit); }));
+  $$("[data-subedit]").forEach((el) => (el.onclick = () => { haptic(); editSubscription(items.find((r) => String(r.id) === el.dataset.subedit)); }));
   $$("[data-del]").forEach((el) => (el.onclick = async () => {
-    if (!(await confirmBox("Удалить? Бот перестанет это брать."))) return;
+    if (!(await confirmBox("Удалить? Бот перестанет это брать и присылать."))) return;
     try { for (const rule of ids(el, "del")) await api(`/rules/${rule}`, "DELETE"); haptic("success"); toast("Удалено"); }
     catch (err) { toast(err.message); }
-    changed(); rerenderRules();
+    changed(); rerenderSubs();
   }));
+  if (S.highlight) {
+    const card = $(`[data-card="${S.highlight}"]`);
+    S.highlight = null;
+    if (card) { card.scrollIntoView({ block: "center" }); card.classList.add("flash"); }
+  }
 }
 async function patchRules(ids, body) {
   haptic();
   try { for (const rule of ids) await api(`/rules/${rule}`, "PATCH", body); }
   catch (err) { toast(err.message); }
-  changed(); rerenderRules();
+  changed(); rerenderSubs();
 }
-async function rerenderRules() {
+async function rerenderSubs() {
   const y = window.scrollY;
-  await renderRules();
-  if (S.tab === "rules") window.scrollTo(0, y);
+  await renderSubs();
+  if (S.tab === "subs" && !S.sub) window.scrollTo(0, y);
 }
 
-// ------------------------------------------------------------------ limits and modes
+// ------------------------------------------------------------------ profile: modes, speed, limits, notifications
 const CHECK_TARGETS = {
-  limits: ["Задать", () => scrollToId("budget")],
-  rule: ["Выбрать", () => go("collections")],
+  limits: ["Задать", () => goTo("profile", "budget")],
+  rule: ["Выбрать", () => go("search")],
   modes: ["Включить", () => enableModes()],
   live: ["Включить", () => setMode("live")],
   paused: ["Снять", () => savePrefs({ purchases_paused: false }, "Пауза снята")],
-  stopped: ["Открыть", () => scrollToId("emergency")],
+  stopped: ["Открыть", () => goTo("profile", "emergency")],
 };
 // the run mode goes up to RUN_MODE from .env; real purchases are allowed there once, on the bot's computer
 const MODE_RANK = { notify_only: 0, dry_run: 1, live: 2 };
@@ -1143,7 +1728,7 @@ function workCard(m) {
       <label class="switch"><input type="checkbox" data-notify="matching_only" ${m.notify.matching_only ? "checked" : ""}><span></span></label></div>
     ${EVERYWHERE.map(([rule, title, sub]) => `<div class="line"><div class="grow"><b>${title}</b><div class="sub">${sub}</div></div>
       <label class="switch"><input type="checkbox" data-everywhere="${rule}" ${m.monochrome_everywhere === rule ? "checked" : ""}><span></span></label></div>`).join("")}
-    </div><p class="hint">Режимы «по флору» действуют во всех коллекциях, и в новых тоже, вместе с тем, что выбрано в коллекциях;
+    </div><p class="hint">Режимы «по флору» действуют во всех коллекциях, и в новых тоже, вместе с подписками;
       включён может быть один из них. Покупки — в пределах лимитов и при включённом «💸 Покупать».</p>
     ${m.is_admin ? "" : '<p class="hint">Покупки включает администратор.</p>'}`;
 }
@@ -1163,6 +1748,58 @@ async function setEverywhere(rule) {
   } catch (err) { toast(err.message); haptic("error"); return false; }
   finally { updateChrome(); }
 }
+// the modes "all monochromes up to the collection / model floor", also from the search settings
+function openMonoAllSheet() {
+  const current = S.me.monochrome_everywhere;
+  const own = (S.collections || []).filter((c) => c.monochrome_floor);  // "any monochrome up to a floor" set in a collection
+  let rule = current || "collection_floor";
+  Sheet.open(`<h3>⚫ Все монохромы по флору</h3>
+    <p class="sub" style="margin:0 2px 14px">Бот будет покупать любой монохром во всех коллекциях, и в новых тоже, если он не дороже флора.</p>
+    <div class="seg" id="allrule"><button data-rule="collection_floor">Флор коллекции</button><button data-rule="model_floor">Флор модели</button></div>
+    <p class="hint" id="allhint"></p>
+    <p class="hint">Модели и фоны, выбранные в подписках, покупаются по своим ценам. Общие лимиты действуют. Этот же режим есть в профиле.</p>
+    <button class="btn" id="allon"></button>
+    ${current ? '<button class="btn danger" id="alloff" style="margin-top:8px">Выключить</button>' : ""}
+    ${own.length ? `<p class="hint" style="margin-top:16px">Ещё в ${own.length} ${plural(own.length, "коллекции", "коллекциях", "коллекциях")} «все монохромы по флору» выбраны в самой коллекции — они действуют и без этого режима.</p>
+      <button class="btn soft" id="ownoff">Убрать из коллекций</button>` : ""}`, (root) => {
+    const sync = () => {
+      $$("#allrule [data-rule]", root).forEach((b) => b.classList.toggle("on", b.dataset.rule === rule));
+      $("#allhint", root).textContent = rule === "collection_floor"
+        ? "Флор коллекции — самый дешёвый другой подарок этой коллекции на MRKT."
+        : "Флор модели — самая дешёвая другая копия той же модели на MRKT.";
+      $("#allon", root).textContent = !current ? "Включить" : current === rule ? "Включено" : "Переключить";
+      $("#allon", root).disabled = current === rule;
+    };
+    $$("#allrule [data-rule]", root).forEach((b) => (b.onclick = () => { rule = b.dataset.rule; haptic(); sync(); }));
+    sync();
+    const apply = async (button, value) => {
+      button.disabled = true;
+      if (!(await setEverywhere(value))) { button.disabled = false; return; }
+      Sheet.close(); refreshStatus();
+    };
+    $("#allon", root).onclick = (e) => apply(e.target, rule);
+    if ($("#alloff", root)) $("#alloff", root).onclick = (e) => apply(e.target, null);
+    if ($("#ownoff", root)) $("#ownoff", root).onclick = async (e) => {
+      if (!(await confirmBox("Убрать «все монохромы по флору» из коллекций? Модели и фоны, выбранные отдельно, останутся."))) return;
+      e.target.disabled = true;
+      try {
+        const res = await api("/monochromes", "PUT", { rule: null });
+        Sheet.close(); haptic("success");
+        toast(res.error || `Убрано из ${res.changed} ${plural(res.changed, "коллекции", "коллекций", "коллекций")}`);
+        changed();
+      } catch (err) { e.target.disabled = false; toast(err.message); haptic("error"); }
+    };
+  });
+}
+// after a change of modes or switches: the profile and the tasks show them as the bot stored them
+function refreshStatus() {
+  if (S.sub) return;
+  if (S.tab === "profile" && $("#status")) {
+    drawStatus();
+    $$("[data-pref]").forEach((el) => (el.checked = !!S.me[el.dataset.pref]));
+    $$("#notifycard [data-notify]").forEach((el) => (el.checked = !!S.me.notify[el.dataset.notify]));
+  } else if (S.tab === "tasks") renderTasks();
+}
 async function setMode(mode) {
   const m = S.me;
   if (mode === m.run_mode) return;
@@ -1176,36 +1813,39 @@ async function setMode(mode) {
     haptic("success");
     toast({ live: "Бот покупает по-настоящему", dry_run: "Тестовый режим", notify_only: "Покупки выключены" }[mode]);
   } catch (err) { toast(err.message); haptic("error"); }
-  updateChrome(); drawStatus();
+  updateChrome(); refreshStatus();
 }
-// switches of the settings page: saved at once, then shown as the bot stored them
+// switches of the profile page: saved at once, then shown as the bot stored them
 async function savePrefs(body, message) {
   haptic();
   try {
     S.me = await api("/settings", "PUT", body);
     if (message) toast(message);
   } catch (err) { toast(err.message); haptic("error"); }
-  updateChrome(); drawStatus();
-  $$("[data-pref]").forEach((el) => (el.checked = !!S.me[el.dataset.pref]));
-  $$("[data-notify]").forEach((el) => (el.checked = !!S.me.notify[el.dataset.notify]));
+  updateChrome(); refreshStatus();
 }
 function enableModes() {
   const missing = S.me.modes_missing;
-  if (!missing.length) return go("collections");  // nothing is bought automatically yet: choose it first
+  if (!missing.length) return go("search");  // nothing is bought automatically yet: choose it first
   savePrefs(Object.fromEntries(missing.map((key) => [key, true])), "Автопокупка включена");
 }
-function scrollToId(id) { const el = document.getElementById(id); if (el) el.scrollIntoView({ behavior: "smooth", block: "start" }); }
-async function renderSettings() {
+async function renderProfile() {
   const id = newScreen();
-  view.innerHTML = head("Настройки") + skeletonRows(3);
-  try { await loadMe(); } catch (err) { if (!stale(id)) fail(err, renderSettings); return; }
+  view.innerHTML = head("Профиль") + skeletonRows(3);
+  try { await loadMe(); } catch (err) { if (!stale(id)) fail(err, renderProfile, head("Профиль")); return; }
   if (stale(id)) return;
-  const m = S.me, l = m.limits;
+  const m = S.me, l = m.limits, u = (tg && tg.initDataUnsafe && tg.initDataUnsafe.user) || {};
+  const name = [u.first_name, u.last_name].filter(Boolean).join(" ") || "Пользователь";
   const limit = (key, title, value, sub) => `<div class="line"><div class="grow"><b>${title}</b>${sub ? `<div class="sub">${sub}</div>` : ""}</div>
     ${priceField(`data-limit="${key}"`, value ?? "", "—")}</div>`;
   const toggle = (attr, key, on, title, sub) => `<div class="line"><div class="grow"><b>${title}</b><div class="sub">${sub}</div></div>
     <label class="switch"><input type="checkbox" ${attr}="${key}" ${on ? "checked" : ""}><span></span></label></div>`;
-  view.innerHTML = head("Настройки") + `<div id="status"></div>
+  view.innerHTML = head("Профиль") + `
+    <div class="pcard"><div class="avatar"><span class="letter">${esc(name[0])}</span>${pic(u.photo_url)}</div>
+      <div class="grow"><b>${esc(name)}</b><div class="sub">${u.username ? `@${esc(u.username)} · ` : ""}ID ${m.user_id}${m.is_admin ? " · администратор" : ""}</div></div></div>
+    <div class="stats"><div><span>Сегодня</span><b>${ton(m.spent.today)}</b></div><div><span>Всего</span><b>${ton(m.spent.total)}</b></div>
+      <div><span>Подписки</span><b>${m.rules.enabled} из ${m.rules.total}</b></div></div>
+    <div id="status"></div>
     <div class="label" id="budget">Бюджет</div>
     <div class="card">${limit("per_purchase_ton", "На одну покупку", l.per_purchase, "")}
       ${limit("daily_ton", "В день", l.daily, `потрачено сегодня ${ton(m.spent.today)}`)}
@@ -1213,11 +1853,12 @@ async function renderSettings() {
     <p class="hint">Без всех трёх лимитов бот ничего не покупает — даже в тестовом режиме.</p>
     <div class="label" id="notify">Уведомления</div>
     <div class="card" id="notifycard">${NOTIFY.map(([key, title, sub]) => toggle("data-notify", key, m.notify[key], title, sub)).join("")}</div>
-    <p class="hint">Подарок, который бот покупает сам, приходит одним сообщением — с результатом покупки.</p>
+    <p class="hint">Подарок, который бот покупает сам, приходит одним сообщением — с результатом покупки. У подписки могут быть свои уведомления.</p>
     <div class="label" id="modes">Автопокупка</div>
-    <div class="card">${toggle("data-pref", "autobuy_enabled", m.autobuy_enabled, "Обычные подарки", "любой фон и фильтры из чата")}
+    <div class="card">${toggle("data-pref", "autobuy_enabled", m.autobuy_enabled, "Обычные подарки", "подписки с любым фоном и фильтры из чата")}
       ${toggle("data-pref", "monochrome_autobuy_enabled", m.monochrome_autobuy_enabled, "Монохромы", "монохромные фоны")}
       ${toggle("data-pref", "purchases_paused", m.purchases_paused, "Пауза", "временно ничего не покупать")}</div>
+    <button class="rowbtn" id="historybtn"><div class="grow"><b>🧾 История покупок</b><div class="sub">куплено, «был бы куплен» и неудачные попытки</div></div><span class="chev">›</span></button>
     <div id="emergency"></div>
     <div class="foot" id="datainfo"></div>`;
   drawStatus();
@@ -1227,6 +1868,7 @@ async function renderSettings() {
   }));
   $$("[data-pref]").forEach((el) => (el.onchange = () => savePrefs({ [el.dataset.pref]: el.checked })));
   $$("#notifycard [data-notify]").forEach((el) => (el.onchange = () => savePrefs({ notify: { [el.dataset.notify]: el.checked } })));
+  $("#historybtn").onclick = () => { haptic(); S.scroll.profile = window.scrollY; S.sub = { kind: "history" }; render(); };
 }
 function drawStatus() {
   const m = S.me;
@@ -1238,14 +1880,8 @@ function drawStatus() {
     : listings ? ["🔔 Только листинги", "Бот ничего не покупает и присылает листинги подарков по вашему выбору."]
     : ["⏸ Выключен", "Бот не покупает и не присылает листинги."];
   const cls = m.stopped ? "stop" : m.run_mode === "dry_run" ? "dry_run" : buying ? "live" : "notify_only";
-  const checks = m.ready ? "" : `<div class="label">Чтобы бот начал покупать</div><div class="card">${m.checklist.map((c) => {
-    const target = !c.ok && (c.id !== "live" || m.is_admin) && CHECK_TARGETS[c.id];
-    return `<div class="ck${c.ok ? " ok" : ""}"><span class="mark">${c.ok ? "✓" : "!"}</span><span class="grow">${esc(c.text)}</span>
-      ${target ? `<button class="link" data-check="${esc(c.id)}">${target[0]}</button>` : ""}</div>`;
-  }).join("")}</div>`;
-  $("#status").innerHTML = `<div class="mode ${cls}"><b>${esc(title)}</b><div class="sub">${esc(text)}</div></div>
-    ${workCard(m)}${speedCard(m)}${checks}`;
-  $$("#status [data-check]").forEach((b) => (b.onclick = () => { haptic(); CHECK_TARGETS[b.dataset.check][1](); }));
+  $("#status").innerHTML = `${banner()}<div class="mode ${cls}"><b>${esc(title)}</b><div class="sub">${esc(text)}</div></div>
+    <div class="label">Режимы</div>${workCard(m)}${speedCard(m)}`;
   const buy = $("#buyswitch");
   buy.onchange = () => {
     const want = buy.checked;
@@ -1291,12 +1927,12 @@ async function saveLimits() {
   try {
     S.me = await api("/settings", "PUT", body);
     Save.hide(); haptic("success"); toast("Лимиты сохранены"); updateChrome();
-    if (S.tab === "settings") renderSettings();
+    if (S.tab === "profile" && !S.sub) { const y = window.scrollY; await renderProfile(); window.scrollTo(0, y); }
   } catch (err) { toast(err.message); haptic("error"); }
   finally { Save.busy(false); }
 }
 
-// ------------------------------------------------------------------ history
+// ------------------------------------------------------------------ history of purchases (inside the profile)
 function dayLabel(d) {
   const today = new Date(), yesterday = new Date();
   yesterday.setDate(today.getDate() - 1);
@@ -1305,34 +1941,95 @@ function dayLabel(d) {
   return d.toLocaleDateString("ru-RU", { day: "numeric", month: "long" });
 }
 async function renderHistory() {
-  const id = newScreen();
-  view.innerHTML = head("История") + skeletonRows(4);
+  const id = newScreen(), top = subHead("История покупок", "куплено, «был бы куплен» и неудачные попытки");
+  view.innerHTML = top + skeletonRows(4);
   let items;
-  try { items = (await api("/history")).items; } catch (err) { if (!stale(id)) fail(err, renderHistory); return; }
+  try { items = (await api("/history")).items; } catch (err) { if (!stale(id)) fail(err, renderHistory, top); return; }
   if (stale(id)) return;
   items.sort((a, b) => b.created_at.localeCompare(a.created_at));
   let day = "";
-  view.innerHTML = head("История") + (items.length ? items.map((a) => {
+  view.innerHTML = top + (items.length ? items.map((a) => {
     const d = new Date(a.created_at), label = dayLabel(d);
     const sep = label !== day ? `<div class="day">${label}</div>` : "";
     day = label;
-    return sep + `<div class="hrow"${a.url ? ` data-url="${esc(a.url)}"` : ""}>
-      ${thumb(a.image, a.title)}
-      <div class="grow"><div class="name">${esc(a.title)}</div>
+    return sep + `<button class="lrow"${a.url ? ` data-open="${esc(a.url)}"` : ""}>
+      ${giftImg({ title: a.title, image: a.image })}
+      <div class="grow"><div class="lt">${esc(a.title)}</div>
         <div class="sub">${esc([a.model, a.backdrop].filter(Boolean).join(" · "))}</div>
         <div class="sub">${d.toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" })}${a.rule ? " · " + esc(a.rule.replace(/^📱\s*/u, "")) : ""}</div></div>
-      <div class="right"><b>${ton(a.price)}</b><br><span class="st ${esc(a.status)}">${esc(a.status_label)}</span></div></div>`;
+      <div class="lr"><b>${num(a.price)}${ICON.ton}</b><br><span class="st ${esc(a.status)}">${esc(a.status_label)}</span></div></button>`;
   }).join("") : empty("🧾", "Покупок пока не было", "Здесь появятся покупки и тестовые «был бы куплен»."));
-  $$("[data-url]").forEach((el) => (el.onclick = () => openLink(el.dataset.url)));
+}
+
+// ------------------------------------------------------------------ tasks: what is left before the bot buys, what it does now
+const TASK_ICONS = { limits: "💰", rule: "🎯", modes: "🛒", live: "💸", giftwiki: "⚫", stopped: "⛔", rights: "🔑", paused: "⏸" };
+async function renderTasks() {
+  const id = newScreen();
+  view.innerHTML = head("Задания") + skeletonRows(4);
+  try { await loadMe(); } catch (err) { if (!stale(id)) fail(err, renderTasks, head("Задания")); return; }
+  if (stale(id)) return;
+  const m = S.me, list = m.checklist, done = list.filter((c) => c.ok).length;
+  const speed = SPEEDS.find(([seconds]) => Math.abs(m.poll_interval - seconds) < 0.01);
+  const mode = m.stopped ? "⛔ остановлен" : m.run_mode === "live" ? "💸 покупает" : m.run_mode === "dry_run" ? "🧪 тест" : m.notify.matching_only ? "🔔 листинги" : "⏸ выключен";
+  view.innerHTML = head("Задания") + `
+    <div class="progress"><div class="ptext"><b>${done} из ${list.length}</b> · ${m.ready ? "бот готов покупать" : "выполните, чтобы бот начал покупать"}</div>
+      <div class="bar"><i style="width:${list.length ? Math.round((done / list.length) * 100) : 100}%"></i></div></div>
+    ${list.map((c) => {
+      const target = !c.ok && (c.id !== "live" || m.is_admin) && CHECK_TARGETS[c.id];
+      return `<div class="task${c.ok ? " done" : ""}"><span class="ticon">${c.ok ? "✓" : TASK_ICONS[c.id] || "•"}</span><div class="grow">${esc(c.text)}</div>
+        ${target ? `<button class="tbtn" data-check="${esc(c.id)}">${target[0]}</button>` : c.ok ? '<span class="tok">Готово</span>' : ""}</div>`;
+    }).join("")}
+    <div class="label">Сейчас</div>
+    <div class="card">
+      <div class="kv"><span>Режим</span><b>${mode}</b></div>
+      <div class="kv"><span>Скорость реакции</span><b>${speed ? `${speed[1]} · ${speed[2]}` : `раз в ${num(m.poll_interval, 2)} с`}</b></div>
+      <div class="kv"><span>Подписки</span><b>${m.rules.enabled} активных · ${m.rules.autobuy} покупают сами</b></div>
+      <div class="kv"><span>Монохромы по флору</span><b>${m.monochrome_everywhere ? RULE_UPTO[m.monochrome_everywhere] : "выключено"}</b></div>
+      <div class="kv"><span>Потрачено сегодня</span><b>${ton(m.spent.today)}</b></div>
+      <div class="kv"><span>Данные Gift Wiki</span><b>${m.giftwiki.records ? `${num(m.giftwiki.records, 0)} пар` : "не загружены"}</b></div>
+    </div>`;
+  $$("[data-check]").forEach((b) => (b.onclick = () => { haptic(); CHECK_TARGETS[b.dataset.check][1](); }));
+}
+
+// ------------------------------------------------------------------ leaders: the market as the bot sees it in the MRKT feed
+async function renderLeaders() {
+  const id = newScreen(), days = S.leaders.days;
+  const top = head("Лидеры") + `<div class="seg seg3" id="lperiod">${[[1, "24 часа"], [7, "7 дней"], [30, "30 дней"]].map(([d, t]) =>
+    `<button data-days="${d}" class="${d === days ? "on" : ""}">${t}</button>`).join("")}</div>`;
+  const bind = () => $$("#lperiod [data-days]").forEach((b) => (b.onclick = () => {
+    if (+b.dataset.days === S.leaders.days) return;
+    haptic(); S.leaders.days = +b.dataset.days; renderLeaders();
+  }));
+  view.innerHTML = top + `<div style="margin-top:14px">${skeletonRows(5)}</div>`;
+  bind();
+  let data;
+  try { data = await api(`/leaders?days=${days}`); } catch (err) { if (!stale(id)) { fail(err, renderLeaders, top); bind(); } return; }
+  if (stale(id)) return;
+  const sales = (n) => `${n} ${plural(n, "продажа", "продажи", "продаж")}`;
+  view.innerHTML = top + `
+    <div class="label">По объёму продаж</div>
+    ${data.collections.length ? data.collections.map((c, i) => `<button class="lrow" data-col="${esc(c.name)}"><span class="rank r${i + 1}">${i + 1}</span>${thumb(c.image, c.title)}
+      <div class="grow"><div class="lt">${esc(c.title)}</div><div class="sub">${sales(c.sales)}</div></div>
+      <div class="lr"><b>${num(c.volume)}${ICON.ton}</b></div></button>`).join("")
+      : empty("📊", "Продаж пока нет", "Бот ещё не видел продаж за этот период в ленте MRKT.")}
+    ${data.sales.length ? `<div class="label">Самые дорогие продажи</div>${data.sales.map((g) => giftRow({ ...g, url: g.tg_url },
+      `<b>${num(g.price)}${ICON.ton}</b><div class="sub">${ago(g.sold_at)}</div>`)).join("")}` : ""}
+    <div class="label">Дешёвые монохромы на продаже</div>
+    ${data.monochromes.length ? data.monochromes.map((g) => giftRow(g, `<b>${num(g.price)}${ICON.ton}</b><div class="sub">MRKT ›</div>`)).join("")
+      : empty("⚫", "Монохромов на продаже не видно", "Бот покажет их здесь, когда увидит в объявлениях MRKT.")}
+    <p class="foot">По данным ленты MRKT, которую видит бот${data.since ? ` с ${new Date(data.since).toLocaleDateString("ru-RU", { day: "numeric", month: "long" })}` : ""}.
+      Монохромы — объявления, которые бот видел за последние 3 дня.</p>`;
+  bind();
+  $$("[data-col]").forEach((b) => (b.onclick = () => { haptic(); pickCollection(b.dataset.col); }));
 }
 
 // ------------------------------------------------------------------ start
 function applyTheme() {
-  document.documentElement.dataset.theme = tg && tg.colorScheme === "light" ? "light" : "dark";
   if (!tg || !tg.isVersionAtLeast) return;
   try {
-    if (tg.isVersionAtLeast("6.1")) { tg.setHeaderColor("secondary_bg_color"); tg.setBackgroundColor("secondary_bg_color"); }
-    if (tg.isVersionAtLeast("7.10") && tg.setBottomBarColor) tg.setBottomBarColor("secondary_bg_color");
+    if (tg.isVersionAtLeast("6.9")) { tg.setHeaderColor("#000000"); tg.setBackgroundColor("#000000"); }
+    if (tg.isVersionAtLeast("7.10") && tg.setBottomBarColor) tg.setBottomBarColor("#0d0d0d");
+    if (tg.isVersionAtLeast("7.7") && tg.disableVerticalSwipes) tg.disableVerticalSwipes();  // scrolling must not close the app
   } catch (e) { /* old clients */ }
 }
 // on phones the keyboard would push the bottom bar over the field being typed in
@@ -1351,7 +2048,6 @@ document.addEventListener("keydown", (e) => { if (e.key === "Enter" && e.target.
     return;
   }
   tg.ready(); tg.expand();
-  if (tg.onEvent) tg.onEvent("themeChanged", applyTheme);
   try { await loadMe(); } catch (err) { return fail(err, () => location.reload()); }
   render();
 })();
