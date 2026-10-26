@@ -19,9 +19,18 @@ def is_plan(row: Filter) -> bool:
     return bool((row.criteria or {}).get("picks"))
 
 
+def is_assistant(row: Filter) -> bool:
+    """The resale assistant's settings: a filter with resale rules (one per user, set in the Mini App)."""
+    return (row.criteria or {}).get("resale") is not None
+
+
+def managed(row: Filter) -> bool:
+    return is_plan(row) or is_assistant(row)
+
+
 def without_plans(rows: list[Filter]) -> tuple[list[Filter], int]:
-    """Filters for the chat interface and the number of Mini App plans left out of it."""
-    kept = [r for r in rows if not is_plan(r)]
+    """Filters for the chat interface and the number of Mini App plans (and the assistant) left out of it."""
+    kept = [r for r in rows if not managed(r)]
     return kept, len(rows) - len(kept)
 
 
@@ -53,9 +62,13 @@ async def get_filter(session: AsyncSession, user_id: int, filter_id: int) -> Fil
     return row
 
 
+async def assistant_filter(session: AsyncSession, user_id: int) -> Filter | None:
+    return next((r for r in await list_filters(session, user_id) if is_assistant(r)), None)
+
+
 async def _check_room(session: AsyncSession, user_id: int, *, plan: bool) -> None:
     rows = await list_filters(session, user_id)
-    plans = sum(1 for r in rows if is_plan(r))
+    plans = sum(1 for r in rows if managed(r))
     if plan and plans >= MAX_PLANS_PER_USER:
         raise ValueError(f"Не больше {MAX_PLANS_PER_USER} правил мини-приложения на пользователя")
     if not plan and len(rows) - plans >= MAX_FILTERS_PER_USER:
@@ -81,7 +94,7 @@ async def create_filter(
 
 
 async def copy_filter(session: AsyncSession, source: Filter) -> Filter:
-    await _check_room(session, source.user_id, plan=is_plan(source))
+    await _check_room(session, source.user_id, plan=managed(source))
     row = Filter(
         user_id=source.user_id,
         name=(f"{source.name} (копия)")[:64],

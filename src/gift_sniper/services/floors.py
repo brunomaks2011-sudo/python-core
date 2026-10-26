@@ -34,16 +34,26 @@ class FloorService:
     def __init__(self, mrkt: _Search, *, ttl: float = 20.0) -> None:
         self.mrkt = mrkt
         self.ttl = ttl
-        self._cache: dict[tuple[str, str], tuple[float, list[tuple[str, int]]]] = {}
+        self._cache: dict[tuple[str, str, str], tuple[float, list[tuple[str, int]]]] = {}
 
-    async def _cheapest(self, collection: str, model: str | None) -> list[tuple[str, int]] | None:
+    async def cheapest(
+        self, collection: str, model: str | None = None, backdrop: str | None = None
+    ) -> list[tuple[str, int]] | None:
         """(gift id, price) of the cheapest listings, cheapest first; None when MRKT cannot tell."""
-        key = (normalize_name(collection), normalize_name(model) if model else "")
+        key = (
+            normalize_name(collection),
+            normalize_name(model) if model else "",
+            normalize_name(backdrop) if backdrop else "",
+        )
         cached = self._cache.get(key)
         if cached and time.monotonic() - cached[0] < self.ttl:
             return cached[1]
         query = SalingQuery(
-            collection_names=[collection], model_names=[model] if model else [], ordering="Price", count=DEPTH
+            collection_names=[collection],
+            model_names=[model] if model else [],
+            backdrop_names=[backdrop] if backdrop else [],
+            ordering="Price",
+            count=DEPTH,
         )
         try:
             listings, _ = await self.mrkt.search_listings(query, priority=True)  # a purchase may wait on it
@@ -61,14 +71,25 @@ class FloorService:
         self._cache[key] = (time.monotonic(), cheapest)
         return cheapest
 
+    async def lowest(
+        self,
+        collection: str,
+        *,
+        model: str | None = None,
+        backdrop: str | None = None,
+        exclude_gift: str | None = None,
+    ) -> int | None:
+        """The lowest asking price of a collection, model, backdrop or model on a backdrop; None: no data."""
+        cheapest = await self.cheapest(collection, model, backdrop)
+        return next((price for gift_id, price in cheapest or [] if gift_id != exclude_gift), None)
+
     async def floor(self, listing: ListingSnapshot, rule: PriceRule) -> int | None:
         if rule is PriceRule.FIXED or not listing.collection_name:
             return None
         if rule is PriceRule.MODEL_FLOOR and not listing.model_name:
             return None
         model = listing.model_name if rule is PriceRule.MODEL_FLOOR else None
-        cheapest = await self._cheapest(listing.collection_name, model)
-        return next((price for gift_id, price in cheapest or [] if gift_id != listing.gift_id), None)
+        return await self.lowest(listing.collection_name, model=model, exclude_gift=listing.gift_id)
 
     async def with_floors(
         self, listing: ListingSnapshot, enrichment: Enrichment, rules: set[PriceRule]

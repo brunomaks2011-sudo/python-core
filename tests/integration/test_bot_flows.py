@@ -24,8 +24,12 @@ from gift_sniper.bot.middlewares import AccessMiddleware
 from gift_sniper.bot.setup import build_dispatcher
 from gift_sniper.bot.ui import MAIN_SECTIONS
 from gift_sniper.db.models import Budget, Filter, UserSettings
+from gift_sniper.domain.enums import BudgetScope
+from gift_sniper.domain.types import MrktOrder
 from gift_sniper.services.container import Services
+from gift_sniper.services.floors import FloorService
 from gift_sniper.services.giftwiki_sync import GiftWikiSync
+from gift_sniper.services.orders import OrdersService
 from gift_sniper.services.search import SearchService
 from gift_sniper.services.stats import StatsService
 from tests.factories import TON
@@ -143,6 +147,15 @@ async def ui(env: Env) -> AsyncIterator[Harness]:
         search=SearchService(env.mrkt, env.enricher, env.sessionmaker),  # type: ignore[arg-type]
         stats=StatsService(env.sessionmaker, env.store),
         sync=GiftWikiSync(env.settings, None, env.sessionmaker, env.redis, env.store, env.enricher),  # type: ignore[arg-type]
+        orders=OrdersService(
+            env.settings,
+            env.sessionmaker,
+            env.redis,
+            env.mrkt,
+            FloorService(env.mrkt),
+            env.control,
+            env.notifier,
+        ),
     )
     session = RecordingSession()
     bot = Bot("123456:" + "A" * 35, session=session)
@@ -367,3 +380,21 @@ async def test_wiki_gift_card(ui: Harness, env: Env) -> None:
     card = await ui.click(gift_cb)
     assert "Записей по типам: high: 1, low: 1" in card and "Onyx + Black — high" in card
     assert "Доля монохромных моделей: Нет данных" in card  # no MRKT models observed yet
+
+
+async def test_outbid_button_works_once(ui: Harness, env: Env) -> None:
+    await ui.send("/start")
+    await env.set_mode_budget(ADMIN, BudgetScope.USER, per_purchase_limit_nano=50 * TON)
+    mine = MrktOrder("mine", "Plush Pepe", "Onyx", None, None, 10 * TON, is_mine=True)
+    env.mrkt.my_orders_list = [mine]
+    env.mrkt.top_orders[("Plush Pepe", "Onyx", None, None)] = MrktOrder(
+        "other", "Plush Pepe", "Onyx", None, None, 10_500_000_000
+    )
+    token = await env.notifier.make_token({"order_id": "mine", "price": 10_510_000_000})
+    text = await ui.click(f"ob:{token}")
+    assert "✅ Ордер перебит: 10 TON → 10.51 TON" in text
+    assert [o.price_nano for o in env.mrkt.my_orders_list] == [10_510_000_000]
+    await ui.click(f"ob:{token}")
+    assert "Кнопка устарела или недоступна" in ui.session.alerts()[-1]
+    creates = [kind for kind, _ in env.mrkt.order_calls if kind == "create"]
+    assert creates == ["create"]

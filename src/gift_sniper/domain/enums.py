@@ -48,6 +48,16 @@ class PurchaseMode(StrEnum):
     REGULAR = "regular"
     MONOCHROME = "monochrome"
     MANUAL = "manual"
+    RESALE = "resale"  # the resale assistant: bought to be sold again
+
+
+class ResaleStatus(StrEnum):
+    BOUGHT = "bought"  # bought, not listed yet
+    WAITING = "waiting"  # MRKT allows listing it later (nextResaleDate)
+    LISTED = "listed"  # on sale on MRKT
+    FAILED = "failed"  # listing failed, tried again later
+    SOLD = "sold"  # MRKT reported the sale
+    DRY_RUN = "dry_run"  # test mode: would have been bought and listed
 
 
 class PurchaseRunMode(StrEnum):

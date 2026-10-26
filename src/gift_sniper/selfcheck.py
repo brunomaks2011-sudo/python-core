@@ -147,6 +147,7 @@ async def _check_mrkt(settings: Settings, report: Report, samples: list[tuple[st
                 report.add(
                     OK if colors else WARN, f"Цвета фона в листингах MRKT: {colors} из {len(listings)}"
                 )
+                _check_fee(report, listings)
         except MrktError as exc:
             report.add(FAIL, str(exc))
         try:
@@ -184,14 +185,72 @@ async def _check_mrkt(settings: Settings, report: Report, samples: list[tuple[st
                 )
             except MrktError as exc:
                 report.add(WARN, f"{exc} (мини-приложение покажет только замеченные ботом {label})")
+        if collections:
+            await _check_orders(client, report, collections[0])
         report.add(
             WARN,
             "MRKT gifts/buy нельзя проверить без реальной покупки. Начните с RUN_MODE=dry_run, затем выполните "
             "одну ручную покупку недорогого подарка и проверьте результат в «История операций».",
         )
+        report.add(
+            WARN,
+            "MRKT gifts/sale (выставление ИИ-ассистентом) и orders/create, orders/cancel (перебив ордера) "
+            "тоже проверяются только настоящим действием: бот сообщает об успехе после того, как MRKT "
+            "покажет подарок на продаже или новый ордер в списке ваших ордеров.",
+        )
     finally:
         await client.close()
     return collections
+
+
+def _check_fee(report: Report, listings: list[Any]) -> None:
+    """MRKT's fee as the listings show it: salePrice (buyers) against salePriceWithoutFee (the seller)."""
+    pairs = [
+        (item.price_nano, item.price_without_fee_nano)
+        for item in listings
+        if item.price_nano and item.price_without_fee_nano
+    ]
+    if not pairs:
+        report.add(
+            WARN,
+            "MRKT не прислал salePriceWithoutFee: ИИ-ассистент считает комиссию по настройке (2% по умолчанию)",
+        )
+        return
+    fees = sorted(round((buyer / seller - 1) * 100, 2) for buyer, seller in pairs)
+    report.add(OK, f"Комиссия MRKT по листингам (salePrice / salePriceWithoutFee): {fees[len(fees) // 2]}%")
+
+
+async def _check_orders(client: Any, report: Report, collection: str) -> None:
+    """Orders: the requests are documented by tgmrkts, the responses are not; show what MRKT returns."""
+    from gift_sniper.integrations.mrkt import MrktError
+
+    try:
+        mine = await client.my_orders()
+        report.add(OK, f"MRKT orders/get-my-orders: {len(mine)} ордеров аккаунта")
+    except MrktError as exc:
+        report.add(WARN, f"{exc} — режим «Ордера» не сможет показать ваши ордера")
+    try:
+        orders = await client.orders(collection)
+        fields = sorted(orders[0].raw)[:20] if orders else []
+        report.add(
+            OK,
+            f"MRKT orders ({collection}): {len(orders)} ордеров"
+            + (f", лучший {format_ton(orders[0].price_nano)}, поля ордера: {fields}" if orders else ""),
+        )
+        if orders and orders[0].collection_name:
+            top = await client.top_order(
+                orders[0].collection_name,
+                orders[0].model_name,
+                orders[0].backdrop_name,
+                orders[0].symbol_name,
+            )
+            report.add(
+                OK if top else WARN,
+                "MRKT orders/top: "
+                + (format_ton(top.price_nano) if top else "нет ордера для этих атрибутов"),
+            )
+    except MrktError as exc:
+        report.add(WARN, f"{exc} — режим «Ордера» не сможет показать ордера рынка")
 
 
 async def _check_giftwiki(

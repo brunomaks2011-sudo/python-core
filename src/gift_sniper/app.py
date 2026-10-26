@@ -31,9 +31,11 @@ from gift_sniper.services.floors import FloorService
 from gift_sniper.services.giftwiki_sync import GiftWikiSync
 from gift_sniper.services.monitor import ListingMonitor
 from gift_sniper.services.notifications import MessageSender, Notifier, TelegramSender
+from gift_sniper.services.orders import OrdersService
 from gift_sniper.services.processor import ListingProcessor
 from gift_sniper.services.purchase import PurchaseRequest, PurchaseService
 from gift_sniper.services.queue import StreamQueue
+from gift_sniper.services.resale import ResaleAssistant
 from gift_sniper.services.search import SearchService
 from gift_sniper.services.stats import StatsService
 from gift_sniper.webapp.api import MiniAppApi
@@ -100,7 +102,10 @@ class Application:
         filter_cache = FilterCache(sessionmaker, redis, s.redis_prefix)
         notifier = Notifier(s, sender, sessionmaker, redis)
         floors = FloorService(mrkt)
-        purchase = PurchaseService(s, sessionmaker, redis, mrkt, control, enricher, notifier, floors=floors)
+        resale = ResaleAssistant(s, sessionmaker, redis, mrkt, floors, control, notifier)
+        purchase = PurchaseService(
+            s, sessionmaker, redis, mrkt, control, enricher, notifier, floors=floors, resale=resale
+        )
         events_queue = StreamQueue(redis, f"{s.redis_prefix}:events", "processors")
         purchase_queue = StreamQueue(redis, f"{s.redis_prefix}:purchases", "buyers", max_deliveries=3)
         monitor = ListingMonitor(s, mrkt, events_queue, redis, notifier, control) if mrkt.configured else None
@@ -123,6 +128,8 @@ class Application:
             monitor=monitor,
             purchase_queue=purchase_queue,
             events_queue=events_queue,
+            resale=resale,
+            orders=OrdersService(s, sessionmaker, redis, mrkt, floors, control, notifier),
         )
         self.processor = ListingProcessor(
             s,
@@ -134,6 +141,7 @@ class Application:
             control=control,
             floors=floors,
             background_notifications=True,
+            assistant=resale,
         )
         return self.services
 
@@ -283,6 +291,10 @@ class Application:
             self._spawn(
                 self._every(60, services.purchase.reverify_unknown, "reverify", initial=10), "reverify"
             )
+            if services.resale is not None:
+                self._spawn(
+                    self._every(120, services.resale.relist_due, "resale-relist", initial=60), "resale-relist"
+                )
         if "scheduler" in components:
             self._spawn(self._once(self._giftwiki_initial, "giftwiki-initial"), "gw-initial")
             self._spawn(
@@ -302,6 +314,11 @@ class Application:
             )
             self._spawn(self._every(24 * 3600, self._cleanup_job, "cleanup", initial=600), "cleanup")
             self._spawn(self._every(15, self._queue_metrics, "queue-metrics"), "queue-metrics")
+            if services.orders is not None and s.orders_poll_seconds > 0:
+                self._spawn(
+                    self._every(s.orders_poll_seconds, services.orders.watch, "orders-watch", initial=30),
+                    "orders-watch",
+                )
         if "bot" in components:
             if self.bot is None:
                 log.warning("Telegram bot is not started: TELEGRAM_BOT_TOKEN is not set")
@@ -325,6 +342,8 @@ class Application:
             services.purchase,
             services.control,
             search=services.search,
+            resale=services.resale,
+            orders=services.orders,
         )
 
     async def _run_bot(self, services: Services) -> None:

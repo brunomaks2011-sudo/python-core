@@ -1,8 +1,16 @@
 from aiogram import Router
 
-from gift_sniper.bot.handlers import common, filters, market, modes, settings, wiki
+from gift_sniper.bot.handlers import common, filters, market, modes, orders, settings, wiki
 
-_MODULE_ROUTERS = [common.router, filters.router, modes.router, market.router, wiki.router, settings.router]
+_MODULE_ROUTERS = [
+    common.router,
+    filters.router,
+    modes.router,
+    market.router,
+    orders.router,
+    wiki.router,
+    settings.router,
+]
 
 
 def build_router() -> Router:

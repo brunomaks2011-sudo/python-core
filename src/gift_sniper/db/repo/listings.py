@@ -462,6 +462,25 @@ async def recent_sales(
     return [(row[0], row[1]) for row in (await session.execute(stmt)).all()]
 
 
+async def model_sales(
+    session: AsyncSession, collection_name: str, model_name: str, since: datetime
+) -> list[tuple[int, str | None, str]]:
+    """(price, backdrop, gift id) of every sale of one model seen in the MRKT feed since `since`."""
+    stmt = (
+        select(PriceHistory.price_nano, Gift.backdrop_name, PriceHistory.gift_id)
+        .join(Gift, Gift.id == PriceHistory.gift_id)
+        .where(
+            PriceHistory.event_type == SALE,
+            PriceHistory.collection_norm == normalize_name(collection_name),
+            PriceHistory.model_norm == normalize_name(model_name),
+            PriceHistory.observed_at >= since,
+        )
+    )
+    return [
+        (int(price), backdrop, str(gift)) for price, backdrop, gift in (await session.execute(stmt)).all()
+    ]
+
+
 async def first_sale_seen(session: AsyncSession) -> datetime | None:
     """Since when the bot has seen sales in the MRKT feed."""
     stmt = select(func.min(PriceHistory.observed_at)).where(PriceHistory.event_type == SALE)

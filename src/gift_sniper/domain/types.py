@@ -43,6 +43,8 @@ class ListingSnapshot:
     backdrop_symbol_color: int | None = None
     floor_collection_nano: int | None = None
     floor_model_backdrop_nano: int | None = None
+    price_without_fee_nano: int | None = None  # salePriceWithoutFee: what the seller gets (amrkt)
+    next_resale_at: datetime | None = None  # nextResaleDate: an owned gift cannot be listed before it (amrkt)
     fetched_at: datetime | None = None
     raw: dict[str, Any] = field(default_factory=dict, compare=False, repr=False)
 
@@ -87,6 +89,26 @@ class MonochromeRecord:
     @property
     def type(self) -> GiftWikiMonochromeType | None:
         return GiftWikiMonochromeType.parse(self.type_raw)
+
+
+@dataclass(frozen=True, slots=True)
+class MrktOrder:
+    """A buy order on MRKT for a collection, optionally one model, backdrop and symbol."""
+
+    order_id: str
+    collection_name: str | None
+    model_name: str | None
+    backdrop_name: str | None
+    symbol_name: str | None
+    price_nano: int  # the most the order pays for one gift
+    min_price_nano: int | None = None
+    quantity: int | None = None
+    is_mine: bool | None = None
+    raw: dict[str, Any] = field(default_factory=dict, compare=False, repr=False)
+
+    @property
+    def attributes(self) -> tuple[str | None, str | None, str | None, str | None]:
+        return self.collection_name, self.model_name, self.backdrop_name, self.symbol_name
 
 
 @dataclass(frozen=True, slots=True)

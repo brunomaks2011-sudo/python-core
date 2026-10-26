@@ -31,6 +31,7 @@ from gift_sniper.services.filters import FilterSpec, MatchContext, PriceRule, ev
 from gift_sniper.services.floors import FloorService
 from gift_sniper.services.notifications import Notifier
 from gift_sniper.services.purchase import PurchaseRequest
+from gift_sniper.services.resale import ResaleAssistant
 
 log = logging.getLogger(__name__)
 
@@ -99,6 +100,7 @@ class ListingProcessor:
         control: RunControl | None = None,
         floors: FloorService | None = None,
         background_notifications: bool = False,
+        assistant: ResaleAssistant | None = None,
     ) -> None:
         self.settings = settings
         self.sessionmaker = sessionmaker
@@ -108,6 +110,7 @@ class ListingProcessor:
         self.purchase_queue = purchase_queue
         self.control = control
         self.floors = floors
+        self.assistant = assistant
         # the bot sends listing messages while the next listing is already being judged
         self.background_notifications = background_notifications
         self._notifying: set[asyncio.Task[None]] = set()
@@ -154,11 +157,21 @@ class ListingProcessor:
             await listings_repo.set_classification(session, listing.gift_id, verdict)
         report.listing_id = change.listing_id
 
+        if event.type == FeedEventType.SALE.value and self.assistant is not None:
+            # a gift the assistant listed may have been sold, also while the bot was down (backlog)
+            try:
+                await self.assistant.on_sale(listing.gift_id, price, is_mine=listing.is_mine)
+            except Exception:  # the sale stays in the price history
+                log.exception("resale sale check failed", extra={"gift_id": listing.gift_id})
         if backlog:
             report.skipped = "backlog"
             return report
         if event.type not in ACTIONABLE or change.status is not ListingStatus.ACTIVE:
             report.skipped = "not actionable"
+            return report
+        # the account's own listing (e.g. the assistant selling): nothing to buy or announce
+        if listing.is_mine:
+            report.skipped = "own listing"
             return report
         price_changed = (
             change.previous_price_nano is not None and change.previous_price_nano != change.price_nano
@@ -181,8 +194,8 @@ class ListingProcessor:
         )
         matched_by_user: dict[int, list[FilterSpec]] = defaultdict(list)
         for spec in specs:
-            if not spec.enabled:
-                continue
+            if not spec.enabled or spec.criteria.resale is not None:
+                continue  # the assistant's settings are not a rule: it values the listing below
             result = evaluate(
                 spec.kind, spec.criteria, listing, enrichment, ctx, activated_at=spec.activated_at
             )
@@ -200,6 +213,9 @@ class ListingProcessor:
                 report.purchase_requests.append(request)
                 if self.purchase_queue is not None:
                     await self.purchase_queue.publish(request.to_payload())
+        await self._assistant_requests(
+            specs, users, listing, enrichment, change, event, detected_at, ctx, report
+        )
         if report.purchase_requests:
             EVENT_TO_DECISION.observe((datetime.now(UTC) - detected_at).total_seconds())
 
@@ -256,6 +272,59 @@ class ListingProcessor:
             elif isinstance(res, Exception):
                 log.error("notification failed", exc_info=res, extra={"user_id": user_id})
 
+    async def _assistant_requests(
+        self,
+        specs: list[FilterSpec],
+        users: dict[int, UserFlags],
+        listing: ListingSnapshot,
+        enrichment: Enrichment,
+        change: listings_repo.ListingChange,
+        event: FeedEvent,
+        detected_at: datetime,
+        ctx: MatchContext,
+        report: ProcessReport,
+    ) -> None:
+        """🤖 The resale assistant of each user who has one: buy when the listing can be resold with a profit."""
+        if self.assistant is None or listing.price_nano is None:
+            return
+        buying = {request.user_id for request in report.purchase_requests}
+        for spec in specs:
+            rules = spec.criteria.resale
+            if rules is None or not spec.enabled or not spec.autobuy or spec.user_id in buying:
+                continue
+            flags = users.get(spec.user_id)
+            if flags is None or flags.is_blocked or not flags.can_purchase or flags.purchases_paused:
+                continue
+            # the assistant's own bounds: collections, prices and the like
+            if not evaluate(
+                spec.kind, spec.criteria, listing, enrichment, ctx, activated_at=spec.activated_at
+            ).matched:
+                continue
+            try:
+                plan = await self.assistant.plan(listing, rules)
+            except Exception:
+                log.exception("resale valuation failed", extra={"gift_id": listing.gift_id})
+                return
+            if not plan.ok:
+                continue
+            await self.assistant.remember(spec.user_id, plan)
+            request = PurchaseRequest(
+                user_id=spec.user_id,
+                gift_id=listing.gift_id,
+                expected_price_nano=listing.price_nano,
+                mode=PurchaseMode.RESALE,
+                filter_id=spec.id,
+                listing_id=change.listing_id,
+                trigger="assistant",
+                event_type=event.type,
+                first_sighting=change.is_new_listing,
+                detected_at=detected_at,
+            )
+            buying.add(spec.user_id)
+            report.purchase_requests.append(request)
+            if self.purchase_queue is not None:
+                await self.purchase_queue.publish(request.to_payload())
+
     @staticmethod
     def _floor_rules(
         specs: list[FilterSpec], listing: ListingSnapshot, enrichment: Enrichment
@@ -265,6 +334,8 @@ class ListingProcessor:
         rules: set[PriceRule] = set()
         for spec in specs:
             if not spec.enabled or (spec.kind is FilterKind.MONOCHROME and not is_mono):
+                continue
+            if spec.criteria.resale is not None:
                 continue
             wanted = {normalize_name(c) for c in spec.criteria.collections}
             if wanted and not wanted & names:

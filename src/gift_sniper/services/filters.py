@@ -160,6 +160,23 @@ def floor_rules(criteria: FilterCriteria, listing: ListingSnapshot) -> set[Price
     }
 
 
+class ResaleRules(BaseModel):
+    """🤖 The resale assistant: what a gift must promise to be bought, and how it is sold again.
+
+    A gift is valued by what buyers paid for the same model on the same backdrop (the same picture) in the
+    last `period_days`. MRKT adds `fee_percent` to the price a seller sets, so the seller gets the buyers'
+    price divided by 1 + fee; the profit is that minus the purchase price.
+    """
+
+    model_config = ConfigDict(extra="ignore", validate_assignment=True)
+
+    min_profit_nano: int = Field(default=300_000_000, ge=0)  # 0.30 TON
+    fee_percent: float = Field(default=2.0, ge=0, le=50)
+    period_days: int = Field(default=7, ge=1, le=30)
+    min_sales: int = Field(default=3, ge=1, le=100)
+    auto_list: bool = True  # list the gift for sale right after buying it
+
+
 class FilterCriteria(BaseModel):
     model_config = ConfigDict(extra="ignore", validate_assignment=True)
 
@@ -185,6 +202,8 @@ class FilterCriteria(BaseModel):
     min_monochrome_model_share_percent: float | None = None
     # Mini App: what to buy inside the collection(s) and up to which price, per model / backdrop
     picks: list[Pick] = Field(default_factory=list, max_length=MAX_PICKS)
+    # the resale assistant: such a filter is never matched as a rule, the assistant values each listing
+    resale: ResaleRules | None = None
 
     @field_validator(
         "collections", "models", "backdrops", "symbols", "exclude_collections", "exclude_models", mode="after"
@@ -401,6 +420,12 @@ def describe_criteria(kind: FilterKind, c: FilterCriteria) -> list[str]:
             lines.append(
                 f"{label}: {low if low is not None else '—'}‰ … {high if high is not None else '—'}‰"
             )
+    if c.resale is not None:
+        r = c.resale
+        lines.append(
+            f"🤖 Перекуп: профит от {format_ton(r.min_profit_nano)} после комиссии {r.fee_percent:g}%, "
+            f"оценка по продажам за {r.period_days} дн. (не меньше {r.min_sales})"
+        )
     if c.number_pattern:
         exact = all(ch in DIGITS for ch in c.number_pattern)
         lines.append(f"Номер: {c.number_pattern}" if exact else f"Шаблон номера: {c.number_pattern}")

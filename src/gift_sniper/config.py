@@ -122,6 +122,9 @@ class Settings(BaseSettings):
     purchase_workers: int = 2
     processor_workers: int = 2
 
+    # --- Orders -------------------------------------------------------------------------
+    orders_poll_seconds: float = 60.0  # how often the account's MRKT orders are checked for outbids; 0: never
+
     # --- Discount methodology -----------------------------------------------------------
     discount_window_days: int = 7
     discount_min_samples: int = 5

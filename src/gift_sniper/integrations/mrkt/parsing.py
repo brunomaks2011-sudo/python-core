@@ -10,7 +10,7 @@ import re
 from datetime import UTC, datetime
 from typing import Any
 
-from gift_sniper.domain.types import FeedEvent, ListingSnapshot
+from gift_sniper.domain.types import FeedEvent, ListingSnapshot, MrktOrder
 
 # MRKT's request validation names feed types as C# enum members (FeedItemType); accept that spelling too
 _CAMEL_BOUNDARY = re.compile(r"(?<=[a-z0-9])(?=[A-Z])")
@@ -106,6 +106,8 @@ def parse_gift(data: Any, fetched_at: datetime | None = None) -> ListingSnapshot
         backdrop_symbol_color=_int(data.get("backdropColorsSymbolColor")),
         floor_collection_nano=_int(data.get("floorPriceNanoTONsByCollection")),
         floor_model_backdrop_nano=_int(data.get("floorPriceNanoTONsByBackdropModel")),
+        price_without_fee_nano=_int(data.get("salePriceWithoutFee")),
+        next_resale_at=parse_datetime(data.get("nextResaleDate")),
         fetched_at=fetched_at or datetime.now(UTC),
         raw=data,
     )
@@ -130,3 +132,48 @@ def parse_feed_item(data: Any, fetched_at: datetime | None = None) -> FeedEvent 
         amount_nano=amount,
         date=date,
     )
+
+
+def _first(item: dict[str, Any], *keys: str) -> Any:
+    return next((item[k] for k in keys if item.get(k) is not None), None)
+
+
+# Orders: tgmrkts documents the requests (orders/create takes priceMinNanoTONs / priceMaxNanoTONs, collectionName,
+# modelName, backdropName, symbolName, quantity) but not the responses. An order is read with the names of
+# those request fields; one without a recognisable id and price is not an order to the bot.
+ORDER_PRICE_KEYS = ("priceMaxNanoTONs", "priceNanoTONs", "price")
+ORDER_LIST_KEYS = ("orders", "items", "data", "result")
+
+
+def parse_order(data: Any) -> MrktOrder | None:
+    if not isinstance(data, dict):
+        return None
+    order_id = _str(_first(data, "id", "orderId"))
+    price = _int(_first(data, *ORDER_PRICE_KEYS))
+    if not order_id or price is None or price <= 0:
+        return None
+    return MrktOrder(
+        order_id=order_id,
+        collection_name=_str(data.get("collectionName")),
+        model_name=_str(data.get("modelName")),
+        backdrop_name=_str(data.get("backdropName")),
+        symbol_name=_str(data.get("symbolName")),
+        price_nano=price,
+        min_price_nano=_int(data.get("priceMinNanoTONs")),
+        quantity=_int(_first(data, "quantity", "count")),
+        is_mine=_bool(data.get("isMine")),
+        raw=data,
+    )
+
+
+def order_items(data: Any) -> list[Any] | None:
+    """The list of orders in a response: a bare list or a list under a common key; None when there is none."""
+    if isinstance(data, list):
+        return data
+    if isinstance(data, dict):
+        for key in ORDER_LIST_KEYS:
+            if isinstance(data.get(key), list):
+                return list(data[key])
+        if parse_order(data) is not None:  # orders/top may give the order itself
+            return [data]
+    return None

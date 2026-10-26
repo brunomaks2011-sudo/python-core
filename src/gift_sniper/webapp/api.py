@@ -27,12 +27,13 @@ from gift_sniper.db.repo import giftwiki as giftwiki_repo
 from gift_sniper.db.repo import listings as listings_repo
 from gift_sniper.db.repo import misc
 from gift_sniper.db.repo import purchases as purchases_repo
+from gift_sniper.db.repo import resale as resale_repo
 from gift_sniper.db.repo import users as users_repo
-from gift_sniper.domain.enums import BudgetScope, FilterKind, PurchaseMode, PurchaseRunMode
+from gift_sniper.domain.enums import BudgetScope, FilterKind, PurchaseMode, PurchaseRunMode, ResaleStatus
 from gift_sniper.domain.money import NANO_PER_TON, ton_to_nano
 from gift_sniper.domain.normalize import normalize_name
 from gift_sniper.domain.types import ListingSnapshot, MonochromeVerdict
-from gift_sniper.integrations.mrkt import MrktAttribute, MrktError, SalingQuery
+from gift_sniper.integrations.mrkt import MrktAttribute, MrktError, MrktFormatError, SalingQuery
 from gift_sniper.services.filters import (
     MAX_LIST_ITEMS,
     PRICE_RULE_TEXT,
@@ -41,12 +42,15 @@ from gift_sniper.services.filters import (
     FilterSpec,
     Pick,
     PriceRule,
+    ResaleRules,
     clean_number_pattern,
     describe_criteria,
     number_matches,
 )
+from gift_sniper.services.orders import OrdersService
 from gift_sniper.services.percentages import monochrome_model_share
 from gift_sniper.services.reference import ReferenceSnapshot, RefRecord
+from gift_sniper.services.resale import ResaleAssistant, fee_permille
 from gift_sniper.services.texts import listing_url, nft_url, telegram_nft_url
 from gift_sniper.services.user_prefs import NotificationSettings
 from gift_sniper.webapp.auth import WebAppIdentity
@@ -56,7 +60,15 @@ log = logging.getLogger(__name__)
 
 ATTRIBUTES_TTL_SECONDS = 3600
 # notification switches the Mini App shows (the chat menu has the same ones plus filters and limits)
-NOTIFY_SWITCHES = ("purchases", "errors", "matching_only", "monochrome", "all_listings", "price_drops")
+NOTIFY_SWITCHES = (
+    "purchases",
+    "errors",
+    "matching_only",
+    "monochrome",
+    "all_listings",
+    "price_drops",
+    "orders_outbid",
+)
 ATTRIBUTES_FAILURE_TTL_SECONDS = 120
 FLOOR_DEPTH = 5  # cheapest listings read for a floor: auction lots are skipped
 FLOOR_CARDS = 3  # chosen models (and backdrops) that get their own floor card
@@ -74,6 +86,15 @@ STATUS_LABELS = {
     "submitted": "проверяется",
     "reserved": "проверяется",
 }
+RESALE_LABELS = {
+    ResaleStatus.BOUGHT.value: "куплен, не выставлен",
+    ResaleStatus.WAITING.value: "ждёт, когда MRKT разрешит продажу",
+    ResaleStatus.LISTED.value: "на продаже",
+    ResaleStatus.FAILED.value: "не выставлен",
+    ResaleStatus.SOLD.value: "продан",
+    ResaleStatus.DRY_RUN.value: "тест: был бы куплен и выставлен",
+}
+ASSISTANT_NAME = "🤖 ИИ-ассистент"
 
 
 class _Mrkt(Protocol):
@@ -209,6 +230,23 @@ class SubscriptionInput(SelectionInput):
     notify_price: bool = False
 
 
+class AssistantInput(BaseModel):
+    """The resale assistant's page: its switch, the profit it wants and its own limits."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    enabled: bool = False
+    min_profit_ton: str | float = "0.3"
+    fee_percent: float = Field(default=2.0, ge=0, le=50)
+    period_days: int = Field(default=7, ge=1, le=30)
+    min_sales: int = Field(default=3, ge=1, le=100)
+    auto_list: bool = True
+    max_price_ton: str | float | None = None  # the most it pays for one gift
+    daily_ton: str | float | None = None  # its own budget per day
+    max_count: int | None = Field(default=None, ge=1, le=1000)
+    collections: list[str] = Field(default_factory=list, max_length=MAX_LIST_ITEMS)
+
+
 class PairPick(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
@@ -335,7 +373,13 @@ def _editable(c: FilterCriteria) -> bool:
         c.monochrome_types,
         c.min_monochrome_model_share_percent,
     )
-    return len(c.collections) == 1 and not c.picks and not c.only_new_listings and not any(chat_only)
+    return (
+        len(c.collections) == 1
+        and not c.picks
+        and c.resale is None
+        and not c.only_new_listings
+        and not any(chat_only)
+    )
 
 
 def _mono_type(verdict: MonochromeVerdict) -> str | None:
@@ -380,6 +424,8 @@ class MiniAppApi:
         purchase: _Purchase,
         control: _Control,
         search: _Search | None = None,
+        resale: ResaleAssistant | None = None,
+        orders: OrdersService | None = None,
     ) -> None:
         self.settings = settings
         self.sessionmaker = sessionmaker
@@ -390,6 +436,8 @@ class MiniAppApi:
         self.purchase = purchase
         self.control = control
         self.search = search
+        self.resale = resale
+        self.orders = orders
         self.prefix = settings.redis_prefix
 
     async def register(self, identity: WebAppIdentity) -> None:
@@ -421,7 +469,8 @@ class MiniAppApi:
         run_mode = (await self.control.run_mode()).value
         stopped = await self.control.is_stopped()
         buying = [r for r in rows if r.enabled and r.autobuy]
-        kinds = {r.kind for r in buying}
+        kinds = {r.kind for r in buying if not filters_repo.is_assistant(r)}  # the assistant needs no mode
+        assistant = next((r for r in rows if filters_repo.is_assistant(r)), None)
         limits_ok = None not in (limits.per_purchase, limits.daily, limits.total)
         # the autobuy switches that are off although a buying rule needs them
         modes_missing = sorted(
@@ -511,6 +560,7 @@ class MiniAppApi:
             "giftwiki": {"records": snapshot.records_count, "age_hours": snapshot.age_hours()},
             "mrkt_configured": self.mrkt.configured,
             "rules": {"total": len(rows), "enabled": sum(r.enabled for r in rows), "autobuy": len(buying)},
+            "assistant": {"on": bool(assistant is not None and assistant.enabled and assistant.autobuy)},
             "checklist": checklist,
             "ready": all(item["ok"] for item in checklist),
         }
@@ -1342,6 +1392,8 @@ class MiniAppApi:
             slugs = await listings_repo.collection_slugs(session)
         items = []
         for row in rows:
+            if filters_repo.is_assistant(row):
+                continue  # it has its own page
             view = self._rule_view(row)
             name = view["collection"]
             view["image"] = collection_thumb(giftname(name, slug=slugs.get(name))) if name else None
@@ -1413,6 +1465,8 @@ class MiniAppApi:
             row = await filters_repo.get_filter(session, user_id, rule_id)
             if row is None:
                 raise ApiError("Правило не найдено", 404)
+            if filters_repo.is_assistant(row):
+                raise ApiError("ИИ-ассистент настраивается на своей странице в «Режимах»")
             if set(payload) <= {"enabled", "autobuy", "notify_new", "notify_price"}:  # switches of the list
                 if "enabled" in payload:
                     filters_repo.set_enabled(row, bool(payload["enabled"]))
@@ -1518,6 +1572,185 @@ class MiniAppApi:
                 raise ApiError("Снять остановку может только администратор", 403)
             await self.control.resume(by_user=user_id)
         return await self.me(user_id)
+
+    # ------------------------------------------------------------------ 🤖 resale assistant
+    @staticmethod
+    def _position_view(row: Any) -> dict[str, Any]:
+        profit = row.list_price_nano - row.buy_price_nano if row.list_price_nano is not None else None
+        return {
+            "id": row.id,
+            "name": row.name,
+            "collection": row.collection_name,
+            "model": row.model_name,
+            "backdrop": row.backdrop_name,
+            "number": row.number,
+            "status": row.status,
+            "status_label": RESALE_LABELS.get(row.status, row.status),
+            "run_mode": row.run_mode,
+            "buy": ton(row.buy_price_nano),
+            "list": ton(row.list_price_nano),  # what the seller gets
+            "target": ton(row.target_price_nano),  # what buyers pay, the fee included
+            "profit": ton(profit),
+            "sold_price": ton(row.sold_price_nano),
+            "sales": row.sales_count,
+            "reason": row.reason,
+            "can_list": row.run_mode == PurchaseRunMode.LIVE.value and row.status in resale_repo.OPEN,
+            "created_at": row.created_at.isoformat() if row.created_at else None,
+            "listed_at": row.listed_at.isoformat() if row.listed_at else None,
+            "sold_at": row.sold_at.isoformat() if row.sold_at else None,
+        }
+
+    async def assistant(self, user_id: int) -> dict[str, Any]:
+        async with self.sessionmaker() as session:
+            row = await filters_repo.assistant_filter(session, user_id)
+            positions = await resale_repo.for_user(session, user_id, limit=30)
+            totals = await resale_repo.totals(session, user_id)
+            first_sale = await listings_repo.first_sale_seen(session)
+        spec = filters_repo.to_spec(row) if row is not None else None
+        rules = spec.criteria.resale if spec is not None and spec.criteria.resale else ResaleRules()
+        sold_count, sold_profit = totals.get(ResaleStatus.SOLD.value, (0, 0))
+        listed_count, listed_profit = totals.get(ResaleStatus.LISTED.value, (0, 0))
+        return {
+            "exists": row is not None,
+            "on": bool(row is not None and row.enabled and row.autobuy),
+            "can_purchase": self.settings.can_purchase(user_id),
+            "run_mode": (await self.control.run_mode()).value,
+            "settings": {
+                "min_profit": ton(rules.min_profit_nano),
+                "fee_percent": rules.fee_percent,
+                "period_days": rules.period_days,
+                "min_sales": rules.min_sales,
+                "auto_list": rules.auto_list,
+                "max_price": ton(spec.criteria.max_price_nano) if spec else None,
+                "daily": ton(spec.limits.daily_limit_nano) if spec else None,
+                "max_count": spec.limits.max_count if spec else None,
+                "collections": spec.criteria.collections if spec else [],
+            },
+            "positions": [self._position_view(p) for p in positions],
+            "totals": {
+                "sold": sold_count,
+                "sold_profit": ton(sold_profit),
+                "listed": listed_count,
+                "listed_profit": ton(listed_profit),
+                "open": sum(totals.get(s, (0, 0))[0] for s in resale_repo.OPEN),
+                "dry_run": totals.get(ResaleStatus.DRY_RUN.value, (0, 0))[0],
+            },
+            "sales_seen_since": first_sale.isoformat() if first_sale else None,
+        }
+
+    async def save_assistant(self, user_id: int, payload: dict[str, Any]) -> dict[str, Any]:
+        data = AssistantInput.model_validate(payload)
+        min_profit = ton_to_nano(data.min_profit_ton) if str(data.min_profit_ton).strip() else 0
+        rules = ResaleRules(
+            min_profit_nano=min_profit,
+            fee_percent=data.fee_percent,
+            period_days=data.period_days,
+            min_sales=data.min_sales,
+            auto_list=data.auto_list,
+        )
+        can_purchase = self.settings.can_purchase(user_id)
+        if data.enabled and not can_purchase:
+            raise ApiError("У вас нет права на покупки")
+        async with self.sessionmaker() as session, session.begin():
+            known = {c.name for c in await listings_repo.market_collections(session)}
+            unknown = [c for c in data.collections if c not in known]
+            if unknown:
+                raise ApiError("Коллекция не найдена: " + ", ".join(unknown[:3]), 404)
+            row = await filters_repo.assistant_filter(session, user_id)
+            if row is None:
+                try:
+                    row = await filters_repo.create_filter(
+                        session, user_id, ASSISTANT_NAME, FilterKind.REGULAR, plan=True
+                    )
+                except ValueError as exc:
+                    raise ApiError(str(exc)) from exc
+            criteria = FilterCriteria(
+                collections=data.collections, max_price_nano=_price(data.max_price_ton), resale=rules
+            )
+            filters_repo.update_criteria(row, criteria)
+            limits = FilterLimits(daily_limit_nano=_price(data.daily_ton), max_count=data.max_count)
+            filters_repo.update_limits(row, limits)
+            row.name = ASSISTANT_NAME
+            filters_repo.set_enabled(row, data.enabled)
+            row.autobuy = data.enabled and can_purchase
+            await session.flush()
+            await misc.audit(
+                session,
+                "webapp_assistant",
+                user_id=user_id,
+                filter_id=row.id,
+                enabled=data.enabled,
+                fee_permille=fee_permille(data.fee_percent),
+            )
+        await self.filter_cache.invalidate()
+        return await self.assistant(user_id)
+
+    async def list_position(self, user_id: int, position_id: int) -> dict[str, Any]:
+        if self.resale is None:
+            raise ApiError("ИИ-ассистент недоступен в этом процессе", 503)
+        if not self.settings.can_purchase(user_id):
+            raise ApiError("У вас нет права на покупки", 403)
+        result = await self.resale.list_position(position_id, user_id=user_id)
+        if result.status == "missing":
+            raise ApiError(result.text, 404)
+        return {"status": result.status, "text": result.text, "assistant": await self.assistant(user_id)}
+
+    # ------------------------------------------------------------------ 📋 orders
+    def _orders_service(self) -> OrdersService:
+        if self.orders is None:
+            raise ApiError("Ордера недоступны в этом процессе", 503)
+        if not self.mrkt.configured:
+            raise ApiError("MRKT не подключён: нет токена MRKT", 503)
+        return self.orders
+
+    @staticmethod
+    def _mrkt_problem(exc: MrktError) -> ApiError:
+        if isinstance(exc, MrktFormatError):
+            return ApiError(f"{exc}. Запустите «python -m gift_sniper check» и пришлите результат", 502)
+        return ApiError(f"MRKT не ответил: {exc}", 502)
+
+    async def my_orders(self, user_id: int) -> dict[str, Any]:
+        orders = self._orders_service()
+        try:
+            views = await orders.mine()
+        except MrktError as exc:
+            raise self._mrkt_problem(exc) from exc
+        return {
+            "items": [view.to_dict() for view in views],
+            "run_mode": (await self.control.run_mode()).value,
+            "can_purchase": self.settings.can_purchase(user_id),
+        }
+
+    async def market_orders(
+        self, user_id: int, collection: str, model: str | None, backdrop: str | None
+    ) -> dict[str, Any]:
+        orders = self._orders_service()
+        if not collection.strip():
+            raise ApiError("Выберите коллекцию")
+        try:
+            items, floors = await orders.market(
+                collection.strip(), model=model or None, backdrop=backdrop or None
+            )
+        except MrktError as exc:
+            raise self._mrkt_problem(exc) from exc
+        return {"items": items, "floors": [{"label": f.label, "price_nano": f.price_nano} for f in floors]}
+
+    async def outbid(self, user_id: int, payload: dict[str, Any]) -> dict[str, Any]:
+        orders = self._orders_service()
+        order_id = str(payload.get("order_id") or "").strip()
+        try:
+            price = int(payload["price_nano"])
+        except (KeyError, TypeError, ValueError) as exc:
+            raise ApiError("Нет цены нового ордера") from exc
+        if not order_id or price <= 0:
+            raise ApiError("Нет ордера или цены")
+        result = await orders.outbid(user_id=user_id, order_id=order_id, price_nano=price)
+        return {
+            "status": result.status,
+            "ok": result.ok,
+            "text": result.text,
+            "price_nano": result.price_nano,
+        }
 
     # ------------------------------------------------------------------ history
     async def history(self, user_id: int) -> dict[str, Any]:

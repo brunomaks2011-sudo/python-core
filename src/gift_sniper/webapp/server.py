@@ -177,6 +177,35 @@ def create_app(api: MiniAppApi, settings: Settings) -> web.Application:
             await api.update_subscription(user_id, rule_id(request), await body(request))
         )
 
+    async def assistant(request: web.Request) -> web.Response:
+        return web.json_response(await api.assistant(await caller(request)))
+
+    async def save_assistant(request: web.Request) -> web.Response:
+        user_id = await caller(request)
+        return web.json_response(await api.save_assistant(user_id, await body(request)))
+
+    async def list_position(request: web.Request) -> web.Response:
+        user_id = await caller(request)
+        try:
+            position_id = int(request.match_info["position_id"])
+        except ValueError as exc:
+            raise ApiError("Позиция не найдена", 404) from exc
+        return web.json_response(await api.list_position(user_id, position_id))
+
+    async def my_orders(request: web.Request) -> web.Response:
+        return web.json_response(await api.my_orders(await caller(request)))
+
+    async def market_orders(request: web.Request) -> web.Response:
+        user_id = await caller(request)
+        q = request.query
+        return web.json_response(
+            await api.market_orders(user_id, q.get("collection", ""), q.get("model"), q.get("backdrop"))
+        )
+
+    async def outbid(request: web.Request) -> web.Response:
+        user_id = await caller(request)
+        return web.json_response(await api.outbid(user_id, await body(request)))
+
     app = web.Application(middlewares=[errors], client_max_size=64 * 1024)
     app.router.add_get("/", root)
     app.router.add_get("/app/", index)
@@ -202,6 +231,12 @@ def create_app(api: MiniAppApi, settings: Settings) -> web.Application:
     app.router.add_get("/api/leaders", leaders)
     app.router.add_post("/api/subscriptions", create_subscription)
     app.router.add_put("/api/subscriptions/{rule_id}", update_subscription)
+    app.router.add_get("/api/assistant", assistant)
+    app.router.add_put("/api/assistant", save_assistant)
+    app.router.add_post("/api/assistant/positions/{position_id}/list", list_position)
+    app.router.add_get("/api/orders/mine", my_orders)
+    app.router.add_get("/api/orders/market", market_orders)
+    app.router.add_post("/api/orders/outbid", outbid)
     return app
 
 

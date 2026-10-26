@@ -187,6 +187,7 @@ def purchase_confirmed_text(
     price_nano: int | None,
     filter_name: str | None,
     remaining: str,
+    extra: list[str] | None = None,
 ) -> str:
     return "\n".join(
         [
@@ -197,6 +198,7 @@ def purchase_confirmed_text(
             f"Цена: {format_ton(price_nano)}",
             f"Фильтр: {e(filter_name or 'ручная покупка')}",
             f"Остаток бюджета: {escape(remaining)}",
+            *[escape(line) for line in extra or []],
         ]
     )
 
@@ -220,6 +222,7 @@ def dry_run_text(
     price_nano: int | None,
     filter_name: str | None,
     url: str | None = None,
+    extra: list[str] | None = None,
 ) -> str:
     return "\n".join(
         [
@@ -229,6 +232,7 @@ def dry_run_text(
             f"Модель: {e(model)}",
             f"Цена: {format_ton(price_nano)}",
             f"Фильтр: {e(filter_name or 'ручная покупка')}",
+            *[escape(line) for line in extra or []],
             "Реальная покупка не выполнялась.",
         ]
     )

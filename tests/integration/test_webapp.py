@@ -10,17 +10,20 @@ import pytest_asyncio
 from aiohttp.test_utils import TestClient, TestServer
 
 from gift_sniper.config import RunMode
+from gift_sniper.db.models import ResalePosition
 from gift_sniper.db.repo import filters as filters_repo
 from gift_sniper.db.repo import giftwiki as giftwiki_repo
 from gift_sniper.db.repo import listings as listings_repo
 from gift_sniper.db.repo import users as users_repo
-from gift_sniper.domain.enums import FeedEventType, MonochromeStatus
-from gift_sniper.domain.types import FeedEvent, MonochromeRecord
-from gift_sniper.integrations.mrkt import MrktAttribute
+from gift_sniper.domain.enums import BudgetScope, FeedEventType, MonochromeStatus
+from gift_sniper.domain.types import FeedEvent, MonochromeRecord, MrktOrder
+from gift_sniper.integrations.mrkt import MrktAttribute, MrktFormatError
 from gift_sniper.services.enrichment import ReferenceStore
 from gift_sniper.services.floors import FloorService
+from gift_sniper.services.orders import OrdersService
 from gift_sniper.services.processor import ListingProcessor
 from gift_sniper.services.queue import MemoryQueue
+from gift_sniper.services.resale import ResaleAssistant
 from gift_sniper.services.search import SearchService
 from gift_sniper.webapp.api import MiniAppApi
 from gift_sniper.webapp.server import create_app
@@ -54,6 +57,24 @@ async def client(env: Env) -> AsyncIterator[TestClient]:  # type: ignore[type-ar
         env.service,
         env.control,
         search=SearchService(env.mrkt, env.enricher, env.sessionmaker),  # type: ignore[arg-type]
+        resale=ResaleAssistant(
+            env.settings,
+            env.sessionmaker,
+            env.redis,
+            env.mrkt,
+            FloorService(env.mrkt),
+            env.control,
+            env.notifier,
+        ),
+        orders=OrdersService(
+            env.settings,
+            env.sessionmaker,
+            env.redis,
+            env.mrkt,
+            FloorService(env.mrkt),
+            env.control,
+            env.notifier,
+        ),
     )
     client = TestClient(TestServer(create_app(api, make_settings(telegram_bot_token=TOKEN))))
     await client.start_server()
@@ -404,6 +425,7 @@ async def test_notification_switches_and_what_blocks_buying(client: TestClient, 
         "monochrome": True,
         "all_listings": False,
         "price_drops": False,
+        "orders_outbid": True,
     }
     body = {"notify": {"monochrome": False, "matching_only": False}}
     saved = await (await client.put("/api/settings", headers=auth(), json=body)).json()
@@ -794,3 +816,125 @@ async def test_leaders_from_what_the_bot_saw(client: TestClient, env: Env) -> No
     assert [s["id"] for s in board["sales"]] == ["a", "b", "c"] and board["since"]
     assert [(m["id"], m["price"]) for m in board["monochromes"]] == [("m", 7)]
     assert (await client.get("/api/leaders?days=2", headers=auth())).status == 400
+
+
+async def test_assistant_page_saves_settings_as_a_hidden_filter(
+    client: TestClient,  # type: ignore[type-arg]
+    env: Env,
+) -> None:
+    empty = await (await client.get("/api/assistant", headers=auth())).json()
+    assert not empty["exists"] and not empty["on"] and empty["settings"]["min_profit"] == 0.3
+    assert empty["settings"]["fee_percent"] == 2.0 and empty["positions"] == []
+    body = {
+        "enabled": True,
+        "min_profit_ton": "0.5",
+        "fee_percent": 2,
+        "period_days": 7,
+        "min_sales": 4,
+        "auto_list": True,
+        "max_price_ton": "20",
+        "daily_ton": "100",
+        "collections": ["Plush Pepe"],
+    }
+    saved = await (await client.put("/api/assistant", headers=auth(), json=body)).json()
+    assert saved["on"] and saved["settings"]["min_profit"] == 0.5 and saved["settings"]["min_sales"] == 4
+    assert saved["settings"]["max_price"] == 20 and saved["settings"]["daily"] == 100
+    assert saved["settings"]["collections"] == ["Plush Pepe"]
+    async with env.sessionmaker() as session:
+        [row] = await filters_repo.list_filters(session, ADMIN)
+    assert filters_repo.is_assistant(row) and row.enabled and row.autobuy
+    assert row.criteria["resale"]["min_profit_nano"] == 500_000_000
+
+    # not a subscription, not editable as a rule, and no autobuy mode switch needed for it
+    rules = await (await client.get("/api/rules", headers=auth())).json()
+    assert rules["items"] == []
+    refused = await client.patch(f"/api/rules/{row.id}", headers=auth(), json={"enabled": False})
+    assert refused.status == 400 and "своей странице" in (await refused.json())["error"]
+    me = await (await client.get("/api/me", headers=auth())).json()
+    assert me["assistant"]["on"] and me["modes_missing"] == []
+
+    again = await (await client.put("/api/assistant", headers=auth(), json=body | {"enabled": False})).json()
+    assert not again["on"]
+    async with env.sessionmaker() as session:
+        assert len(await filters_repo.list_filters(session, ADMIN)) == 1  # the same filter, not a second one
+    bad = await client.put("/api/assistant", headers=auth(), json=body | {"collections": ["Nope"]})
+    assert bad.status == 404
+
+
+async def test_assistant_position_listed_from_the_page(
+    client: TestClient,  # type: ignore[type-arg]
+    env: Env,
+) -> None:
+    env.mrkt.add(make_listing("g1", price_nano=12 * TON, is_on_sale=False, is_mine=True))
+    async with env.sessionmaker() as session, session.begin():
+        await users_repo.ensure_user(
+            session, ADMIN, username=None, full_name=None, is_admin=True, can_purchase=True
+        )
+        position = ResalePosition(
+            user_id=ADMIN,
+            run_mode="live",
+            gift_id="g1",
+            name="Plush Pepe #100",
+            buy_price_nano=12 * TON,
+            list_price_nano=12_840_000_000,
+            fee_permille=20,
+            status="bought",
+            reason="Автовыставление выключено",
+        )
+        session.add(position)
+        await session.flush()
+        position_id = position.id
+    page = await (await client.get("/api/assistant", headers=auth())).json()
+    [item] = page["positions"]
+    assert item["can_list"] and item["profit"] == 0.84 and item["status_label"] == "куплен, не выставлен"
+    done = await (await client.post(f"/api/assistant/positions/{position_id}/list", headers=auth())).json()
+    assert done["status"] == "listed" and env.mrkt.sale_calls == [("g1", 12_840_000_000)]
+    assert done["assistant"]["positions"][0]["status"] == "listed"
+    assert done["assistant"]["totals"]["listed"] == 1
+    missing = await client.post("/api/assistant/positions/999999/list", headers=auth())
+    assert missing.status == 404
+
+
+async def test_orders_endpoints(client: TestClient, env: Env) -> None:  # type: ignore[type-arg]
+    async with env.sessionmaker() as session, session.begin():
+        await users_repo.ensure_user(
+            session, ADMIN, username=None, full_name=None, is_admin=True, can_purchase=True
+        )
+        budget = await users_repo.get_or_create_budget(session, ADMIN, BudgetScope.USER)
+        budget.per_purchase_limit_nano = 50 * TON
+    mine = MrktOrder("mine", "Plush Pepe", "Onyx", None, None, 10 * TON, is_mine=True)
+    other = MrktOrder("other", "Plush Pepe", "Onyx", None, None, 10_500_000_000, is_mine=False)
+    env.mrkt.my_orders_list = [mine]
+    env.mrkt.market_orders = [other, mine]
+    env.mrkt.top_orders[("Plush Pepe", "Onyx", None, None)] = other
+    env.mrkt.market = [make_listing("f1", price_nano=12 * TON)]  # type: ignore[attr-defined]
+
+    data = await (await client.get("/api/orders/mine", headers=auth())).json()
+    [view] = data["items"]
+    assert view["outbid"] and view["next_price_nano"] == 10_510_000_000 and view["top"]["id"] == "other"
+    assert view["floors"] == [{"label": "модели", "price_nano": 12 * TON}]
+
+    market = await (
+        await client.get("/api/orders/market?collection=Plush%20Pepe&model=Onyx", headers=auth())
+    ).json()
+    assert [(o["id"], o["mine"]) for o in market["items"]] == [("other", False), ("mine", True)]
+    assert (await client.get("/api/orders/market", headers=auth())).status == 400
+
+    result = await (
+        await client.post(
+            "/api/orders/outbid", headers=auth(), json={"order_id": "mine", "price_nano": 10_510_000_000}
+        )
+    ).json()
+    assert result["status"] == "done" and result["ok"] and result["price_nano"] == 10_510_000_000
+    assert (await client.post("/api/orders/outbid", headers=auth(), json={"order_id": "x"})).status == 400
+
+
+async def test_orders_unknown_format_is_explained(client: TestClient, env: Env) -> None:  # type: ignore[type-arg]
+    async def broken(*, count: int = 20) -> list[object]:
+        raise MrktFormatError("MRKT orders/get-my-orders: ответ без списка ордеров (['total'])")
+
+    env.mrkt.my_orders = broken  # type: ignore[method-assign]
+    response = await client.get("/api/orders/mine", headers=auth())
+    assert response.status == 502
+    error = (await response.json())["error"]
+    assert "без списка ордеров" in error and "python -m gift_sniper check" in error

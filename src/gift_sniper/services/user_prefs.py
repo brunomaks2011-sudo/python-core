@@ -14,6 +14,7 @@ class NotificationSettings(BaseModel):
     price_drops: bool = False
     purchases: bool = True
     errors: bool = True
+    orders_outbid: bool = True  # someone placed a higher order than the account's MRKT order
     min_price_nano: int | None = None
     max_price_nano: int | None = None
     collections: list[str] = Field(default_factory=list)

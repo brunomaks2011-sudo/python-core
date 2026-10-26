@@ -17,7 +17,9 @@ from gift_sniper.services.filter_cache import FilterCache
 from gift_sniper.services.giftwiki_sync import GiftWikiSync
 from gift_sniper.services.monitor import ListingMonitor
 from gift_sniper.services.notifications import Notifier
+from gift_sniper.services.orders import OrdersService
 from gift_sniper.services.purchase import PurchaseService
+from gift_sniper.services.resale import ResaleAssistant
 from gift_sniper.services.search import SearchService
 from gift_sniper.services.stats import StatsService
 
@@ -41,3 +43,5 @@ class Services:
     monitor: ListingMonitor | None = None
     purchase_queue: Any = None
     events_queue: Any = None
+    resale: ResaleAssistant | None = None
+    orders: OrdersService | None = None

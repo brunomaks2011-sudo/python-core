@@ -1,4 +1,4 @@
-"""PostgreSQL schema (SQLAlchemy 2 ORM). Mirrored by migrations/versions/0001_initial.py."""
+"""PostgreSQL schema (SQLAlchemy 2 ORM). Mirrored by the migrations in migrations/versions."""
 
 from __future__ import annotations
 
@@ -408,6 +408,47 @@ class Purchase(Base):
     confirmed_at: Mapped[datetime] = mapped_column(server_default=_now())
     confirmation_source: Mapped[str] = mapped_column(String(32))
     mrkt_response: Mapped[Json | None] = mapped_column()
+
+
+class ResalePosition(Base):
+    """A gift the 🤖 resale assistant bought to sell again: bought → listed → sold."""
+
+    __tablename__ = "resale_positions"
+    __table_args__ = (
+        Index("ix_resale_positions_gift", "gift_id"),
+        Index("ix_resale_positions_user_created", "user_id", "created_at"),
+        Index("ix_resale_positions_status", "status"),
+    )
+
+    id: Mapped[int] = mapped_column(BigInteger, primary_key=True)
+    user_id: Mapped[int] = mapped_column(BigInteger, ForeignKey("users.id", ondelete="CASCADE"))
+    attempt_id: Mapped[int | None] = mapped_column(
+        BigInteger, ForeignKey("purchase_attempts.id", ondelete="SET NULL")
+    )
+    run_mode: Mapped[str] = mapped_column(String(16))  # live | dry_run
+    gift_id: Mapped[str] = mapped_column(String(64))
+    name: Mapped[str | None] = mapped_column(String(NAME))
+    collection_name: Mapped[str | None] = mapped_column(String(NAME))
+    model_name: Mapped[str | None] = mapped_column(String(NAME))
+    backdrop_name: Mapped[str | None] = mapped_column(String(NAME))
+    number: Mapped[int | None] = mapped_column(Integer)
+    buy_price_nano: Mapped[int] = mapped_column(BigInteger)
+    target_price_nano: Mapped[int | None] = mapped_column(
+        BigInteger
+    )  # what a buyer pays, MRKT's fee included
+    list_price_nano: Mapped[int | None] = mapped_column(BigInteger)  # the price set on MRKT, without the fee
+    fee_permille: Mapped[int] = mapped_column(Integer)
+    expected_profit_nano: Mapped[int | None] = mapped_column(BigInteger)
+    sales_count: Mapped[int | None] = mapped_column(Integer)  # sales behind the estimate
+    status: Mapped[str] = mapped_column(String(16))  # bought | listed | waiting | failed | sold | dry_run
+    reason: Mapped[str | None] = mapped_column(Text)
+    tries: Mapped[int] = mapped_column(Integer, default=0, server_default=text("0"))
+    resale_at: Mapped[datetime | None] = mapped_column()  # MRKT allows listing from then (nextResaleDate)
+    listed_at: Mapped[datetime | None] = mapped_column()
+    sold_at: Mapped[datetime | None] = mapped_column()
+    sold_price_nano: Mapped[int | None] = mapped_column(BigInteger)
+    created_at: Mapped[datetime] = mapped_column(server_default=_now())
+    updated_at: Mapped[datetime] = mapped_column(server_default=_now(), onupdate=func.now())
 
 
 # ---------------------------------------------------------------- notifications & logs

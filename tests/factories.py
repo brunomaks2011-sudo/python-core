@@ -10,7 +10,7 @@ from typing import Any
 
 from gift_sniper.config import Settings
 from gift_sniper.domain.enums import MonochromeStatus
-from gift_sniper.domain.types import Enrichment, ListingSnapshot, MonochromeVerdict, Share
+from gift_sniper.domain.types import Enrichment, ListingSnapshot, MonochromeVerdict, MrktOrder, Share
 from gift_sniper.integrations.mrkt import BuyOutcome, BuyOutcomeKind, MrktError
 from gift_sniper.services.reference import GiftCoverage, ReferenceSnapshot, RefRecord
 
@@ -150,6 +150,18 @@ class FakeMrkt:
         self.can_reauthenticate = False
         self.attributes: dict[tuple[str, str], list[Any]] = {}  # (kind, collection) -> MrktAttribute list
         self.attribute_calls: list[tuple[str, str]] = []
+        # selling: each call takes the next outcome (an exception is raised); none left: listed
+        self.sale_calls: list[tuple[str, int]] = []
+        self.sale_outcomes: deque[Any] = deque()
+        self.sale_fee_permille = 20
+        # orders
+        self.my_orders_list: list[MrktOrder] = []
+        self.market_orders: list[MrktOrder] = []
+        self.top_orders: dict[tuple[str | None, ...], MrktOrder | None] = {}
+        self.order_calls: list[tuple[str, Any]] = []
+        self.create_error: Exception | None = None
+        self.cancel_error: Exception | None = None
+        self.hide_created = False  # MRKT accepts a new order but does not list it yet
 
     def add(self, listing: ListingSnapshot) -> None:
         self.gifts[listing.gift_id] = listing
@@ -185,6 +197,78 @@ class FakeMrkt:
 
     async def find_in_inventory(self, collection_name: str, number: int) -> list[ListingSnapshot]:
         return [g for g in self.inventory if g.collection_name == collection_name and g.number == number]
+
+    async def list_for_sale(self, gift_id: str, price_nano: int) -> list[str]:
+        self.sale_calls.append((gift_id, price_nano))
+        outcome = self.sale_outcomes.popleft() if self.sale_outcomes else None
+        if isinstance(outcome, Exception):
+            raise outcome
+        if gift_id in self.gifts:
+            buyer = price_nano * (1000 + self.sale_fee_permille) // 1000
+            self.gifts[gift_id] = replace(
+                self.gifts[gift_id], is_on_sale=True, price_nano=buyer, price_without_fee_nano=price_nano
+            )
+        return [gift_id]
+
+    async def my_orders(self, *, count: int = 20) -> list[MrktOrder]:
+        self.order_calls.append(("mine", count))
+        return list(self.my_orders_list)
+
+    async def orders(
+        self,
+        collection: str,
+        *,
+        models: list[str] | None = None,
+        backdrops: list[str] | None = None,
+        symbols: list[str] | None = None,
+        count: int = 20,
+    ) -> list[MrktOrder]:
+        self.order_calls.append(("market", (collection, models, backdrops)))
+        return [
+            o
+            for o in self.market_orders
+            if o.collection_name == collection
+            and (not models or o.model_name in models)
+            and (not backdrops or o.backdrop_name in backdrops)
+        ]
+
+    async def top_order(
+        self,
+        collection: str,
+        model: str | None = None,
+        backdrop: str | None = None,
+        symbol: str | None = None,
+    ) -> MrktOrder | None:
+        self.order_calls.append(("top", (collection, model, backdrop, symbol)))
+        same = [o for o in self.my_orders_list if o.attributes == (collection, model, backdrop, symbol)]
+        others = self.top_orders.get((collection, model, backdrop, symbol))
+        candidates = [*same, *([others] if others else [])]
+        return max(candidates, key=lambda o: o.price_nano) if candidates else None
+
+    async def create_order(self, **kw: Any) -> Any:
+        self.order_calls.append(("create", kw))
+        if self.create_error is not None:
+            raise self.create_error
+        new = MrktOrder(
+            order_id=f"new-{len(self.order_calls)}",
+            collection_name=kw["collection"],
+            model_name=kw["model"],
+            backdrop_name=kw["backdrop"],
+            symbol_name=kw["symbol"],
+            price_nano=kw["price_nano"],
+            min_price_nano=kw.get("min_price_nano"),
+            quantity=kw.get("quantity"),
+            is_mine=True,
+        )
+        if not self.hide_created:
+            self.my_orders_list.append(new)
+        return {"id": new.order_id}
+
+    async def cancel_order(self, order_id: str) -> None:
+        self.order_calls.append(("cancel", order_id))
+        if self.cancel_error is not None:
+            raise self.cancel_error
+        self.my_orders_list = [o for o in self.my_orders_list if o.order_id != order_id]
 
     # --- monitor / search
     feed_pages: deque[list[Any]]

@@ -24,7 +24,7 @@ from urllib.parse import quote
 import aiohttp
 
 from gift_sniper.config import Settings
-from gift_sniper.domain.types import FeedEvent, ListingSnapshot
+from gift_sniper.domain.types import FeedEvent, ListingSnapshot, MrktOrder
 from gift_sniper.integrations.http import (
     AsyncRateLimiter,
     backoff_delay,
@@ -32,7 +32,7 @@ from gift_sniper.integrations.http import (
     request_not_sent,
     retry_after_seconds,
 )
-from gift_sniper.integrations.mrkt.parsing import _int, parse_feed_item, parse_gift
+from gift_sniper.integrations.mrkt.parsing import _int, order_items, parse_feed_item, parse_gift, parse_order
 from gift_sniper.metrics import EXTERNAL_LATENCY, EXTERNAL_REQUESTS, Timer
 
 log = logging.getLogger(__name__)
@@ -66,6 +66,10 @@ class MrktHTTPError(MrktError):
 
 class MrktUnavailable(MrktError):
     pass
+
+
+class MrktFormatError(MrktError):
+    """MRKT answered, but in a shape the bot does not recognise (the field names are not documented)."""
 
 
 class BuyOutcomeKind(StrEnum):
@@ -442,6 +446,144 @@ class MrktClient:
     async def me(self) -> dict[str, Any] | None:
         data = await self._request("GET", "me", endpoint="me", max_retries=1)
         return data if isinstance(data, dict) else None
+
+    # ------------------------------------------------------------------ orders (requests from tgmrkts)
+    def _orders(self, data: Any, endpoint: str) -> list[MrktOrder]:
+        items = order_items(data)
+        if items is None:
+            keys = sorted(data)[:20] if isinstance(data, dict) else type(data).__name__
+            log.warning("MRKT %s: unrecognized response shape", endpoint, extra={"keys": keys})
+            raise MrktFormatError(f"MRKT {endpoint}: ответ без списка ордеров ({keys})")
+        orders = [o for o in (parse_order(item) for item in items) if o is not None]
+        if items and not orders:
+            sample = items[0]
+            keys = sorted(sample)[:20] if isinstance(sample, dict) else type(sample).__name__
+            log.warning("MRKT %s: orders not recognized", endpoint, extra={"keys": keys})
+            raise MrktFormatError(f"MRKT {endpoint}: ордера в незнакомом формате (поля {keys})")
+        return orders
+
+    @staticmethod
+    def _orders_filter(
+        collections: list[str], models: list[str], backdrops: list[str], symbols: list[str]
+    ) -> dict[str, Any]:
+        return {
+            "collectionNames": collections,
+            "modelNames": models,
+            "backdropNames": backdrops,
+            "symbolNames": symbols,
+        }
+
+    async def my_orders(self, *, count: int = 20) -> list[MrktOrder]:
+        """Orders of this account: POST orders/get-my-orders."""
+        payload = {
+            **self._orders_filter([], [], [], []),
+            "ordering": "PublicationTime",
+            "lowToHigh": False,
+            "cursor": "",
+            "count": count,
+        }
+        data = await self._request(
+            "POST", "orders/get-my-orders", endpoint="orders/get-my-orders", payload=payload, priority=True
+        )
+        return self._orders(data, "orders/get-my-orders")
+
+    async def orders(
+        self,
+        collection: str,
+        *,
+        models: list[str] | None = None,
+        backdrops: list[str] | None = None,
+        symbols: list[str] | None = None,
+        count: int = MAX_PAGE_SIZE,
+    ) -> list[MrktOrder]:
+        """Orders of everyone for a collection, the highest price first: POST orders."""
+        payload = {
+            **self._orders_filter([collection], models or [], backdrops or [], symbols or []),
+            "ordering": "Price",
+            "lowToHigh": False,
+            "cursor": "",
+            "count": count,
+        }
+        data = await self._request("POST", "orders", endpoint="orders", payload=payload, priority=True)
+        return self._orders(data, "orders")
+
+    async def top_order(
+        self,
+        collection: str,
+        model: str | None = None,
+        backdrop: str | None = None,
+        symbol: str | None = None,
+    ) -> MrktOrder | None:
+        """The highest order for exactly these attributes: POST orders/top."""
+        payload = {
+            "collectionName": collection,
+            "modelName": model,
+            "backdropName": backdrop,
+            "symbolName": symbol,
+        }
+        data = await self._request(
+            "POST", "orders/top", endpoint="orders/top", payload=payload, priority=True
+        )
+        if not data:  # no order for these attributes
+            return None
+        orders = self._orders(data, "orders/top")
+        return max(orders, key=lambda o: o.price_nano) if orders else None
+
+    async def create_order(
+        self,
+        *,
+        collection: str,
+        model: str | None,
+        backdrop: str | None,
+        symbol: str | None,
+        price_nano: int,
+        min_price_nano: int | None = None,
+        quantity: int = 1,
+        is_transferable: bool = False,
+    ) -> Any:
+        """A buy order: POST orders/create. Not retried: a repeated request could place a second order."""
+        payload = {
+            "collectionName": collection,
+            "modelName": model,
+            "backdropName": backdrop,
+            "symbolName": symbol,
+            "priceMinNanoTONs": min_price_nano if min_price_nano is not None else price_nano,
+            "priceMaxNanoTONs": price_nano,
+            "quantity": quantity,
+            "isTransferable": is_transferable,
+        }
+        return await self._request(
+            "POST", "orders/create", endpoint="orders/create", payload=payload, priority=True, max_retries=0
+        )
+
+    async def cancel_order(self, order_id: str) -> None:
+        """POST orders/cancel/{orderId}; an HTTP error is raised, a success has no documented body."""
+        await self._request(
+            "POST",
+            f"orders/cancel/{quote(order_id, safe='')}",
+            endpoint="orders/cancel",
+            priority=True,
+            max_retries=0,
+        )
+
+    # ------------------------------------------------------------------ selling
+    async def list_for_sale(self, gift_id: str, price_nano: int) -> list[str]:
+        """Put an owned gift up for sale at a price without MRKT's fee (buyers pay the fee on top).
+
+        POST gifts/sale: tgmrkts sends {"ids", "price"}, amrkt {"ids", "prices": [...]} and reads {"ids",
+        "prices"} back. Both price keys are sent, so MRKT finds the one it knows. Not retried: the caller
+        checks the gift afterwards instead.
+        """
+        data = await self._request(
+            "POST",
+            "gifts/sale",
+            endpoint="gifts/sale",
+            payload={"ids": [gift_id], "price": price_nano, "prices": [price_nano]},
+            priority=True,
+            max_retries=0,
+        )
+        ids = data.get("ids") if isinstance(data, dict) else None
+        return [str(i) for i in ids] if isinstance(ids, list) else []
 
     # ------------------------------------------------------------------ purchase
     async def buy(self, gift_id: str) -> BuyOutcome:

@@ -51,6 +51,7 @@ from gift_sniper.services.filters import FilterSpec, MatchContext, evaluate, flo
 from gift_sniper.services.floors import FloorService
 from gift_sniper.services.locks import RedisLock
 from gift_sniper.services.notifications import Notifier
+from gift_sniper.services.resale import ResaleAssistant
 from gift_sniper.services.user_prefs import NotificationSettings
 
 log = logging.getLogger(__name__)
@@ -67,7 +68,7 @@ class PurchaseRequest:
     mode: PurchaseMode
     filter_id: int | None = None
     listing_id: int | None = None
-    trigger: str = "auto"  # auto | manual
+    trigger: str = "auto"  # auto | manual | assistant
     event_type: str = "listing"
     first_sighting: bool = True
     detected_at: datetime | None = None
@@ -129,6 +130,7 @@ class PurchaseService:
         enricher: Enricher,
         notifier: Notifier | None,
         floors: FloorService | None = None,
+        resale: ResaleAssistant | None = None,
     ) -> None:
         self.settings = settings
         self.sessionmaker = sessionmaker
@@ -138,6 +140,7 @@ class PurchaseService:
         self.enricher = enricher
         self.notifier = notifier
         self.floors = floors
+        self.resale = resale
         self.sleep = asyncio.sleep  # replaced in tests
 
     # ================================================================== entry point
@@ -205,6 +208,8 @@ class PurchaseService:
         ):  # a floor-priced pick is re-checked against the floor
             enrichment = await self.floors.with_floors(fresh, enrichment, floor_rules(spec.criteria, fresh))
         problem = self._recheck_problem(req, spec, fresh, enrichment)
+        if not problem and req.mode is PurchaseMode.RESALE:
+            problem = await self._resale_problem(req, spec, fresh)
         if problem:
             return await self._record_cancelled(
                 req, prun, spec, fresh, problem, attempt_no, prefs, enrichment
@@ -236,7 +241,9 @@ class PurchaseService:
                     finished=True,
                 )
             result = PurchaseResult(PurchaseStatus.DRY_RUN, "Тестовый режим", attempt_id, price)
-            return await self._notify_result(req, spec, fresh, result, prefs)
+            await self._notify_result(req, spec, fresh, result, prefs)
+            await self._after_resale(req, spec, fresh, attempt_id, price, prun)
+            return result
 
         return await self._submit(req, prun, spec, fresh, price, attempt_id, attempt_no, prefs, balance)
 
@@ -259,7 +266,51 @@ class PurchaseService:
                 return "Фильтр не относится к автопокупке монохромов"
             if not mono_on:
                 return "Автопокупка монохромов выключена"
+        if req.mode is PurchaseMode.RESALE and (spec.criteria.resale is None or self.resale is None):
+            return "ИИ-ассистент не настроен"
+        if req.mode is not PurchaseMode.RESALE and spec.criteria.resale is not None:
+            return "Настройки ИИ-ассистента покупают только через ассистента"
         return None
+
+    async def _resale_problem(
+        self, req: PurchaseRequest, spec: FilterSpec | None, fresh: ListingSnapshot
+    ) -> str:
+        """The assistant buys only while the price it decided on still leaves the profit it wants."""
+        assert self.resale is not None and spec is not None and spec.criteria.resale is not None
+        price = fresh.price_nano
+        assert price is not None
+        plan = await self.resale.recall(req.user_id, req.gift_id)
+        if plan is None or plan.list_price_nano is None:
+            return "Оценка ассистента устарела, подарок не куплен"
+        profit = plan.list_price_nano - price
+        wanted = spec.criteria.resale.min_profit_nano
+        if profit < wanted:
+            return f"Профит при цене {format_ton(price)}: {format_ton(profit)} — меньше {format_ton(wanted)}"
+        return ""
+
+    async def _after_resale(
+        self,
+        req: PurchaseRequest,
+        spec: FilterSpec | None,
+        listing: ListingSnapshot,
+        attempt_id: int,
+        price: int,
+        prun: PurchaseRunMode,
+    ) -> None:
+        """A gift the assistant bought is recorded and listed for sale; a problem there never undoes the purchase."""
+        if req.mode is not PurchaseMode.RESALE or self.resale is None:
+            return
+        try:
+            await self.resale.after_purchase(
+                user_id=req.user_id,
+                attempt_id=attempt_id,
+                listing=listing,
+                price_nano=price,
+                run_mode=prun,
+                rules=spec.criteria.resale if spec is not None else None,
+            )
+        except Exception:
+            log.exception("resale follow-up failed", extra={"gift_id": req.gift_id, "attempt_id": attempt_id})
 
     async def _balance(self) -> int | None:
         try:
@@ -762,7 +813,9 @@ class PurchaseService:
                 source=source,
             )
         result = PurchaseResult(PurchaseStatus.CONFIRMED, "Покупка подтверждена", attempt_id, price)
-        return await self._notify_result(req, spec, listing, result, prefs)
+        await self._notify_result(req, spec, listing, result, prefs)
+        await self._after_resale(req, spec, listing, attempt_id, price, PurchaseRunMode.LIVE)
+        return result
 
     async def _finish(
         self,
@@ -836,6 +889,7 @@ class PurchaseService:
                     price_nano=result.price_nano,
                     filter_name=spec.name if spec else None,
                     remaining=await self.remaining_text(req.user_id, req.mode, spec),
+                    extra=await self._resale_lines(req, result.price_nano),
                 )
                 await self.notifier.purchase_message(req.user_id, text, success=True, prefs=prefs)
             elif result.status is PurchaseStatus.DRY_RUN:
@@ -846,6 +900,7 @@ class PurchaseService:
                     model=model,
                     price_nano=result.price_nano,
                     filter_name=spec.name if spec else None,
+                    extra=await self._resale_lines(req, result.price_nano),
                 )
                 await self.notifier.purchase_message(req.user_id, text, success=True, prefs=prefs)
             elif result.status is not None:
@@ -858,6 +913,15 @@ class PurchaseService:
         except Exception:
             log.exception("failed to send purchase notification", extra={"attempt_id": result.attempt_id})
         return result
+
+    async def _resale_lines(self, req: PurchaseRequest, price: int | None) -> list[str]:
+        """The assistant's reasoning under its purchase message."""
+        if req.mode is not PurchaseMode.RESALE or self.resale is None:
+            return []
+        plan = await self.resale.recall(req.user_id, req.gift_id)
+        if plan is None:
+            return []
+        return plan.at_price(price).lines() if price is not None else plan.lines()
 
     # ================================================================== recovery
     async def recover_on_startup(self) -> None:

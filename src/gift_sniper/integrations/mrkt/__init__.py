@@ -5,6 +5,7 @@ from gift_sniper.integrations.mrkt.client import (
     MrktAuthError,
     MrktClient,
     MrktError,
+    MrktFormatError,
     MrktHTTPError,
     SalingQuery,
 )
@@ -17,6 +18,7 @@ __all__ = [
     "MrktAuthError",
     "MrktClient",
     "MrktError",
+    "MrktFormatError",
     "MrktHTTPError",
     "SalingQuery",
     "parse_feed_item",
