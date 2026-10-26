@@ -25,7 +25,9 @@ DEPTH = 5  # enough to skip the listing itself and a few auction lots
 
 
 class _Search(Protocol):
-    async def search_listings(self, query: SalingQuery) -> tuple[list[ListingSnapshot], str | None]: ...
+    async def search_listings(
+        self, query: SalingQuery, *, priority: bool = False
+    ) -> tuple[list[ListingSnapshot], str | None]: ...
 
 
 class FloorService:
@@ -44,7 +46,7 @@ class FloorService:
             collection_names=[collection], model_names=[model] if model else [], ordering="Price", count=DEPTH
         )
         try:
-            listings, _ = await self.mrkt.search_listings(query)
+            listings, _ = await self.mrkt.search_listings(query, priority=True)  # a purchase may wait on it
         except MrktError as exc:
             log.warning("MRKT floor lookup failed", extra={"collection": collection, "error": str(exc)})
             return None

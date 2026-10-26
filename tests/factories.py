@@ -199,7 +199,9 @@ class FakeMrkt:
             raise page
         return page, ("next" if pages else None)
 
-    async def search_listings(self, query: Any) -> tuple[list[ListingSnapshot], str | None]:
+    async def search_listings(
+        self, query: Any, *, priority: bool = False
+    ) -> tuple[list[ListingSnapshot], str | None]:
         self.search_queries = [*getattr(self, "search_queries", []), query]
         market: list[ListingSnapshot] | None = getattr(self, "market", None)
         if (

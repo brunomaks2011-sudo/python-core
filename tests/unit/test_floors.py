@@ -18,7 +18,9 @@ class Market:
         self.down = down
         self.queries: list[SalingQuery] = []
 
-    async def search_listings(self, query: SalingQuery) -> tuple[list[ListingSnapshot], str | None]:
+    async def search_listings(
+        self, query: SalingQuery, *, priority: bool = False
+    ) -> tuple[list[ListingSnapshot], str | None]:
         self.queries.append(query)
         if self.down:
             raise MrktError("MRKT is down")

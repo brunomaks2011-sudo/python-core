@@ -84,13 +84,13 @@ class Settings(BaseSettings):
     mrkt_auth_cooldown_seconds: float = 60.0
     mrkt_auth_header_format: str = "raw"  # raw | bearer
     mrkt_referer: str = "https://cdn.tgmrkt.io/"
-    mrkt_requests_per_second: float = 2.0
-    mrkt_priority_requests_per_second: float = 2.0
+    mrkt_requests_per_second: float = 3.0
+    mrkt_priority_requests_per_second: float = 4.0
     mrkt_request_timeout_seconds: float = 10.0
     mrkt_buy_timeout_seconds: float = 15.0
     mrkt_monitor_enabled: bool = True
     mrkt_monitor_source: MonitorSource = MonitorSource.FEED
-    mrkt_feed_poll_interval_seconds: float = 2.0
+    mrkt_feed_poll_interval_seconds: float = 1.0  # the Mini App settings can change it at runtime
     mrkt_feed_page_size: int = 20
     mrkt_feed_max_pages: int = 5
     mrkt_app_url: str = "https://t.me/mrkt/app"

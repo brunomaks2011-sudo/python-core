@@ -22,6 +22,7 @@ from gift_sniper.domain.enums import FeedEventType
 from gift_sniper.domain.types import FeedEvent
 from gift_sniper.integrations.mrkt import MrktAuthError, MrktClient, MrktError, SalingQuery
 from gift_sniper.metrics import DETECTION_LATENCY, EVENTS_SEEN, MONITOR_LAST_POLL
+from gift_sniper.services.control import ControlService
 from gift_sniper.services.notifications import Notifier
 from gift_sniper.services.processor import Publisher, event_to_payload
 
@@ -45,12 +46,14 @@ class ListingMonitor:
         queue: Publisher,
         redis: Redis,
         notifier: Notifier | None = None,
+        control: ControlService | None = None,
     ) -> None:
         self.settings = settings
         self.mrkt = mrkt
         self.queue = queue
         self.redis = redis
         self.notifier = notifier
+        self.control = control
         self.seen_prefix = f"{settings.redis_prefix}:seen:"
         self.first_poll = True
         self.last_success: float | None = None
@@ -112,11 +115,24 @@ class ListingMonitor:
         MONITOR_LAST_POLL.set(self.last_success)
         return published
 
+    async def interval(self) -> float:
+        """The poll interval chosen in the Mini App (or from .env); the feed alone then takes 1/interval
+        requests a second, so the general MRKT limiter is given that plus room for the other calls."""
+        seconds = (
+            await self.control.poll_interval()
+            if self.control is not None
+            else self.settings.mrkt_feed_poll_interval_seconds
+        )
+        limiter = getattr(self.mrkt, "limiter", None)
+        if limiter is not None:
+            limiter.rate = max(self.settings.mrkt_requests_per_second, 1 / seconds + 1)
+        return seconds
+
     async def run(self, stop: asyncio.Event) -> None:
-        interval = self.settings.mrkt_feed_poll_interval_seconds
         failures = 0
         log.info("listing monitor started", extra={"source": self.settings.mrkt_monitor_source.value})
         while not stop.is_set():
+            interval = await self.interval()
             started = time.monotonic()
             try:
                 await self.poll_once()

@@ -80,6 +80,8 @@ class _Purchase(Protocol):
 class _Control(Protocol):
     async def run_mode(self) -> Any: ...
     async def set_run_mode(self, mode: RunMode, *, by_user: int | None) -> Any: ...
+    async def poll_interval(self) -> float: ...
+    async def set_poll_interval(self, seconds: float, *, by_user: int | None) -> float: ...
     async def is_stopped(self) -> bool: ...
     async def stop_all(self, *, by_user: int | None, reason: str = "") -> None: ...
     async def resume(self, *, by_user: int | None) -> None: ...
@@ -147,6 +149,7 @@ class PairPick(BaseModel):
 
     backdrop: str = Field(min_length=1, max_length=128)
     price_ton: str | float | None = None
+    min_ton: str | float | None = None  # "от": cheaper listings are not taken
     rule: FloorRule | None = None  # instead of a price: up to the collection or model floor
 
 
@@ -157,7 +160,9 @@ class ModelPicks(BaseModel):
 
     model: str | None = Field(default=None, max_length=128)
     any_price_ton: str | float | None = None  # every copy of the model, any backdrop
+    any_min_ton: str | float | None = None
     monochrome_price_ton: str | float | None = None  # every pair Gift Wiki confirms as monochrome
+    monochrome_min_ton: str | float | None = None
     monochrome_rule: FloorRule | None = None  # the same up to the collection or model floor instead
     pairs: list[PairPick] = Field(default_factory=list, max_length=200)  # single monochrome pairs
     autobuy: bool | None = None
@@ -188,6 +193,11 @@ def _pick_price(picks: list[Pick], model_norm: str | None, backdrop_norm: str | 
     return ton(pick.max_price_nano) if pick is not None and pick.price_rule is PriceRule.FIXED else None
 
 
+def _pick_min(picks: list[Pick], model_norm: str | None, backdrop_norm: str | None) -> float | None:
+    pick = _find_pick(picks, model_norm, backdrop_norm)
+    return ton(pick.min_price_nano) if pick is not None else None
+
+
 def _pick_rule(picks: list[Pick], model_norm: str | None, backdrop_norm: str | None) -> str | None:
     """The floor the pick follows instead of a price, if it does."""
     pick = _find_pick(picks, model_norm, backdrop_norm)
@@ -209,8 +219,18 @@ def _whole_floor_pick(picks: list[Pick]) -> Pick | None:
     )
 
 
-def _floor_pick(model: str | None, rule: str, backdrops: list[str] | None = None) -> Pick:
-    return Pick(model=model, backdrops=backdrops or [], price_rule=PriceRule(rule))
+def _floor_pick(
+    model: str | None, rule: str, backdrops: list[str] | None = None, low: int | None = None
+) -> Pick:
+    return Pick(model=model, backdrops=backdrops or [], price_rule=PriceRule(rule), min_price_nano=low)
+
+
+def _range(low_ton: str | float | None, high: int | None, what: str) -> int | None:
+    """ "от" of a price range; it may not be above "до"."""
+    low = _price(low_ton)
+    if low is not None and high is not None and low > high:
+        raise ApiError(f"«От» больше «до» у {what}")
+    return low
 
 
 def _percent(permille: int | None) -> float | None:
@@ -349,6 +369,7 @@ class MiniAppApi:
             "can_purchase": can_purchase,
             "run_mode": run_mode,
             "max_run_mode": self.settings.run_mode.value,  # RUN_MODE in .env: the mode can go up to it
+            "poll_interval": await self.control.poll_interval(),
             "stopped": stopped,
             "autobuy_enabled": prefs.autobuy_enabled,
             "monochrome_autobuy_enabled": prefs.monochrome_autobuy_enabled,
@@ -548,6 +569,7 @@ class MiniAppApi:
                         "center": color_hex(record.center_color) or color_hex(center),
                         "edge": color_hex(record.edge_color) or color_hex(edge),
                         "price": _pick_price(mono, norm, backdrop_norm),
+                        "min": _pick_min(mono, norm, backdrop_norm),
                         "rule": _pick_rule(mono, norm, backdrop_norm),
                     }
                 )
@@ -570,7 +592,9 @@ class MiniAppApi:
                     "image": next((p["image"] for p in pairs if p["image"]), None) or observed_image,
                     "monochrome_chance": chance,
                     "any": _pick_price(regular, norm, None),
+                    "any_min": _pick_min(regular, norm, None),
                     "monochrome": _pick_price(mono, norm, None),
+                    "monochrome_min": _pick_min(mono, norm, None),
                     "monochrome_rule": _pick_rule(mono, norm, None),
                     "taken": sum(1 for p in [*regular, *mono] if p.model and normalize_name(p.model) == norm),
                     "pairs": pairs,
@@ -597,7 +621,9 @@ class MiniAppApi:
             else self.settings.can_purchase(user_id),
             "whole": {
                 "any": _pick_price(regular, None, None),
+                "any_min": _pick_min(regular, None, None),
                 "monochrome": _pick_price(mono, None, None),
+                "monochrome_min": _pick_min(mono, None, None),
                 "monochrome_rule": _pick_rule(mono, None, None),
             },
             "taken": len(regular) + len(mono),
@@ -627,20 +653,27 @@ class MiniAppApi:
         model_norm = normalize_name(data.model) if data.model else None
         new: dict[FilterKind, list[Pick]] = {FilterKind.REGULAR: [], FilterKind.MONOCHROME: []}
         if (price := _price(data.any_price_ton)) is not None:
-            new[FilterKind.REGULAR].append(Pick(model=data.model, max_price_nano=price))
+            low = _range(data.any_min_ton, price, "«Любой фон»")
+            new[FilterKind.REGULAR].append(Pick(model=data.model, max_price_nano=price, min_price_nano=low))
         if data.monochrome_rule is not None:
-            new[FilterKind.MONOCHROME].append(_floor_pick(data.model, data.monochrome_rule))
+            low = _range(data.monochrome_min_ton, None, "«Все монохромы»")
+            new[FilterKind.MONOCHROME].append(_floor_pick(data.model, data.monochrome_rule, low=low))
         elif (price := _price(data.monochrome_price_ton)) is not None:
-            new[FilterKind.MONOCHROME].append(Pick(model=data.model, max_price_nano=price))
+            low = _range(data.monochrome_min_ton, price, "«Все монохромы»")
+            new[FilterKind.MONOCHROME].append(
+                Pick(model=data.model, max_price_nano=price, min_price_nano=low)
+            )
         for pair in data.pairs:
             if pair.rule is not None:
-                new[FilterKind.MONOCHROME].append(_floor_pick(data.model, pair.rule, [pair.backdrop]))
+                low = _range(pair.min_ton, None, f"фона {pair.backdrop}")
+                new[FilterKind.MONOCHROME].append(_floor_pick(data.model, pair.rule, [pair.backdrop], low))
                 continue
             price = _price(pair.price_ton)
             if price is None:
                 raise ApiError(f"Укажите цену для фона {pair.backdrop}")
+            low = _range(pair.min_ton, price, f"фона {pair.backdrop}")
             new[FilterKind.MONOCHROME].append(
-                Pick(model=data.model, backdrops=[pair.backdrop], max_price_nano=price)
+                Pick(model=data.model, backdrops=[pair.backdrop], max_price_nano=price, min_price_nano=low)
             )
         can_purchase = self.settings.can_purchase(user_id)
         async with self.sessionmaker() as session, session.begin():
@@ -734,6 +767,7 @@ class MiniAppApi:
                     "model": p.model,
                     "backdrops": p.backdrops,
                     "price": ton(p.max_price_nano),
+                    "min": ton(p.min_price_nano),
                     "rule": p.price_rule.value,
                 }
                 for p in c.picks
@@ -890,6 +924,20 @@ class MiniAppApi:
                 "на компьютере с ботом командой scripts\\live.cmd (Windows) или ./scripts/live.sh"
             )
         await self.control.set_run_mode(mode, by_user=user_id)
+        return await self.me(user_id)
+
+    async def set_speed(self, user_id: int, payload: dict[str, Any]) -> dict[str, Any]:
+        """How often the bot polls MRKT for new listings (admins)."""
+        if not self.settings.is_admin(user_id):
+            raise ApiError("Скорость реакции меняет только администратор", 403)
+        try:
+            seconds = float(payload["interval"])
+        except (KeyError, TypeError, ValueError) as exc:
+            raise ApiError("Неверный интервал") from exc
+        try:
+            await self.control.set_poll_interval(seconds, by_user=user_id)
+        except ValueError as exc:
+            raise ApiError(str(exc)) from exc
         return await self.me(user_id)
 
     async def emergency(self, user_id: int, *, stop: bool) -> dict[str, Any]:

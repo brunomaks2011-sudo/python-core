@@ -103,7 +103,7 @@ class Application:
         purchase = PurchaseService(s, sessionmaker, redis, mrkt, control, enricher, notifier, floors=floors)
         events_queue = StreamQueue(redis, f"{s.redis_prefix}:events", "processors")
         purchase_queue = StreamQueue(redis, f"{s.redis_prefix}:purchases", "buyers", max_deliveries=3)
-        monitor = ListingMonitor(s, mrkt, events_queue, redis, notifier) if mrkt.configured else None
+        monitor = ListingMonitor(s, mrkt, events_queue, redis, notifier, control) if mrkt.configured else None
         sync = GiftWikiSync(s, giftwiki, sessionmaker, redis, store, enricher)
         self.services = Services(
             settings=s,
@@ -125,7 +125,15 @@ class Application:
             events_queue=events_queue,
         )
         self.processor = ListingProcessor(
-            s, sessionmaker, enricher, filter_cache, notifier, purchase_queue, control=control, floors=floors
+            s,
+            sessionmaker,
+            enricher,
+            filter_cache,
+            notifier,
+            purchase_queue,
+            control=control,
+            floors=floors,
+            background_notifications=True,
         )
         return self.services
 

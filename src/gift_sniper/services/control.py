@@ -21,6 +21,8 @@ log = logging.getLogger(__name__)
 
 STATE_KILL = "kill_switch"
 STATE_RUN_MODE = "run_mode"
+STATE_POLL = "poll_interval"
+POLL_LIMITS = (0.3, 10.0)  # seconds between MRKT feed polls that can be chosen
 
 
 class ControlService:
@@ -32,16 +34,20 @@ class ControlService:
         self.sessionmaker = sessionmaker
         self.kill_key = f"{settings.redis_prefix}:kill_switch"
         self.mode_key = f"{settings.redis_prefix}:run_mode"
+        self.poll_key = f"{settings.redis_prefix}:poll_interval"
 
     async def restore(self) -> None:
         """Copy the persisted state from PostgreSQL to Redis on startup."""
         async with self.sessionmaker() as session:
             kill = await misc.get_state(session, STATE_KILL)
             mode = await misc.get_state(session, STATE_RUN_MODE)
+            poll = await misc.get_state(session, STATE_POLL)
         if kill and kill.get("active"):
             await self.redis.set(self.kill_key, "1")
         if mode and mode.get("mode"):
             await self.redis.set(self.mode_key, str(mode["mode"]))
+        if poll and poll.get("seconds"):
+            await self.redis.set(self.poll_key, str(poll["seconds"]))
         KILL_SWITCH.set(1 if await self.is_stopped() else 0)
 
     async def is_stopped(self) -> bool:
@@ -84,6 +90,27 @@ class ControlService:
                 return env_mode
             return override if override.rank < env_mode.rank else env_mode
         return env_mode
+
+    async def poll_interval(self) -> float:
+        """Seconds between MRKT feed polls: chosen in the Mini App, else MRKT_FEED_POLL_INTERVAL_SECONDS."""
+        default = self.settings.mrkt_feed_poll_interval_seconds
+        try:
+            raw = await self.redis.get(self.poll_key)
+            value = float(raw) if raw else None
+        except Exception:
+            return default
+        low, high = POLL_LIMITS
+        return value if value is not None and low <= value <= high else default
+
+    async def set_poll_interval(self, seconds: float, *, by_user: int | None) -> float:
+        low, high = POLL_LIMITS
+        if not low <= seconds <= high:
+            raise ValueError(f"Интервал опроса должен быть от {low} до {high} с")
+        await self.redis.set(self.poll_key, str(seconds))
+        async with self.sessionmaker() as session, session.begin():
+            await misc.set_state(session, STATE_POLL, {"seconds": seconds, "by": by_user})
+            await misc.audit(session, "poll_interval", user_id=by_user, seconds=seconds)
+        return seconds
 
     async def set_run_mode(self, mode: RunMode, *, by_user: int | None) -> RunMode:
         if mode.rank > self.settings.run_mode.rank:

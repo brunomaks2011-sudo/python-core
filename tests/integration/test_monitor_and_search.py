@@ -12,6 +12,7 @@ from gift_sniper.db.repo import filters as filters_repo
 from gift_sniper.db.repo import users as users_repo
 from gift_sniper.domain.enums import FilterKind
 from gift_sniper.domain.types import FeedEvent
+from gift_sniper.integrations.http import AsyncRateLimiter
 from gift_sniper.integrations.mrkt import MrktAuthError
 from gift_sniper.services.monitor import ListingMonitor
 from gift_sniper.services.queue import MemoryQueue
@@ -36,6 +37,23 @@ async def test_first_poll_is_backlog_then_only_new_events(env: Env) -> None:
     assert await monitor.poll_once() == 1
     assert queue.published[-1]["event_id"] == "e3" and queue.published[-1]["backlog"] is False
     assert monitor.last_success is not None
+
+
+async def test_poll_interval_chosen_at_runtime_and_the_limiter_follows(
+    env: Env, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(env.settings, "mrkt_requests_per_second", 2.0)
+    env.mrkt.limiter = AsyncRateLimiter(2.0)  # type: ignore[attr-defined]
+    monitor = ListingMonitor(env.settings, env.mrkt, MemoryQueue(), env.redis, control=env.control)  # type: ignore[arg-type]
+    assert await monitor.interval() == env.settings.mrkt_feed_poll_interval_seconds
+    await env.control.set_poll_interval(0.5, by_user=1)
+    assert await monitor.interval() == 0.5
+    assert env.mrkt.limiter.rate == 3  # type: ignore[attr-defined]  # two feed polls a second and room for more
+    with pytest.raises(ValueError):
+        await env.control.set_poll_interval(0.1, by_user=1)
+    await env.redis.delete(env.control.poll_key)  # Redis flushed: the choice is restored from PostgreSQL
+    await env.control.restore()
+    assert await env.control.poll_interval() == 0.5
 
 
 async def test_monitor_keeps_only_tracked_event_types(env: Env) -> None:

@@ -45,6 +45,7 @@ def _first(item: dict[str, Any], *keys: str) -> Any:
 
 SERVICE = "mrkt"
 MAX_PAGE_SIZE = 20  # documented limit of gifts/saling
+PRIORITY_BURST = 5  # a purchase needs the re-check, the balance and the buy without waiting for tokens
 
 
 class MrktError(Exception):
@@ -137,7 +138,10 @@ class MrktClient:
         self._auth_lock = asyncio.Lock()
         self._last_auth_attempt: float | None = None
         self.limiter = AsyncRateLimiter(settings.mrkt_requests_per_second)
-        self.priority_limiter = AsyncRateLimiter(settings.mrkt_priority_requests_per_second)
+        self.priority_limiter = AsyncRateLimiter(
+            settings.mrkt_priority_requests_per_second,
+            burst=max(PRIORITY_BURST, int(settings.mrkt_priority_requests_per_second)),
+        )
         self.last_auth_error: str | None = None
 
     # ------------------------------------------------------------------ lifecycle
@@ -313,8 +317,12 @@ class MrktClient:
                 raise MrktError(f"MRKT {endpoint}: response is not JSON") from exc
 
     # ------------------------------------------------------------------ reads
-    async def search_listings(self, query: SalingQuery) -> tuple[list[ListingSnapshot], str | None]:
-        data = await self._request("POST", "gifts/saling", endpoint="gifts/saling", payload=query.payload())
+    async def search_listings(
+        self, query: SalingQuery, *, priority: bool = False
+    ) -> tuple[list[ListingSnapshot], str | None]:
+        data = await self._request(
+            "POST", "gifts/saling", endpoint="gifts/saling", payload=query.payload(), priority=priority
+        )
         fetched_at = datetime.now(UTC)
         gifts = data.get("gifts") if isinstance(data, dict) else None
         listings = [g for g in (parse_gift(item, fetched_at) for item in (gifts or [])) if g is not None]

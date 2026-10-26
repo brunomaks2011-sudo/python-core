@@ -130,6 +130,10 @@ def create_app(api: MiniAppApi, settings: Settings) -> web.Application:
         user_id = await caller(request)
         return web.json_response(await api.monochromes_everywhere(user_id, await body(request)))
 
+    async def set_speed(request: web.Request) -> web.Response:
+        user_id = await caller(request)
+        return web.json_response(await api.set_speed(user_id, await body(request)))
+
     async def set_mode(request: web.Request) -> web.Response:
         user_id = await caller(request)
         return web.json_response(await api.set_mode(user_id, await body(request)))
@@ -158,6 +162,7 @@ def create_app(api: MiniAppApi, settings: Settings) -> web.Application:
     app.router.add_delete("/api/rules/{rule_id}", delete_rule)
     app.router.add_put("/api/settings", save_settings)
     app.router.add_put("/api/mode", set_mode)
+    app.router.add_put("/api/speed", set_speed)
     app.router.add_post("/api/stop", stop)
     app.router.add_post("/api/resume", resume)
     app.router.add_get("/api/history", history)

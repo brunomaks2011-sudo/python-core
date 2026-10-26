@@ -192,8 +192,11 @@ class PurchaseService:
         if refusal:
             return PurchaseResult(None, refusal)
 
-        # ---- fresh re-check on MRKT
-        fresh, problem = await self._fresh_listing(req)
+        # ---- fresh re-check on MRKT, with the balance read at the same time: one round trip, not two
+        if prun is PurchaseRunMode.LIVE and self.settings.purchase_check_balance:
+            (fresh, problem), balance = await asyncio.gather(self._fresh_listing(req), self._balance())
+        else:
+            (fresh, problem), balance = await self._fresh_listing(req), None
         if fresh is None:
             return await self._record_cancelled(req, prun, spec, None, problem, attempt_no, prefs)
         enrichment = await self.enricher.enrich(fresh)
@@ -235,7 +238,7 @@ class PurchaseService:
             result = PurchaseResult(PurchaseStatus.DRY_RUN, "Тестовый режим", attempt_id, price)
             return await self._notify_result(req, spec, fresh, result, prefs)
 
-        return await self._submit(req, prun, spec, fresh, price, attempt_id, attempt_no, prefs)
+        return await self._submit(req, prun, spec, fresh, price, attempt_id, attempt_no, prefs, balance)
 
     def _mode_refusal(
         self, req: PurchaseRequest, spec: FilterSpec | None, regular_on: bool, mono_on: bool
@@ -257,6 +260,12 @@ class PurchaseService:
             if not mono_on:
                 return "Автопокупка монохромов выключена"
         return None
+
+    async def _balance(self) -> int | None:
+        try:
+            return await self.mrkt.balance_nano()
+        except MrktError:
+            return None  # unknown balance: MRKT itself rejects an unaffordable purchase
 
     async def _fresh_listing(self, req: PurchaseRequest) -> tuple[ListingSnapshot | None, str]:
         try:
@@ -504,22 +513,18 @@ class PurchaseService:
         attempt_id: int,
         attempt_no: int,
         prefs: NotificationSettings,
+        balance: int | None,
     ) -> PurchaseResult:
-        if self.settings.purchase_check_balance:
-            try:
-                balance = await self.mrkt.balance_nano()
-            except MrktError:
-                balance = None  # unknown balance: MRKT itself rejects an unaffordable purchase
-            if balance is not None and balance < price:
-                return await self._finish(
-                    req,
-                    spec,
-                    fresh,
-                    attempt_id,
-                    PurchaseStatus.FAILED,
-                    f"Недостаточно средств на MRKT: баланс {format_ton(balance)}, нужно {format_ton(price)}",
-                    prefs,
-                )
+        if balance is not None and balance < price:  # read together with the re-check
+            return await self._finish(
+                req,
+                spec,
+                fresh,
+                attempt_id,
+                PurchaseStatus.FAILED,
+                f"Недостаточно средств на MRKT: баланс {format_ton(balance)}, нужно {format_ton(price)}",
+                prefs,
+            )
         if await self.control.is_stopped():
             return await self._finish(
                 req,

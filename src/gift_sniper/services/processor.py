@@ -98,6 +98,7 @@ class ListingProcessor:
         purchase_queue: Publisher | None,
         control: RunControl | None = None,
         floors: FloorService | None = None,
+        background_notifications: bool = False,
     ) -> None:
         self.settings = settings
         self.sessionmaker = sessionmaker
@@ -107,6 +108,9 @@ class ListingProcessor:
         self.purchase_queue = purchase_queue
         self.control = control
         self.floors = floors
+        # the bot sends listing messages while the next listing is already being judged
+        self.background_notifications = background_notifications
+        self._notifying: set[asyncio.Task[None]] = set()
 
     async def handle_payload(self, payload: dict[str, Any]) -> None:
         event, detected_at, backlog = payload_to_event(payload)
@@ -215,26 +219,42 @@ class ListingProcessor:
                     return report  # the price went up: nothing to notify
                 price_drop_from = previous
             buying = await self._buying_users(report)
-            tasks = []
             notified = [(user_id, flags) for user_id, flags in users.items() if user_id not in buying]
-            for user_id, flags in notified:
-                tasks.append(
-                    self._notify_user(
-                        flags,
-                        listing,
-                        enrichment,
-                        matched_by_user.get(user_id, []),
-                        change.listing_id,
-                        price_drop_from,
-                    )
-                )
-            results = await asyncio.gather(*tasks, return_exceptions=True)
-            for (user_id, _), res in zip(notified, results, strict=True):
-                if res is True:
-                    report.notified_users.append(user_id)
-                elif isinstance(res, Exception):
-                    log.error("notification failed", exc_info=res, extra={"user_id": user_id})
+            sending = self._notify_all(
+                notified, listing, enrichment, matched_by_user, change.listing_id, price_drop_from, report
+            )
+            if self.background_notifications:
+                task = asyncio.create_task(sending)
+                self._notifying.add(task)
+                task.add_done_callback(self._notifying.discard)
+            else:
+                await sending
         return report
+
+    async def _notify_all(
+        self,
+        notified: list[tuple[int, UserFlags]],
+        listing: ListingSnapshot,
+        enrichment: Enrichment,
+        matched_by_user: dict[int, list[FilterSpec]],
+        listing_id: int | None,
+        price_drop_from: int | None,
+        report: ProcessReport,
+    ) -> None:
+        results = await asyncio.gather(
+            *(
+                self._notify_user(
+                    flags, listing, enrichment, matched_by_user.get(user_id, []), listing_id, price_drop_from
+                )
+                for user_id, flags in notified
+            ),
+            return_exceptions=True,
+        )
+        for (user_id, _), res in zip(notified, results, strict=True):
+            if res is True:
+                report.notified_users.append(user_id)
+            elif isinstance(res, Exception):
+                log.error("notification failed", exc_info=res, extra={"user_id": user_id})
 
     @staticmethod
     def _floor_rules(

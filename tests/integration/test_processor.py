@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 from datetime import UTC, datetime, timedelta
 
 import pytest
@@ -248,6 +249,22 @@ async def test_monochrome_up_to_the_model_floor(env: Env) -> None:
         event("e4", gift_id="m4", number=103, model_name="Ivory"), detected_at=datetime.now(UTC)
     )
     assert len(env.mrkt.search_queries) == lookups  # not a monochrome / another model: no floor needed
+
+
+async def test_notifications_can_go_out_while_the_next_listing_is_judged(env: Env) -> None:
+    await env.add_user(UID, notify={"all_listings": True})
+    proc = ListingProcessor(
+        env.settings,
+        env.sessionmaker,
+        env.enricher,
+        env.filter_cache,
+        env.notifier,
+        MemoryQueue(),
+        background_notifications=True,
+    )
+    await proc.process(event("e1"), detected_at=datetime.now(UTC))
+    await asyncio.gather(*proc._notifying)  # sent by a task of its own
+    assert len(env.sender.texts_for(UID)) == 1 and not proc._notifying
 
 
 async def test_open_in_mrkt_is_the_share_link_of_the_gift(env: Env) -> None:

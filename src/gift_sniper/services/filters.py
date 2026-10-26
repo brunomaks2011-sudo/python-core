@@ -52,6 +52,7 @@ class Pick(BaseModel):
     backdrops: list[str] = []
     max_price_nano: int | None = Field(default=None, gt=0)  # the price; with a floor rule an optional cap
     price_rule: PriceRule = PriceRule.FIXED
+    min_price_nano: int | None = Field(default=None, gt=0)  # "от": cheaper listings are not taken
 
     @field_validator("model", mode="after")
     @classmethod
@@ -68,6 +69,9 @@ class Pick(BaseModel):
     def _has_price(self) -> Pick:
         if self.price_rule is PriceRule.FIXED and self.max_price_nano is None:
             raise ValueError("a pick with a fixed price needs max_price_nano")
+        low, high = self.min_price_nano, self.max_price_nano
+        if low is not None and high is not None and low > high:
+            raise ValueError("min_price_nano is above max_price_nano")
         return self
 
     def limit_nano(self, enrichment: Enrichment) -> int | None:
@@ -86,6 +90,12 @@ class Pick(BaseModel):
     def price_text(self) -> str:
         return PRICE_RULE_TEXT.get(self.price_rule) or format_ton(self.max_price_nano)
 
+    def range_text(self) -> str:
+        """'≤ 7 TON', 'от 3 TON до 7 TON', '≤ флор модели', 'от 3 TON до флор модели'."""
+        if self.min_price_nano is None:
+            return f"≤ {self.price_text()}"
+        return f"от {format_ton(self.min_price_nano)} до {self.price_text()}"
+
     def specificity(self) -> int:
         return (self.model is not None) + bool(self.backdrops)
 
@@ -97,7 +107,7 @@ class Pick(BaseModel):
     def label(self, *, monochrome: bool = False) -> str:
         anything = "все монохромные фоны" if monochrome else "любой фон"
         backdrops = ", ".join(self.backdrops) if self.backdrops else anything
-        return f"{self.model or 'все модели'} · {backdrops} ≤ {self.price_text()}"
+        return f"{self.model or 'все модели'} · {backdrops} {self.range_text()}"
 
 
 def matching_pick(picks: list[Pick], listing: ListingSnapshot, enrichment: Enrichment) -> Pick | None:
@@ -254,6 +264,8 @@ def evaluate(
             failed.append("модель и фон не выбраны в мини-приложении")
         elif price is not None:
             limit = pick.limit_nano(enrichment)
+            if pick.min_price_nano is not None and price < pick.min_price_nano:
+                failed.append(f"цена ниже {format_ton(pick.min_price_nano)} ({pick.model or 'все модели'})")
             if limit is None:
                 failed.append(f"{pick.price_text()} неизвестен — нет других объявлений или MRKT не ответил")
             elif price > limit:
