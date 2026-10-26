@@ -29,7 +29,14 @@ from gift_sniper.domain.enums import BudgetScope, FilterKind, PurchaseMode, Purc
 from gift_sniper.domain.money import NANO_PER_TON, ton_to_nano
 from gift_sniper.domain.normalize import normalize_name
 from gift_sniper.integrations.mrkt import MrktAttribute, MrktError
-from gift_sniper.services.filters import FilterCriteria, FilterLimits, Pick, PriceRule, describe_criteria
+from gift_sniper.services.filters import (
+    PRICE_RULE_TEXT,
+    FilterCriteria,
+    FilterLimits,
+    Pick,
+    PriceRule,
+    describe_criteria,
+)
 from gift_sniper.services.percentages import monochrome_model_share
 from gift_sniper.services.reference import ReferenceSnapshot, RefRecord
 from gift_sniper.services.texts import nft_url
@@ -219,6 +226,23 @@ def _whole_floor_pick(picks: list[Pick]) -> Pick | None:
     )
 
 
+def _everywhere(rows: list[Filter]) -> Filter | None:
+    """The mode "every monochrome of every collection up to a floor": a monochrome plan without collections."""
+    for row in rows:
+        if row.kind != FilterKind.MONOCHROME.value or not filters_repo.is_plan(row):
+            continue
+        criteria = FilterCriteria.model_validate(row.criteria or {})
+        if not criteria.collections and _whole_floor_pick(criteria.picks) is not None:
+            return row
+    return None
+
+
+def _everywhere_rule(rows: list[Filter]) -> str | None:
+    row = _everywhere(rows)
+    pick = _whole_floor_pick(_picks_of(row)) if row is not None and row.enabled else None
+    return pick.price_rule.value if pick is not None else None
+
+
 def _floor_pick(
     model: str | None, rule: str, backdrops: list[str] | None = None, low: int | None = None
 ) -> Pick:
@@ -370,6 +394,7 @@ class MiniAppApi:
             "run_mode": run_mode,
             "max_run_mode": self.settings.run_mode.value,  # RUN_MODE in .env: the mode can go up to it
             "poll_interval": await self.control.poll_interval(),
+            "monochrome_everywhere": _everywhere_rule(rows),
             "stopped": stopped,
             "autobuy_enabled": prefs.autobuy_enabled,
             "monochrome_autobuy_enabled": prefs.monochrome_autobuy_enabled,
@@ -440,6 +465,35 @@ class MiniAppApi:
                 }
             )
         return {"items": items, "giftwiki_records": snapshot.records_count}
+
+    async def set_monochrome_mode(self, user_id: int, payload: dict[str, Any]) -> dict[str, Any]:
+        """The modes "every monochrome up to the collection floor / up to the model floor": one rule for all
+        collections, also those MRKT adds later (rule: null turns the mode off)."""
+        raw = payload.get("rule")
+        if raw not in (None, PriceRule.COLLECTION_FLOOR.value, PriceRule.MODEL_FLOOR.value):
+            raise ApiError("Неизвестное правило цены")
+        async with self.sessionmaker() as session, session.begin():
+            row = _everywhere(await filters_repo.list_filters(session, user_id))
+            if raw is None:
+                if row is not None:
+                    await filters_repo.delete_filter(session, row)
+            else:
+                rule = PriceRule(raw)
+                if row is None:
+                    try:
+                        row = await filters_repo.create_filter(
+                            session, user_id, "📱 Все монохромы", FilterKind.MONOCHROME, plan=True
+                        )
+                    except ValueError as exc:
+                        raise ApiError(str(exc)) from exc
+                filters_repo.update_criteria(row, FilterCriteria(picks=[Pick(price_rule=rule)]))
+                row.name = f"📱 Все монохромы · {PRICE_RULE_TEXT[rule]}"[:64]
+                filters_repo.set_enabled(row, True)
+                row.autobuy = self.settings.can_purchase(user_id)
+                await self._enable_mode(session, user_id, row)
+            await misc.audit(session, "webapp_monochrome_mode", user_id=user_id, rule=raw)
+        await self.filter_cache.invalidate()
+        return await self.me(user_id)
 
     async def monochromes_everywhere(self, user_id: int, payload: dict[str, Any]) -> dict[str, Any]:
         """Any monochrome up to the collection or model floor in every collection with monochrome data

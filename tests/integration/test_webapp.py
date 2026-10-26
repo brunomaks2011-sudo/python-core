@@ -17,6 +17,7 @@ from gift_sniper.db.repo import users as users_repo
 from gift_sniper.domain.types import FeedEvent, MonochromeRecord
 from gift_sniper.integrations.mrkt import MrktAttribute
 from gift_sniper.services.enrichment import ReferenceStore
+from gift_sniper.services.floors import FloorService
 from gift_sniper.services.processor import ListingProcessor
 from gift_sniper.services.queue import MemoryQueue
 from gift_sniper.webapp.api import MiniAppApi
@@ -318,6 +319,77 @@ async def test_every_monochrome_up_to_the_floor_in_one_tap(client: TestClient, e
     detail = await (await client.get(PEPE, headers=auth())).json()
     assert detail["whole"]["monochrome_rule"] is None and detail["taken"] == 1
     assert (await client.put("/api/monochromes", headers=auth(), json={"rule": "fixed"})).status == 400
+
+
+async def test_modes_every_monochrome_up_to_the_collection_or_model_floor(
+    client: TestClient,  # type: ignore[type-arg]
+    env: Env,
+) -> None:
+    """One rule for all collections, also those nothing was chosen in (and those MRKT adds later)."""
+    await env.add_giftwiki("Plush Pepe", [("Onyx", "Black", "high")])
+    await env.add_giftwiki("Lol Pop", [("Sweet", "Black", "high")], gift_id="gw-2")
+    mode = "/api/monochrome-mode"
+    me = await (await client.put(mode, headers=auth(), json={"rule": "collection_floor"})).json()
+    assert me["monochrome_everywhere"] == "collection_floor"
+    me = await (await client.put(mode, headers=auth(), json={"rule": "model_floor"})).json()
+    assert me["monochrome_everywhere"] == "model_floor" and me["modes_missing"] == []
+    cards = (await (await client.get("/api/rules", headers=auth())).json())["items"]
+    assert [(r["name"], r["kind"], r["collection"], r["plan"], r["autobuy"]) for r in cards] == [
+        ("📱 Все монохромы · флор модели", "monochrome", None, True, True)
+    ]  # switching the floor keeps the one rule
+    collections = (await (await client.get("/api/collections", headers=auth())).json())["items"]
+    assert all(c["monochrome_floor"] is None and not c["taken"] for c in collections)
+    await client.put(
+        "/api/settings",
+        headers=auth(),
+        json={"per_purchase_ton": "20", "daily_ton": "50", "total_ton": "100"},
+    )
+
+    sweet = {"collection_name": "Lol Pop", "collection_title": "Lol Pop", "model_name": "Sweet"}
+    env.mrkt.market = [
+        make_listing("other-sweet", number=1, backdrop_name="White", price_nano=3 * TON, **sweet)
+    ]
+    queue = MemoryQueue()
+    processor = ListingProcessor(
+        env.settings,
+        env.sessionmaker,
+        env.enricher,
+        env.filter_cache,
+        env.notifier,
+        queue,
+        floors=FloorService(env.mrkt),
+    )
+
+    async def judge(gift_id: str, number: int, price: int, **kw: str) -> list[int]:
+        listing = make_listing(gift_id, number=number, price_nano=price, **{**sweet, **kw})
+        event = FeedEvent(gift_id, "listing", listing, price, datetime.now(UTC) - timedelta(seconds=1))
+        return (await processor.process(event, detected_at=datetime.now(UTC))).matched_filters
+
+    assert await judge("s1", 2, 3 * TON) == [cards[0]["id"]]  # a monochrome at the model floor
+    assert queue.published[-1]["mode"] == "monochrome"
+    assert await judge("s2", 3, 4 * TON) == []  # above the floor
+    assert (
+        await judge(
+            "p1",
+            4,
+            TON,
+            **{"collection_name": "Plush Pepe", "collection_title": "Plush Pepe", "model_name": "Onyx"},
+        )
+        == []
+    )  # no other Onyx on sale: no floor
+    lookups = len(env.mrkt.search_queries)
+    assert await judge("s3", 5, TON, backdrop_name="White") == []  # not a monochrome: no floor needed
+    assert len(env.mrkt.search_queries) == lookups
+
+    await client.put(f"/api/rules/{cards[0]['id']}", headers=auth(), json={"enabled": False})
+    assert (await (await client.get("/api/me", headers=auth())).json())["monochrome_everywhere"] is None
+    await client.put(mode, headers=auth(), json={"rule": "model_floor"})  # back on: the same rule again
+    cards = (await (await client.get("/api/rules", headers=auth())).json())["items"]
+    assert [(r["id"], r["enabled"]) for r in cards] == [(cards[0]["id"], True)]
+    off = await (await client.put(mode, headers=auth(), json={"rule": None})).json()
+    assert off["monochrome_everywhere"] is None
+    assert (await (await client.get("/api/rules", headers=auth())).json())["items"] == []
+    assert (await client.put(mode, headers=auth(), json={"rule": "fixed"})).status == 400
 
 
 async def test_notification_switches_and_what_blocks_buying(client: TestClient, env: Env) -> None:  # type: ignore[type-arg]

@@ -602,47 +602,56 @@ async function renderCollections() {
   window.scrollTo(0, S.list.scroll);
 }
 function drawMonoAll() {
-  const withMono = S.collections.filter((c) => c.monochrome_pairs), on = withMono.filter((c) => c.monochrome_floor);
-  const rule = on.length ? on[0].monochrome_floor : null;
+  const rule = S.me.monochrome_everywhere, withMono = S.collections.filter((c) => c.monochrome_pairs);
   $("#monoall").innerHTML = withMono.length ? `<button class="rowbtn" id="monoallbtn"><div class="grow"><b>⚫ Все монохромы по флору</b>
-    <div class="sub">${on.length ? `включено в ${on.length} из ${withMono.length} · ${RULE_UPTO[rule]}` : `выключено · коллекций с монохромами: ${withMono.length}`}</div></div>
+    <div class="sub">${rule ? `во всех коллекциях · ${RULE_UPTO[rule]}` : `выключено · коллекций с монохромами: ${withMono.length}`}</div></div>
     <span class="chev">›</span></button>` : "";
   if (withMono.length) $("#monoallbtn").onclick = () => { haptic(); openMonoAllSheet(); };
 }
-// one tap for every collection with monochrome data: any monochrome up to its collection or model floor
+// the modes "all monochromes up to the collection / model floor" of the settings, one tap from the catalog
 function openMonoAllSheet() {
-  const withMono = S.collections.filter((c) => c.monochrome_pairs), on = withMono.filter((c) => c.monochrome_floor);
-  const n = withMono.length, where = `${n} ${plural(n, "коллекции", "коллекциях", "коллекциях")}`;
-  let rule = on.length ? on[0].monochrome_floor : "collection_floor";
+  const current = S.me.monochrome_everywhere;
+  const own = S.collections.filter((c) => c.monochrome_floor);  // "any monochrome up to a floor" set in a collection
+  let rule = current || "collection_floor";
   Sheet.open(`<h3>⚫ Все монохромы по флору</h3>
-    <p class="sub" style="margin:0 2px 14px">Бот будет брать любой монохром во всех коллекциях с данными о монохромах (${n}), если он не дороже флора.</p>
+    <p class="sub" style="margin:0 2px 14px">Бот будет покупать любой монохром во всех коллекциях, и в новых тоже, если он не дороже флора.</p>
     <div class="seg" id="allrule"><button data-rule="collection_floor">Флор коллекции</button><button data-rule="model_floor">Флор модели</button></div>
     <p class="hint" id="allhint"></p>
-    <p class="hint">Заменяет «Любой монохром» в каждой коллекции. Модели и фоны, выбранные отдельно, покупаются по своим ценам. Общие лимиты действуют.</p>
-    <button class="btn" id="allon">Включить в ${where}</button>
-    ${on.length ? `<button class="btn danger" id="alloff" style="margin-top:8px">Выключить везде (${on.length})</button>` : ""}`, (root) => {
+    <p class="hint">Модели и фоны, выбранные в коллекциях, покупаются по своим ценам. Общие лимиты действуют. Этот же режим есть в «Настройках».</p>
+    <button class="btn" id="allon"></button>
+    ${current ? '<button class="btn danger" id="alloff" style="margin-top:8px">Выключить</button>' : ""}
+    ${own.length ? `<p class="hint" style="margin-top:16px">Ещё в ${own.length} ${plural(own.length, "коллекции", "коллекциях", "коллекциях")} «все монохромы по флору» выбраны в самой коллекции — они действуют и без этого режима.</p>
+      <button class="btn soft" id="ownoff">Убрать из коллекций</button>` : ""}`, (root) => {
     const sync = () => {
       $$("#allrule [data-rule]", root).forEach((b) => b.classList.toggle("on", b.dataset.rule === rule));
       $("#allhint", root).textContent = rule === "collection_floor"
         ? "Флор коллекции — самый дешёвый другой подарок этой коллекции на MRKT."
         : "Флор модели — самая дешёвая другая копия той же модели на MRKT.";
+      $("#allon", root).textContent = !current ? "Включить" : current === rule ? "Включено" : "Переключить";
+      $("#allon", root).disabled = current === rule;
     };
     $$("#allrule [data-rule]", root).forEach((b) => (b.onclick = () => { rule = b.dataset.rule; haptic(); sync(); }));
     sync();
     const apply = async (button, value) => {
-      if (value && !(await confirmBox(`Бот будет покупать любой монохром ${RULE_UPTO[value]} в ${where} — в пределах лимитов. Включить?`))) return;
       button.disabled = true;
-      try {
-        const res = await api("/monochromes", "PUT", { rule: value });
-        Sheet.close(); haptic("success");
-        toast(res.error || (value ? `Включено в ${res.changed} ${plural(res.changed, "коллекции", "коллекциях", "коллекциях")}` : "Выключено"));
-        changed();
-        await ensureCollections();
-        if (S.tab === "collections" && S.page === "list") { drawMonoAll(); drawCollectionsGrid(); }
-      } catch (err) { button.disabled = false; toast(err.message); haptic("error"); }
+      if (!(await setEverywhere(value))) { button.disabled = false; return; }
+      Sheet.close();
+      if (S.tab === "collections" && S.page === "list") drawMonoAll();
     };
     $("#allon", root).onclick = (e) => apply(e.target, rule);
     if ($("#alloff", root)) $("#alloff", root).onclick = (e) => apply(e.target, null);
+    if ($("#ownoff", root)) $("#ownoff", root).onclick = async (e) => {
+      if (!(await confirmBox("Убрать «все монохромы по флору» из коллекций? Модели и фоны, выбранные отдельно, останутся."))) return;
+      e.target.disabled = true;
+      try {
+        const res = await api("/monochromes", "PUT", { rule: null });
+        Sheet.close(); haptic("success");
+        toast(res.error || `Убрано из ${res.changed} ${plural(res.changed, "коллекции", "коллекций", "коллекций")}`);
+        changed();
+        await ensureCollections();
+        if (S.tab === "collections" && S.page === "list") { drawMonoAll(); drawCollectionsGrid(); }
+      } catch (err) { e.target.disabled = false; toast(err.message); haptic("error"); }
+    };
   });
 }
 function drawCollectionsGrid() {
@@ -999,8 +1008,9 @@ async function saveModel() {
 
 // ------------------------------------------------------------------ what the bot takes
 function groupRules(items) {
-  const groups = new Map(), other = [];
+  const groups = new Map(), other = [], everywhere = [];
   for (const r of items) {
+    if (r.plan && !r.collection) { everywhere.push(r); continue; }  // "all monochromes up to a floor"
     if (!r.plan || !r.collection) { other.push(r); continue; }
     const key = r.collection.toLowerCase();
     if (!groups.has(key)) groups.set(key, { collection: r.collection, image: r.image, rules: [], picks: [] });
@@ -1014,7 +1024,7 @@ function groupRules(items) {
     enabled: g.rules.some((r) => r.enabled), autobuy: g.rules.some((r) => r.autobuy),
     picks: g.picks.sort((a, b) => (a.model || "").localeCompare(b.model || "", "ru") || b.backdrops.length - a.backdrops.length),
   }));
-  return { groups: list.sort(byTitle), other };
+  return { groups: list.sort(byTitle), other, everywhere };
 }
 function pickLine(p) {
   const what = p.backdrops.length ? `⚫ ${p.backdrops.join(", ")}` : p.mono ? "⚫ все монохромы" : "любой фон";
@@ -1036,6 +1046,15 @@ function groupCard(g) {
       <label class="switch"><input type="checkbox" data-en="${g.ids}" ${g.enabled ? "checked" : ""}><span></span></label></div>
     <div class="picks">${g.picks.slice(0, 6).map(pickLine).join("")}${more}</div>${ruleActions(g, g.collection)}</div>`;
 }
+function everywhereCard(r) {
+  const rule = { ...r, ids: String(r.id) }, top = r.pick_items.map((p) => RULE_UPTO[p.rule]).filter(Boolean).join(", ");
+  return `<div class="rcard${r.enabled ? "" : " paused"}">
+    <div class="rhead"><div class="thumb"><span class="letter">⚫</span></div>
+      <div class="grow"><b>Все монохромы</b><div class="sub">${stateText(r)} · во всех коллекциях</div></div>
+      <label class="switch"><input type="checkbox" data-en="${rule.ids}" ${r.enabled ? "checked" : ""}><span></span></label></div>
+    <div class="picks"><div class="pk"><span><b>Все коллекции</b> · ⚫ любой монохром</span><span class="pr">${esc(top)}</span></div></div>
+    ${ruleActions(rule)}</div>`;
+}
 function chatRuleCard(r) {
   const rule = { ...r, ids: String(r.id) };
   return `<div class="rcard${r.enabled ? "" : " paused"}">
@@ -1050,9 +1069,10 @@ async function renderRules() {
   try { [items] = await Promise.all([api("/rules").then((r) => r.items), ensureCollections().catch(() => null)]); }
   catch (err) { if (!stale(id)) fail(err, renderRules); return; }
   if (stale(id)) return;
-  const { groups, other } = groupRules(items);
+  const { groups, other, everywhere } = groupRules(items);
   const on = groups.filter((g) => g.enabled), picks = on.reduce((s, g) => s + g.picks.length, 0);
-  view.innerHTML = head("Берёт бот") + banner() + (groups.length || other.length ? `
+  view.innerHTML = head("Берёт бот") + banner() + (groups.length || other.length || everywhere.length ? `
+    ${everywhere.map(everywhereCard).join("")}
     ${groups.length ? `<p class="total">Бот берёт <b>${picks}</b> ${plural(picks, "позицию", "позиции", "позиций")} в <b>${on.length}</b> ${plural(on.length, "коллекции", "коллекциях", "коллекциях")}</p>` : ""}
     ${groups.map(groupCard).join("")}
     ${other.length ? `<div class="label">Фильтры из чата</div>${other.map(chatRuleCard).join("")}` : ""}
@@ -1121,7 +1141,27 @@ function workCard(m) {
       <label class="switch"><input type="checkbox" id="buyswitch" ${buying ? "checked" : ""} ${m.is_admin ? "" : "disabled"}><span></span></label></div>
     <div class="line"><div class="grow"><b>🔔 Листинги</b><div class="sub">бот присылает листинги подарков по вашему выбору${buying ? ", которые не покупает сам" : ""}</div></div>
       <label class="switch"><input type="checkbox" data-notify="matching_only" ${m.notify.matching_only ? "checked" : ""}><span></span></label></div>
-    </div>${m.is_admin ? "" : '<p class="hint">Покупки включает администратор.</p>'}`;
+    ${EVERYWHERE.map(([rule, title, sub]) => `<div class="line"><div class="grow"><b>${title}</b><div class="sub">${sub}</div></div>
+      <label class="switch"><input type="checkbox" data-everywhere="${rule}" ${m.monochrome_everywhere === rule ? "checked" : ""}><span></span></label></div>`).join("")}
+    </div><p class="hint">Режимы «по флору» действуют во всех коллекциях, и в новых тоже, вместе с тем, что выбрано в коллекциях;
+      включён может быть один из них. Покупки — в пределах лимитов и при включённом «💸 Покупать».</p>
+    ${m.is_admin ? "" : '<p class="hint">Покупки включает администратор.</p>'}`;
+}
+const EVERYWHERE = [
+  ["collection_floor", "⚫ Монохромы по флору коллекции", "любой монохром, если он не дороже самого дешёвого подарка коллекции"],
+  ["model_floor", "⚫ Монохромы по флору модели", "любой монохром, если он не дороже самой дешёвой копии той же модели"],
+];
+// one rule for every collection: the bot keeps at most one of the two floors
+async function setEverywhere(rule) {
+  if (rule && !(await confirmBox(`Бот будет покупать любой монохром во всех коллекциях ${RULE_UPTO[rule]} — в пределах лимитов. Включить?`))) return false;
+  haptic();
+  try {
+    S.me = await api("/monochrome-mode", "PUT", { rule });
+    haptic("success");
+    toast(rule ? `Все монохромы ${RULE_UPTO[rule]}` : "Монохромы по флору выключены");
+    return true;
+  } catch (err) { toast(err.message); haptic("error"); return false; }
+  finally { updateChrome(); }
 }
 async function setMode(mode) {
   const m = S.me;
@@ -1213,6 +1253,12 @@ function drawStatus() {
     setMode(want ? "live" : "notify_only");
   };
   $("#work [data-notify]").onchange = (e) => savePrefs({ notify: { matching_only: e.target.checked } });
+  $$("#work [data-everywhere]").forEach((el) => (el.onchange = async () => {
+    const want = el.checked ? el.dataset.everywhere : null;
+    el.checked = !el.checked;  // shown as the bot has it until the change is saved
+    await setEverywhere(want);
+    drawStatus();
+  }));
   $$("#speedseg [data-speed]").forEach((b) => (b.onclick = async () => {
     haptic();
     try {
