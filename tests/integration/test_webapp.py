@@ -14,12 +14,14 @@ from gift_sniper.db.repo import filters as filters_repo
 from gift_sniper.db.repo import giftwiki as giftwiki_repo
 from gift_sniper.db.repo import listings as listings_repo
 from gift_sniper.db.repo import users as users_repo
+from gift_sniper.domain.enums import FeedEventType, MonochromeStatus
 from gift_sniper.domain.types import FeedEvent, MonochromeRecord
 from gift_sniper.integrations.mrkt import MrktAttribute
 from gift_sniper.services.enrichment import ReferenceStore
 from gift_sniper.services.floors import FloorService
 from gift_sniper.services.processor import ListingProcessor
 from gift_sniper.services.queue import MemoryQueue
+from gift_sniper.services.search import SearchService
 from gift_sniper.webapp.api import MiniAppApi
 from gift_sniper.webapp.server import create_app
 from tests.factories import TON, make_listing, make_settings
@@ -51,6 +53,7 @@ async def client(env: Env) -> AsyncIterator[TestClient]:  # type: ignore[type-ar
         env.filter_cache,
         env.service,
         env.control,
+        search=SearchService(env.mrkt, env.enricher, env.sessionmaker),  # type: ignore[arg-type]
     )
     client = TestClient(TestServer(create_app(api, make_settings(telegram_bot_token=TOKEN))))
     await client.start_server()
@@ -574,3 +577,220 @@ async def test_data_synced_by_another_process_shows_up(client: TestClient, env: 
     await ReferenceStore(env.sessionmaker, env.redis, env.settings.redis_prefix).bump()  # the other process
     listing = await (await client.get("/api/collections", headers=auth())).json()
     assert next(c for c in listing["items"] if c["name"] == "Plush Pepe")["monochrome_pairs"] == 1
+
+
+async def sold(env: Env, *listings: object) -> None:
+    """Sales the bot saw in the MRKT feed."""
+    async with env.sessionmaker() as session, session.begin():
+        for listing in listings:
+            await listings_repo.upsert_gift(session, listing)  # type: ignore[arg-type]
+            await listings_repo.apply_event(
+                session,
+                FeedEventType.SALE.value,
+                listing,  # type: ignore[arg-type]
+                price_nano=listing.price_nano,  # type: ignore[attr-defined]
+                event_date=None,
+                source="feed",
+                source_event_id=None,
+            )
+
+
+async def test_search_screen_backdrops_patterns_prices_and_sales(
+    client: TestClient,  # type: ignore[type-arg]
+    env: Env,
+) -> None:
+    await env.add_giftwiki("Plush Pepe", [("Onyx", "Black", "high"), ("Ivory", "White", "combo")])
+    env.mrkt.attributes[("backdrop", "Plush Pepe")] = [
+        MrktAttribute("Black", 20),
+        MrktAttribute("Cobalt", 15),
+    ]
+    onyx_black = make_listing(
+        "ob", number=1212, price_nano=9 * TON, name="PlushPepe-1212", symbol_name="Star"
+    )
+    onyx_cobalt = make_listing(
+        "oc", number=1300, price_nano=4 * TON, backdrop_name="Cobalt", symbol_name="Moon"
+    )
+    ivory_white = make_listing(
+        "iw",
+        number=777,
+        price_nano=6 * TON,
+        model_name="Ivory",
+        backdrop_name="White",
+        backdrop_center_color=0xFAFAFA,
+    )
+    env.mrkt.market = [onyx_black, onyx_cobalt, ivory_white]
+    await sold(
+        env,
+        make_listing("s1", number=3434, price_nano=8 * TON),
+        make_listing("s2", number=500, price_nano=3 * TON, backdrop_name="Cobalt"),
+    )
+    async with env.sessionmaker() as session, session.begin():
+        for gift in (onyx_cobalt, ivory_white):
+            await listings_repo.upsert_gift(session, gift)
+
+    detail = await (await client.get(PEPE, headers=auth())).json()
+    backdrops = {b["name"]: b for b in detail["backdrops"]}
+    assert set(backdrops) == {"Black", "Cobalt", "White"}
+    assert (
+        backdrops["Black"]["mono"] == [{"model": "Onyx", "type": "high"}]
+        and backdrops["Black"]["rarity"] == 2.0
+    )
+    assert backdrops["White"]["center"] == "#fafafa" and backdrops["Cobalt"]["mono"] == []
+    assert {s["name"] for s in detail["symbols"]} >= {"Moon", "Star"}
+
+    prices = await (
+        await client.post(
+            "/api/prices",
+            headers=auth(),
+            json={"collection": "Plush Pepe", "models": ["Onyx"], "backdrops": ["Black"]},
+        )
+    ).json()
+    cards = {c["kind"]: c for c in prices["cards"]}
+    assert prices["error"] is None and [c["kind"] for c in prices["cards"]] == [
+        "collection",
+        "selection",
+        "model",
+        "backdrop",
+    ]
+    assert (cards["collection"]["floor"], cards["model"]["floor"], cards["selection"]["floor"]) == (4, 4, 9)
+    assert cards["selection"]["gift"]["url"] == "https://t.me/mrkt/app?startapp=ob"
+    assert cards["collection"]["last_sale"] == 3 and cards["model"]["last_sale"] == 3  # the newest sale seen
+    mono = await (
+        await client.post(
+            "/api/prices", headers=auth(), json={"collection": "Plush Pepe", "monochrome": True}
+        )
+    ).json()
+    assert [c["floor"] for c in mono["cards"]] == [4, 6]  # Ivory on White is the cheapest monochrome pair
+
+    on_sale = await (
+        await client.post("/api/market", headers=auth(), json={"collection": "Plush Pepe", "pattern": "ABAB"})
+    ).json()
+    assert [i["id"] for i in on_sale["items"]] == ["ob"] and on_sale["items"][0]["mono"] == "high"
+    every = await (
+        await client.post(
+            "/api/market", headers=auth(), json={"collection": "Plush Pepe", "symbols": ["Moon"]}
+        )
+    ).json()
+    assert [i["id"] for i in every["items"]] == ["oc"]
+    sales = await (
+        await client.post("/api/market", headers=auth(), json={"collection": "Plush Pepe", "view": "sold"})
+    ).json()
+    assert [(i["id"], i["price"]) for i in sales["items"]] == [("s2", 3), ("s1", 8)] and sales["since"]
+    shaped = await (
+        await client.post(
+            "/api/market",
+            headers=auth(),
+            json={"collection": "Plush Pepe", "view": "sold", "pattern": "abab"},
+        )
+    ).json()
+    assert [i["id"] for i in shaped["items"]] == ["s1"]
+    bad = await client.post(
+        "/api/market", headers=auth(), json={"collection": "Plush Pepe", "pattern": "12-34"}
+    )
+    assert bad.status == 400
+
+
+async def test_subscriptions_from_the_search_screen(client: TestClient, env: Env) -> None:  # type: ignore[type-arg]
+    body = {
+        "collection": "Plush Pepe",
+        "models": ["Onyx"],
+        "backdrops": ["Black", "Cobalt"],
+        "pattern": "aaa",
+        "autobuy": True,
+        "notify_new": True,
+        "notify_price": False,
+    }
+    no_price = await client.post("/api/subscriptions", headers=auth(), json=body)
+    assert no_price.status == 400 and "цену" in (await no_price.json())["error"]
+    created = await client.post(
+        "/api/subscriptions", headers=auth(), json={**body, "min_price_ton": "2", "max_price_ton": "15"}
+    )
+    assert created.status == 201
+    view = await created.json()
+    assert (view["name"], view["autobuy"], view["pattern"], view["models"], view["backdrops"]) == (
+        "Plush Pepe",
+        True,
+        "AAA",
+        ["Onyx"],
+        ["Black", "Cobalt"],
+    )
+    assert (
+        view["min_price"],
+        view["max_price"],
+        view["notify_new"],
+        view["notify_price"],
+        view["editable"],
+    ) == (2, 15, True, False, True)
+    queue = MemoryQueue()
+    processor = ListingProcessor(
+        env.settings, env.sessionmaker, env.enricher, env.filter_cache, env.notifier, queue
+    )
+    await client.put(
+        "/api/settings",
+        headers=auth(),
+        json={"per_purchase_ton": "20", "daily_ton": "50", "total_ton": "100"},
+    )
+    for gift_id, number in (("n1", 555), ("n2", 556)):
+        listing = make_listing(gift_id, number=number, price_nano=10 * TON)
+        event = FeedEvent(gift_id, "listing", listing, 10 * TON, datetime.now(UTC) - timedelta(seconds=1))
+        await processor.process(event, detected_at=datetime.now(UTC))
+    assert [p["gift_id"] for p in queue.published] == ["n1"]  # 556 is not "AAA"
+
+    switched = await (
+        await client.patch(f"/api/rules/{view['id']}", headers=auth(), json={"notify_price": True})
+    ).json()
+    assert switched["notify_price"] is True and switched["notify_new"] is True
+    edited = await client.put(
+        f"/api/subscriptions/{view['id']}",
+        headers=auth(),
+        json={"collection": "Plush Pepe", "name": "Чёрные", "monochrome": True, "notify_new": False},
+    )
+    edited_view = await edited.json()
+    assert (edited_view["name"], edited_view["kind"], edited_view["autobuy"], edited_view["pattern"]) == (
+        "Чёрные",
+        "monochrome",
+        False,
+        None,
+    )
+    plan = await (
+        await client.put(PEPE + "/picks", headers=auth(), json={"model": "Onyx", "any_price_ton": "5"})
+    ).json()
+    cards = (await (await client.get("/api/rules", headers=auth())).json())["items"]
+    plan_card = next(c for c in cards if c["plan"])
+    assert plan["taken"] == 1 and plan_card["editable"] is False
+    refused = await client.put(
+        f"/api/subscriptions/{plan_card['id']}", headers=auth(), json={"collection": "Plush Pepe"}
+    )
+    assert refused.status == 400
+
+
+async def test_leaders_from_what_the_bot_saw(client: TestClient, env: Env) -> None:  # type: ignore[type-arg]
+    await sold(
+        env,
+        make_listing("a", number=1, price_nano=30 * TON),
+        make_listing("b", number=2, price_nano=10 * TON),
+        make_listing(
+            "c", number=3, price_nano=5 * TON, collection_name="Lol Pop", collection_title="Lol Pop"
+        ),
+    )
+    on_sale = make_listing("m", number=4, price_nano=7 * TON)
+    async with env.sessionmaker() as session, session.begin():
+        await listings_repo.upsert_gift(session, on_sale)
+        await listings_repo.apply_event(
+            session,
+            FeedEventType.LISTING.value,
+            on_sale,
+            price_nano=on_sale.price_nano,
+            event_date=None,
+            source="feed",
+            source_event_id=None,
+            monochrome_status=MonochromeStatus.MONOCHROME,
+        )
+    board = await (await client.get("/api/leaders?days=1", headers=auth())).json()
+    assert [(c["name"], c["sales"], c["volume"]) for c in board["collections"]] == [
+        ("Plush Pepe", 2, 40),
+        ("Lol Pop", 1, 5),
+    ]
+    assert [s["id"] for s in board["sales"]] == ["a", "b", "c"] and board["since"]
+    assert [(m["id"], m["price"]) for m in board["monochromes"]] == [("m", 7)]
+    assert (await client.get("/api/leaders?days=2", headers=auth())).status == 400

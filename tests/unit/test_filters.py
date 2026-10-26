@@ -18,6 +18,7 @@ from gift_sniper.services.filters import (
     describe_criteria,
     evaluate,
     floor_rules,
+    number_matches,
 )
 from tests.factories import TON, make_enrichment, make_listing
 
@@ -215,3 +216,39 @@ def test_a_fixed_price_pick_needs_its_price() -> None:
     assert Pick(model="Onyx", price_rule=PriceRule.MODEL_FLOOR).max_price_nano is None
     old = FilterCriteria.model_validate({"picks": [{"model": "Onyx", "max_price_nano": 5 * TON}]})
     assert old.picks[0].price_rule is PriceRule.FIXED  # picks saved before the floor rules
+
+
+@pytest.mark.parametrize(
+    ("pattern", "number", "matches"),
+    [
+        ("777", 777, True),
+        ("777", 7770, False),
+        ("AAA", 555, True),
+        ("AAA", 556, False),
+        ("AAA", 5555, False),
+        ("ABABAB", 121212, True),
+        ("ABABAB", 111111, False),  # different letters are different digits
+        ("ABBA", 1221, True),
+        ("A00", 300, True),
+        ("A00", 310, False),
+        ("ААА", 444, True),  # letters typed on a Russian keyboard work too
+        ("AAA", None, False),
+    ],
+)
+def test_number_or_pattern(pattern: str, number: int | None, matches: bool) -> None:
+    assert number_matches(pattern, number) is matches
+
+
+def test_number_pattern_in_criteria() -> None:
+    criteria = FilterCriteria(number_pattern=" #ababab ")
+    assert criteria.number_pattern == "ABABAB"
+    assert check(criteria, number=343434).matched
+    failed = check(criteria, number=343435)
+    assert failed.failed == ["номер не подходит под «ABABAB»"]
+    assert "Шаблон номера: ABABAB" in describe_criteria(FilterKind.REGULAR, criteria)
+    assert "Номер: 777" in describe_criteria(FilterKind.REGULAR, FilterCriteria(number_pattern="777"))
+    assert FilterCriteria(number_pattern="  ").number_pattern is None
+    with pytest.raises(ValidationError):
+        FilterCriteria(number_pattern="12-34")
+    with pytest.raises(ValidationError):
+        FilterCriteria(number_pattern="ABCDEFGH")

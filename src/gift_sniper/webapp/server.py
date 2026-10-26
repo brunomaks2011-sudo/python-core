@@ -151,6 +151,32 @@ def create_app(api: MiniAppApi, settings: Settings) -> web.Application:
     async def history(request: web.Request) -> web.Response:
         return web.json_response(await api.history(await caller(request)))
 
+    async def prices(request: web.Request) -> web.Response:
+        user_id = await caller(request)
+        return web.json_response(await api.prices(user_id, await body(request)))
+
+    async def market(request: web.Request) -> web.Response:
+        user_id = await caller(request)
+        return web.json_response(await api.market(user_id, await body(request)))
+
+    async def leaders(request: web.Request) -> web.Response:
+        user_id = await caller(request)
+        try:
+            days = int(request.query.get("days", "1"))
+        except ValueError as exc:
+            raise ApiError("Период — 1, 7 или 30 дней") from exc
+        return web.json_response(await api.leaders(user_id, days))
+
+    async def create_subscription(request: web.Request) -> web.Response:
+        user_id = await caller(request)
+        return web.json_response(await api.create_subscription(user_id, await body(request)), status=201)
+
+    async def update_subscription(request: web.Request) -> web.Response:
+        user_id = await caller(request)
+        return web.json_response(
+            await api.update_subscription(user_id, rule_id(request), await body(request))
+        )
+
     app = web.Application(middlewares=[errors], client_max_size=64 * 1024)
     app.router.add_get("/", root)
     app.router.add_get("/app/", index)
@@ -171,6 +197,11 @@ def create_app(api: MiniAppApi, settings: Settings) -> web.Application:
     app.router.add_post("/api/stop", stop)
     app.router.add_post("/api/resume", resume)
     app.router.add_get("/api/history", history)
+    app.router.add_post("/api/prices", prices)
+    app.router.add_post("/api/market", market)
+    app.router.add_get("/api/leaders", leaders)
+    app.router.add_post("/api/subscriptions", create_subscription)
+    app.router.add_put("/api/subscriptions/{rule_id}", update_subscription)
     return app
 
 

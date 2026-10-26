@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
+from typing import Any
 
 from sqlalchemy import func, select, update
 from sqlalchemy.dialects.postgresql import insert as pg_insert
@@ -409,3 +411,110 @@ async def backdrop_colors(session: AsyncSession) -> dict[str, tuple[int | None, 
         .group_by(Gift.backdrop_name)
     )
     return {normalize_name(str(b)): (c, e) for b, c, e in (await session.execute(stmt)).all()}
+
+
+async def collection_symbols(session: AsyncSession, collection_name: str) -> dict[str, int | None]:
+    """Symbols (patterns) seen on MRKT gifts of a collection: name -> rarity per mille."""
+    stmt = (
+        select(Gift.symbol_name, func.max(Gift.symbol_rarity_permille))
+        .where(Gift.collection_name == collection_name, Gift.symbol_name.is_not(None))
+        .group_by(Gift.symbol_name)
+    )
+    return {str(name): rarity for name, rarity in (await session.execute(stmt)).all()}
+
+
+def _attributes_in(models: Sequence[str], backdrops: Sequence[str], symbols: Sequence[str]) -> list[Any]:
+    conditions = []
+    for column, names in (
+        (Gift.model_name, models),
+        (Gift.backdrop_name, backdrops),
+        (Gift.symbol_name, symbols),
+    ):
+        if names:
+            conditions.append(func.lower(column).in_([n.lower() for n in names]))
+    return conditions
+
+
+SALE = FeedEventType.SALE.value
+
+
+async def recent_sales(
+    session: AsyncSession,
+    collection_name: str,
+    *,
+    models: Sequence[str] = (),
+    backdrops: Sequence[str] = (),
+    symbols: Sequence[str] = (),
+    limit: int = 100,
+) -> list[tuple[PriceHistory, Gift]]:
+    """Sales of a collection seen in the MRKT feed, newest first."""
+    stmt = (
+        select(PriceHistory, Gift)
+        .join(Gift, Gift.id == PriceHistory.gift_id)
+        .where(
+            PriceHistory.event_type == SALE,
+            PriceHistory.collection_norm == normalize_name(collection_name),
+            *_attributes_in(models, backdrops, symbols),
+        )
+        .order_by(PriceHistory.observed_at.desc(), PriceHistory.id.desc())
+        .limit(limit)
+    )
+    return [(row[0], row[1]) for row in (await session.execute(stmt)).all()]
+
+
+async def first_sale_seen(session: AsyncSession) -> datetime | None:
+    """Since when the bot has seen sales in the MRKT feed."""
+    stmt = select(func.min(PriceHistory.observed_at)).where(PriceHistory.event_type == SALE)
+    return (await session.execute(stmt)).scalar_one_or_none()
+
+
+async def sales_by_collection(
+    session: AsyncSession, since: datetime, limit: int = 10
+) -> list[tuple[str, int, int, int]]:
+    """(collection, number of sales, volume, the highest price) of the sales seen since `since`, by volume."""
+    volume = func.sum(PriceHistory.price_nano)
+    stmt = (
+        select(Gift.collection_name, func.count(), volume, func.max(PriceHistory.price_nano))
+        .join(Gift, Gift.id == PriceHistory.gift_id)
+        .where(
+            PriceHistory.event_type == SALE,
+            PriceHistory.observed_at >= since,
+            Gift.collection_name.is_not(None),
+        )
+        .group_by(Gift.collection_name)
+        .order_by(volume.desc())
+        .limit(limit)
+    )
+    return [(str(c), int(n), int(v), int(top)) for c, n, v, top in (await session.execute(stmt)).all()]
+
+
+async def top_sales(
+    session: AsyncSession, since: datetime, limit: int = 10
+) -> list[tuple[PriceHistory, Gift]]:
+    stmt = (
+        select(PriceHistory, Gift)
+        .join(Gift, Gift.id == PriceHistory.gift_id)
+        .where(PriceHistory.event_type == SALE, PriceHistory.observed_at >= since)
+        .order_by(PriceHistory.price_nano.desc(), PriceHistory.id.desc())
+        .limit(limit)
+    )
+    return [(row[0], row[1]) for row in (await session.execute(stmt)).all()]
+
+
+async def cheapest_monochromes(
+    session: AsyncSession, seen_since: datetime, limit: int = 10
+) -> list[tuple[Listing, Gift]]:
+    """Active listings classified MONOCHROME and seen since `seen_since`, cheapest first."""
+    stmt = (
+        select(Listing, Gift)
+        .join(Gift, Gift.id == Listing.gift_id)
+        .where(
+            Listing.status == ListingStatus.ACTIVE.value,
+            Listing.monochrome_status == MonochromeStatus.MONOCHROME.value,
+            Listing.price_nano.is_not(None),
+            Listing.last_seen_at >= seen_since,
+        )
+        .order_by(Listing.price_nano)
+        .limit(limit)
+    )
+    return [(row[0], row[1]) for row in (await session.execute(stmt)).all()]

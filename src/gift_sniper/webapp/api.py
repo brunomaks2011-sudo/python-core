@@ -7,8 +7,11 @@ the chat interface: every purchase still re-checks price, budgets, monochrome st
 
 from __future__ import annotations
 
+import asyncio
 import json
 import logging
+from collections.abc import Callable
+from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from typing import Any, Literal, Protocol
 
@@ -28,18 +31,23 @@ from gift_sniper.db.repo import users as users_repo
 from gift_sniper.domain.enums import BudgetScope, FilterKind, PurchaseMode, PurchaseRunMode
 from gift_sniper.domain.money import NANO_PER_TON, ton_to_nano
 from gift_sniper.domain.normalize import normalize_name
-from gift_sniper.integrations.mrkt import MrktAttribute, MrktError
+from gift_sniper.domain.types import ListingSnapshot, MonochromeVerdict
+from gift_sniper.integrations.mrkt import MrktAttribute, MrktError, SalingQuery
 from gift_sniper.services.filters import (
+    MAX_LIST_ITEMS,
     PRICE_RULE_TEXT,
     FilterCriteria,
     FilterLimits,
+    FilterSpec,
     Pick,
     PriceRule,
+    clean_number_pattern,
     describe_criteria,
+    number_matches,
 )
 from gift_sniper.services.percentages import monochrome_model_share
 from gift_sniper.services.reference import ReferenceSnapshot, RefRecord
-from gift_sniper.services.texts import nft_url
+from gift_sniper.services.texts import listing_url, nft_url, telegram_nft_url
 from gift_sniper.services.user_prefs import NotificationSettings
 from gift_sniper.webapp.auth import WebAppIdentity
 from gift_sniper.webapp.images import absolute_url, collection_thumb, color_hex, gift_image, giftname
@@ -50,6 +58,13 @@ ATTRIBUTES_TTL_SECONDS = 3600
 # notification switches the Mini App shows (the chat menu has the same ones plus filters and limits)
 NOTIFY_SWITCHES = ("purchases", "errors", "matching_only", "monochrome", "all_listings", "price_drops")
 ATTRIBUTES_FAILURE_TTL_SECONDS = 120
+FLOOR_DEPTH = 5  # cheapest listings read for a floor: auction lots are skipped
+FLOOR_CARDS = 3  # chosen models (and backdrops) that get their own floor card
+MARKET_PAGES = 3  # MRKT pages read for "На продаже"
+MARKET_LIMIT = 40
+SOLD_SCAN = 300  # recent sales read to pick those matching a number pattern or monochrome pairs
+LEADER_PERIODS = (1, 7, 30)
+MONO_SEEN_DAYS = 3  # a monochrome listing not seen for longer is not shown as on sale
 STATUS_LABELS = {
     "confirmed": "куплено",
     "dry_run": "тест: был бы куплен",
@@ -66,6 +81,16 @@ class _Mrkt(Protocol):
     def configured(self) -> bool: ...
 
     async def collection_attributes(self, kind: str, collection_name: str) -> list[MrktAttribute]: ...
+
+    async def search_listings(
+        self, query: SalingQuery, *, priority: bool = False
+    ) -> tuple[list[ListingSnapshot], str | None]: ...
+
+
+class _Search(Protocol):
+    """The chat's 🔎 search of current MRKT listings (services.search.SearchService)."""
+
+    async def search(self, spec: FilterSpec, *, max_pages: int = 3, limit: int = 10) -> Any: ...
 
 
 class _Store(Protocol):
@@ -149,6 +174,39 @@ class LimitsInput(BaseModel):
 
 
 FloorRule = Literal["collection_floor", "model_floor"]
+
+
+class SelectionInput(BaseModel):
+    """The search screen's choice: a collection, optionally models, backdrops, patterns and a number."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    collection: str = Field(min_length=1, max_length=128)
+    models: list[str] = Field(default_factory=list, max_length=MAX_LIST_ITEMS)
+    backdrops: list[str] = Field(default_factory=list, max_length=MAX_LIST_ITEMS)
+    symbols: list[str] = Field(default_factory=list, max_length=MAX_LIST_ITEMS)
+    monochrome: bool = False  # only pairs Gift Wiki confirms as monochrome
+    pattern: str | None = Field(default=None, max_length=16)  # "777" or a shape such as "ABABAB"
+
+    @field_validator("pattern", mode="after")
+    @classmethod
+    def _pattern(cls, value: str | None) -> str | None:
+        return clean_number_pattern(value)
+
+
+class MarketInput(SelectionInput):
+    view: Literal["on_sale", "sold"] = "on_sale"
+
+
+class SubscriptionInput(SelectionInput):
+    """A subscription made on the search screen, stored as an ordinary filter with its own switches."""
+
+    name: str = Field(default="", max_length=64)
+    min_price_ton: str | float | None = None
+    max_price_ton: str | float | None = None
+    autobuy: bool = False
+    notify_new: bool = True
+    notify_price: bool = False
 
 
 class PairPick(BaseModel):
@@ -261,6 +319,47 @@ def _percent(permille: int | None) -> float | None:
     return permille / 10 if permille is not None else None
 
 
+def _editable(c: FilterCriteria) -> bool:
+    """A filter the search screen can show and save without losing anything: one collection, no Mini App
+    picks and none of the criteria only the chat edits."""
+    chat_only = (
+        c.exclude_collections,
+        c.exclude_models,
+        c.model_rarity_min_permille,
+        c.model_rarity_max_permille,
+        c.backdrop_rarity_min_permille,
+        c.backdrop_rarity_max_permille,
+        c.symbol_rarity_min_permille,
+        c.symbol_rarity_max_permille,
+        c.min_discount_percent,
+        c.monochrome_types,
+        c.min_monochrome_model_share_percent,
+    )
+    return len(c.collections) == 1 and not c.picks and not c.only_new_listings and not any(chat_only)
+
+
+def _mono_type(verdict: MonochromeVerdict) -> str | None:
+    if not verdict.is_monochrome:
+        return None
+    return verdict.gw_type.value if verdict.gw_type else "monochrome"
+
+
+def _pair_key(model: str | None, backdrop: str | None) -> tuple[str, str]:
+    return normalize_name(model), normalize_name(backdrop)
+
+
+def _in_query(item: ListingSnapshot, query: SalingQuery) -> bool:
+    """MRKT filters by these names itself; checked again so a floor never comes from another model or backdrop."""
+    for value, names in (
+        (item.model_name, query.model_names),
+        (item.backdrop_name, query.backdrop_names),
+        (item.symbol_name, query.symbol_names),
+    ):
+        if names and normalize_name(value) not in {normalize_name(n) for n in names}:
+            return False
+    return True
+
+
 def _records_by_model(records: list[RefRecord]) -> dict[str, list[RefRecord]]:
     by_model: dict[str, list[RefRecord]] = {}
     for record in records:
@@ -280,6 +379,7 @@ class MiniAppApi:
         filter_cache: _FilterCache,
         purchase: _Purchase,
         control: _Control,
+        search: _Search | None = None,
     ) -> None:
         self.settings = settings
         self.sessionmaker = sessionmaker
@@ -289,6 +389,7 @@ class MiniAppApi:
         self.filter_cache = filter_cache
         self.purchase = purchase
         self.control = control
+        self.search = search
         self.prefix = settings.redis_prefix
 
     async def register(self, identity: WebAppIdentity) -> None:
@@ -583,6 +684,7 @@ class MiniAppApi:
             rules = await filters_repo.list_filters(session, user_id)
             seen_pairs = await listings_repo.pair_slugs(session, name)
             colors = await listings_repo.backdrop_colors(session)
+            symbols = await listings_repo.collection_symbols(session, name)
         snapshot = self.store.snapshot
         records = self._records(snapshot, row.name, row.title)
         mono_by_model = _records_by_model(records)
@@ -660,6 +762,7 @@ class MiniAppApi:
         mono_models = {n for n, recs in mono_by_model.items() if recs}
         share = monochrome_model_share(mono_models, set(models)) if mono_models else None
         return {
+            **self._backdrops_and_symbols(records, mrkt_backdrops, seen_backdrops, rarity, colors, symbols),
             "name": row.name,
             "title": row.title or row.name,
             "floor": ton(row.floor_price_nano),
@@ -687,6 +790,56 @@ class MiniAppApi:
                 self._rule_view(r)
                 for r in rules
                 if not filters_repo.is_plan(r) and self._rule_collection(r) == normalize_name(name)
+            ],
+        }
+
+    @staticmethod
+    def _backdrops_and_symbols(
+        records: list[RefRecord],
+        mrkt_backdrops: list[MrktAttribute],
+        seen_backdrops: dict[str, int | None],
+        rarity: dict[str, int | None],
+        colors: dict[str, tuple[int | None, int | None]],
+        symbols: dict[str, int | None],
+    ) -> dict[str, Any]:
+        """Every backdrop of the collection (MRKT's list, those seen on gifts, Gift Wiki's) with its colours and
+        the models it is a monochrome for; the patterns (symbols) seen on its gifts."""
+        mono: dict[str, list[dict[str, Any]]] = {}
+        record_colors: dict[str, tuple[str | None, str | None]] = {}
+        names: dict[str, str] = {}
+        for item in mrkt_backdrops:
+            names.setdefault(normalize_name(item.name), item.name)
+        for seen in seen_backdrops:
+            names.setdefault(normalize_name(seen), seen)
+        for record in records:
+            if not record.backdrop_name:
+                continue
+            norm = normalize_name(record.backdrop_name)
+            names.setdefault(norm, record.backdrop_name)
+            record_colors.setdefault(norm, (color_hex(record.center_color), color_hex(record.edge_color)))
+            if record.model_name:
+                kind = record.type.value if record.type else record.type_raw
+                mono.setdefault(norm, []).append({"model": record.model_name, "type": kind})
+        floors = {normalize_name(b.name): b.floor_price_nano for b in mrkt_backdrops}
+        backdrops = []
+        for norm, backdrop in names.items():
+            center, edge = record_colors.get(norm, (None, None))
+            seen_center, seen_edge = colors.get(norm, (None, None))
+            backdrops.append(
+                {
+                    "name": backdrop,
+                    "rarity": _percent(rarity.get(norm)),
+                    "center": center or color_hex(seen_center),
+                    "edge": edge or color_hex(seen_edge),
+                    "floor": ton(floors.get(norm)),
+                    "mono": mono.get(norm, []),
+                }
+            )
+        return {
+            "backdrops": sorted(backdrops, key=lambda b: str(b["name"]).casefold()),
+            "symbols": [
+                {"name": symbol, "rarity": _percent(value)}
+                for symbol, value in sorted(symbols.items(), key=lambda kv: kv[0].casefold())
             ],
         }
 
@@ -789,6 +942,353 @@ class MiniAppApi:
         await self.redis.set(key, json.dumps(payload), ex=ATTRIBUTES_TTL_SECONDS)
         return items
 
+    # ------------------------------------------------------------------ search screen
+    async def _market_collection(self, name: str) -> MarketCollection:
+        async with self.sessionmaker() as session:
+            row = await session.get(MarketCollection, name)
+        if row is None:
+            raise ApiError("Коллекция не найдена", 404)
+        return row
+
+    def _mono_pairs(
+        self, collection: MarketCollection, models: list[str]
+    ) -> dict[tuple[str, str], RefRecord]:
+        """Gift Wiki monochrome pairs (model, backdrop) of the collection, of the chosen models if there are any."""
+        wanted = {normalize_name(m) for m in models}
+        pairs: dict[tuple[str, str], RefRecord] = {}
+        for record in self._records(self.store.snapshot, collection.name, collection.title):
+            key = _pair_key(record.model_name, record.backdrop_name)
+            if record.model_name and record.backdrop_name and (not wanted or key[0] in wanted):
+                pairs.setdefault(key, record)
+        return pairs
+
+    @staticmethod
+    def _search_criteria(data: SelectionInput, pairs: dict[tuple[str, str], RefRecord]) -> FilterCriteria:
+        """The choice as filter criteria. For monochromes MRKT is asked only for models and backdrops that can
+        make a monochrome pair; the pair itself is checked on each gift."""
+        models, backdrops = data.models, data.backdrops
+        if data.monochrome and pairs and not backdrops:
+            models = models or sorted({str(r.model_name) for r in pairs.values()})
+            backdrops = sorted({str(r.backdrop_name) for r in pairs.values()})
+        return FilterCriteria(
+            collections=[data.collection],
+            models=models,
+            backdrops=backdrops,
+            symbols=data.symbols,
+            number_pattern=data.pattern,
+        )
+
+    def _gift_view(self, gift: ListingSnapshot, price_nano: int | None, mono: str | None) -> dict[str, Any]:
+        return {
+            "id": gift.gift_id,
+            "title": gift.title,
+            "number": gift.number,
+            "model": gift.model_name,
+            "backdrop": gift.backdrop_name,
+            "symbol": gift.symbol_name,
+            "price": ton(price_nano),
+            "mono": mono,
+            "image": gift_image(gift.name),
+            "url": listing_url(self.settings, gift),
+            "tg_url": telegram_nft_url(gift),
+            "center": color_hex(gift.backdrop_center_color),
+            "edge": color_hex(gift.backdrop_edge_color),
+        }
+
+    def _stored_gift_view(self, gift: Gift, price_nano: int | None, mono: str | None) -> dict[str, Any]:
+        snapshot = ListingSnapshot(
+            gift_id=gift.id,
+            collection_name=gift.collection_name,
+            collection_title=gift.collection_title,
+            name=gift.name,
+            number=gift.number,
+            model_name=gift.model_name,
+            backdrop_name=gift.backdrop_name,
+            symbol_name=gift.symbol_name,
+            backdrop_center_color=gift.backdrop_center_color,
+            backdrop_edge_color=gift.backdrop_edge_color,
+        )
+        return self._gift_view(snapshot, price_nano, mono)
+
+    async def _cheapest(
+        self, query: SalingQuery, keep: Callable[[ListingSnapshot], bool] | None, pages: int
+    ) -> ListingSnapshot | None:
+        """The cheapest gift on sale for the query (auction lots are not asking prices)."""
+        for _ in range(pages):
+            listings, cursor = await self.mrkt.search_listings(query)
+            valid = [
+                item
+                for item in listings
+                if item.price_nano is not None
+                and not item.is_on_auction
+                and _in_query(item, query)
+                and (keep is None or keep(item))
+            ]
+            if valid:
+                return min(valid, key=lambda item: item.price_nano or 0)
+            if not cursor or not listings:
+                break
+            query.cursor = cursor
+        return None
+
+    async def prices(self, user_id: int, payload: dict[str, Any]) -> dict[str, Any]:
+        """ "Получить цены": floors on MRKT right now — of the collection, of the whole choice and of each chosen
+        model and backdrop — with the last sale of each that the bot saw in the MRKT feed."""
+        data = SelectionInput.model_validate(payload)
+        await self.store.maybe_reload(min_interval=5)
+        collection = await self._market_collection(data.collection)
+        pairs = self._mono_pairs(collection, data.models) if data.monochrome else {}
+
+        def is_pair(item: ListingSnapshot) -> bool:
+            return _pair_key(item.model_name, item.backdrop_name) in pairs
+
+        name = collection.name
+        cards: list[dict[str, Any]] = [{"kind": "collection", "title": collection.title or name}]
+        searches = [SalingQuery(collection_names=[name], count=FLOOR_DEPTH)]
+        sold_by: list[tuple[list[str], list[str], list[str]]] = [([], [], [])]
+        if data.models or data.backdrops or data.symbols or data.monochrome:
+            criteria = self._search_criteria(data, pairs)
+            cards.append({"kind": "selection", "title": "Выбранное"})
+            searches.append(
+                SalingQuery(
+                    collection_names=[name],
+                    model_names=criteria.models,
+                    backdrop_names=criteria.backdrops,
+                    symbol_names=criteria.symbols,
+                )
+            )
+            sold_by.append((data.models, data.backdrops, data.symbols))
+        for model in data.models[:FLOOR_CARDS]:
+            cards.append({"kind": "model", "title": model})
+            searches.append(SalingQuery(collection_names=[name], model_names=[model], count=FLOOR_DEPTH))
+            sold_by.append(([model], [], []))
+        for backdrop in data.backdrops[:FLOOR_CARDS]:
+            cards.append({"kind": "backdrop", "title": backdrop})
+            searches.append(
+                SalingQuery(collection_names=[name], backdrop_names=[backdrop], count=FLOOR_DEPTH)
+            )
+            sold_by.append(([], [backdrop], []))
+
+        error = None if self.mrkt.configured else "MRKT не подключён: флор не узнать"
+        found: list[ListingSnapshot | BaseException | None] = [None] * len(cards)
+        if error is None:
+            mono_card = 1 if data.monochrome else -1  # the whole choice: only monochrome pairs count
+            found = await asyncio.gather(
+                *(
+                    self._cheapest(
+                        query, is_pair if i == mono_card else None, MARKET_PAGES if i == mono_card else 1
+                    )
+                    for i, query in enumerate(searches)
+                ),
+                return_exceptions=True,
+            )
+            failures = [item for item in found if isinstance(item, BaseException)]
+            for failure in failures:
+                if not isinstance(failure, MrktError):
+                    raise failure
+            if failures:
+                log.warning("MRKT floors failed", extra={"error": str(failures[0])})
+                error = "MRKT ответил не на все запросы — попробуйте ещё раз"
+        async with self.sessionmaker() as session:
+            for i, (models, backdrops, symbols) in enumerate(sold_by):
+                mono_only = data.monochrome and cards[i]["kind"] == "selection"
+                sales = await listings_repo.recent_sales(
+                    session,
+                    name,
+                    models=models,
+                    backdrops=backdrops,
+                    symbols=symbols,
+                    limit=SOLD_SCAN if mono_only else 1,
+                )
+                last = next(
+                    (
+                        sale
+                        for sale, gift in sales
+                        if not mono_only or _pair_key(gift.model_name, gift.backdrop_name) in pairs
+                    ),
+                    None,
+                )
+                cards[i]["last_sale"] = ton(last.price_nano) if last else None
+                cards[i]["last_sale_at"] = last.observed_at.isoformat() if last else None
+        for card, item in zip(cards, found, strict=True):
+            gift = item if isinstance(item, ListingSnapshot) else None
+            card["floor"] = ton(gift.price_nano) if gift else None
+            card["gift"] = self._gift_view(gift, gift.price_nano, None) if gift else None
+            card["failed"] = isinstance(item, BaseException)
+        return {"cards": cards, "error": error, "checked_at": datetime.now(UTC).isoformat()}
+
+    async def market(self, user_id: int, payload: dict[str, Any]) -> dict[str, Any]:
+        """ "Смотреть продажи": gifts on sale on MRKT now (the same search as the chat's 🔎) or the sales the bot
+        saw in the MRKT feed."""
+        data = MarketInput.model_validate(payload)
+        await self.store.maybe_reload(min_interval=5)
+        collection = await self._market_collection(data.collection)
+        pairs = self._mono_pairs(collection, data.models) if data.monochrome else {}
+        if data.view == "sold":
+            return await self._sold(data, collection, pairs)
+        if self.search is None or not self.mrkt.configured:
+            raise ApiError("MRKT не подключён: объявления не загрузить", 503)
+        spec = FilterSpec(
+            id=0,
+            user_id=user_id,
+            name="Мини-приложение",
+            kind=FilterKind.MONOCHROME if data.monochrome else FilterKind.REGULAR,
+            enabled=True,
+            autobuy=False,
+            criteria=self._search_criteria(data, pairs),
+            limits=FilterLimits(),
+            activated_at=None,
+        )
+        try:
+            result = await self.search.search(spec, max_pages=MARKET_PAGES, limit=MARKET_LIMIT)
+        except MrktError as exc:
+            raise ApiError(f"MRKT не ответил: {exc}", 502) from exc
+        return {
+            "view": "on_sale",
+            "items": [
+                self._gift_view(listing, listing.price_nano, _mono_type(enrichment.verdict))
+                for listing, enrichment in result.items
+            ],
+            "scanned": result.scanned,
+            "complete": result.exhausted,
+        }
+
+    async def _sold(
+        self, data: MarketInput, collection: MarketCollection, pairs: dict[tuple[str, str], RefRecord]
+    ) -> dict[str, Any]:
+        known = self._mono_pairs(collection, [])
+        async with self.sessionmaker() as session:
+            sales = await listings_repo.recent_sales(
+                session,
+                collection.name,
+                models=data.models,
+                backdrops=data.backdrops,
+                symbols=data.symbols,
+                limit=SOLD_SCAN,
+            )
+            since = await listings_repo.first_sale_seen(session)
+        items = []
+        for sale, gift in sales:
+            record = known.get(_pair_key(gift.model_name, gift.backdrop_name))
+            if data.monochrome and _pair_key(gift.model_name, gift.backdrop_name) not in pairs:
+                continue
+            if data.pattern and not number_matches(data.pattern, gift.number):
+                continue
+            mono = (record.type.value if record.type else record.type_raw) if record else None
+            items.append(
+                {
+                    **self._stored_gift_view(gift, sale.price_nano, mono),
+                    "sold_at": sale.observed_at.isoformat(),
+                }
+            )
+            if len(items) >= MARKET_LIMIT:
+                break
+        return {"view": "sold", "items": items, "since": since.isoformat() if since else None}
+
+    async def leaders(self, user_id: int, days: int) -> dict[str, Any]:
+        """Market leaders by what the bot saw in the MRKT feed: collections by sales volume, the most expensive
+        sales, and the cheapest monochromes on sale."""
+        if days not in LEADER_PERIODS:
+            raise ApiError("Период — 1, 7 или 30 дней")
+        now = datetime.now(UTC)
+        since = now - timedelta(days=days)
+        async with self.sessionmaker() as session:
+            volume = await listings_repo.sales_by_collection(session, since)
+            top = await listings_repo.top_sales(session, since)
+            cheap = await listings_repo.cheapest_monochromes(session, now - timedelta(days=MONO_SEEN_DAYS))
+            first = await listings_repo.first_sale_seen(session)
+            slugs = await listings_repo.collection_slugs(session)
+            titles = {c.name: c.title or c.name for c in await listings_repo.market_collections(session)}
+        return {
+            "days": days,
+            "since": first.isoformat() if first else None,
+            "collections": [
+                {
+                    "name": collection,
+                    "title": titles.get(collection, collection),
+                    "image": collection_thumb(giftname(collection, slug=slugs.get(collection))),
+                    "sales": count,
+                    "volume": ton(total),
+                    "top": ton(highest),
+                }
+                for collection, count, total, highest in volume
+            ],
+            "sales": [
+                {
+                    **self._stored_gift_view(gift, sale.price_nano, gift.monochrome_type),
+                    "sold_at": sale.observed_at.isoformat(),
+                }
+                for sale, gift in top
+            ],
+            "monochromes": [
+                {
+                    **self._stored_gift_view(gift, listing.price_nano, gift.monochrome_type or "monochrome"),
+                    "seen_at": listing.last_seen_at.isoformat(),
+                }
+                for listing, gift in cheap
+            ],
+        }
+
+    # ------------------------------------------------------------------ subscriptions
+    async def create_subscription(self, user_id: int, payload: dict[str, Any]) -> dict[str, Any]:
+        data = SubscriptionInput.model_validate(payload)
+        async with self.sessionmaker() as session, session.begin():
+            title = await self._collection_title(session, data.collection)
+            try:
+                row = await filters_repo.create_filter(session, user_id, title, FilterKind.REGULAR)
+            except ValueError as exc:
+                raise ApiError(str(exc)) from exc
+            self._apply_subscription(row, data, title, can_purchase=self.settings.can_purchase(user_id))
+            await self._enable_mode(session, user_id, row)
+            await session.flush()
+            await misc.audit(session, "webapp_subscription_create", user_id=user_id, filter_id=row.id)
+            view = self._rule_view(row)
+        await self.filter_cache.invalidate()
+        return view
+
+    async def update_subscription(
+        self, user_id: int, rule_id: int, payload: dict[str, Any]
+    ) -> dict[str, Any]:
+        data = SubscriptionInput.model_validate(payload)
+        async with self.sessionmaker() as session, session.begin():
+            row = await filters_repo.get_filter(session, user_id, rule_id)
+            if row is None:
+                raise ApiError("Подписка не найдена", 404)
+            if not _editable(FilterCriteria.model_validate(row.criteria or {})):
+                raise ApiError("Этот фильтр меняется в чате с ботом")
+            title = await self._collection_title(session, data.collection)
+            self._apply_subscription(row, data, title, can_purchase=self.settings.can_purchase(user_id))
+            await self._enable_mode(session, user_id, row)
+            await misc.audit(session, "webapp_subscription_update", user_id=user_id, filter_id=row.id)
+            view = self._rule_view(row)
+        await self.filter_cache.invalidate()
+        return view
+
+    @staticmethod
+    def _apply_subscription(row: Filter, data: SubscriptionInput, title: str, *, can_purchase: bool) -> None:
+        high = _price(data.max_price_ton)
+        low = _range(data.min_price_ton, high, "цены")
+        if data.autobuy and high is None:
+            raise ApiError("Для покупок укажите цену «до»")
+        criteria = FilterCriteria(
+            collections=[data.collection],
+            models=data.models,
+            backdrops=data.backdrops,
+            symbols=data.symbols,
+            number_pattern=data.pattern,
+            min_price_nano=low,
+            max_price_nano=high,
+        )
+        filters_repo.update_criteria(row, criteria)
+        limits = FilterLimits.model_validate(row.limits or {})
+        limits.notify_new = data.notify_new
+        limits.notify_price_drops = data.notify_price
+        filters_repo.update_limits(row, limits)
+        row.kind = (FilterKind.MONOCHROME if data.monochrome else FilterKind.REGULAR).value
+        row.name = (data.name.strip() or title)[:64]
+        filters_repo.set_enabled(row, True)
+        row.autobuy = data.autobuy and can_purchase
+
     # ------------------------------------------------------------------ rules
     @staticmethod
     def _rule_collection(row: Filter) -> str | None:
@@ -827,6 +1327,13 @@ class MiniAppApi:
                 for p in c.picks
             ],
             "summary": describe_criteria(spec.kind, c),
+            "models": c.models,
+            "symbols": c.symbols,
+            "pattern": c.number_pattern,
+            "min_price": ton(c.min_price_nano),
+            "notify_new": spec.limits.notify_new,
+            "notify_price": spec.limits.notify_price_drops,
+            "editable": _editable(c),
         }
 
     async def rules(self, user_id: int) -> dict[str, Any]:
@@ -906,9 +1413,16 @@ class MiniAppApi:
             row = await filters_repo.get_filter(session, user_id, rule_id)
             if row is None:
                 raise ApiError("Правило не найдено", 404)
-            if set(payload) <= {"enabled", "autobuy"}:  # a switch on the rules screen
+            if set(payload) <= {"enabled", "autobuy", "notify_new", "notify_price"}:  # switches of the list
                 if "enabled" in payload:
                     filters_repo.set_enabled(row, bool(payload["enabled"]))
+                if "notify_new" in payload or "notify_price" in payload:
+                    limits = FilterLimits.model_validate(row.limits or {})
+                    if "notify_new" in payload:
+                        limits.notify_new = bool(payload["notify_new"])
+                    if "notify_price" in payload:
+                        limits.notify_price_drops = bool(payload["notify_price"])
+                    filters_repo.update_limits(row, limits)
                 if "autobuy" in payload:
                     row.autobuy = bool(payload["autobuy"]) and self.settings.can_purchase(user_id)
                     criteria = FilterCriteria.model_validate(row.criteria or {})

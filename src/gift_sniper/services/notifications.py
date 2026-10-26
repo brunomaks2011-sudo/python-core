@@ -29,6 +29,11 @@ from gift_sniper.services.user_prefs import NotificationSettings
 log = logging.getLogger(__name__)
 
 
+def _wants(own: bool | None, common: bool) -> bool:
+    """A subscription's own notification switch, or the user's common one when it has none."""
+    return common if own is None else own
+
+
 class MessageSender(Protocol):
     async def send(
         self,
@@ -265,14 +270,16 @@ class Notifier:
         in_scope = self._in_scope(prefs, listing, enrichment)
 
         if price_drop_from is not None:
-            if not prefs.price_drops or listing.price_nano is None or price_drop_from <= 0:
+            watching = [s for s in matched if _wants(s.limits.notify_price_drops, prefs.price_drops)]
+            everything = prefs.price_drops and prefs.all_listings and in_scope
+            if listing.price_nano is None or price_drop_from <= 0 or not (watching or everything):
                 return False
             drop = (price_drop_from - listing.price_nano) / price_drop_from * 100
-            if drop < prefs.price_drop_min_percent or not (matched or (prefs.all_listings and in_scope)):
+            if drop < prefs.price_drop_min_percent:
                 return False
             note = f"было {format_ton(price_drop_from)}, −{drop:.1f}%"
             status = (
-                "подходит под фильтр: " + ", ".join(s.name for s in matched) if matched else "все листинги"
+                "подходит под фильтр: " + ", ".join(s.name for s in watching) if watching else "все листинги"
             )
             text = texts.new_listing_text(listing, enrichment, status_line=status, price_note=note)
             return await self.send(
@@ -286,14 +293,15 @@ class Notifier:
                 preview_url=texts.telegram_nft_url(listing),
             )
 
-        mono_filters = [s for s in matched if s.kind is FilterKind.MONOCHROME]
-        if matched and (prefs.matching_only or prefs.all_listings):
+        shown = [s for s in matched if _wants(s.limits.notify_new, prefs.matching_only or prefs.all_listings)]
+        mono_filters = [s for s in shown if s.kind is FilterKind.MONOCHROME]
+        if shown:
             if mono_filters and is_mono:
-                text = texts.monochrome_text(listing, enrichment, filter_names=[s.name for s in matched])
+                text = texts.monochrome_text(listing, enrichment, filter_names=[s.name for s in shown])
                 keyboard = await self._keyboard(listing, monochrome=True)
                 kind = "monochrome"
             else:
-                status = "подходит под фильтр: " + ", ".join(s.name for s in matched)
+                status = "подходит под фильтр: " + ", ".join(s.name for s in shown)
                 text = texts.new_listing_text(listing, enrichment, status_line=status)
                 keyboard = await self._keyboard(listing, monochrome=False)
                 kind = "listing"
@@ -302,7 +310,8 @@ class Notifier:
             keyboard = await self._keyboard(listing, monochrome=True)
             kind = "monochrome"
         elif prefs.all_listings and in_scope:
-            text = texts.new_listing_text(listing, enrichment, status_line="не подходит под ваши фильтры")
+            status = "все листинги" if matched else "не подходит под ваши фильтры"
+            text = texts.new_listing_text(listing, enrichment, status_line=status)
             keyboard = await self._keyboard(listing, monochrome=False)
             kind = "listing"
         else:

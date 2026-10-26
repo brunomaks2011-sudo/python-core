@@ -41,6 +41,40 @@ class PriceRule(StrEnum):
 
 PRICE_RULE_TEXT = {PriceRule.COLLECTION_FLOOR: "флор коллекции", PriceRule.MODEL_FLOOR: "флор модели"}
 
+NUMBER_PATTERN_MAX = 7  # gift numbers have at most 7 digits
+DIGITS = "0123456789"
+
+
+def clean_number_pattern(value: str | None) -> str | None:
+    """ "Номер или паттерн": digits ("777") or a shape of digits in letters ("AAA", "ABABAB")."""
+    text = "".join(str(value or "").split()).upper().lstrip("#№")
+    if not text:
+        return None
+    if len(text) > NUMBER_PATTERN_MAX or not all(ch in DIGITS or ch.isalpha() for ch in text):
+        raise ValueError("номер или шаблон — до 7 цифр и букв, например 777 или ABABAB")
+    return text
+
+
+def number_matches(pattern: str, number: int | None) -> bool:
+    """Digits only: exactly this number. With letters: the shape of the number's digits, where the same letter
+    is the same digit and different letters are different digits (AAA: 777, ABAB: 1212); digits in a shape
+    stay as they are (A00: 100, 200, ...)."""
+    if number is None or number < 0:
+        return False
+    if all(ch in DIGITS for ch in pattern):
+        return int(pattern) == number
+    digits = str(number)
+    if len(digits) != len(pattern):
+        return False
+    letters: dict[str, str] = {}
+    for symbol, digit in zip(pattern, digits, strict=True):
+        if symbol in DIGITS:
+            if symbol != digit:
+                return False
+        elif letters.setdefault(symbol, digit) != digit:
+            return False
+    return len(set(letters.values())) == len(letters)
+
 
 class Pick(BaseModel):
     """A choice made in the Mini App inside one collection: a model (or every model) with chosen backdrops
@@ -145,6 +179,7 @@ class FilterCriteria(BaseModel):
     symbol_rarity_max_permille: int | None = None
     only_new_listings: bool = False
     min_discount_percent: float | None = None
+    number_pattern: str | None = None  # "777" or a shape of digits such as "ABABAB"
     # monochrome mode only
     monochrome_types: list[str] = []
     min_monochrome_model_share_percent: float | None = None
@@ -164,6 +199,11 @@ class FilterCriteria(BaseModel):
         parsed = [GiftWikiMonochromeType.parse(v) for v in value]
         return [t.value for t in GiftWikiMonochromeType if t in parsed]
 
+    @field_validator("number_pattern", mode="after")
+    @classmethod
+    def _pattern(cls, value: str | None) -> str | None:
+        return clean_number_pattern(value)
+
 
 class FilterLimits(BaseModel):
     model_config = ConfigDict(extra="ignore", validate_assignment=True)
@@ -175,6 +215,9 @@ class FilterLimits(BaseModel):
     total_limit_nano: int | None = None
     period_max_count: int | None = None
     period_hours: int | None = None
+    # a Mini App subscription's own notification switches; None follows the user's common settings
+    notify_new: bool | None = None
+    notify_price_drops: bool | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -258,6 +301,8 @@ def evaluate(
         failed.append("фон не выбран")
     if criteria.symbols and not _name_in(listing.symbol_name, criteria.symbols):
         failed.append("символ не выбран")
+    if criteria.number_pattern and not number_matches(criteria.number_pattern, listing.number):
+        failed.append(f"номер не подходит под «{criteria.number_pattern}»")
     if criteria.picks:
         pick = matching_pick(criteria.picks, listing, enrichment)
         if pick is None:
@@ -356,6 +401,9 @@ def describe_criteria(kind: FilterKind, c: FilterCriteria) -> list[str]:
             lines.append(
                 f"{label}: {low if low is not None else '—'}‰ … {high if high is not None else '—'}‰"
             )
+    if c.number_pattern:
+        exact = all(ch in DIGITS for ch in c.number_pattern)
+        lines.append(f"Номер: {c.number_pattern}" if exact else f"Шаблон номера: {c.number_pattern}")
     if c.picks:
         shown = [p.label(monochrome=kind is FilterKind.MONOCHROME) for p in c.picks[:5]]
         more = f" и ещё {len(c.picks) - 5}" if len(c.picks) > 5 else ""

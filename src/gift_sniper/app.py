@@ -324,6 +324,7 @@ class Application:
             services.filter_cache,
             services.purchase,
             services.control,
+            search=services.search,
         )
 
     async def _run_bot(self, services: Services) -> None:

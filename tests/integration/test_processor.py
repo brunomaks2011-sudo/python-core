@@ -135,6 +135,22 @@ async def test_price_drop_notification_and_only_new_filters(env: Env) -> None:
     assert len(env.sender.texts_for(UID)) == 2
 
 
+async def test_a_subscription_has_its_own_notification_switches(env: Env) -> None:
+    """Switches set on a subscription win over the user's common "Листинги" / "Снижение цены"."""
+    await env.add_user(UID, notify={"matching_only": False, "price_drops": False, "no_repeats": False})
+    await env.add_filter(
+        UID, name="loud", autobuy=False, limits={"notify_new": True, "notify_price_drops": True}
+    )
+    await env.add_filter(UID, name="quiet", autobuy=False, limits={"notify_new": False})
+    proc = processor(env, MemoryQueue())
+    await proc.process(event("e1", price=10 * TON), detected_at=datetime.now(UTC))
+    texts = env.sender.texts_for(UID)
+    assert len(texts) == 1 and "loud" in texts[0] and "quiet" not in texts[0]
+    await proc.process(event("e2", "change_price", price=8 * TON), detected_at=datetime.now(UTC))
+    texts = env.sender.texts_for(UID)
+    assert len(texts) == 2 and "Цена снижена" in texts[1] and "loud" in texts[1]
+
+
 async def test_sale_closes_listing(env: Env) -> None:
     await env.add_user(UID)
     queue = MemoryQueue()
