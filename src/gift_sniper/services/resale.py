@@ -483,7 +483,10 @@ class ResaleAssistant:
             sent = format_ton(position.list_price_nano)
             lines.append(f"Отправлена цена {sent}, MRKT показывает без комиссии {format_ton(seller)}")
         await self._tell(position, "\n".join(lines))
-        return ListResult(ResaleStatus.LISTED.value, f"Выставлен за {format_ton(buyer)}")
+        return ListResult(
+            ResaleStatus.LISTED.value,
+            f"Выставлен за {format_ton(seller)}, покупатели видят {format_ton(buyer)}",
+        )
 
     async def relist_due(self) -> int:
         """Retry listings that failed or had to wait (with growing pauses); returns how many were tried."""

@@ -92,7 +92,7 @@ RESALE_LABELS = {
     ResaleStatus.LISTED.value: "на продаже",
     ResaleStatus.FAILED.value: "не выставлен",
     ResaleStatus.SOLD.value: "продан",
-    ResaleStatus.DRY_RUN.value: "тест: был бы куплен и выставлен",
+    ResaleStatus.DRY_RUN.value: "тест",
 }
 ASSISTANT_NAME = "🤖 ИИ-ассистент"
 
@@ -471,6 +471,7 @@ class MiniAppApi:
         buying = [r for r in rows if r.enabled and r.autobuy]
         kinds = {r.kind for r in buying if not filters_repo.is_assistant(r)}  # the assistant needs no mode
         assistant = next((r for r in rows if filters_repo.is_assistant(r)), None)
+        rules = [r for r in rows if r is not assistant]
         limits_ok = None not in (limits.per_purchase, limits.daily, limits.total)
         # the autobuy switches that are off although a buying rule needs them
         modes_missing = sorted(
@@ -559,7 +560,11 @@ class MiniAppApi:
             "spent": {"today": ton(usage.daily_spent), "total": ton(usage.total_spent)},
             "giftwiki": {"records": snapshot.records_count, "age_hours": snapshot.age_hours()},
             "mrkt_configured": self.mrkt.configured,
-            "rules": {"total": len(rows), "enabled": sum(r.enabled for r in rows), "autobuy": len(buying)},
+            "rules": {  # subscriptions and plans; the assistant has its own switch
+                "total": len(rules),
+                "enabled": sum(r.enabled for r in rules),
+                "autobuy": sum(1 for r in rules if r.enabled and r.autobuy),
+            },
             "assistant": {"on": bool(assistant is not None and assistant.enabled and assistant.autobuy)},
             "checklist": checklist,
             "ready": all(item["ok"] for item in checklist),

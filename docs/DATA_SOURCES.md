@@ -160,12 +160,19 @@ HTTP 401 (не чаще раза в `MRKT_AUTH_COOLDOWN_SECONDS`). Сессия 
 | Коллекции | `GET /gifts/collections` → `[{"name","title","floorPriceNanoTons",...}]` | tgmrkts, amrkt |
 | Инвентарь (проверка результата) | `POST /gifts` с фильтрами и `number` | tgmrkts, amrkt |
 | Модели и фоны коллекции (мини-приложение) | `POST /gifts/models`, `POST /gifts/backdrops` `{"collections": [name]}`. Поля ответа в источнике не описаны: бот читает `modelName`/`backdropName`/`name`, `...RarityPerMille`/`rarityPerMille`, `floorPriceNanoTons`; нераспознанный ответ даёт пустой список (используются модели из листингов), `check` показывает результат | tgmrkts |
+| Выставление на продажу (ИИ-ассистент) | `POST /gifts/sale`: tgmrkts — `{"ids": [id], "price": nanoTON}`, amrkt — `{"ids": [id], "prices": [nanoTON]}` → `{"ids", "prices"}`. Бот отправляет оба ключа цены. Успех — когда `GET /gifts/gift/{id}` показывает `isOnSale`, иначе — когда ответ содержит id подарка | tgmrkts, amrkt |
+| Ордера аккаунта | `POST /orders/get-my-orders` (`collectionNames`, `modelNames`, `backdropNames`, `symbolNames`, `ordering: "PublicationTime"`, `lowToHigh`, `cursor`, `count`) | tgmrkts |
+| Ордера рынка | `POST /orders` (те же фильтры, `ordering: "Price"`, `lowToHigh: false`) | tgmrkts |
+| Лучший ордер на атрибуты | `POST /orders/top` `{"collectionName", "modelName", "backdropName", "symbolName"}` | tgmrkts |
+| Создать / отменить ордер | `POST /orders/create` `{"collectionName", "modelName", "backdropName", "symbolName", "priceMinNanoTONs", "priceMaxNanoTONs", "quantity", "isTransferable"}`, `POST /orders/cancel/{orderId}`. Не повторяются при ошибке | tgmrkts |
 
 Поля подарка (по pydantic-моделям `amrkt`): `id`, `name`, `number`, `collectionName`, `collectionTitle`,
 `modelName`, `modelRarityPerMille`, `backdropName`, `backdropRarityPerMille`, `symbolName`,
 `symbolRarityPerMille`, `salePrice` (nanoTON), `isOnSale`, `isOnAuction`, `isMine`,
 `backdropColorsCenterColor`, `backdropColorsEdgeColor`, `backdropColorsTextColor`,
-`backdropColorsSymbolColor`, `floorPriceNanoTONsByCollection`, `floorPriceNanoTONsByBackdropModel`.
+`backdropColorsSymbolColor`, `floorPriceNanoTONsByCollection`, `floorPriceNanoTONsByBackdropModel`,
+`salePriceWithoutFee` (цена без комиссии — то, что получает продавец), `nextResaleDate` (раньше этой даты
+подарок нельзя выставить).
 Отсутствующие поля бот не заменяет нулями: в интерфейсе они показываются как «Нет данных».
 
 ### Картинки подарков (мини-приложение)
@@ -192,6 +199,18 @@ HTTP 401 (не чаще раза в `MRKT_AUTH_COOLDOWN_SECONDS`). Сессия 
   Ссылка `https://t.me/nft/<slug>` строится, только если поле `name` имеет вид `Slug-123`.
 * Идемпотентность `POST /gifts/buy` не задокументирована. Поэтому бот никогда не повторяет покупку
   автоматически после сетевой ошибки: сначала он проверяет состояние подарка (см. README, «Покупки»).
+* **Ответы эндпоинтов ордеров нигде не описаны.** Бот читает ордер по названиям полей из запросов
+  (`id`/`orderId`, `priceMaxNanoTONs`/`priceNanoTONs`/`price`, `priceMinNanoTONs`, `collectionName`,
+  `modelName`, `backdropName`, `symbolName`, `quantity`, `isMine`), а список — из массива или из ключа
+  `orders`/`items`/`data`/`result`. Ответ другой формы не угадывается: режим «Ордера» показывает ошибку с
+  полями ответа, а `python -m gift_sniper check` печатает, что вернул MRKT.
+* Изменения цены ордера в источниках нет, поэтому перебить = отменить и создать новый.
+* В чём указывается цена `gifts/sale` — с комиссией или без — источники прямо не говорят. Бот отправляет цену
+  продавца (без комиссии) и после выставления читает `salePrice` и `salePriceWithoutFee`: если MRKT понял
+  цену иначе, сообщение о выставлении покажет обе цены, а профит пересчитывается по тому, что показал MRKT.
+* Цена продажи в ленте (`sale`) — `salePrice` подарка из события. По моделям amrkt `salePrice` — цена с
+  комиссией, `salePriceWithoutFee` — без неё, поэтому ассистент считает цены продаж ценами для покупателя.
+  Комиссию по живым листингам показывает `check`.
 
 ## 3. Определение «монохрома» в сообществе
 
