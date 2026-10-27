@@ -27,6 +27,8 @@ COPY --from=build /app/src ./src
 COPY prisma ./prisma
 COPY prisma.config.ts ./
 COPY scripts/docker-entrypoint.sh ./scripts/docker-entrypoint.sh
+# Прибираємо Windows-переноси рядків (CRLF), якщо проєкт клонували у Windows
+RUN sed -i 's/\r$//' scripts/docker-entrypoint.sh
 USER node
 EXPOSE 8080
 # Під час старту застосовуються міграції, потім запускається бот (PID 1 отримує SIGTERM).

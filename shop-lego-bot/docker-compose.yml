@@ -61,7 +61,8 @@ services:
     volumes:
       - ./backups:/backups
       - ./scripts/backup-loop.sh:/usr/local/bin/backup-loop.sh:ro
-    entrypoint: ["sh", "/usr/local/bin/backup-loop.sh"]
+    # tr прибирає Windows-переноси рядків (CRLF), якщо проєкт клонували у Windows
+    entrypoint: ["sh", "-c", "tr -d '\\r' < /usr/local/bin/backup-loop.sh > /tmp/backup-loop.sh && exec sh /tmp/backup-loop.sh"]
     depends_on:
       db:
         condition: service_healthy

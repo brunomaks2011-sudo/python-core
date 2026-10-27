@@ -1,0 +1,3 @@
+# Скрипти виконуються в Linux-контейнерах — завжди LF, навіть після клонування у Windows
+*.sh text eol=lf
+Dockerfile text eol=lf
