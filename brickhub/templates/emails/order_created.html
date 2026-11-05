@@ -1,0 +1,6 @@
+{% extends "emails/_base.html" %}
+{% block body %}<h2 style="margin:0 0 8px">Дякуємо за замовлення!</h2>
+<p>Замовлення <b>{{ order.number }}</b> прийнято. Менеджер зв'яжеться з вами для підтвердження.</p>
+<p style="color:#6b7280;font-size:14px">{{ order.get_delivery_method_display }}: {{ order.delivery_summary }}<br>Оплата: {{ order.get_payment_method_display }}</p>
+{% include "emails/_items.html" %}
+<p><a href="{{ link }}" style="display:inline-block;background:#111318;color:#fff;text-decoration:none;padding:12px 20px;border-radius:10px;font-weight:700">Переглянути замовлення</a></p>{% endblock %}

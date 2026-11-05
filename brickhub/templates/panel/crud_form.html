@@ -1,0 +1,20 @@
+{% extends "panel/base.html" %}
+{% block title %}{{ cfg.title }}{% endblock %}
+{% block heading %}{% if obj %}{{ obj }}{% else %}Новий запис: {{ cfg.one }}{% endif %}{% endblock %}
+{% block actions %}<a class="btn btn-ghost" href="{% url 'panel:crud_list' key %}">До списку</a>{% endblock %}
+{% block content %}
+<form class="pcard pform" method="post" style="max-width:900px">{% csrf_token %}
+  {% if form.non_field_errors %}<div class="alert alert-red" style="margin-bottom:14px">{{ form.non_field_errors }}</div>{% endif %}
+  <div class="fields">
+    {% for field in form %}
+      {% if field.field.widget.input_type == "checkbox" %}<label class="check">{{ field }}<span>{{ field.label }}</span></label>
+      {% else %}{% include "partials/field.html" %}{% endif %}
+    {% endfor %}
+  </div>
+  <div class="row" style="margin-top:18px">
+    <button class="btn btn-primary" type="submit">Зберегти</button>
+    {% if obj %}<button class="btn btn-ghost" style="color:var(--red)" type="submit" form="crud-delete">Видалити</button>{% endif %}
+  </div>
+</form>
+{% if obj %}<form id="crud-delete" method="post" action="{% url 'panel:crud_delete' key obj.pk %}" data-confirm="Видалити запис?">{% csrf_token %}</form>{% endif %}
+{% endblock %}

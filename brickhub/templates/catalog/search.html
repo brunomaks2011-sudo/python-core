@@ -1,0 +1,24 @@
+{% extends "catalog/listing.html" %}{% load shop_tags %}
+{% block before_listing %}
+  {% if design %}
+    <a class="parts-promo" href="{% url 'catalog:part_design' design.part.design_id %}" style="grid-template-columns:auto 1fr auto;padding:16px 20px;margin-bottom:18px;gap:18px;align-items:center">
+      <span class="ph-img" style="width:72px;height:72px;display:grid;place-items:center;background:var(--surface-2);border-radius:14px"><img src="{% part_icon design.part.design_id 4 %}" alt="" width="56" height="56"></span>
+      <span><span class="eyebrow" style="margin:0">Деталь {{ design.part.design_id }}</span><b style="display:block;font-size:17px">{{ design.part.display_name }}</b><span class="muted">{{ design.colors }} {{ design.colors|plural:"колір,кольори,кольорів" }} · від {{ design.pmin|uah }} · {{ design.stock|default:0|thousands }} шт. на складі</span></span>
+      <span class="btn btn-dark">Усі кольори <svg class="ic"><use href="#i-arrow-right"/></svg></span>
+    </a>
+  {% endif %}
+  {% if catalog %}
+    <div class="panel-card" style="margin-bottom:18px">
+      <h2 style="font-size:17px">Знайдено в офіційному каталозі LEGO</h2>
+      <p class="muted" style="margin-top:-6px">Цих позицій зараз немає в продажу. Напишіть нам — спробуємо привезти під замовлення.</p>
+      <div class="stack">
+        {% for c in catalog %}
+          <div class="row" style="justify-content:space-between;border-top:1px solid var(--line-2);padding-top:12px">
+            <span><span class="badge">{% if c.kind == 'set' %}Набір{% elif c.kind == 'part' %}Деталь{% else %}Мініфігурка{% endif %}</span> <b class="mono">{{ c.number }}</b> {{ c.name }}{% if c.year %} · {{ c.year }}{% endif %}{% if c.extra %} · {{ c.extra }}{% endif %}</span>
+            <a class="btn btn-sm" href="{% url 'core:contacts' %}">Запитати</a>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+  {% endif %}
+{% endblock %}

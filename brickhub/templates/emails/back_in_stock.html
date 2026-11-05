@@ -1,0 +1,6 @@
+{% extends "emails/_base.html" %}
+{% block body %}<h2 style="margin:0 0 12px">Знову в наявності!</h2>
+<p>Товар, на який ви підписались, з'явився на складі:</p>
+<p style="font-size:17px"><b>{{ product.title }}</b>{% if product.official_number %} ({{ product.official_number }}){% endif %}</p>
+<p><a href="{{ url }}" style="display:inline-block;background:#d6101a;color:#fff;text-decoration:none;padding:12px 20px;border-radius:10px;font-weight:700">Перейти до товару</a></p>
+<p style="color:#6b7280;font-size:13px">Кількість обмежена — поспішайте.</p>{% endblock %}

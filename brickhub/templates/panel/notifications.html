@@ -1,0 +1,13 @@
+{% extends "panel/base.html" %}
+{% block title %}Очікують надходження{% endblock %}
+{% block heading %}Очікують надходження{% endblock %}
+{% block content %}
+<p class="muted">Покупці підписались на повідомлення про ці товари. Лист надсилається автоматично, щойно залишок стає більшим за нуль; вручну можна надіслати кнопкою. Уже надіслано: {{ sent }}.</p>
+<div class="ptable-wrap"><table class="ptable">
+  <thead><tr><th>Товар</th><th>Підписок</th><th>Залишок</th><th></th></tr></thead>
+  <tbody>{% for r in rows %}
+    <tr><td><a class="link" href="{% url 'panel:product_edit' r.product_id %}">{{ r.product__title }}</a><br><span class="muted mono" style="font-size:12px">{{ r.product__sku }}</span></td><td class="num"><b>{{ r.n }}</b></td><td class="num">{{ r.product__inventory__quantity|default:0 }}</td>
+      <td>{% if r.product__inventory__quantity %}<form method="post">{% csrf_token %}<input type="hidden" name="product" value="{{ r.product_id }}"><button class="btn btn-sm btn-dark">Надіслати листи</button></form>{% else %}<a class="btn btn-sm btn-soft" href="{% url 'panel:product_edit' r.product_id %}">Поповнити склад</a>{% endif %}</td></tr>
+  {% empty %}<tr><td colspan="4" class="muted" style="padding:28px">Немає активних підписок.</td></tr>{% endfor %}</tbody>
+</table></div>
+{% endblock %}

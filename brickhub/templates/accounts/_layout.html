@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container">
+  <header class="page-head"><h1>{% block acc_title %}Особистий кабінет{% endblock %}</h1></header>
+  <div class="account">
+    <nav class="acc-nav" aria-label="Кабінет">
+      <a href="{% url 'accounts:dashboard' %}" class="{% if active == 'dashboard' %}is-active{% endif %}"><svg class="ic"><use href="#i-user"/></svg>Огляд</a>
+      <a href="{% url 'accounts:orders' %}" class="{% if active == 'orders' %}is-active{% endif %}"><svg class="ic"><use href="#i-box"/></svg>Мої замовлення</a>
+      <a href="{% url 'catalog:favorites' %}"><svg class="ic"><use href="#i-heart"/></svg>Обране</a>
+      <a href="{% url 'accounts:notifications' %}" class="{% if active == 'notifications' %}is-active{% endif %}"><svg class="ic"><use href="#i-bell"/></svg>Очікую надходження</a>
+      <a href="{% url 'accounts:profile' %}" class="{% if active == 'profile' %}is-active{% endif %}"><svg class="ic"><use href="#i-edit"/></svg>Особисті дані</a>
+      {% if user.is_staff %}<a href="{% url 'panel:dashboard' %}"><svg class="ic"><use href="#i-chart"/></svg>Адмін-панель</a>{% endif %}
+      <form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}<button type="submit"><svg class="ic"><use href="#i-logout"/></svg>Вийти</button></form>
+    </nav>
+    <section>{% block acc_content %}{% endblock %}</section>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends "core/_page.html" %}
+{% block page %}
+<div class="perks" style="margin-bottom:20px">
+  {% if SHOP.PHONE %}<a class="perk" href="tel:{{ SHOP.PHONE|cut:' ' }}"><svg class="ic"><use href="#i-phone"/></svg><span><b>{{ SHOP.PHONE }}</b><br>Телефон</span></a>{% endif %}
+  {% if SHOP.EMAIL %}<a class="perk" href="mailto:{{ SHOP.EMAIL }}"><svg class="ic"><use href="#i-mail"/></svg><span><b>{{ SHOP.EMAIL }}</b><br>Пошта</span></a>{% endif %}
+  {% if SHOP.ADDRESS %}<div class="perk"><svg class="ic"><use href="#i-pin"/></svg><span><b>{{ SHOP.ADDRESS }}</b><br>Адреса</span></div>{% endif %}
+  <div class="perk"><svg class="ic"><use href="#i-clock"/></svg><span><b>{{ SHOP.WORK_HOURS }}</b><br>Графік роботи</span></div>
+</div>
+{% if not SHOP.PHONE and not SHOP.EMAIL %}<p class="muted">Контакти магазину налаштовуються змінними SHOP_PHONE, SHOP_EMAIL та SHOP_ADDRESS.</p>{% endif %}
+<h2>Допомога з деталями</h2>
+<p>Не знаєте номер деталі? Надішліть фото деталі або сторінку інструкції — допоможемо знайти. Корисно також прочитати, <a class="link" href="{% url 'core:guide' %}">як знайти номер деталі самостійно</a>.</p>
+{% endblock %}

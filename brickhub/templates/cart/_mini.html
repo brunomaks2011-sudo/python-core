@@ -1,0 +1,26 @@
+{% load shop_tags %}
+<div class="drawer-body">
+  {% if summary.items %}
+    {% for item in summary.items %}
+      <div class="mc-item">
+        <a href="{{ item.product.get_absolute_url }}">{% product_img item.product "thumb" %}</a>
+        <div>
+          <a class="mc-title" href="{{ item.product.get_absolute_url }}">{{ item.product.title }}</a>
+          <div class="mc-meta">{% if item.product.color_id %}{{ item.product.color.display_name }} · {% endif %}{{ item.quantity }} × {{ item.product.price|uah }}</div>
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="empty" style="border:0"><svg class="ic"><use href="#i-cart"/></svg><h3>Кошик порожній</h3></div>
+  {% endif %}
+</div>
+{% if summary.items %}
+<div class="drawer-foot">
+  {% if summary.free_delivery_from %}
+    {% if summary.free_delivery %}<div class="alert alert-ok" style="margin-bottom:12px"><svg class="ic"><use href="#i-truck"/></svg>Доставка для вас безкоштовна</div>
+    {% else %}<div style="font-size:13px" class="muted">До безкоштовної доставки: <b style="color:var(--ink)">{{ summary.free_delivery_left|uah }}</b></div><div class="progress"><span style="width:{{ summary.free_delivery_progress }}%"></span></div>{% endif %}
+  {% endif %}
+  <div class="sum-row total" style="border:0;margin:0;padding-top:6px"><span>Разом</span><span>{{ summary.total|uah }}</span></div>
+  <div class="row" style="margin-top:10px"><a class="btn" style="flex:1" href="{% url 'cart:detail' %}">Кошик</a><a class="btn btn-primary" style="flex:1" href="{% url 'orders:checkout' %}">Оформити</a></div>
+</div>
+{% endif %}

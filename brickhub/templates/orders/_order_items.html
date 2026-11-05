@@ -1,0 +1,18 @@
+{% load shop_tags %}
+<div class="cart-list">
+  {% for item in order.items.all %}
+    <div class="cart-item" style="grid-template-columns:minmax(0,1fr) auto">
+      <div>
+        <div class="ci-title">{% if item.product %}<a href="{{ item.product.get_absolute_url }}">{{ item.title }}</a>{% else %}{{ item.title }}{% endif %}</div>
+        <div class="ci-meta"><span class="mono">{{ item.number|default:item.sku }}</span>{% if item.color_name %}<span>{{ item.color_name }}</span>{% endif %}<span>{{ item.condition_label }}</span><span>{{ item.quantity }} × {{ item.unit_price|uah }}</span></div>
+      </div>
+      <b class="ci-total">{{ item.line_total|uah }}</b>
+    </div>
+  {% endfor %}
+</div>
+<div class="summary" style="position:static;margin-top:14px">
+  <div class="sum-row"><span>Товари</span><b>{{ order.subtotal|uah }}</b></div>
+  {% if order.discount_total %}<div class="sum-row"><span>Знижка{% if order.promo_code %} ({{ order.promo_code }}){% endif %}</span><span class="disc">−{{ order.discount_total|uah }}</span></div>{% endif %}
+  <div class="sum-row"><span>Доставка</span><span>{% if order.delivery_cost is None %}за тарифами перевізника{% elif order.delivery_cost == 0 %}<b style="color:var(--green)">Безкоштовно</b>{% else %}{{ order.delivery_cost|uah }}{% endif %}</span></div>
+  <div class="sum-row total"><span>До сплати</span><span>{{ order.total|uah }}</span></div>
+</div>

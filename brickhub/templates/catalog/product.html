@@ -1,0 +1,216 @@
+{% extends "base.html" %}{% load shop_tags %}
+{% block content %}
+{% with p=product s=product.lego_set %}
+<div class="container">
+  <div class="pd">
+    {% gallery_items p as images %}
+    <div class="gallery{% if images|length < 2 %} single{% endif %}" data-gallery>
+      {% if images|length > 1 %}
+        <div class="gallery-thumbs" role="tablist" aria-label="Фото">
+          {% for im in images %}
+            <button type="button" class="{% if forloop.first %}is-active{% endif %}" data-src="{{ im.src }}" {% if im.fallback %}data-fallback="{{ im.fallback }}"{% endif %} aria-label="Фото {{ forloop.counter }}">
+              <img src="{{ im.thumb }}" alt="" loading="lazy" {% if im.fallback %}data-fallback="{{ im.fallback }}"{% endif %}>
+            </button>
+          {% endfor %}
+        </div>
+      {% endif %}
+      <div class="gallery-main">
+        {% with im=images.0 %}
+          <img src="{{ im.src }}" alt="{{ im.alt }}" width="720" height="720" fetchpriority="high" data-gallery-main {% if im.fallback %}data-fallback="{{ im.fallback }}"{% endif %}>
+        {% endwith %}
+        <div class="card-badges">
+          {% if p.discount_percent %}<span class="badge badge-red">−{{ p.discount_percent }}%</span>{% endif %}
+          {% if p.is_new %}<span class="badge badge-yellow">Новинка</span>{% endif %}
+          {% if p.condition == "used" %}<span class="badge badge-dark">Б/у</span>{% endif %}
+          {% if p.is_rare %}<span class="badge badge-blue">Рідкісний</span>{% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="pd-info">
+      <div class="pd-kicker">
+        {% if p.theme_id %}<a class="chip" href="{{ p.theme.get_absolute_url }}" style="height:30px"><span class="dot" style="--c:{{ p.theme.accent }}"></span>{{ p.theme.display_name }}</a>{% endif %}
+        {% if p.category_id %}<a class="chip" href="{{ p.category.get_absolute_url }}" style="height:30px">{{ p.category.name }}</a>{% endif %}
+        <span class="badge">{{ p.get_kind_display }}</span>
+        <span class="badge {% if p.condition == 'new' %}badge-green{% else %}badge-orange{% endif %}">{{ p.get_condition_display }}</span>
+      </div>
+      <h1>{{ p.title }}</h1>
+      <div class="pd-ids">
+        {% if p.official_number %}<span class="idpill"><span>{{ p.number_label }}</span><b>{{ p.official_number }}</b><button type="button" data-copy="{{ p.official_number }}" aria-label="Копіювати номер"><svg class="ic"><use href="#i-copy"/></svg></button></span>{% endif %}
+        {% if element_id %}<span class="idpill"><span>Element ID</span><b>{{ element_id }}</b><button type="button" data-copy="{{ element_id }}" aria-label="Копіювати Element ID"><svg class="ic"><use href="#i-copy"/></svg></button></span>{% endif %}
+        {% if p.color_id %}<span class="idpill"><span class="swatch{% if p.color.is_transparent %} is-trans{% endif %}" style="--c:{{ p.color.hex }}"></span><span>Колір</span><b>{{ p.color.code }}</b></span>{% endif %}
+        <span class="idpill"><span>Артикул</span><b>{{ p.sku }}</b><button type="button" data-copy="{{ p.sku }}" aria-label="Копіювати артикул"><svg class="ic"><use href="#i-copy"/></svg></button></span>
+      </div>
+      {% if p.reviews_count %}<a class="rating-line" href="#reviews" style="margin:-6px 0 14px;font-size:14px"><span class="stars" style="font-size:16px">{{ p.rating_avg|stars }}</span>{{ p.rating_avg|floatformat:1 }} · {{ p.reviews_count }} {{ p.reviews_count|plural:"відгук,відгуки,відгуків" }}</a>{% endif %}
+
+      <div class="buybox">
+        <div class="price{% if p.discount_percent %} is-sale{% endif %}">
+          {% if p.discount_percent %}<s>{{ p.old_price|uah }}</s>{% endif %}
+          <b>{{ p.price|uah }}</b>{% if p.kind == "part" %}<span class="per">ціна за 1 шт.</span>{% endif %}
+        </div>
+        <div class="stock-line">
+          {% if p.in_stock %}
+            {% if p.low_stock %}<span class="stock low">Закінчується — залишилось {{ p.stock }} шт.</span>{% else %}<span class="stock in">В наявності{% if p.kind == "part" or p.stock > 3 %}: {{ p.stock|thousands }} шт.{% endif %}</span>{% endif %}
+            <span class="muted">· Відправка 1–2 дні</span>
+          {% else %}<span class="stock out">Немає в наявності</span>{% endif %}
+        </div>
+        {% if p.completeness %}<div class="alert" style="margin-top:12px"><svg class="ic"><use href="#i-info"/></svg>{{ p.completeness }}</div>{% endif %}
+
+        {% if siblings|length > 1 %}
+          <div class="color-picker">
+            <div class="cp-label">Колір: <b>{{ p.color.display_name }}</b> <span class="muted">({{ p.color.name }})</span> · <a class="link" href="{% url 'catalog:part_design' p.part.design_id %}">усі {{ siblings|length }} варіанти</a></div>
+            <div class="color-swatches">
+              {% for sib in siblings %}
+                <a href="{{ sib.get_absolute_url }}" class="{% if sib.color.is_transparent %}is-trans {% endif %}{% if sib.pk == p.pk %}is-active {% endif %}{% if not sib.in_stock %}is-out{% endif %}" style="--c:{{ sib.color.hex }}" aria-label="{{ sib.color.display_name }}{% if sib.condition == 'used' %}, б/у{% endif %}">
+                  <span class="tip">{{ sib.color.display_name }}{% if sib.condition == "used" %} · б/у{% endif %} · {{ sib.price|uah }}</span>
+                </a>
+              {% endfor %}
+            </div>
+          </div>
+        {% endif %}
+
+        {% if p.in_stock %}
+          <form method="post" action="{% url 'cart:add' %}" data-add-to-cart class="buy-row">{% csrf_token %}
+            <input type="hidden" name="product" value="{{ p.pk }}">
+            <div class="stepper" data-stepper>
+              <button type="button" data-step="-1" aria-label="Менше">−</button>
+              <input type="number" name="quantity" value="1" min="1" max="{{ p.stock }}" inputmode="numeric" aria-label="Кількість">
+              <button type="button" data-step="1" aria-label="Більше">+</button>
+            </div>
+            <button class="btn btn-lg btn-primary" type="submit"><svg class="ic"><use href="#i-cart"/></svg><span class="btn-label">Додати в кошик</span></button>
+          </form>
+          {% if p.kind == "part" %}<p class="muted" style="font-size:13px;margin:10px 0 0">Сума за кількість рахується в кошику. Потрібно кілька кольорів? <a class="link" href="{% url 'catalog:part_design' p.part.design_id %}">Таблиця кольорів деталі</a>.</p>{% endif %}
+        {% else %}
+          <div class="notify-box" id="notify">
+            <b>Повідомити про надходження</b>
+            <p class="muted" style="margin:4px 0 0;font-size:14px">Напишемо на пошту, щойно товар з'явиться на складі.</p>
+            <form method="post" action="{% url 'catalog:stock_notify' p.pk %}" data-notify>{% csrf_token %}
+              <input type="email" name="email" required placeholder="Ваш e-mail" value="{% if user.is_authenticated %}{{ user.email }}{% endif %}" autocomplete="email" aria-label="E-mail">
+              <button class="btn btn-dark" type="submit"><svg class="ic"><use href="#i-bell"/></svg>Повідомити</button>
+            </form>
+          </div>
+        {% endif %}
+        <div class="buy-row" style="margin-top:10px">
+          <form method="post" action="{% url 'catalog:toggle_favorite' p.pk %}" data-toggle="fav">{% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <button class="btn{% if is_favorite %} is-active{% endif %}" type="submit" data-fav="{{ p.pk }}" aria-pressed="{% if is_favorite %}true{% else %}false{% endif %}"><svg class="ic ic-fill"><use href="#i-heart"/></svg><span data-label-on="В обраному" data-label-off="Додати в обране">{% if is_favorite %}В обраному{% else %}Додати в обране{% endif %}</span></button>
+          </form>
+          <form method="post" action="{% url 'catalog:toggle_compare' p.pk %}" data-toggle="compare">{% csrf_token %}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <button class="btn{% if in_compare %} is-active{% endif %}" type="submit" data-compare="{{ p.pk }}" aria-pressed="{% if in_compare %}true{% else %}false{% endif %}"><svg class="ic"><use href="#i-compare"/></svg><span data-label-on="У порівнянні" data-label-off="Порівняти">{% if in_compare %}У порівнянні{% else %}Порівняти{% endif %}</span></button>
+          </form>
+        </div>
+      </div>
+
+      <div class="perks">
+        <div class="perk"><svg class="ic"><use href="#i-shield"/></svg><span>Оригінальна продукція LEGO</span></div>
+        <div class="perk"><svg class="ic"><use href="#i-truck"/></svg><span>Нова пошта та Укрпошта{% if SHOP.FREE_DELIVERY_FROM %}, безкоштовно від {{ SHOP.FREE_DELIVERY_FROM|uah }}{% endif %}</span></div>
+        <div class="perk"><svg class="ic"><use href="#i-cash"/></svg><span>Оплата при отриманні або карткою</span></div>
+        <div class="perk"><svg class="ic"><use href="#i-refresh"/></svg><span>14 днів на повернення</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pd-sections">
+    <div class="stack">
+      {% if p.description %}
+        <section class="panel-card"><h2>Опис</h2><div class="prose">{{ p.description|linebreaks }}</div></section>
+      {% endif %}
+      {% if p.kind == "minifig" and p.minifigure.contents %}
+        <section class="panel-card"><h2>Комплектація</h2>
+          <ul class="contents-list">
+            {% for c in p.minifigure.contents %}
+              <li><span class="mono">{{ c.part }}</span><span>{{ c.name }}{% if c.color %} <span class="muted">· {{ c.color }}</span>{% endif %}</span><span class="muted">× {{ c.qty }}</span></li>
+            {% endfor %}
+          </ul>
+        </section>
+      {% endif %}
+      {% if contains_figs %}
+        <section class="panel-card"><h2>Мініфігурки з цього набору</h2>
+          <div class="grid" style="--cols:4">{% for product in contains_figs %}{% include "catalog/_card.html" %}{% endfor %}</div>
+        </section>
+      {% endif %}
+    </div>
+    <section class="panel-card">
+      <h2>Характеристики</h2>
+      <table class="specs">
+        <tr><th>Тип товару</th><td>{{ p.get_kind_display }}</td></tr>
+        {% if p.official_number %}<tr><th>{{ p.number_label }}</th><td class="mono">{{ p.official_number }}</td></tr>{% endif %}
+        {% if s and s.number != s.base_number %}<tr><th>Номер у каталозі</th><td class="mono">{{ s.number }}</td></tr>{% endif %}
+        {% if element_id %}<tr><th>Element ID</th><td class="mono">{{ element_id }}</td></tr>{% endif %}
+        {% if p.kind == "part" %}
+          <tr><th>Офіційна назва</th><td>{{ p.part.name }}</td></tr>
+          <tr><th>Колір</th><td><span class="swatch-inline"><span class="swatch{% if p.color.is_transparent %} is-trans{% endif %}" style="--c:{{ p.color.hex }}"></span>{{ p.color.display_name }}</span></td></tr>
+          <tr><th>Офіційна назва кольору</th><td>{{ p.color.name }}</td></tr>
+          {% if p.color.bricklink_id is not None %}<tr><th>Номер кольору (BrickLink)</th><td class="mono">{{ p.color.bricklink_id }}</td></tr>{% endif %}
+          {% if p.color.lego_id %}<tr><th>Номер кольору LEGO</th><td class="mono">{{ p.color.lego_id }}</td></tr>{% endif %}
+          {% if p.part.part_category %}<tr><th>Тип деталі</th><td>{{ p.part.part_category.display_name }}</td></tr>{% endif %}
+          {% if p.part.alternate_ids %}<tr><th>Альтернативні номери</th><td class="mono">{{ p.part.alternate_ids }}</td></tr>{% endif %}
+        {% endif %}
+        {% if p.theme_id and p.kind != "part" %}<tr><th>Серія</th><td>{{ p.theme.display_name }}</td></tr>{% endif %}
+        {% if s %}
+          {% if s.year %}<tr><th>Рік випуску</th><td>{{ s.year }}</td></tr>{% endif %}
+          {% if s.pieces %}<tr><th>Кількість деталей</th><td>{{ s.pieces|thousands }}</td></tr>{% endif %}
+          {% if s.minifigs_count is not None and p.kind == "set" %}<tr><th>Кількість мініфігурок</th><td>{{ s.minifigs_count }}</td></tr>{% endif %}
+          {% if s.age_min %}<tr><th>Вікова категорія</th><td>{{ s.age_min }}+</td></tr>{% endif %}
+          {% if s.dimensions %}<tr><th>Розміри зібраної моделі (В × Ш × Г)</th><td>{{ s.dimensions }}</td></tr>{% endif %}
+        {% endif %}
+        {% if p.kind == "minifig" %}
+          <tr><th>Персонаж</th><td>{{ p.minifigure.character|default:p.minifigure.name }}</td></tr>
+          {% if p.minifigure.bricklink_id %}<tr><th>Номер BrickLink</th><td class="mono">{{ p.minifigure.bricklink_id }}</td></tr>{% endif %}
+          <tr><th>Номер у каталозі</th><td class="mono">{{ p.minifigure.fig_number }}</td></tr>
+          {% if p.minifigure.year %}<tr><th>Перша поява</th><td>{{ p.minifigure.year }}</td></tr>{% endif %}
+          {% if p.minifigure.num_parts %}<tr><th>Кількість частин</th><td>{{ p.minifigure.num_parts }}</td></tr>{% endif %}
+          {% if p.minifigure.appears_in %}<tr><th>Зустрічається в наборах</th><td>{% for n in p.minifigure.appears_in %}<a class="link" href="{% url 'catalog:search' %}?q={{ n|cut:'-1' }}">{{ n|cut:"-1" }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>{% endif %}
+        {% endif %}
+        <tr><th>Стан</th><td>{{ p.get_condition_display }}</td></tr>
+        {% if p.completeness %}<tr><th>Комплектація</th><td>{{ p.completeness }}</td></tr>{% endif %}
+        <tr><th>Артикул магазину</th><td class="mono">{{ p.sku }}</td></tr>
+      </table>
+    </section>
+  </div>
+
+  <section class="panel-card" id="reviews" style="margin-top:20px">
+    <div class="section-head" style="margin-bottom:8px"><h2 style="margin:0">Відгуки покупців</h2></div>
+    {% if p.reviews_count %}
+      <div class="rating-summary"><span class="big">{{ p.rating_avg|floatformat:1 }}</span><div><div class="stars" style="font-size:20px">{{ p.rating_avg|stars }}</div><span class="muted">{{ p.reviews_count }} {{ p.reviews_count|plural:"відгук,відгуки,відгуків" }}</span></div></div>
+    {% else %}
+      <p class="muted">Відгуків ще немає — станьте першим, хто поділиться враженнями.</p>
+    {% endif %}
+    {% for r in reviews %}
+      <article class="review">
+        <div class="review-head"><b>{{ r.user.first_name|default:"Покупець" }}</b><span class="stars">{{ r.rating|stars }}</span><time datetime="{{ r.created_at|date:'c' }}">{{ r.created_at|date:"j E Y" }}</time></div>
+        {% if r.title %}<b style="display:block;margin-bottom:4px">{{ r.title }}</b>{% endif %}
+        <div class="prose">{{ r.text|linebreaksbr }}</div>
+      </article>
+    {% endfor %}
+    {% if user.is_authenticated %}
+      <form method="post" action="{% url 'catalog:review_create' p.pk %}" class="stack" style="margin-top:18px;max-width:640px">{% csrf_token %}
+        <b>{% if my_review %}Змінити ваш відгук{% else %}Написати відгук{% endif %}</b>
+        <div class="rating-input" role="radiogroup" aria-label="Оцінка">
+          {% for v in "54321" %}<input type="radio" id="r{{ v }}" name="rating" value="{{ v }}" {% if my_review and my_review.rating|stringformat:"s" == v %}checked{% endif %} required><label for="r{{ v }}" title="{{ v }}">★</label>{% endfor %}
+        </div>
+        <div class="field"><input type="text" name="title" maxlength="120" placeholder="Заголовок (необов'язково)" value="{{ my_review.title|default:'' }}"></div>
+        <div class="field"><textarea name="text" rows="4" maxlength="3000" required placeholder="Що сподобалось, що ні, кому радите">{{ my_review.text|default:'' }}</textarea></div>
+        <div><button class="btn btn-dark" type="submit">Опублікувати відгук</button></div>
+      </form>
+    {% else %}
+      <p style="margin-top:12px"><a class="link" href="{% url 'accounts:login' %}?next={{ request.path|urlencode }}%23reviews">Увійдіть</a>, щоб залишити відгук.</p>
+    {% endif %}
+  </section>
+
+  {% if similar %}
+  <section class="section" aria-labelledby="similar-title">
+    <div class="section-head"><h2 id="similar-title">{% if p.kind == "part" %}Схожі деталі{% else %}Схожі товари{% endif %}</h2></div>
+    {% include "catalog/_rail.html" with items=similar %}
+  </section>
+  {% endif %}
+  {% if recent %}
+  <section class="section" aria-labelledby="recent-title">
+    <div class="section-head"><h2 id="recent-title">Нещодавно переглянуті</h2></div>
+    {% include "catalog/_rail.html" with items=recent %}
+  </section>
+  {% endif %}
+</div>
+{% endwith %}
+{% endblock %}

@@ -1,0 +1,16 @@
+{% extends "accounts/_layout.html" %}
+{% block acc_title %}Вітаємо, {{ user.first_name|default:user.email }}!{% endblock %}
+{% block acc_content %}
+<div class="kpis">
+  <div class="kpi"><span>Усього замовлень</span><b>{{ orders_count }}</b></div>
+  <div class="kpi"><span>Активні замовлення</span><b>{{ open_orders }}</b></div>
+  <div class="kpi"><span>В обраному</span><b>{{ favorites_count }}</b></div>
+</div>
+<div class="section-head"><h2 style="font-size:20px;margin:0">Останні замовлення</h2><a class="link" href="{% url 'accounts:orders' %}">Усі замовлення</a></div>
+{% include "accounts/_orders_table.html" %}
+<div class="panel-card" style="margin-top:16px">
+  <h2 style="font-size:18px">Дані для доставки</h2>
+  <p class="muted" style="margin:0">{{ user.get_full_name|default:"Ім'я не вказано" }} · {{ user.phone|default:"телефон не вказано" }}<br>{% if user.city %}{{ user.city }}{% if user.np_warehouse %}, {{ user.np_warehouse }}{% endif %}{% else %}Адресу ще не збережено — вона підставиться після першого замовлення.{% endif %}</p>
+  <a class="btn btn-sm" style="margin-top:12px" href="{% url 'accounts:profile' %}">Змінити</a>
+</div>
+{% endblock %}

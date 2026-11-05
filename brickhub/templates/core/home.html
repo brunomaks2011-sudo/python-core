@@ -1,0 +1,176 @@
+{% extends "base.html" %}{% load shop_tags %}
+{% block content %}
+<div class="container">
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="hero-inner">
+      <div>
+        <span class="eyebrow" style="color:#ffd84d">Оригінальна продукція LEGO</span>
+        <h1 id="hero-title">Світ LEGO <em>починається</em> тут!</h1>
+        <p class="lead">Набори всіх популярних серій, окремі деталі за номером Design ID та Element ID і мініфігурки — з доставкою Новою поштою та Укрпоштою по всій Україні.</p>
+        <div class="hero-actions">
+          <a class="btn btn-lg btn-primary" href="{% url 'catalog:index' %}" style="--btn-bg:#fff;--btn-fg:var(--red);--btn-bd:#fff;box-shadow:none">
+            <span class="btn-label">Перейти до каталогу</span><svg class="ic"><use href="#i-arrow-right"/></svg>
+          </a>
+          <a class="btn btn-lg btn-outline-light" href="{% url 'catalog:part_finder' %}"><svg class="ic"><use href="#i-brick"/></svg>Знайти деталі</a>
+        </div>
+        <form class="hero-quick" action="{% url 'catalog:search' %}" method="get" role="search">
+          <input name="q" placeholder="Номер набору або деталі, напр. 75355 чи 3001" inputmode="search" enterkeyhint="search" aria-label="Швидкий пошук за номером">
+          <button class="btn btn-sm btn-dark" type="submit"><svg class="ic"><use href="#i-search"/></svg>Знайти</button>
+        </form>
+        <div class="hero-stats">
+          <div><b>{{ stats.sets|thousands }}</b><span>наборів у довіднику</span></div>
+          <div><b>{{ stats.parts|thousands }}</b><span>номерів деталей</span></div>
+          <div><b>{{ stats.colors }}</b><span>кольорів LEGO</span></div>
+        </div>
+      </div>
+      <div class="hero-visual" aria-hidden="true">
+        {% for p in hero|slice:":3" %}
+          <a class="hero-card" href="{{ p.get_absolute_url }}" tabindex="-1">
+            {% product_img p "card" eager=True %}
+            <div class="hc-meta"><span>{{ p.title }}</span><span class="badge badge-red">{{ p.price|uah }}</span></div>
+          </a>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="series-title">
+    <div class="section-head">
+      <div><span class="eyebrow">Серії</span><h2 id="series-title">Популярні серії LEGO</h2></div>
+      <a class="link" href="{% url 'catalog:category' 'nabory' %}">Усі набори <svg class="ic" style="width:16px;height:16px"><use href="#i-arrow-right"/></svg></a>
+    </div>
+    <div class="series-strip">
+      {% for t in series %}
+        <a class="series-tile" href="{{ t.get_absolute_url }}" style="--c:{{ t.accent }}"><span>{{ t.n }} товарів</span><b>{{ t.display_name }}</b></a>
+      {% endfor %}
+    </div>
+  </section>
+
+  {% if popular %}
+  <section class="section" aria-labelledby="popular-title">
+    <div class="section-head">
+      <div><span class="eyebrow">Обирають найчастіше</span><h2 id="popular-title">Популярні товари</h2></div>
+      <a class="link" href="{% url 'catalog:collection' 'populiarni' %}">Дивитися всі <svg class="ic" style="width:16px;height:16px"><use href="#i-arrow-right"/></svg></a>
+    </div>
+    {% include "catalog/_rail.html" with items=popular %}
+  </section>
+  {% endif %}
+
+  {% if new %}
+  <section class="section" aria-labelledby="new-title">
+    <div class="section-head">
+      <div><span class="eyebrow">Свіжий реліз</span><h2 id="new-title">Новинки</h2><p>Набори 2025–2026 років, що щойно з'явилися у продажу.</p></div>
+      <a class="link" href="{% url 'catalog:collection' 'novynky' %}">Усі новинки <svg class="ic" style="width:16px;height:16px"><use href="#i-arrow-right"/></svg></a>
+    </div>
+    {% include "catalog/_rail.html" with items=new %}
+  </section>
+  {% endif %}
+
+  {% if bestsellers %}
+  <section class="section" aria-labelledby="hits-title">
+    <div class="section-head">
+      <div><span class="eyebrow">Хіти</span><h2 id="hits-title">Хіти продажів</h2></div>
+      <a class="link" href="{% url 'catalog:collection' 'khity-prodazhu' %}">Усі хіти <svg class="ic" style="width:16px;height:16px"><use href="#i-arrow-right"/></svg></a>
+    </div>
+    {% include "catalog/_rail.html" with items=bestsellers %}
+  </section>
+  {% endif %}
+
+  <section class="section">
+    <div class="parts-promo">
+      <div>
+        <span class="eyebrow">Деталі поштучно</span>
+        <h2>Потрібна конкретна деталь? Знайдіть її за номером</h2>
+        <p class="muted">Шукайте за Design ID, Element ID або назвою, обирайте колір за номером BrickLink і купуйте рівно стільки, скільки потрібно — від однієї штуки.</p>
+        <form class="pp-form" action="{% url 'catalog:part_finder' %}" method="get">
+          <input name="q" placeholder="Напр. 3001, 3023, 32524 або «плитка»" aria-label="Номер або назва деталі" enterkeyhint="search">
+          <button class="btn btn-lg btn-primary" type="submit"><svg class="ic"><use href="#i-search"/></svg><span class="btn-label">Знайти</span></button>
+        </form>
+        <div class="pp-examples">Приклади:
+          <a href="{% url 'catalog:part_design' '3001' %}">3001</a>
+          <a href="{% url 'catalog:part_design' '3069b' %}">3069b</a>
+          <a href="{% url 'catalog:part_design' '32524' %}">32524</a>
+          <a href="{% url 'catalog:part_design' '54200' %}">54200</a>
+          <a href="{% url 'cart:quick_order' %}">Замовлення списком →</a>
+        </div>
+      </div>
+      <div class="pp-visual">
+        {% for p in popular_parts|slice:":8" %}
+          <a href="{{ p.get_absolute_url }}" title="{{ p.official_number }} {{ p.title }} — {{ p.color.display_name }}">{% product_img p "thumb" %}</a>
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+
+  {% if latest %}
+  <section class="section" aria-labelledby="latest-title">
+    <div class="section-head">
+      <div><span class="eyebrow">Склад</span><h2 id="latest-title">Останні надходження</h2></div>
+      <a class="link" href="{% url 'catalog:collection' 'ostanni-nadkhodzhennia' %}?sort=new">Усі надходження <svg class="ic" style="width:16px;height:16px"><use href="#i-arrow-right"/></svg></a>
+    </div>
+    {% include "catalog/_rail.html" with items=latest %}
+  </section>
+  {% endif %}
+
+  {% if minifigs %}
+  <section class="section" aria-labelledby="figs-title">
+    <div class="section-head">
+      <div><span class="eyebrow">Колекціонерам</span><h2 id="figs-title">Популярні мініфігурки</h2></div>
+      <a class="link" href="{% url 'catalog:category' 'minifihurky' %}">Усі мініфігурки <svg class="ic" style="width:16px;height:16px"><use href="#i-arrow-right"/></svg></a>
+    </div>
+    {% include "catalog/_rail.html" with items=minifigs %}
+  </section>
+  {% endif %}
+
+  <section class="section" aria-labelledby="cats-title">
+    <div class="section-head">
+      <div><span class="eyebrow">Категорії</span><h2 id="cats-title">Популярні категорії деталей</h2></div>
+      <a class="link" href="{% url 'catalog:category' 'detali' %}">Усі деталі <svg class="ic" style="width:16px;height:16px"><use href="#i-arrow-right"/></svg></a>
+    </div>
+    <div class="cat-tiles">
+      {% for c in part_categories %}
+        <a class="cat-tile" href="{{ c.get_absolute_url }}"><img src="{% category_icon c.slug %}" alt="" width="76" height="76" loading="lazy"><b>{{ c.name }}</b><span>{{ c.n }} позицій</span></a>
+      {% endfor %}
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="adv-title">
+    <div class="section-head"><div><span class="eyebrow">Чому BRICK HUB</span><h2 id="adv-title">Переваги магазину</h2></div></div>
+    <div class="adv">
+      <div class="adv-item"><div class="adv-ico"><svg class="ic"><use href="#i-shield"/></svg></div><div><b>Лише оригінал LEGO</b><p>Жодних аналогів і копій — тільки оригінальні набори, деталі та фігурки.</p></div></div>
+      <div class="adv-item"><div class="adv-ico"><svg class="ic"><use href="#i-brick"/></svg></div><div><b>Деталі поштучно</b><p>Будь-яка кількість за номером і кольором — як на BrickLink, але в гривнях.</p></div></div>
+      <div class="adv-item"><div class="adv-ico"><svg class="ic"><use href="#i-truck"/></svg></div><div><b>Швидка доставка</b><p>Відправка Новою поштою та Укрпоштою у відділення, поштомат або кур'єром.</p></div></div>
+      <div class="adv-item"><div class="adv-ico"><svg class="ic"><use href="#i-cash"/></svg></div><div><b>Зручна оплата</b><p>Накладений платіж при отриманні або онлайн-оплата карткою.</p></div></div>
+      <div class="adv-item"><div class="adv-ico"><svg class="ic"><use href="#i-refresh"/></svg></div><div><b>Обмін і повернення</b><p>14 днів на повернення товару належної якості згідно із законом.</p></div></div>
+      <div class="adv-item"><div class="adv-ico"><svg class="ic"><use href="#i-message"/></svg></div><div><b>Допомога з пошуком</b><p>Підкажемо номер деталі за фото або інструкцією та зберемо замовлення.</p></div></div>
+    </div>
+  </section>
+
+  <section class="section" aria-labelledby="delivery-title">
+    <div class="section-head"><div><span class="eyebrow">Доставка по Україні</span><h2 id="delivery-title">Як ми доставляємо</h2></div>
+      <a class="link" href="{% url 'core:delivery' %}">Детальніше <svg class="ic" style="width:16px;height:16px"><use href="#i-arrow-right"/></svg></a></div>
+    <div class="delivery">
+      <div class="dcard is-dark">
+        <h3><svg class="ic" style="width:26px;height:26px;color:var(--yellow)"><use href="#i-truck"/></svg>Доставка за 1–3 дні</h3>
+        <p>Відправляємо замовлення в день оформлення або наступного робочого дня. Номер ТТН з'являється в особистому кабінеті та приходить на пошту.</p>
+        {% if SHOP.FREE_DELIVERY_FROM %}<p style="margin:0"><span class="badge badge-yellow">Безкоштовно від {{ SHOP.FREE_DELIVERY_FROM|uah }}</span></p>{% endif %}
+      </div>
+      <div class="dcard">
+        <h3><span class="carrier-logo">НП</span>Нова пошта</h3>
+        <ul><li>У відділення або поштомат</li><li>Кур'єром за адресою</li><li>Накладений платіж при отриманні</li></ul>
+      </div>
+      <div class="dcard">
+        <h3><span class="carrier-logo up">УП</span>Укрпошта</h3>
+        <ul><li>У будь-яке відділення України</li><li>Вигідно для легких посилок з деталями</li><li>Відстеження за трек-номером</li></ul>
+      </div>
+    </div>
+  </section>
+
+  {% if recent %}
+  <section class="section" aria-labelledby="recent-title">
+    <div class="section-head"><div><h2 id="recent-title">Ви нещодавно переглядали</h2></div></div>
+    {% include "catalog/_rail.html" with items=recent %}
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

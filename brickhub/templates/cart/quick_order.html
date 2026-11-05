@@ -1,0 +1,50 @@
+{% extends "base.html" %}{% load shop_tags %}
+{% block content %}
+<div class="container" style="padding-bottom:40px">
+  <header class="page-head">
+    <span class="eyebrow">Для тих, хто будує власні моделі</span>
+    <h1>Швидке замовлення деталей списком</h1>
+    <p class="lead">Вставте список у форматі <span class="kbd">номер колір кількість</span> — по одному рядку. Колір можна вказати номером BrickLink (5 = Red) або назвою українською чи англійською. Для наборів і мініфігурок достатньо номера.</p>
+  </header>
+  <div class="cart-layout">
+    <form class="form-card quick-order" method="post">{% csrf_token %}
+      <label class="sr-only" for="lines">Список деталей</label>
+      <textarea id="lines" name="lines" spellcheck="false" placeholder="3001 5 10&#10;3023 Black 24&#10;3069b прозорий 6&#10;75355 1">{{ text }}</textarea>
+      <div class="row" style="margin-top:12px">
+        <button class="btn btn-dark" type="submit" name="action" value="check">Перевірити наявність</button>
+        {% if ok_count %}<button class="btn btn-primary" type="submit" name="action" value="add"><svg class="ic"><use href="#i-cart"/></svg>Додати в кошик ({{ ok_count }})</button>{% endif %}
+      </div>
+    </form>
+    <aside class="summary">
+      <h3>Підказки</h3>
+      <ul class="muted" style="padding-left:18px;margin:0;font-size:14px">
+        <li><span class="kbd">3001 5 10</span> — цеглинка 2 × 4, колір 5 (Red), 10 шт.</li>
+        <li><span class="kbd">3023 Black 24</span> — назва кольору англійською</li>
+        <li><span class="kbd">3069b прозорий 6</span> — або українською</li>
+        <li><span class="kbd">Element ID кількість</span> — колір уже закладено в Element ID</li>
+        <li>Номери кольорів — у <a class="link" href="{% url 'catalog:colors' %}">таблиці кольорів</a></li>
+      </ul>
+    </aside>
+  </div>
+  {% if rows %}
+    <div class="cart-list" style="margin-top:18px;overflow-x:auto">
+      <table class="qo-table">
+        <thead><tr><th>Рядок</th><th>Знайдено</th><th>Колір</th><th>К-сть</th><th>Ціна</th><th>Статус</th></tr></thead>
+        <tbody>
+        {% for r in rows %}
+          <tr>
+            <td class="mono">{{ r.line }}</td>
+            <td>{% if r.product %}<a class="link" href="{{ r.product.get_absolute_url }}">{{ r.product.official_number }} {{ r.product.title }}</a>{% else %}—{% endif %}</td>
+            <td>{% if r.product.color_id %}<span class="swatch-inline"><span class="swatch" style="--c:{{ r.product.color.hex }}"></span>{{ r.product.color.display_name }}</span>{% endif %}</td>
+            <td>{{ r.qty }}</td>
+            <td>{% if r.product %}{{ r.product.price|uah }}{% endif %}</td>
+            <td>{% if r.error %}<span class="bad">{{ r.error }}</span>{% else %}<span class="ok">Готово до замовлення</span>{% endif %}</td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p style="margin-top:12px">Орієнтовна сума доступних позицій: <b>{{ rows_total|uah }}</b></p>
+  {% endif %}
+</div>
+{% endblock %}

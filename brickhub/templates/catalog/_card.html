@@ -1,0 +1,66 @@
+{% load shop_tags %}{% with p=product %}
+<article class="card{% if list_view %} is-list{% endif %}">
+  <a class="card-media{% if p.kind == 'part' %} is-part{% endif %}" href="{{ p.get_absolute_url }}" tabindex="-1" aria-hidden="true">
+    {% product_img p "card" %}
+    <div class="card-badges">
+      {% if p.discount_percent %}<span class="badge badge-red">−{{ p.discount_percent }}%</span>{% endif %}
+      {% if p.is_new %}<span class="badge badge-yellow">Новинка</span>{% endif %}
+      {% if p.condition == "used" %}<span class="badge badge-dark">Б/у</span>{% endif %}
+      {% if p.is_rare %}<span class="badge badge-blue">Рідкісний</span>{% endif %}
+      {% if p.is_bestseller and not p.is_new and not p.discount_percent %}<span class="badge badge-outline">Хіт</span>{% endif %}
+    </div>
+  </a>
+  <div class="card-tools">
+    <form method="post" action="{% url 'catalog:toggle_favorite' p.pk %}" data-toggle="fav">{% csrf_token %}
+      <input type="hidden" name="next" value="{{ request.get_full_path }}">
+      <button class="tool-btn{% if p.pk in favorite_ids %} is-active{% endif %}" type="submit" data-fav="{{ p.pk }}" aria-pressed="{% if p.pk in favorite_ids %}true{% else %}false{% endif %}" aria-label="В обране">
+        <svg class="ic ic-fill"><use href="#i-heart"/></svg>
+      </button>
+    </form>
+    <form method="post" action="{% url 'catalog:toggle_compare' p.pk %}" data-toggle="compare">{% csrf_token %}
+      <input type="hidden" name="next" value="{{ request.get_full_path }}">
+      <button class="tool-btn{% if p.pk in compare_ids %} is-active{% endif %}" type="submit" data-compare="{{ p.pk }}" aria-pressed="{% if p.pk in compare_ids %}true{% else %}false{% endif %}" aria-label="До порівняння">
+        <svg class="ic"><use href="#i-compare"/></svg>
+      </button>
+    </form>
+  </div>
+  <div class="card-body">
+    <div class="card-kicker">
+      {% if p.kind == "part" %}{{ p.category.name|default:"Деталь" }}
+      {% elif p.theme_id %}<span class="dot" style="--c:{{ p.theme.accent }}"></span>{{ p.theme.short_name }}{% if p.year %} · {{ p.year }}{% endif %}
+      {% else %}{{ p.get_kind_display }}{% endif %}
+    </div>
+    <a class="card-title" href="{{ p.get_absolute_url }}">{{ p.title }}</a>
+    <div class="card-meta">
+      {% if p.kind == "part" %}
+        <span class="swatch-inline"><span class="swatch{% if p.color.is_transparent %} is-trans{% endif %}" style="--c:{{ p.color.hex }}"></span>{{ p.color.display_name }}</span>
+        <span class="num mono">{{ p.official_number }}</span>
+      {% elif p.kind == "set" %}
+        <span class="num">№ {{ p.official_number }}</span>{% if p.pieces %}<span>{{ p.pieces|thousands }} дет.</span>{% endif %}
+      {% elif p.kind == "minifig" %}
+        <span class="num mono">{{ p.official_number }}</span>
+      {% else %}
+        {% if p.official_number %}<span class="num">Арт. {{ p.official_number }}</span>{% endif %}
+      {% endif %}
+    </div>
+    {% if p.reviews_count %}<div class="rating-line"><span class="stars">{{ p.rating_avg|stars }}</span>{{ p.reviews_count }}</div>{% endif %}
+    <div class="card-foot">
+      <div>
+        <div class="price{% if p.discount_percent %} is-sale{% endif %}">
+          {% if p.old_price and p.discount_percent %}<s>{{ p.old_price|uah }}</s>{% endif %}
+          <b>{{ p.price|uah }}</b>{% if p.kind == "part" %}<span class="per">за шт.</span>{% endif %}
+        </div>
+        {% if p.in_stock %}{% if p.low_stock %}<span class="stock low">Закінчується</span>{% else %}<span class="stock in">{% if p.kind == "part" %}{{ p.stock|thousands }} шт.{% else %}В наявності{% endif %}</span>{% endif %}{% else %}<span class="stock out">Немає в наявності</span>{% endif %}
+      </div>
+      {% if p.in_stock %}
+        <form method="post" action="{% url 'cart:add' %}" data-add-to-cart>{% csrf_token %}
+          <input type="hidden" name="product" value="{{ p.pk }}"><input type="hidden" name="quantity" value="1">
+          <button class="add-btn" type="submit" aria-label="Додати в кошик: {{ p.title }}"><svg class="ic"><use href="#i-cart"/></svg></button>
+        </form>
+      {% else %}
+        <a class="add-btn" style="background:var(--surface-2);color:var(--ink-2)" href="{{ p.get_absolute_url }}#notify" aria-label="Повідомити про надходження"><svg class="ic"><use href="#i-bell"/></svg></a>
+      {% endif %}
+    </div>
+  </div>
+</article>
+{% endwith %}

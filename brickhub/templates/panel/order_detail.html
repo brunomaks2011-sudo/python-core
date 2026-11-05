@@ -1,0 +1,76 @@
+{% extends "panel/base.html" %}{% load shop_tags %}
+{% block title %}{{ order.number }}{% endblock %}
+{% block heading %}Замовлення {{ order.number }} <span class="status s-{{ order.status }}" style="vertical-align:middle;margin-left:8px">{{ order.get_status_display }}</span>{% endblock %}
+{% block actions %}<a class="btn" href="{% url 'panel:order_packing' order.pk %}" target="_blank"><svg class="ic"><use href="#i-printer"/></svg>Пакувальний лист</a><a class="btn btn-ghost" href="{% url 'panel:orders' %}">До списку</a>{% endblock %}
+{% block content %}
+<div class="pgrid c21">
+  <div>
+    <section class="pcard">
+      <h2>Товари</h2>
+      <table class="ptable">
+        <thead><tr><th>Товар</th><th>Номер</th><th>Місце</th><th>Ціна</th><th>К-сть</th><th>Сума</th></tr></thead>
+        <tbody>
+        {% for i in order.items.all %}
+          <tr>
+            <td>{% if i.product %}<a class="link" style="color:var(--ink)" href="{% url 'panel:product_edit' i.product_id %}">{{ i.title }}</a>{% else %}{{ i.title }}{% endif %}<br><span class="muted mono" style="font-size:12px">{{ i.sku }}</span>{% if i.color_name %} <span class="muted" style="font-size:12px">· {{ i.color_name }}</span>{% endif %} <span class="badge" style="height:20px">{{ i.condition_label }}</span></td>
+            <td class="mono">{{ i.number|default:"—" }}</td>
+            <td class="muted">{{ i.product.inventory.location|default:"—" }}</td>
+            <td class="num">{{ i.unit_price|uah }}</td>
+            <td class="num">{{ i.quantity }}</td>
+            <td class="num"><b>{{ i.line_total|uah }}</b></td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+      <dl class="dl" style="margin-top:14px;grid-template-columns:1fr auto;max-width:360px;margin-left:auto">
+        <dt>Товари</dt><dd class="num">{{ order.subtotal|uah }}</dd>
+        {% if order.discount_total %}<dt>Знижка {{ order.promo_code }}</dt><dd class="num" style="color:var(--green)">−{{ order.discount_total|uah }}</dd>{% endif %}
+        <dt>Доставка</dt><dd class="num">{% if order.delivery_cost is None %}за тарифами{% else %}{{ order.delivery_cost|uah }}{% endif %}</dd>
+        <dt><b>До сплати</b></dt><dd class="num"><b>{{ order.total|uah }}</b></dd>
+      </dl>
+    </section>
+    <section class="pcard">
+      <h2>Історія</h2>
+      <ul class="events">{% for e in order.events.all %}<li><time>{{ e.created_at|date:"j.m.Y H:i" }}</time><span><b>{{ e.get_status_display }}</b>{% if e.note %} — {{ e.note }}{% endif %}{% if e.created_by %} <span class="muted">({{ e.created_by }})</span>{% endif %}{% if not e.is_customer_visible %} <span class="badge">службова</span>{% endif %}</span></li>{% endfor %}</ul>
+    </section>
+    {% if order.payments.all %}
+    <section class="pcard">
+      <h2>Платежі</h2>
+      <table class="ptable"><tbody>{% for pay in order.payments.all %}<tr><td>{{ pay.provider }}</td><td>{{ pay.get_status_display }}</td><td class="num">{{ pay.amount|uah }}</td><td class="mono muted">{{ pay.external_id|default:"—" }}</td><td class="muted">{{ pay.updated_at|date:"j.m H:i" }}</td></tr>{% endfor %}</tbody></table>
+    </section>
+    {% endif %}
+  </div>
+  <div>
+    <section class="pcard">
+      <h2>Змінити статус</h2>
+      <form method="post" class="stack">{% csrf_token %}<input type="hidden" name="form" value="status">
+        <div class="field">{{ status_form.status }}</div>
+        <div class="field">{{ status_form.note }}</div>
+        <label class="check">{{ status_form.notify }}<span>{{ status_form.notify.label }}</span></label>
+        <button class="btn btn-dark btn-block" type="submit">Оновити статус</button>
+        <p class="muted" style="font-size:12px;margin:0">Скасування або повернення автоматично повертає товари на склад.</p>
+      </form>
+    </section>
+    <section class="pcard">
+      <h2>Покупець</h2>
+      <dl class="dl" style="grid-template-columns:96px 1fr">
+        <dt>Ім'я</dt><dd>{{ order.full_name }}</dd>
+        <dt>Телефон</dt><dd><a class="link" href="tel:{{ order.phone }}">{{ order.phone }}</a></dd>
+        <dt>E-mail</dt><dd><a class="link" href="mailto:{{ order.email }}">{{ order.email }}</a></dd>
+        <dt>Акаунт</dt><dd>{% if order.user %}<a class="link" href="{% url 'panel:user_detail' order.user_id %}">{{ order.user.email }}</a>{% else %}гість{% endif %}</dd>
+        <dt>Доставка</dt><dd>{{ order.get_delivery_method_display }}<br>{{ order.delivery_summary }}</dd>
+        <dt>Оплата</dt><dd>{{ order.get_payment_method_display }} · {{ order.get_payment_status_display }}</dd>
+        {% if order.comment %}<dt>Коментар</dt><dd>{{ order.comment }}</dd>{% endif %}
+      </dl>
+    </section>
+    <section class="pcard">
+      <h2>ТТН і нотатки</h2>
+      <form method="post" class="stack">{% csrf_token %}<input type="hidden" name="form" value="meta">
+        {% for field in meta_form %}{% include "partials/field.html" %}{% endfor %}
+        <button class="btn btn-block" type="submit">Зберегти</button>
+        <p class="muted" style="font-size:12px;margin:0">Після першого збереження ТТН відкрите замовлення автоматично отримує статус «Відправлене», а покупець — лист з посиланням на відстеження.</p>
+      </form>
+    </section>
+  </div>
+</div>
+{% endblock %}

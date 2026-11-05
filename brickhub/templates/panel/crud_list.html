@@ -1,0 +1,15 @@
+{% extends "panel/base.html" %}{% load shop_tags %}
+{% block title %}{{ cfg.title }}{% endblock %}
+{% block heading %}{{ cfg.title }} <span class="muted" style="font-size:15px;font-family:var(--font);font-weight:500">{{ page.paginator.count|thousands }}</span>{% endblock %}
+{% block actions %}<a class="btn btn-primary" href="{% url 'panel:crud_new' key %}"><svg class="ic"><use href="#i-plus"/></svg>Додати {{ cfg.one }}</a>{% endblock %}
+{% block content %}
+<form class="pfilters" method="get"><input type="search" name="q" value="{{ q }}" placeholder="Пошук"><button class="btn btn-dark" type="submit">Знайти</button></form>
+<div class="ptable-wrap"><table class="ptable">
+  <thead><tr>{% for attr, label in cfg.columns %}<th>{{ label }}</th>{% endfor %}<th></th></tr></thead>
+  <tbody>{% for row in rows %}
+    <tr>{% for cell in row.cells %}<td>{% if cell.swatch %}<span class="swatch{% if cell.trans %} is-trans{% endif %}" style="--c:{{ cell.swatch }};--s:26px;border-radius:7px"></span>{% elif cell.value is True %}<span class="badge badge-green">так</span>{% elif cell.value is False %}<span class="badge">ні</span>{% elif cell.value is None %}<span class="muted">—</span>{% else %}{{ cell.value }}{% endif %}</td>{% endfor %}
+      <td><a class="btn btn-sm btn-soft" href="{% url 'panel:crud_edit' key row.obj.pk %}"><svg class="ic"><use href="#i-edit"/></svg>Змінити</a></td></tr>
+  {% empty %}<tr><td colspan="{{ cfg.columns|length|add:1 }}" class="muted" style="padding:28px">Записів немає.</td></tr>{% endfor %}</tbody>
+</table></div>
+{% include "partials/pagination.html" %}
+{% endblock %}

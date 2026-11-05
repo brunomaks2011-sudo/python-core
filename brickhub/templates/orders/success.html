@@ -1,0 +1,37 @@
+{% extends "base.html" %}{% load shop_tags %}
+{% block content %}
+<div class="container order-box">
+  <div class="success-hero">
+    <div class="ok"><svg class="ic"><use href="#i-check"/></svg></div>
+    <h1>Дякуємо! Замовлення {{ order.number }} прийнято</h1>
+    <p class="muted">Ми надіслали підтвердження на <b>{{ order.email }}</b>. Менеджер зв'яжеться з вами для підтвердження{% if order.payment_method == "cod" %}, оплата — при отриманні{% endif %}.</p>
+  </div>
+  {% if order.payment_method == "card" and order.payment_status != "paid" %}
+    <div class="alert alert-info" style="margin-bottom:16px"><svg class="ic"><use href="#i-card"/></svg>
+      <div>Замовлення очікує оплату {{ order.total|uah }}.
+        {% if card_enabled %}<a class="btn btn-sm btn-primary" style="margin-left:8px" href="{% url 'orders:pay' order.number %}?t={{ order.access_token }}">Оплатити карткою</a>
+        {% else %}Онлайн-оплата зараз недоступна — менеджер узгодить з вами спосіб оплати.{% endif %}
+        {% if request.GET.paid %}<br><small>Якщо ви щойно оплатили, статус оновиться після підтвердження від банку.</small>{% endif %}
+      </div>
+    </div>
+  {% elif order.payment_status == "paid" %}
+    <div class="alert alert-ok" style="margin-bottom:16px"><svg class="ic"><use href="#i-check"/></svg>Оплату отримано. Дякуємо!</div>
+  {% endif %}
+  <div class="panel-card" style="margin-bottom:16px">
+    <h2>Статус</h2>
+    {% include "orders/_timeline.html" %}
+    <table class="specs" style="margin-top:12px">
+      <tr><th>Отримувач</th><td>{{ order.full_name }}, {{ order.phone }}</td></tr>
+      <tr><th>Доставка</th><td>{{ order.get_delivery_method_display }} — {{ order.delivery_summary }}</td></tr>
+      <tr><th>Оплата</th><td>{{ order.get_payment_method_display }} · {{ order.get_payment_status_display }}</td></tr>
+      {% if order.tracking_number %}<tr><th>ТТН</th><td><a class="link" href="{{ order.tracking_url }}" target="_blank" rel="noopener">{{ order.tracking_number }}</a></td></tr>{% endif %}
+      {% if order.comment %}<tr><th>Коментар</th><td>{{ order.comment }}</td></tr>{% endif %}
+    </table>
+  </div>
+  {% include "orders/_order_items.html" %}
+  <div class="row" style="margin-top:18px;justify-content:center">
+    {% if user.is_authenticated %}<a class="btn btn-dark" href="{% url 'accounts:order_detail' order.number %}">Відкрити в кабінеті</a>{% endif %}
+    <a class="btn" href="{% url 'catalog:index' %}">Продовжити покупки</a>
+  </div>
+</div>
+{% endblock %}

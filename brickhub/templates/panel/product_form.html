@@ -1,0 +1,159 @@
+{% extends "panel/base.html" %}{% load shop_tags %}
+{% block title %}{% if product %}{{ product.sku }}{% else %}Новий товар{% endif %}{% endblock %}
+{% block heading %}{% if product %}{{ product.title|truncatechars:60 }}{% else %}Новий товар{% endif %}{% endblock %}
+{% block actions %}
+  {% if product %}<a class="btn" href="{{ product.get_absolute_url }}" target="_blank" rel="noopener"><svg class="ic"><use href="#i-eye"/></svg>На сайті</a>{% endif %}
+  <a class="btn btn-ghost" href="{% url 'panel:products' %}">До списку</a>
+{% endblock %}
+{% block content %}
+<form class="pform" method="post" enctype="multipart/form-data" data-product-form data-lookup="{% url 'panel:catalog_lookup' %}">{% csrf_token %}
+  {% if form.non_field_errors %}<div class="alert alert-red" style="margin-bottom:14px">{{ form.non_field_errors }}</div>{% endif %}
+  <div class="pgrid c21">
+    <div>
+      <section class="pcard">
+        <h2>Тип і номер LEGO</h2>
+        <div class="fields">
+          {% include "partials/field.html" with field=form.kind %}
+          {% include "partials/field.html" with field=form.condition %}
+        </div>
+        <div class="fields" style="margin-top:14px" data-kind-section="set accessory">
+          <div class="field{% if form.set_number.errors %} has-error{% endif %}">
+            <label for="id_set_number">{{ form.set_number.label }}</label>
+            <div class="row" style="flex-wrap:nowrap">{{ form.set_number }}<button class="btn" type="button" data-lookup-btn="set">Знайти в каталозі</button></div>
+            {% for e in form.set_number.errors %}<p class="error">{{ e }}</p>{% endfor %}
+            <div class="lookup-result" data-lookup-out="set"></div>
+          </div>
+        </div>
+        <div class="fields" style="margin-top:14px" data-kind-section="part">
+          <div class="field{% if form.design_id.errors %} has-error{% endif %}">
+            <label for="id_design_id">{{ form.design_id.label }}</label>
+            <div class="row" style="flex-wrap:nowrap">{{ form.design_id }}<button class="btn" type="button" data-lookup-btn="part">Знайти</button></div>
+            {% for e in form.design_id.errors %}<p class="error">{{ e }}</p>{% endfor %}
+            <div class="lookup-result" data-lookup-out="part"></div>
+          </div>
+          {% include "partials/field.html" with field=form.color %}
+          {% include "partials/field.html" with field=form.element_id %}
+        </div>
+        <div class="fields" style="margin-top:14px" data-kind-section="minifig">
+          <div class="field{% if form.fig_number.errors %} has-error{% endif %}">
+            <label for="id_fig_number">{{ form.fig_number.label }}</label>
+            <div class="row" style="flex-wrap:nowrap">{{ form.fig_number }}<button class="btn" type="button" data-lookup-btn="minifig">Знайти</button></div>
+            {% for e in form.fig_number.errors %}<p class="error">{{ e }}</p>{% endfor %}
+            <div class="lookup-result" data-lookup-out="minifig"></div>
+          </div>
+          {% include "partials/field.html" with field=form.bricklink_id %}
+        </div>
+        <details style="margin-top:14px" {% if form.create_catalog.value %}open{% endif %}>
+          <summary class="muted" style="cursor:pointer;font-size:14px">Номера немає в каталозі?</summary>
+          <div class="fields" style="margin-top:10px">
+            <label class="check full">{{ form.create_catalog }}<span>{{ form.create_catalog.label }}<br><small class="muted">{{ form.create_catalog.help_text }}</small></span></label>
+            {% include "partials/field.html" with field=form.official_name full=True %}
+          </div>
+        </details>
+      </section>
+
+      <section class="pcard">
+        <h2>Назва та опис</h2>
+        <div class="fields">
+          {% include "partials/field.html" with field=form.title full=True %}
+          {% include "partials/field.html" with field=form.category %}
+          {% include "partials/field.html" with field=form.theme %}
+          {% include "partials/field.html" with field=form.completeness full=True %}
+          {% include "partials/field.html" with field=form.description full=True %}
+        </div>
+      </section>
+
+      <section class="pcard" data-kind-section="set accessory">
+        <h2>Характеристики набору</h2>
+        <div class="fields c3">
+          {% include "partials/field.html" with field=form.year %}
+          {% include "partials/field.html" with field=form.pieces %}
+          {% include "partials/field.html" with field=form.minifigs_count %}
+          {% include "partials/field.html" with field=form.age_min %}
+          {% include "partials/field.html" with field=form.height_cm %}
+          {% include "partials/field.html" with field=form.width_cm %}
+          {% include "partials/field.html" with field=form.depth_cm %}
+        </div>
+        <p class="muted" style="font-size:13px;margin:10px 0 0">Ці дані зберігаються в каталозі набору й відображаються в усіх його лотах (нових і б/у).</p>
+      </section>
+
+      <section class="pcard" data-kind-section="minifig">
+        <h2>Мініфігурка</h2>
+        <div class="fields">
+          {% include "partials/field.html" with field=form.character %}
+          {% include "partials/field.html" with field=form.contents full=True %}
+        </div>
+      </section>
+
+      <section class="pcard">
+        <h2>Фото</h2>
+        {% if product %}
+          <div class="img-list" style="margin-bottom:14px">
+            {% for im in product.images.all %}
+              <div class="img-item">
+                <img src="{{ im.thumb_url }}" alt="" loading="lazy">
+                <div class="row">
+                  {% if not forloop.first %}<button class="btn btn-sm btn-soft" type="submit" form="img-{{ im.pk }}-main">Головне</button>{% else %}<span class="badge badge-green">Головне</span>{% endif %}
+                  <button class="btn btn-sm btn-ghost" type="submit" form="img-{{ im.pk }}-del" aria-label="Видалити фото"><svg class="ic"><use href="#i-trash"/></svg></button>
+                </div>
+              </div>
+            {% empty %}
+              <p class="muted" style="margin:0">Фото ще немає — на сайті показується згенероване зображення.</p>
+            {% endfor %}
+          </div>
+        {% endif %}
+        <div class="dropzone" data-dropzone>
+          <svg class="ic" style="width:28px;height:28px;margin:0 auto 6px;color:var(--muted)"><use href="#i-upload"/></svg>
+          <b>Перетягніть фото сюди</b> або оберіть файли
+          <div>{{ images_form.images }}</div>
+          {% for e in images_form.images.errors %}<p class="error">{{ e }}</p>{% endfor %}
+        </div>
+        <div class="field" style="margin-top:12px"><label for="id_external_url">{{ images_form.external_url.label }}</label>{{ images_form.external_url }}</div>
+      </section>
+    </div>
+
+    <div>
+      <section class="pcard" style="position:sticky;top:84px">
+        <h2>Ціна і склад</h2>
+        <div class="fields" style="grid-template-columns:1fr 1fr">
+          {% include "partials/field.html" with field=form.price %}
+          {% include "partials/field.html" with field=form.old_price %}
+          {% include "partials/field.html" with field=form.quantity %}
+          {% include "partials/field.html" with field=form.location %}
+          {% include "partials/field.html" with field=form.sku full=True %}
+        </div>
+        <div class="checks" style="margin:16px 0">
+          {% for f in form %}{% if f.name in "is_active is_featured is_bestseller is_new is_rare" %}<label class="check">{{ f }}<span>{{ f.label }}</span></label>{% endif %}{% endfor %}
+        </div>
+        <div class="stack">
+          <button class="btn btn-lg btn-primary btn-block" type="submit">Зберегти</button>
+          <button class="btn btn-block" type="submit" name="then" value="new">Зберегти й додати ще</button>
+        </div>
+        {% if product %}
+          <hr>
+          <dl class="dl" style="grid-template-columns:110px 1fr">
+            <dt>Продано</dt><dd>{{ product.sold_count }}</dd>
+            <dt>Переглядів</dt><dd>{{ product.views_count }}</dd>
+            <dt>Рейтинг</dt><dd>{% if product.reviews_count %}{{ product.rating_avg|floatformat:1 }} ({{ product.reviews_count }}){% else %}—{% endif %}</dd>
+            <dt>Створено</dt><dd>{{ product.created_at|date:"j E Y" }}</dd>
+          </dl>
+          {% if movements %}
+            <h2 style="margin-top:18px">Рух товару</h2>
+            <table class="ptable" style="font-size:13px"><tbody>
+              {% for m in movements %}<tr><td class="muted">{{ m.created_at|date:"j.m H:i" }}</td><td>{{ m.get_reason_display }}{% if m.order %} {{ m.order.number }}{% endif %}</td><td class="num" style="color:{% if m.change > 0 %}var(--green){% else %}var(--red){% endif %}">{% if m.change > 0 %}+{% endif %}{{ m.change }}</td><td class="num">{{ m.quantity_after }}</td></tr>{% endfor %}
+            </tbody></table>
+          {% endif %}
+          <button class="btn btn-ghost btn-block" style="margin-top:14px;color:var(--red)" type="submit" form="delete-form">Видалити товар</button>
+        {% endif %}
+      </section>
+    </div>
+  </div>
+</form>
+{% if product %}
+  <form id="delete-form" method="post" action="{% url 'panel:product_delete' product.pk %}" data-confirm="Видалити {{ product.sku }}?">{% csrf_token %}</form>
+  {% for im in product.images.all %}
+    <form id="img-{{ im.pk }}-main" method="post" action="{% url 'panel:image_action' im.pk %}">{% csrf_token %}<input type="hidden" name="action" value="main"></form>
+    <form id="img-{{ im.pk }}-del" method="post" action="{% url 'panel:image_action' im.pk %}" data-confirm="Видалити фото?">{% csrf_token %}<input type="hidden" name="action" value="delete"></form>
+  {% endfor %}
+{% endif %}
+{% endblock %}

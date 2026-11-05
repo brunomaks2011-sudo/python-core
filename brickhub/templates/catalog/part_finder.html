@@ -1,0 +1,47 @@
+{% extends "base.html" %}{% load shop_tags %}
+{% block content %}
+<div class="container">
+  <header class="page-head">
+    <span class="eyebrow">Як на BrickLink — тільки в гривнях</span>
+    <h1>Пошук деталей LEGO</h1>
+    <p class="lead">Введіть номер деталі (Design ID), Element ID або назву українською чи англійською. Оберіть колір, щоб побачити лише доступні варіанти.</p>
+  </header>
+  <section class="finder">
+    <form method="get">
+      <input class="q" type="search" name="q" value="{{ q }}" placeholder="Напр. 3001, 3069b, «пластина 2 x 4», tile" enterkeyhint="search" aria-label="Номер або назва деталі" autofocus>
+      <select name="color" aria-label="Колір">
+        <option value="">Усі кольори</option>
+        {% for c in colors %}<option value="{{ c.slug }}" {% if color and color.pk == c.pk %}selected{% endif %}>{{ c.display_name }} ({{ c.code }}) — {{ c.n }}</option>{% endfor %}
+      </select>
+      <select name="category" aria-label="Категорія">
+        <option value="">Усі категорії</option>
+        {% for c in categories %}<option value="{{ c.slug }}" {% if category and category.pk == c.pk %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+      </select>
+      <button class="btn btn-primary" type="submit" style="height:48px"><svg class="ic"><use href="#i-search"/></svg>Знайти</button>
+    </form>
+    <div class="row" style="margin-top:14px;font-size:14px">
+      <span class="muted">Швидкий вибір кольору:</span>
+      <div class="chips-scroll">
+        {% for c in colors|slice:":14" %}<a class="chip{% if color and color.pk == c.pk %} is-active{% endif %}" style="height:32px" href="?{% if q %}q={{ q|urlencode }}&amp;{% endif %}color={{ c.slug }}"><span class="swatch{% if c.is_transparent %} is-trans{% endif %}" style="--c:{{ c.hex }}"></span>{{ c.display_name }}</a>{% endfor %}
+      </div>
+    </div>
+  </section>
+
+  <div class="toolbar"><span class="count">Знайдено <b>{{ page.paginator.count }}</b> {{ page.paginator.count|plural:"деталь,деталі,деталей" }}{% if color %} у кольорі «{{ color.display_name }}»{% endif %}</span><span class="spacer"></span><a class="link" href="{% url 'cart:quick_order' %}">Є список деталей? Замовлення списком →</a></div>
+  {% if rows %}
+    <div class="design-grid">
+      {% for r in rows %}
+        <a class="design-card" href="{% url 'catalog:part_design' r.part.design_id %}{% if color and r.sample.color_id == color.pk %}{% endif %}">
+          <div class="dc-img">{% if r.sample %}{% product_img r.sample "thumb" %}{% endif %}</div>
+          <span class="dc-id">{{ r.part.design_id }}</span>
+          <span class="dc-name">{{ r.part.display_name }}</span>
+          <span class="dc-meta"><span>{{ r.part.n_colors }} {{ r.part.n_colors|plural:"колір,кольори,кольорів" }}</span><b style="color:var(--ink)">від {{ r.part.pmin|uah }}</b></span>
+        </a>
+      {% endfor %}
+    </div>
+    {% include "partials/pagination.html" %}
+  {% else %}
+    <div class="empty"><svg class="ic"><use href="#i-brick"/></svg><h3>Деталь не знайдено</h3><p class="muted">Перевірте номер або спробуйте назву. Номер деталі зазвичай вибитий на самій деталі або вказаний в інструкції.</p><a class="btn btn-dark" href="{% url 'core:guide' %}">Як знайти номер деталі</a></div>
+  {% endif %}
+</div>
+{% endblock %}

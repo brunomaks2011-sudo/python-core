@@ -1,0 +1,16 @@
+{% extends "base.html" %}{% load static shop_tags %}
+{% block content %}
+<div class="container order-box">
+  <div class="success-hero">
+    <div class="ok" style="background:var(--blue-50);color:var(--blue)"><svg class="ic"><use href="#i-card"/></svg></div>
+    <h1>Оплата замовлення {{ order.number }}</h1>
+    <p class="muted">Сума до сплати: <b>{{ order.total|uah }}</b>. Ви перейдете на захищену сторінку {{ provider.title }}.</p>
+  </div>
+  <form method="post" action="{{ form.action }}" accept-charset="utf-8" data-autopay style="text-align:center">
+    <input type="hidden" name="data" value="{{ form.data }}">
+    <input type="hidden" name="signature" value="{{ form.signature }}">
+    <button class="btn btn-lg btn-primary" type="submit"><svg class="ic"><use href="#i-lock"/></svg>Перейти до оплати</button>
+  </form>
+  <p class="muted" style="text-align:center;font-size:13px;margin-top:14px">Статус «Оплачено» з'явиться лише після підтвердження платежу банком.</p>
+</div>
+{% endblock %}

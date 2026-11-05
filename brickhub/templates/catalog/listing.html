@@ -1,0 +1,74 @@
+{% extends "base.html" %}{% load shop_tags %}
+{% block content %}
+<div class="container">
+  <header class="page-head">
+    {% if theme %}<span class="eyebrow" style="color:{{ theme.accent }}">Серія LEGO</span>{% elif color %}<span class="eyebrow">Колір {{ color.code }}</span>{% endif %}
+    <h1>{% if color %}<span class="swatch{% if color.is_transparent %} is-trans{% endif %}" style="--c:{{ color.hex }};--s:28px;display:inline-block;vertical-align:-4px;margin-right:10px;border-radius:8px"></span>{% endif %}{{ heading }}</h1>
+    {% if lead %}<p class="lead">{{ lead }}</p>{% endif %}
+  </header>
+  {% block before_listing %}{% endblock %}
+
+  {% if children %}
+    <div class="subnav" aria-label="Підкатегорії">
+      {% for c in children %}<a class="chip" href="{{ c.get_absolute_url }}"><img src="{% category_icon c.slug %}" alt="" width="24" height="24" loading="lazy">{{ c.name }}</a>{% endfor %}
+      <a class="chip" href="{% url 'catalog:part_finder' %}" style="border-color:var(--red);color:var(--red)"><svg class="ic" style="width:16px;height:16px"><use href="#i-search"/></svg>Пошук за номером</a>
+    </div>
+  {% endif %}
+  {% if nav_series %}
+    <div class="subnav" aria-label="Серії">
+      {% for t in nav_series %}<a class="chip{% if t.slug|in_list:listing.params.theme %} is-active{% endif %}" href="{% if category.kind == 'minifig' %}{% toggle_param 'theme' t.slug %}{% else %}{{ t.get_absolute_url }}{% endif %}"><span class="dot" style="--c:{{ t.accent }}"></span>{{ t.short_name }}</a>{% endfor %}
+    </div>
+  {% endif %}
+  {% if theme and kind_counts %}
+    <div class="subnav">
+      <a class="chip{% if not listing.params.kind %} is-active{% endif %}" href="{{ request.path }}">Усе</a>
+      {% if kind_counts.set %}<a class="chip{% if 'set'|in_list:listing.params.kind %} is-active{% endif %}" href="?kind=set">Набори <span class="count">{{ kind_counts.set }}</span></a>{% endif %}
+      {% if kind_counts.minifig %}<a class="chip{% if 'minifig'|in_list:listing.params.kind %} is-active{% endif %}" href="?kind=minifig">Мініфігурки <span class="count">{{ kind_counts.minifig }}</span></a>{% endif %}
+    </div>
+  {% endif %}
+
+  <div class="listing">
+    {% include "catalog/_filters.html" %}
+    <section aria-label="Товари">
+      <div class="toolbar">
+        <button class="btn btn-sm filters-open" type="button" data-open-filters><svg class="ic"><use href="#i-filter"/></svg>Фільтри{% if listing.active %} · {{ listing.active|length }}{% endif %}</button>
+        <span class="count">Знайдено <b>{{ listing.total|thousands }}</b> {{ listing.total|plural:"товар,товари,товарів" }}</span>
+        <span class="spacer"></span>
+        <form method="get" data-sort-form>
+          {% for k, v in request.GET.lists %}{% if k != "sort" and k != "page" %}{% for vv in v %}<input type="hidden" name="{{ k }}" value="{{ vv }}">{% endfor %}{% endif %}{% endfor %}
+          <label class="sr-only" for="sort">Сортування</label>
+          <select id="sort" name="sort" data-autosubmit>
+            {% if listing.query %}<option value="" {% if listing.sort == "relevance" %}selected{% endif %}>За відповідністю</option>{% endif %}
+            {% for v, label in sort_options %}<option value="{{ v }}" {% if listing.sort == v %}selected{% endif %}>{{ label }}</option>{% endfor %}
+          </select>
+        </form>
+        <div class="view-toggle" role="group" aria-label="Вигляд">
+          <a href="{% set_param 'view' '' %}" class="{% if listing.view == 'grid' %}is-active{% endif %}" aria-label="Плиткою"><svg class="ic"><use href="#i-grid4"/></svg></a>
+          <a href="{% set_param 'view' 'list' %}" class="{% if listing.view == 'list' %}is-active{% endif %}" aria-label="Списком"><svg class="ic"><use href="#i-list"/></svg></a>
+        </div>
+      </div>
+      {% if listing.active %}
+        <div class="active-chips">
+          {% for chip in listing.active %}<a href="{{ chip.url }}">{{ chip.label }}<svg class="ic"><use href="#i-x"/></svg></a>{% endfor %}
+          <a class="clear" href="{{ request.path }}{% if listing.query %}?q={{ listing.query|urlencode }}{% endif %}">Скинути все</a>
+        </div>
+      {% endif %}
+      {% if products %}
+        {% if listing.view == "list" %}
+          <div class="grid" style="--cols:1">{% for product in products %}{% include "catalog/_card.html" with list_view=True %}{% endfor %}</div>
+        {% else %}
+          <div class="grid grid-4">{% for product in products %}{% include "catalog/_card.html" %}{% endfor %}</div>
+        {% endif %}
+        {% include "partials/pagination.html" with page=listing.page listing=listing %}
+      {% else %}
+        <div class="empty">
+          <svg class="ic"><use href="#i-search"/></svg>
+          <h3>Нічого не знайдено</h3>
+          <p class="muted">Спробуйте змінити фільтри або пошукати за номером LEGO.</p>
+          <a class="btn btn-dark" href="{{ request.path }}">Скинути фільтри</a>
+        </div>
+      {% endif %}
+    </section>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,61 @@
+{% extends "base.html" %}{% load shop_tags %}
+{% block content %}
+<div class="container">
+  <section class="part-hero">
+    <div class="ph-img">{% product_img main "large" eager=True %}</div>
+    <div>
+      <span class="eyebrow">Деталь LEGO · {{ part.category.name|default:"Деталі" }}</span>
+      <h1>{{ part.display_name }}</h1>
+      <p class="muted" style="margin:0 0 14px">{{ part.name }}</p>
+      <div class="pd-ids">
+        <span class="idpill"><span>Design ID</span><b>{{ part.design_id }}</b><button type="button" data-copy="{{ part.design_id }}" aria-label="Копіювати"><svg class="ic"><use href="#i-copy"/></svg></button></span>
+        <span class="idpill"><span>Варіантів</span><b>{{ lots|length }}</b></span>
+        <span class="idpill"><span>Кольорів</span><b>{{ colors_count }}</b></span>
+        {% if part.part_category %}<span class="idpill"><span>Тип</span><b style="font-family:var(--font)">{{ part.part_category.display_name }}</b></span>{% endif %}
+      </div>
+      <p class="muted" style="font-size:14px;margin:0">Оберіть колір і кількість у таблиці — можна додати в кошик одразу кілька кольорів. Номери кольорів вказано за BrickLink.</p>
+    </div>
+  </section>
+
+  <table class="lots" aria-label="Кольори та наявність">
+    <thead><tr><th>Колір</th><th>№ кольору</th><th>Element ID</th><th>Стан</th><th>Наявність</th><th>Ціна за шт.</th><th style="text-align:right">Купити</th></tr></thead>
+    <tbody>
+    {% for lot in lots %}
+      <tr class="{% if not lot.in_stock %}is-out{% endif %}">
+        <td class="lot-c"><a class="lot-color" href="{{ lot.get_absolute_url }}">{% product_img lot "mini" %}<span><b>{{ lot.color.display_name }}</b><br><span class="muted" style="font-size:12px">{{ lot.color.name }}</span></span></a></td>
+        <td class="mono">{{ lot.color.code }}</td>
+        <td class="mono">{{ lot.el_id|default:"—" }}</td>
+        <td><span class="badge {% if lot.condition == 'new' %}badge-green{% else %}badge-orange{% endif %}">{{ lot.get_condition_display }}</span></td>
+        <td>{% if lot.in_stock %}<span class="stock in">{{ lot.stock|thousands }} шт.</span>{% else %}<span class="stock out">Немає</span>{% endif %}</td>
+        <td><b>{{ lot.price|uah }}</b></td>
+        <td class="lot-buy-c">
+          {% if lot.in_stock %}
+            <form method="post" action="{% url 'cart:add' %}" data-add-to-cart class="lot-buy">{% csrf_token %}
+              <input type="hidden" name="product" value="{{ lot.pk }}">
+              <div class="stepper sm" data-stepper><button type="button" data-step="-1" aria-label="Менше">−</button><input type="number" name="quantity" value="1" min="1" max="{{ lot.stock }}" inputmode="numeric" aria-label="Кількість"><button type="button" data-step="1" aria-label="Більше">+</button></div>
+              <button class="btn btn-sm btn-dark" type="submit"><svg class="ic"><use href="#i-cart"/></svg><span class="btn-label">У кошик</span></button>
+            </form>
+          {% else %}
+            <a class="btn btn-sm btn-soft" href="{{ lot.get_absolute_url }}#notify"><svg class="ic"><use href="#i-bell"/></svg>Повідомити</a>
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+
+  {% if related %}
+  <section class="section">
+    <div class="section-head"><h2>Інші деталі категорії «{{ part.category.name }}»</h2><a class="link" href="{{ part.category.get_absolute_url }}">Уся категорія</a></div>
+    <div class="design-grid">
+      {% for r in related %}
+        <a class="design-card" href="{% url 'catalog:part_design' r.part.design_id %}">
+          <div class="dc-img">{% product_img r.sample "thumb" %}</div>
+          <span class="dc-id">{{ r.part.design_id }}</span><span class="dc-name">{{ r.part.display_name }}</span>
+        </a>
+      {% endfor %}
+    </div>
+  </section>
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,5 @@
+{% extends "emails/_base.html" %}
+{% block body %}<h2 style="margin:0 0 8px">Замовлення {{ order.number }}: {{ order.get_status_display|lower }}</h2>
+{% if event.note %}<p>{{ event.note }}</p>{% endif %}
+{% if order.tracking_number %}<p>ТТН: <b>{{ order.tracking_number }}</b> — <a href="{{ order.tracking_url }}">відстежити посилку</a></p>{% endif %}
+<p><a href="{{ link }}" style="display:inline-block;background:#111318;color:#fff;text-decoration:none;padding:12px 20px;border-radius:10px;font-weight:700">Деталі замовлення</a></p>{% endblock %}

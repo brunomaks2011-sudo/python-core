@@ -1,0 +1,20 @@
+{% load shop_tags %}
+<div class="panel-card" style="padding:8px 8px 0;overflow-x:auto">
+<table class="orders-table">
+  <thead><tr><th>Номер</th><th class="hide-sm">Дата</th><th>Статус</th><th class="hide-sm">Позицій</th><th>Сума</th><th></th></tr></thead>
+  <tbody>
+  {% for o in orders %}
+    <tr>
+      <td><a class="link mono" href="{% url 'accounts:order_detail' o.number %}">{{ o.number }}</a></td>
+      <td class="hide-sm">{{ o.created_at|date:"j E Y" }}</td>
+      <td><span class="status s-{{ o.status }}">{{ o.get_status_display }}</span></td>
+      <td class="hide-sm">{{ o.items_count }}</td>
+      <td><b>{{ o.total|uah }}</b></td>
+      <td style="text-align:right"><a class="btn btn-sm btn-soft" href="{% url 'accounts:order_detail' o.number %}">Деталі</a></td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="6" class="muted" style="padding:24px 12px">Замовлень ще немає. <a class="link" href="{% url 'catalog:index' %}">Перейти до каталогу</a></td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>

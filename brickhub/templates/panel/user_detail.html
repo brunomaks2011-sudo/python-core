@@ -1,0 +1,22 @@
+{% extends "panel/base.html" %}{% load shop_tags %}
+{% block title %}{{ target.email }}{% endblock %}
+{% block heading %}{{ target.email }}{% endblock %}
+{% block actions %}<a class="btn btn-ghost" href="{% url 'panel:users' %}">До списку</a>{% endblock %}
+{% block content %}
+<div class="pgrid c21">
+  <section class="pcard">
+    <h2>Замовлення</h2>
+    <table class="ptable"><tbody>{% for o in orders %}<tr><td><a class="link mono" href="{% url 'panel:order_detail' o.pk %}">{{ o.number }}</a></td><td class="muted">{{ o.created_at|date:"j.m.Y" }}</td><td><span class="status s-{{ o.status }}">{{ o.get_status_display }}</span></td><td class="num"><b>{{ o.total|uah }}</b></td></tr>{% empty %}<tr><td class="muted">Замовлень немає.</td></tr>{% endfor %}</tbody></table>
+  </section>
+  <section class="pcard pform">
+    <h2>Дані та доступ</h2>
+    <form method="post" class="stack">{% csrf_token %}
+      <div class="fields" style="grid-template-columns:1fr">
+        {% for field in form %}{% if field.name == "is_active" or field.name == "is_staff" %}<label class="check">{{ field }}<span>{% if field.name == "is_active" %}Акаунт активний (вимкніть, щоб заблокувати){% else %}Доступ до адмін-панелі{% endif %}</span></label>{% else %}{% include "partials/field.html" %}{% endif %}{% endfor %}
+      </div>
+      <button class="btn btn-dark" type="submit">Зберегти</button>
+    </form>
+    <dl class="dl" style="margin-top:16px"><dt>Зареєстрований</dt><dd>{{ target.date_joined|date:"j E Y" }}</dd><dt>Останній вхід</dt><dd>{{ target.last_login|date:"j E Y H:i"|default:"—" }}</dd><dt>Адреса</dt><dd>{{ target.city }} {{ target.np_warehouse }}</dd></dl>
+  </section>
+</div>
+{% endblock %}

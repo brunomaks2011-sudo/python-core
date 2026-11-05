@@ -1,0 +1,72 @@
+{% extends "panel/base.html" %}{% load shop_tags %}
+{% block title %}Товари{% endblock %}
+{% block heading %}Товари і склад <span class="muted" style="font-size:15px;font-family:var(--font);font-weight:500">{{ total|thousands }}</span>{% endblock %}
+{% block actions %}
+  <a class="btn" href="{% url 'panel:export_products' %}{% if kind %}?kind={{ kind }}{% endif %}"><svg class="ic"><use href="#i-download"/></svg>Експорт CSV</a>
+  <a class="btn" href="{% url 'panel:import' %}"><svg class="ic"><use href="#i-upload"/></svg>Імпорт</a>
+  <a class="btn btn-primary" href="{% url 'panel:product_new' %}{% if kind %}?kind={{ kind }}{% endif %}"><svg class="ic"><use href="#i-plus"/></svg>Додати товар</a>
+{% endblock %}
+{% block content %}
+<form class="pfilters" method="get">
+  <input type="search" name="q" value="{{ q }}" placeholder="Пошук: артикул, номер LEGO, Design ID, Element ID, назва, колір">
+  <select name="kind"><option value="">Усі типи</option>{% for v, l in kinds %}<option value="{{ v }}" {% if kind == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+  <select name="category"><option value="">Усі категорії</option>{% for c in categories %}<option value="{{ c.slug }}" {% if category == c.slug %}selected{% endif %}>{{ c }}</option>{% endfor %}</select>
+  <select name="stock"><option value="">Будь-який залишок</option><option value="low" {% if stock == 'low' %}selected{% endif %}>Закінчується (1–3)</option><option value="out" {% if stock == 'out' %}selected{% endif %}>Немає в наявності</option></select>
+  <select name="status"><option value="">Усі</option><option value="active" {% if status == 'active' %}selected{% endif %}>На сайті</option><option value="hidden" {% if status == 'hidden' %}selected{% endif %}>Приховані</option></select>
+  <select name="order">
+    <option value="-updated_at" {% if order == '-updated_at' %}selected{% endif %}>Нещодавно змінені</option>
+    <option value="sku" {% if order == 'sku' %}selected{% endif %}>За артикулом</option>
+    <option value="title" {% if order == 'title' %}selected{% endif %}>За назвою</option>
+    <option value="price" {% if order == 'price' %}selected{% endif %}>Ціна ↑</option>
+    <option value="-price" {% if order == '-price' %}selected{% endif %}>Ціна ↓</option>
+    <option value="inventory__quantity" {% if order == 'inventory__quantity' %}selected{% endif %}>Залишок ↑</option>
+    <option value="-inventory__quantity" {% if order == '-inventory__quantity' %}selected{% endif %}>Залишок ↓</option>
+    <option value="-sold_count" {% if order == '-sold_count' %}selected{% endif %}>Продажі ↓</option>
+  </select>
+  <button class="btn btn-dark" type="submit">Знайти</button>
+</form>
+
+<form method="post" action="{% url 'panel:product_bulk' %}" data-bulk>{% csrf_token %}
+  <input type="hidden" name="next" value="{{ request.get_full_path }}">
+  <div class="bulkbar">
+    <label class="check"><input type="checkbox" data-check-all><span>Обрати всі на сторінці</span></label>
+    <span class="spacer"></span>
+    <select name="action" class="select" style="height:36px">
+      <option value="">Дія з обраними…</option>
+      <option value="activate">Показати на сайті</option><option value="deactivate">Приховати</option>
+      <option value="set_new">Позначити «Новинка»</option><option value="unset_new">Зняти «Новинка»</option>
+      <option value="set_featured">Позначити «Популярний»</option><option value="unset_featured">Зняти «Популярний»</option>
+      <option value="set_bestseller">Позначити «Хіт»</option><option value="unset_bestseller">Зняти «Хіт»</option>
+      <option value="delete">Видалити</option>
+    </select>
+    <button class="btn btn-sm" type="submit" data-confirm-bulk>Застосувати</button>
+  </div>
+  <div class="ptable-wrap">
+    <table class="ptable">
+      <thead><tr><th></th><th></th><th>Товар</th><th>Номер LEGO</th><th>Стан</th><th>Ціна, ₴</th><th>Залишок</th><th>Місце</th><th>Продано</th><th></th></tr></thead>
+      <tbody>
+      {% for p in page.object_list %}
+        <tr class="{% if not p.is_active %}is-hidden{% endif %}">
+          <td><input type="checkbox" name="ids" value="{{ p.pk }}" aria-label="Обрати {{ p.sku }}"></td>
+          <td>{% product_img p "mini" cls="thumb" %}</td>
+          <td style="min-width:240px"><a class="link" style="color:var(--ink)" href="{% url 'panel:product_edit' p.pk %}">{{ p.title|truncatechars:60 }}</a><br>
+            <span class="muted mono" style="font-size:12px">{{ p.sku }}</span>
+            {% if p.color_id %}<span class="swatch-inline muted" style="font-size:12px;margin-left:6px"><span class="swatch" style="--c:{{ p.color.hex }};--s:10px"></span>{{ p.color.display_name }}</span>{% endif %}
+            {% if not p.is_active %}<span class="badge" style="height:20px">прихований</span>{% endif %}</td>
+          <td class="mono">{{ p.official_number|default:"—" }}</td>
+          <td><span class="badge {% if p.condition == 'new' %}badge-green{% else %}badge-orange{% endif %}">{{ p.get_condition_display }}</span></td>
+          <td><input class="inline" type="text" inputmode="decimal" value="{{ p.price|stringformat:'.2f' }}" data-quick="{% url 'panel:product_quick_update' p.pk %}" data-field="price" aria-label="Ціна {{ p.sku }}"></td>
+          <td><input class="inline" type="number" min="0" inputmode="numeric" value="{{ p.inventory.quantity }}" data-quick="{% url 'panel:product_quick_update' p.pk %}" data-field="quantity" aria-label="Залишок {{ p.sku }}"></td>
+          <td class="muted">{{ p.inventory.location|default:"—" }}</td>
+          <td class="num">{{ p.sold_count }}</td>
+          <td><div class="row" style="flex-wrap:nowrap"><a class="btn btn-sm btn-soft" href="{% url 'panel:product_edit' p.pk %}" aria-label="Редагувати"><svg class="ic"><use href="#i-edit"/></svg></a><a class="btn btn-sm btn-ghost" href="{{ p.get_absolute_url }}" target="_blank" rel="noopener" aria-label="На сайті"><svg class="ic"><use href="#i-eye"/></svg></a></div></td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="10" class="muted" style="padding:28px">Нічого не знайдено.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</form>
+{% include "partials/pagination.html" %}
+{% endblock %}

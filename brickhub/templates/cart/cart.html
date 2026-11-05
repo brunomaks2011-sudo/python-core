@@ -1,0 +1,75 @@
+{% extends "base.html" %}{% load shop_tags %}
+{% block content %}
+<div class="container">
+  <header class="page-head"><h1>Кошик</h1></header>
+  {% if summary.items %}
+  <div class="cart-layout">
+    <div class="stack">
+      {% for w in summary.warnings %}<div class="alert alert-warn"><svg class="ic"><use href="#i-alert"/></svg>{{ w }}</div>{% endfor %}
+      <div class="cart-list">
+        {% for item in summary.items %}{% with p=item.product %}
+          <div class="cart-item{% if not p.is_active or not p.in_stock %} is-warn{% endif %}">
+            <a class="ci-img" href="{{ p.get_absolute_url }}">{% product_img p "thumb" %}</a>
+            <div>
+              <a class="ci-title" href="{{ p.get_absolute_url }}">{{ p.title }}</a>
+              <div class="ci-meta">
+                <span>{{ p.get_kind_display }}</span>
+                {% if p.official_number %}<span class="mono">{{ p.official_number }}</span>{% endif %}
+                {% if p.color_id %}<span class="swatch-inline"><span class="swatch{% if p.color.is_transparent %} is-trans{% endif %}" style="--c:{{ p.color.hex }}"></span>{{ p.color.display_name }}</span>{% endif %}
+                {% if p.condition == "used" %}<span class="badge badge-dark" style="height:20px">Б/у</span>{% endif %}
+                <span>{{ p.price|uah }}{% if p.kind == "part" %} / шт.{% endif %}</span>
+              </div>
+            </div>
+            <div class="ci-side">
+              {% if p.is_active and p.in_stock %}
+                <form method="post" action="{% url 'cart:update' item.pk %}" data-auto-update>{% csrf_token %}
+                  <div class="stepper sm" data-stepper><button type="button" data-step="-1" aria-label="Менше">−</button><input type="number" name="quantity" value="{{ item.quantity }}" min="1" max="{{ p.stock }}" inputmode="numeric" aria-label="Кількість"><button type="button" data-step="1" aria-label="Більше">+</button></div>
+                  <noscript><button class="btn btn-sm" type="submit">Оновити</button></noscript>
+                </form>
+                <span class="ci-total">{{ item.line_total|uah }}</span>
+              {% else %}
+                <span class="stock out">Недоступно</span>
+              {% endif %}
+              <form method="post" action="{% url 'cart:remove' item.pk %}">{% csrf_token %}<button class="ci-remove" type="submit"><svg class="ic"><use href="#i-trash"/></svg>Видалити</button></form>
+            </div>
+          </div>
+        {% endwith %}{% endfor %}
+      </div>
+      <div class="row">
+        <a class="btn btn-ghost" href="{% url 'catalog:index' %}"><svg class="ic"><use href="#i-chev-left"/></svg>Продовжити покупки</a>
+        <span class="spacer"></span>
+        <a class="btn btn-ghost" href="{% url 'cart:quick_order' %}">Додати деталі списком</a>
+        <form method="post" action="{% url 'cart:clear' %}">{% csrf_token %}<button class="btn btn-ghost" type="submit"><svg class="ic"><use href="#i-trash"/></svg>Очистити</button></form>
+      </div>
+    </div>
+    <aside class="summary">
+      <h3>Ваше замовлення</h3>
+      <div class="sum-row"><span>Товари ({{ summary.count }} шт.)</span><b>{{ summary.subtotal|uah }}</b></div>
+      {% if summary.promo %}
+        <div class="sum-row"><span>Промокод <b class="mono">{{ summary.promo.code }}</b></span><span class="disc">−{{ summary.discount|uah }}</span></div>
+        <form method="post" action="{% url 'cart:promo' %}">{% csrf_token %}<input type="hidden" name="action" value="remove"><button class="ci-remove" type="submit" style="background:none;border:0;color:var(--muted);cursor:pointer;font-size:13px;padding:0">Прибрати промокод</button></form>
+      {% else %}
+        {% if summary.promo_error %}<div class="alert alert-warn" style="margin-top:8px">{{ summary.promo_error }}</div>{% endif %}
+        <form class="promo-form" method="post" action="{% url 'cart:promo' %}">{% csrf_token %}
+          <input name="code" placeholder="Промокод" aria-label="Промокод" autocapitalize="characters" autocomplete="off">
+          <button class="btn" type="submit">Застосувати</button>
+        </form>
+      {% endif %}
+      <div class="sum-row"><span>Доставка</span><span>{% if summary.free_delivery %}<b style="color:var(--green)">Безкоштовно</b>{% else %}за тарифами перевізника{% endif %}</span></div>
+      {% if summary.free_delivery_from and not summary.free_delivery %}
+        <div style="font-size:13px" class="muted">Ще {{ summary.free_delivery_left|uah }} — і доставка безкоштовна</div>
+        <div class="progress"><span style="width:{{ summary.free_delivery_progress }}%"></span></div>
+      {% endif %}
+      <div class="sum-row total"><span>До сплати</span><span>{{ summary.total|uah }}</span></div>
+      <a class="btn btn-lg btn-primary btn-block" style="margin-top:14px" href="{% url 'orders:checkout' %}">Оформити замовлення</a>
+      <p class="muted" style="font-size:12px;margin:12px 0 0;text-align:center">Оплата при отриманні або карткою онлайн</p>
+    </aside>
+  </div>
+  {% if suggestions %}
+    <section class="section"><div class="section-head"><h2>Вам може сподобатися</h2></div>{% include "catalog/_rail.html" with items=suggestions %}</section>
+  {% endif %}
+  {% else %}
+    <div class="empty" style="margin-bottom:40px"><svg class="ic"><use href="#i-cart"/></svg><h3>Кошик порожній</h3><p class="muted">Додайте набори, деталі чи мініфігурки з каталогу.</p><div class="row" style="justify-content:center"><a class="btn btn-dark" href="{% url 'catalog:index' %}">До каталогу</a><a class="btn" href="{% url 'cart:quick_order' %}">Замовлення деталей списком</a></div></div>
+  {% endif %}
+</div>
+{% endblock %}

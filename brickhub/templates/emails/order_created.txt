@@ -1,0 +1,9 @@
+Дякуємо за замовлення {{ order.number }}!
+
+Доставка: {{ order.get_delivery_method_display }} — {{ order.delivery_summary }}
+Оплата: {{ order.get_payment_method_display }}
+
+{% include "emails/_items.txt" %}
+Статус замовлення: {{ link }}
+
+— {{ shop.NAME }}

@@ -1,0 +1,16 @@
+{% extends "panel/base.html" %}{% load shop_tags %}
+{% block title %}Відгуки{% endblock %}
+{% block heading %}Відгуки покупців{% endblock %}
+{% block content %}
+<div class="ptable-wrap"><table class="ptable">
+  <thead><tr><th>Товар</th><th>Автор</th><th>Оцінка</th><th>Відгук</th><th>Статус</th><th></th></tr></thead>
+  <tbody>{% for r in page.object_list %}
+    <tr><td><a class="link" href="{{ r.product.get_absolute_url }}#reviews" target="_blank">{{ r.product.title|truncatechars:40 }}</a></td><td>{{ r.user.email }}</td><td class="stars">{{ r.rating|stars }}</td><td style="max-width:420px">{% if r.title %}<b>{{ r.title }}</b><br>{% endif %}{{ r.text|truncatechars:200 }}</td>
+      <td>{% if r.is_published %}<span class="badge badge-green">Опубліковано</span>{% else %}<span class="badge">Приховано</span>{% endif %}</td>
+      <td><form method="post" class="row" style="flex-wrap:nowrap">{% csrf_token %}<input type="hidden" name="id" value="{{ r.pk }}">
+        {% if r.is_published %}<button class="btn btn-sm btn-soft" name="action" value="hide">Приховати</button>{% else %}<button class="btn btn-sm btn-soft" name="action" value="publish">Опублікувати</button>{% endif %}
+        <button class="btn btn-sm btn-ghost" name="action" value="delete" aria-label="Видалити"><svg class="ic"><use href="#i-trash"/></svg></button></form></td></tr>
+  {% empty %}<tr><td colspan="6" class="muted" style="padding:28px">Відгуків ще немає.</td></tr>{% endfor %}</tbody>
+</table></div>
+{% include "partials/pagination.html" %}
+{% endblock %}

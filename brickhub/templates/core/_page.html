@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container" style="padding-bottom:40px">
+  <header class="page-head"><h1>{{ page_title }}</h1></header>
+  <article class="page-card prose">{% block page %}{% endblock %}</article>
+</div>
+{% endblock %}

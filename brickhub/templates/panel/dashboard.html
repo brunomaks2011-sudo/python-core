@@ -1,0 +1,80 @@
+{% extends "panel/base.html" %}{% load shop_tags %}
+{% block title %}Статистика{% endblock %}
+{% block heading %}Статистика продажів{% endblock %}
+{% block actions %}<a class="btn btn-primary" href="{% url 'panel:product_new' %}"><svg class="ic"><use href="#i-plus"/></svg>Додати товар</a>{% endblock %}
+{% block content %}
+<div class="pgrid c4">
+  <div class="stat accent"><span>Виручка за 30 днів</span><b>{{ w30.total|uah }}</b><small>{{ w30.n }} {{ w30.n|plural:"замовлення,замовлення,замовлень" }}</small></div>
+  <div class="stat"><span>За 7 днів</span><b>{{ w7.total|uah }}</b><small>{{ w7.n }} {{ w7.n|plural:"замовлення,замовлення,замовлень" }}</small></div>
+  <div class="stat"><span>Сьогодні (24 год)</span><b>{{ w1.total|uah }}</b><small>{{ w1.n }} {{ w1.n|plural:"замовлення,замовлення,замовлень" }}</small></div>
+  <div class="stat"><span>Середній чек (30 днів)</span><b>{{ w30.avg|uah }}</b><small>без скасованих</small></div>
+</div>
+
+<div class="pgrid c21" style="margin-top:16px">
+  <section class="pcard">
+    <h2>Виручка по днях <span class="muted" style="font-weight:500;font-size:13px">останні 30 днів</span></h2>
+    <div class="chart" role="img" aria-label="Виручка по днях за останні 30 днів">
+      {% for d in days %}
+        <div class="bar{% if not d.total %} is-zero{% endif %}"><i style="height:{% if d.total %}{{ d.pct|floatformat:0 }}{% else %}1{% endif %}%"></i><span class="tip">{{ d.date|date:"j E" }} · {{ d.total|uah }} · {{ d.n }} зам.</span></div>
+      {% endfor %}
+    </div>
+    <div class="chart-axis"><span>{{ days.0.date|date:"j E" }}</span><span>{{ days.14.date|date:"j E" }}</span><span>{{ days.29.date|date:"j E" }}</span></div>
+  </section>
+  <section class="pcard">
+    <h2>Замовлення за статусами <a class="link" href="{% url 'panel:orders' %}" style="font-size:13px">Усі</a></h2>
+    <div class="stack">
+      {% for s in statuses %}{% if s.n %}
+        <a href="{% url 'panel:orders' %}?status={{ s.code }}" style="display:grid;grid-template-columns:140px 1fr 40px;gap:10px;align-items:center;font-size:14px">
+          <span class="status s-{{ s.code }}">{{ s.label }}</span><span class="mini-bar"><i style="width:{{ s.pct }}%"></i></span><b class="num" style="text-align:right">{{ s.n }}</b>
+        </a>
+      {% endif %}{% empty %}<p class="muted">Замовлень ще немає.</p>{% endfor %}
+    </div>
+    <hr>
+    <dl class="dl">
+      <dt>Відкриті замовлення</dt><dd>{{ open_orders }}</dd>
+      <dt>Користувачів</dt><dd>{{ users_total }} <span class="muted">(+{{ new_users }} за 30 днів)</span></dd>
+      <dt>Чекають надходження</dt><dd><a class="link" href="{% url 'panel:notifications' %}">{{ pending_notifications }} підписок</a></dd>
+      <dt>Відгуки на модерації</dt><dd><a class="link" href="{% url 'panel:reviews' %}">{{ pending_reviews }}</a></dd>
+    </dl>
+  </section>
+</div>
+
+<div class="pgrid c2" style="margin-top:16px">
+  <section class="pcard">
+    <h2>Топ товарів за 30 днів</h2>
+    {% if top %}
+      <table class="ptable"><thead><tr><th>Товар</th><th>Шт.</th><th>Виручка</th></tr></thead><tbody>
+        {% for t in top %}<tr><td>{{ t.title|truncatechars:48 }}<br><span class="muted mono" style="font-size:12px">{{ t.sku }}</span></td><td class="num">{{ t.qty }}</td><td class="num"><b>{{ t.revenue|uah }}</b></td></tr>{% endfor %}
+      </tbody></table>
+    {% else %}<p class="muted">Продажів за 30 днів ще немає.</p>{% endif %}
+  </section>
+  <section class="pcard">
+    <h2>Закінчуються на складі <a class="link" href="{% url 'panel:products' %}?stock=low" style="font-size:13px">Усі</a></h2>
+    <table class="ptable"><thead><tr><th>Товар</th><th>Залишок</th><th></th></tr></thead><tbody>
+      {% for p in low_stock %}<tr><td>{{ p.title|truncatechars:44 }}<br><span class="muted mono" style="font-size:12px">{{ p.sku }}</span></td><td class="num"><span class="badge {% if p.inventory.quantity == 0 %}badge-red{% else %}badge-orange{% endif %}">{{ p.inventory.quantity }} шт.</span></td><td><a class="btn btn-sm btn-soft" href="{% url 'panel:product_edit' p.pk %}">Змінити</a></td></tr>
+      {% empty %}<tr><td colspan="3" class="muted">Усе в достатній кількості.</td></tr>{% endfor %}
+    </tbody></table>
+  </section>
+</div>
+
+<div class="pgrid c21" style="margin-top:16px">
+  <section class="pcard">
+    <h2>Останні замовлення <a class="link" href="{% url 'panel:orders' %}" style="font-size:13px">Усі</a></h2>
+    <table class="ptable"><thead><tr><th>№</th><th>Покупець</th><th>Статус</th><th>Сума</th><th>Дата</th></tr></thead><tbody>
+      {% for o in recent_orders %}<tr><td><a class="link mono" href="{% url 'panel:order_detail' o.pk %}">{{ o.number }}</a></td><td>{{ o.full_name }}<br><span class="muted" style="font-size:12px">{{ o.phone }}</span></td><td><span class="status s-{{ o.status }}">{{ o.get_status_display }}</span></td><td class="num"><b>{{ o.total|uah }}</b></td><td class="muted">{{ o.created_at|date:"j E H:i" }}</td></tr>
+      {% empty %}<tr><td colspan="5" class="muted">Замовлень ще немає.</td></tr>{% endfor %}
+    </tbody></table>
+  </section>
+  <section class="pcard">
+    <h2>Асортимент</h2>
+    <dl class="dl">
+      <dt>Набори</dt><dd>{{ kinds.set|default:0 }}</dd>
+      <dt>Деталі (лоти)</dt><dd>{{ kinds.part|default:0 }}</dd>
+      <dt>Мініфігурки</dt><dd>{{ kinds.minifig|default:0 }}</dd>
+      <dt>Аксесуари</dt><dd>{{ kinds.accessory|default:0 }}</dd>
+      <dt>Вартість складу</dt><dd><b>{{ stock_value|uah }}</b></dd>
+    </dl>
+    <div class="row" style="margin-top:14px"><a class="btn btn-sm btn-dark" href="{% url 'panel:import' %}"><svg class="ic"><use href="#i-upload"/></svg>Імпорт</a><a class="btn btn-sm" href="{% url 'panel:export_products' %}"><svg class="ic"><use href="#i-download"/></svg>Експорт CSV</a></div>
+  </section>
+</div>
+{% endblock %}

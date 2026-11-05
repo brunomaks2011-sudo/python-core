@@ -1,0 +1,15 @@
+{% extends "accounts/_layout.html" %}{% load shop_tags %}
+{% block acc_title %}Очікую надходження{% endblock %}
+{% block acc_content %}
+<div class="panel-card">
+  {% for s in subs %}
+    <div class="row" style="justify-content:space-between;border-bottom:1px solid var(--line-2);padding:12px 0">
+      <a class="link" href="{{ s.product.get_absolute_url }}">{{ s.product.title }}</a>
+      <span>{% if s.notified_at %}<span class="badge badge-green">Повідомлено {{ s.notified_at|date:"j E" }}</span>{% elif s.product.in_stock %}<span class="badge badge-green">Уже в наявності</span>{% else %}<span class="badge">Чекаємо</span>{% endif %}</span>
+      <form method="post" action="{% url 'accounts:notification_delete' s.pk %}">{% csrf_token %}<button class="btn btn-sm btn-ghost" type="submit">Відписатися</button></form>
+    </div>
+  {% empty %}
+    <p class="muted" style="margin:0">Підписок немає. На сторінці відсутнього товару натисніть «Повідомити», і ми напишемо, щойно він з'явиться.</p>
+  {% endfor %}
+</div>
+{% endblock %}

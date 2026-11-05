@@ -1,0 +1,6 @@
+Замовлення {{ order.number }}: {{ order.get_status_display|lower }}
+{% if event.note %}{{ event.note }}{% endif %}
+{% if order.tracking_number %}ТТН: {{ order.tracking_number }} — {{ order.tracking_url }}{% endif %}
+
+Деталі: {{ link }}
+— {{ shop.NAME }}

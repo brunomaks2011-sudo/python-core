@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container" style="padding:40px var(--gutter) 60px">
+  <div class="empty">
+    <svg class="ic"><use href="#i-brick"/></svg>
+    <h1 style="font-size:30px">Цієї деталі тут немає</h1>
+    <p class="muted">Сторінку не знайдено. Можливо, товар уже не продається або адреса змінилася.</p>
+    <div class="row" style="justify-content:center"><a class="btn btn-dark" href="{% url 'core:home' %}">На головну</a><a class="btn" href="{% url 'catalog:part_finder' %}">Пошук деталей</a></div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,28 @@
+{% extends "accounts/_layout.html" %}{% load shop_tags %}
+{% block acc_title %}Замовлення {{ order.number }}{% endblock %}
+{% block acc_content %}
+<div class="panel-card" style="margin-bottom:16px">
+  <div class="row" style="justify-content:space-between">
+    <span class="status s-{{ order.status }}">{{ order.get_status_display }}</span>
+    <span class="muted">від {{ order.created_at|date:"j E Y, H:i" }}</span>
+  </div>
+  {% include "orders/_timeline.html" %}
+  <table class="specs">
+    <tr><th>Отримувач</th><td>{{ order.full_name }}, {{ order.phone }}</td></tr>
+    <tr><th>Доставка</th><td>{{ order.get_delivery_method_display }} — {{ order.delivery_summary }}</td></tr>
+    <tr><th>Оплата</th><td>{{ order.get_payment_method_display }} · {{ order.get_payment_status_display }}</td></tr>
+    {% if order.tracking_number %}<tr><th>ТТН / трек-номер</th><td><a class="link" href="{{ order.tracking_url }}" target="_blank" rel="noopener">{{ order.tracking_number }}</a> — відстежити на сайті перевізника</td></tr>{% endif %}
+  </table>
+  <div class="row" style="margin-top:16px">
+    <form method="post" action="{% url 'accounts:order_repeat' order.number %}">{% csrf_token %}<button class="btn btn-dark" type="submit"><svg class="ic"><use href="#i-refresh"/></svg>Повторити замовлення</button></form>
+    {% if order.payment_method == "card" and order.payment_status != "paid" and order.status != "cancelled" %}<a class="btn btn-primary" href="{% url 'orders:pay' order.number %}?t={{ order.access_token }}"><svg class="ic"><use href="#i-card"/></svg>Оплатити</a>{% endif %}
+    {% if order.can_cancel %}<form method="post" action="{% url 'accounts:order_cancel' order.number %}" data-confirm="Скасувати замовлення {{ order.number }}?">{% csrf_token %}<button class="btn btn-ghost" type="submit">Скасувати замовлення</button></form>{% endif %}
+  </div>
+</div>
+{% if events %}
+<div class="panel-card" style="margin-bottom:16px"><h2 style="font-size:18px">Історія</h2>
+  <ul class="events">{% for e in events %}<li><time>{{ e.created_at|date:"j E, H:i" }}</time><span><b>{{ e.get_status_display }}</b>{% if e.note %} — {{ e.note }}{% endif %}</span></li>{% endfor %}</ul>
+</div>
+{% endif %}
+{% include "orders/_order_items.html" %}
+{% endblock %}

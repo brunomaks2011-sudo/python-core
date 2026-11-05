@@ -1,0 +1,33 @@
+{% extends "panel/base.html" %}{% load shop_tags %}
+{% block title %}Замовлення{% endblock %}
+{% block heading %}Замовлення{% endblock %}
+{% block content %}
+<form class="pfilters" method="get">
+  <input type="search" name="q" value="{{ q }}" placeholder="Номер, телефон, e-mail, прізвище, ТТН">
+  <select name="status"><option value="">Усі статуси</option>{% for v, l in statuses %}<option value="{{ v }}" {% if status == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+  <select name="payment"><option value="">Будь-яка оплата</option>{% for v, l in payments %}<option value="{{ v }}" {% if payment == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
+  <input type="date" name="from" value="{{ date_from }}" aria-label="Від дати">
+  <input type="date" name="to" value="{{ date_to }}" aria-label="До дати">
+  <button class="btn btn-dark" type="submit">Знайти</button>
+</form>
+<div class="ptable-wrap">
+  <table class="ptable">
+    <thead><tr><th>№</th><th>Дата</th><th>Покупець</th><th>Доставка</th><th>Оплата</th><th>Статус</th><th>Шт.</th><th>Сума</th></tr></thead>
+    <tbody>
+    {% for o in page.object_list %}
+      <tr>
+        <td><a class="link mono" href="{% url 'panel:order_detail' o.pk %}">{{ o.number }}</a></td>
+        <td class="muted nowrap">{{ o.created_at|date:"j.m.Y H:i" }}</td>
+        <td>{{ o.full_name }}<br><span class="muted" style="font-size:12px">{{ o.phone }} · {{ o.email }}</span></td>
+        <td style="font-size:13px">{{ o.get_delivery_method_display }}<br><span class="muted">{{ o.city }}</span>{% if o.tracking_number %}<br><span class="mono" style="font-size:12px">ТТН {{ o.tracking_number }}</span>{% endif %}</td>
+        <td style="font-size:13px">{{ o.get_payment_method_display }}<br><span class="muted">{{ o.get_payment_status_display }}</span></td>
+        <td><span class="status s-{{ o.status }}">{{ o.get_status_display }}</span></td>
+        <td class="num">{{ o.n_items|default:0 }}</td>
+        <td class="num"><b>{{ o.total|uah }}</b></td>
+      </tr>
+    {% empty %}<tr><td colspan="8" class="muted" style="padding:28px">Замовлень не знайдено.</td></tr>{% endfor %}
+    </tbody>
+  </table>
+</div>
+{% include "partials/pagination.html" %}
+{% endblock %}

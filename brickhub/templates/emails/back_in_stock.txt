@@ -1,0 +1,5 @@
+Знову в наявності: {{ product.title }}{% if product.official_number %} ({{ product.official_number }}){% endif %}
+
+Перейти до товару: {{ url }}
+
+— {{ shop.NAME }}

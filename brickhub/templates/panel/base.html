@@ -1,0 +1,62 @@
+{% load static %}<!doctype html>
+<html lang="uk">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="robots" content="noindex, nofollow">
+  <title>{% block title %}Адмін-панель{% endblock %} — {{ SHOP.NAME }}</title>
+  <link rel="icon" href="{% static 'img/favicon.svg' %}" type="image/svg+xml">
+  <link rel="stylesheet" href="{% static 'css/app.css' %}">
+  <link rel="stylesheet" href="{% static 'css/panel.css' %}">
+</head>
+<body class="panel-body">
+{% include "partials/icons.html" %}
+<div class="pl">
+  <aside class="pl-side" data-panel-side>
+    <a class="pl-logo" href="{% url 'panel:dashboard' %}">{% include "partials/logo_mark.html" %}<span>BRICK<b>HUB</b><small>Адмін-панель</small></span></a>
+    <nav class="pl-nav">
+      <span class="pl-group">Продажі</span>
+      <a href="{% url 'panel:dashboard' %}" class="{% if section == 'dashboard' %}is-active{% endif %}"><svg class="ic"><use href="#i-chart"/></svg>Статистика</a>
+      <a href="{% url 'panel:orders' %}" class="{% if section == 'orders' %}is-active{% endif %}"><svg class="ic"><use href="#i-box"/></svg>Замовлення</a>
+      <a href="{% url 'panel:crud_list' 'promo' %}" class="{% if section == 'promo' %}is-active{% endif %}"><svg class="ic"><use href="#i-tag"/></svg>Промокоди</a>
+      <span class="pl-group">Асортимент</span>
+      <a href="{% url 'panel:products' %}" class="{% if section == 'products' %}is-active{% endif %}"><svg class="ic"><use href="#i-layers"/></svg>Товари і склад</a>
+      <a href="{% url 'panel:import' %}" class="{% if section == 'import' %}is-active{% endif %}"><svg class="ic"><use href="#i-upload"/></svg>Імпорт CSV / Excel</a>
+      <a href="{% url 'panel:notifications' %}" class="{% if section == 'notifications' %}is-active{% endif %}"><svg class="ic"><use href="#i-bell"/></svg>Очікують надходження</a>
+      <a href="{% url 'panel:reviews' %}" class="{% if section == 'reviews' %}is-active{% endif %}"><svg class="ic"><use href="#i-star"/></svg>Відгуки</a>
+      <span class="pl-group">Довідники</span>
+      <a href="{% url 'panel:crud_list' 'categories' %}" class="{% if section == 'categories' %}is-active{% endif %}"><svg class="ic"><use href="#i-grid4"/></svg>Категорії</a>
+      <a href="{% url 'panel:crud_list' 'themes' %}" class="{% if section == 'themes' %}is-active{% endif %}"><svg class="ic"><use href="#i-spark"/></svg>Серії LEGO</a>
+      <a href="{% url 'panel:crud_list' 'colors' %}" class="{% if section == 'colors' %}is-active{% endif %}"><svg class="ic"><use href="#i-palette"/></svg>Кольори</a>
+      <a href="{% url 'panel:crud_list' 'parts' %}" class="{% if section == 'parts' %}is-active{% endif %}"><svg class="ic"><use href="#i-brick"/></svg>Каталог деталей</a>
+      <a href="{% url 'panel:crud_list' 'elements' %}" class="{% if section == 'elements' %}is-active{% endif %}"><svg class="ic"><use href="#i-tag"/></svg>Element ID</a>
+      <a href="{% url 'panel:crud_list' 'sets' %}" class="{% if section == 'sets' %}is-active{% endif %}"><svg class="ic"><use href="#i-box"/></svg>Каталог наборів</a>
+      <a href="{% url 'panel:crud_list' 'minifigs' %}" class="{% if section == 'minifigs' %}is-active{% endif %}"><svg class="ic"><use href="#i-figure"/></svg>Каталог фігурок</a>
+      <span class="pl-group">Люди</span>
+      <a href="{% url 'panel:users' %}" class="{% if section == 'users' %}is-active{% endif %}"><svg class="ic"><use href="#i-users"/></svg>Користувачі</a>
+    </nav>
+    <div class="pl-side-foot">
+      <a href="{% url 'core:home' %}" target="_blank" rel="noopener"><svg class="ic"><use href="#i-external"/></svg>Відкрити сайт</a>
+      {% if user.is_superuser %}<a href="/django-admin/"><svg class="ic"><use href="#i-gear"/></svg>Системна адмінка</a>{% endif %}
+      <form method="post" action="{% url 'accounts:logout' %}">{% csrf_token %}<button type="submit"><svg class="ic"><use href="#i-logout"/></svg>Вийти ({{ user.email|truncatechars:22 }})</button></form>
+    </div>
+  </aside>
+  <div class="pl-main">
+    <header class="pl-top">
+      <button class="btn btn-icon btn-ghost pl-burger" type="button" data-panel-toggle aria-label="Меню"><svg class="ic"><use href="#i-menu"/></svg></button>
+      <h1>{% block heading %}{% endblock %}</h1>
+      <div class="spacer"></div>
+      {% block actions %}{% endblock %}
+    </header>
+    <div class="pl-content">{% block content %}{% endblock %}</div>
+  </div>
+</div>
+<div class="toasts" aria-live="polite" data-toasts>
+  {% for message in messages %}
+    <div class="toast {{ message.tags }}" data-autohide><svg class="ic"><use href="#{% if message.tags == 'error' or message.tags == 'warning' %}i-alert{% else %}i-check{% endif %}"/></svg><span>{{ message }}</span><button class="toast-close" type="button" aria-label="Закрити">×</button></div>
+  {% endfor %}
+</div>
+<script src="{% static 'js/app.js' %}" defer></script>
+<script src="{% static 'js/panel.js' %}" defer></script>
+</body>
+</html>

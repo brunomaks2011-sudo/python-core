@@ -1,0 +1,11 @@
+{% load shop_tags %}{% if page.has_other_pages %}
+<nav class="pagination" aria-label="Сторінки">
+  {% if page.has_previous %}<a href="{% page_link page.previous_page_number %}" aria-label="Попередня сторінка"><svg class="ic" style="width:18px;height:18px"><use href="#i-chev-left"/></svg></a>{% endif %}
+  {% for n in page.paginator.get_elided_page_range %}
+    {% if n == page.number %}<span class="is-current" aria-current="page">{{ n }}</span>
+    {% elif n == page.paginator.ELLIPSIS %}<span class="gap">…</span>
+    {% else %}<a href="{% page_link n %}">{{ n }}</a>{% endif %}
+  {% endfor %}
+  {% if page.has_next %}<a href="{% page_link page.next_page_number %}" aria-label="Наступна сторінка"><svg class="ic" style="width:18px;height:18px"><use href="#i-chev-right"/></svg></a>{% endif %}
+</nav>
+{% endif %}

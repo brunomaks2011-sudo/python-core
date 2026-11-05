@@ -1,0 +1,6 @@
+{% for i in order.items.all %}- {{ i.title }}{% if i.color_name %}, {{ i.color_name }}{% endif %} ({{ i.number|default:i.sku }}) — {{ i.quantity }} × {{ i.unit_price }} ₴
+{% endfor %}
+Товари: {{ order.subtotal }} ₴{% if order.discount_total %}
+Знижка: −{{ order.discount_total }} ₴{% endif %}
+Доставка: {% if order.delivery_cost is None %}за тарифами перевізника{% else %}{{ order.delivery_cost }} ₴{% endif %}
+До сплати: {{ order.total }} ₴

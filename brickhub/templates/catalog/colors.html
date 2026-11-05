@@ -1,0 +1,32 @@
+{% extends "base.html" %}{% load shop_tags %}
+{% block content %}
+<div class="container">
+  <header class="page-head">
+    <span class="eyebrow">Довідник</span>
+    <h1>Кольори LEGO</h1>
+    <p class="lead">Офіційні назви кольорів, українські назви та номери за BrickLink і Rebrickable. Натисніть на колір, щоб побачити всі деталі в ньому.</p>
+  </header>
+  <div class="row" style="margin-bottom:14px">
+    <a class="chip{% if not show_all %} is-active{% endif %}" href="?">Є в наявності</a>
+    <a class="chip{% if show_all %} is-active{% endif %}" href="?all=1">Усі кольори каталогу</a>
+  </div>
+  <div style="overflow-x:auto">
+  <table class="color-table">
+    <thead><tr><th></th><th>Назва</th><th>Офіційна назва</th><th>BrickLink</th><th>Rebrickable</th><th>HEX</th><th>Деталей у продажу</th></tr></thead>
+    <tbody>
+      {% for c in colors %}
+        <tr>
+          <td><span class="swatch{% if c.is_transparent %} is-trans{% endif %}" style="--c:{{ c.hex }}"></span></td>
+          <td>{% if c.n %}<a class="link" href="{{ c.get_absolute_url }}">{{ c.display_name }}</a>{% else %}{{ c.display_name }}{% endif %}</td>
+          <td>{{ c.name }}</td>
+          <td class="mono">{{ c.bricklink_id|default_if_none:"—" }}</td>
+          <td class="mono">{{ c.rebrickable_id|default_if_none:"—" }}</td>
+          <td class="mono">{{ c.hex }}</td>
+          <td>{{ c.n }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  </div>
+</div>
+{% endblock %}

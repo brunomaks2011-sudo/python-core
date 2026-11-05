@@ -1,0 +1,7 @@
+{% if order.status == "cancelled" or order.status == "returned" %}
+  <div class="alert alert-red"><svg class="ic"><use href="#i-info"/></svg>Статус: {{ order.get_status_display }}</div>
+{% else %}
+  <div class="timeline" aria-label="Стан замовлення">
+    {% for step in order.timeline %}<div class="step{% if step.done %} done{% endif %}{% if step.current %} current{% endif %}">{{ step.label }}</div>{% endfor %}
+  </div>
+{% endif %}

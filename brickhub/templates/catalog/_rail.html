@@ -1,0 +1,7 @@
+<div class="rail-wrap" data-rail>
+  <button class="rail-btn prev" type="button" aria-label="Назад" data-rail-prev disabled><svg class="ic"><use href="#i-chev-left"/></svg></button>
+  <div class="rail" data-rail-track>
+    {% for product in items %}{% include "catalog/_card.html" %}{% endfor %}
+  </div>
+  <button class="rail-btn next" type="button" aria-label="Далі" data-rail-next><svg class="ic"><use href="#i-chev-right"/></svg></button>
+</div>

@@ -1,0 +1,108 @@
+{% load shop_tags %}{% with f=listing.facets prm=listing.params %}
+<aside class="filters" id="filters" aria-label="Фільтри" data-filters>
+  <div class="filters-head">
+    <h3 style="margin:0">Фільтри</h3>
+    <button class="btn btn-icon btn-ghost" type="button" data-close-filters aria-label="Закрити"><svg class="ic"><use href="#i-x"/></svg></button>
+  </div>
+  <form method="get" data-filter-form>
+    {% if prm.q %}<input type="hidden" name="q" value="{{ prm.q }}">{% endif %}
+    {% if prm.sort %}<input type="hidden" name="sort" value="{{ prm.sort }}">{% endif %}
+    {% if prm.view %}<input type="hidden" name="view" value="{{ prm.view }}">{% endif %}
+    <div class="fgroup">
+      <label class="toggle">В наявності <span class="muted" style="font-weight:500;margin-left:auto;margin-right:8px">{{ f.in_stock }}</span>
+        <input type="checkbox" name="stock" value="1" {% if prm.stock %}checked{% endif %} data-autosubmit>
+      </label>
+    </div>
+    {% if f.kind %}
+    <details class="fgroup" open>
+      <summary>Тип товару <svg class="ic"><use href="#i-chev-down"/></svg></summary>
+      <div class="fbody">
+        {% for o in f.kind %}
+          <label class="fopt{% if o.value|in_list:prm.kind %} is-active{% endif %}"><input type="checkbox" name="kind" value="{{ o.value }}" {% if o.value|in_list:prm.kind %}checked{% endif %} data-autosubmit>{{ o.label }}<span class="n">{{ o.count }}</span></label>
+        {% endfor %}
+      </div>
+    </details>
+    {% endif %}
+    {% if f.theme %}
+    <details class="fgroup" open>
+      <summary>Серія LEGO <svg class="ic"><use href="#i-chev-down"/></svg></summary>
+      <div class="fbody">
+        {% for o in f.theme %}
+          <label class="fopt{% if o.value|in_list:prm.theme %} is-active{% endif %}"><input type="checkbox" name="theme" value="{{ o.value }}" {% if o.value|in_list:prm.theme %}checked{% endif %} data-autosubmit><span class="swatch" style="--c:{{ o.accent }};--s:10px;border-radius:3px"></span>{{ o.label }}<span class="n">{{ o.count }}</span></label>
+        {% endfor %}
+      </div>
+    </details>
+    {% endif %}
+    {% if f.category %}
+    <details class="fgroup" open>
+      <summary>Категорія деталей <svg class="ic"><use href="#i-chev-down"/></svg></summary>
+      <div class="fbody">
+        {% for o in f.category %}
+          <label class="fopt{% if o.value|in_list:prm.category %} is-active{% endif %}"><input type="checkbox" name="category" value="{{ o.value }}" {% if o.value|in_list:prm.category %}checked{% endif %} data-autosubmit>{{ o.label }}<span class="n">{{ o.count }}</span></label>
+        {% endfor %}
+      </div>
+    </details>
+    {% endif %}
+    {% if f.color %}
+    <details class="fgroup" open>
+      <summary>Колір <svg class="ic"><use href="#i-chev-down"/></svg></summary>
+      <div style="margin-top:12px">
+        <div class="swatch-grid">
+          {% for o in f.color %}
+            <label class="{% if o.trans %}is-trans {% endif %}{% if o.value|in_list:prm.color %}is-active{% endif %}" style="--c:{{ o.hex }}" title="{{ o.label }} ({{ o.official }}) — {{ o.count }}">
+              <input class="sr-only" type="checkbox" name="color" value="{{ o.value }}" {% if o.value|in_list:prm.color %}checked{% endif %} data-autosubmit>
+              <span class="sr-only">{{ o.label }}</span>
+            </label>
+          {% endfor %}
+        </div>
+      </div>
+    </details>
+    {% endif %}
+    {% if f.condition %}
+    <details class="fgroup" open>
+      <summary>Стан <svg class="ic"><use href="#i-chev-down"/></svg></summary>
+      <div class="fbody">
+        <label class="fopt{% if not prm.condition %} is-active{% endif %}"><input type="radio" name="condition" value="" {% if not prm.condition %}checked{% endif %} data-autosubmit>Будь-який</label>
+        {% for o in f.condition %}
+          <label class="fopt{% if prm.condition == o.value %} is-active{% endif %}"><input type="radio" name="condition" value="{{ o.value }}" {% if prm.condition == o.value %}checked{% endif %} data-autosubmit>{{ o.label }}<span class="n">{{ o.count }}</span></label>
+        {% endfor %}
+      </div>
+    </details>
+    {% endif %}
+    {% if f.price %}
+    <div class="fgroup">
+      <div class="ftitle">Ціна, ₴</div>
+      <div class="range" style="margin-top:12px">
+        <input type="number" name="price_min" inputmode="numeric" min="0" placeholder="від {{ f.price.min }}" value="{{ prm.price_min }}" aria-label="Ціна від">
+        <span class="muted">—</span>
+        <input type="number" name="price_max" inputmode="numeric" min="0" placeholder="до {{ f.price.max }}" value="{{ prm.price_max }}" aria-label="Ціна до">
+      </div>
+    </div>
+    {% endif %}
+    {% if f.year %}
+    <div class="fgroup">
+      <div class="ftitle">Рік випуску</div>
+      <div class="range" style="margin-top:12px">
+        <input type="number" name="year_min" inputmode="numeric" placeholder="від {{ f.year.min }}" value="{{ prm.year_min }}" aria-label="Рік від">
+        <span class="muted">—</span>
+        <input type="number" name="year_max" inputmode="numeric" placeholder="до {{ f.year.max }}" value="{{ prm.year_max }}" aria-label="Рік до">
+      </div>
+    </div>
+    {% endif %}
+    {% if f.pieces %}
+    <div class="fgroup">
+      <div class="ftitle">Кількість деталей у наборі</div>
+      <div class="range" style="margin-top:12px">
+        <input type="number" name="pieces_min" inputmode="numeric" placeholder="від {{ f.pieces.min }}" value="{{ prm.pieces_min }}" aria-label="Деталей від">
+        <span class="muted">—</span>
+        <input type="number" name="pieces_max" inputmode="numeric" placeholder="до {{ f.pieces.max }}" value="{{ prm.pieces_max }}" aria-label="Деталей до">
+      </div>
+    </div>
+    {% endif %}
+    <div class="filters-actions">
+      <button class="btn btn-dark" style="flex:1" type="submit">Показати</button>
+      <a class="btn" href="{{ request.path }}{% if prm.q %}?q={{ prm.q|urlencode }}{% endif %}">Скинути</a>
+    </div>
+  </form>
+</aside>
+{% endwith %}

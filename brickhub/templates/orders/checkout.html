@@ -1,0 +1,113 @@
+{% extends "base.html" %}{% load static shop_tags %}
+{% block content %}
+<div class="container">
+  <header class="page-head"><h1>Оформлення замовлення</h1></header>
+  <form method="post" novalidate data-checkout data-np-live="{{ np_live|yesno:'1,0' }}" class="cart-layout">
+    {% csrf_token %}
+    <div>
+      {% if form.non_field_errors %}<div class="alert alert-red" style="margin-bottom:14px">{{ form.non_field_errors }}</div>{% endif %}
+      <section class="form-card">
+        <h2><span class="stepno">1</span>Контактні дані</h2>
+        <div class="fields">
+          {% include "partials/field.html" with field=form.first_name %}
+          {% include "partials/field.html" with field=form.last_name %}
+          {% include "partials/field.html" with field=form.phone %}
+          {% include "partials/field.html" with field=form.email %}
+        </div>
+        {% if not user.is_authenticated %}
+          <p class="muted" style="font-size:14px;margin:14px 0 0">Вже купували? <a class="link" href="{% url 'accounts:login' %}?next={{ request.path }}">Увійдіть</a> — дані підставляться автоматично.</p>
+        {% endif %}
+      </section>
+
+      <section class="form-card">
+        <h2><span class="stepno">2</span>Доставка</h2>
+        <div class="options" style="margin-bottom:16px">
+          {% for radio in form.delivery_method %}
+            <label class="option">
+              {{ radio.tag }}
+              <span><b>{{ radio.choice_label }}</b>
+                <small>{% if radio.data.value == "np_warehouse" %}1–3 дні, оплата доставки за тарифами{% elif radio.data.value == "np_postomat" %}Зручно забрати без черг{% elif radio.data.value == "np_courier" %}Доставка до дверей{% else %}Будь-яке відділення Укрпошти{% endif %}</small></span>
+              <span class="tag">{% if free_delivery %}Безкоштовно{% else %}За тарифами{% endif %}</span>
+            </label>
+          {% endfor %}
+        </div>
+        {% if form.delivery_method.errors %}<p class="error">{{ form.delivery_method.errors.0 }}</p>{% endif %}
+        <div class="fields">
+          <div class="field full ac{% if form.city.errors %} has-error{% endif %}" data-ac="city">
+            <label for="{{ form.city.id_for_label }}">{{ form.city.label }}</label>
+            {{ form.city }}{{ form.city_ref }}
+            <div class="ac-list" hidden></div>
+            {% if form.city.errors %}<p class="error">{{ form.city.errors.0 }}</p>{% endif %}
+          </div>
+          <div class="field full ac{% if form.np_warehouse.errors %} has-error{% endif %}" data-ac="warehouse" data-show-for="np_warehouse np_postomat">
+            <label for="{{ form.np_warehouse.id_for_label }}">{{ form.np_warehouse.label }}</label>
+            {{ form.np_warehouse }}{{ form.np_warehouse_ref }}
+            <div class="ac-list" hidden></div>
+            {% if np_live %}<p class="help">Почніть вводити номер або адресу відділення — список з Нової пошти.</p>{% else %}<p class="help">Вкажіть номер відділення або поштомата, напр. «Відділення №12» чи «Поштомат №1234».</p>{% endif %}
+            {% if form.np_warehouse.errors %}<p class="error">{{ form.np_warehouse.errors.0 }}</p>{% endif %}
+          </div>
+          <div class="field full{% if form.address.errors %} has-error{% endif %}" data-show-for="np_courier ukrposhta">
+            <label for="{{ form.address.id_for_label }}">{{ form.address.label }}</label>{{ form.address }}
+            {% if form.address.errors %}<p class="error">{{ form.address.errors.0 }}</p>{% endif %}
+          </div>
+          <div class="field{% if form.postal_code.errors %} has-error{% endif %}" data-show-for="ukrposhta">
+            <label for="{{ form.postal_code.id_for_label }}">{{ form.postal_code.label }}</label>{{ form.postal_code }}
+            {% if form.postal_code.errors %}<p class="error">{{ form.postal_code.errors.0 }}</p>{% endif %}
+          </div>
+        </div>
+      </section>
+
+      <section class="form-card">
+        <h2><span class="stepno">3</span>Оплата</h2>
+        <div class="options">
+          {% for radio in form.payment_method %}
+            <label class="option{% if radio.data.value == 'card' and not card_enabled %} is-disabled{% endif %}">
+              {% if radio.data.value == "card" and not card_enabled %}<input type="radio" disabled>{% else %}{{ radio.tag }}{% endif %}
+              <span><b>{{ radio.choice_label }}</b>
+                <small>{% if radio.data.value == "cod" %}Оплата при отриманні у відділенні або кур'єру{% elif card_enabled %}Visa / Mastercard, Apple Pay, Google Pay через LiqPay{% else %}Тимчасово недоступна — платіжний сервіс ще не підключено{% endif %}</small></span>
+              <svg class="ic" style="width:24px;height:24px;color:var(--muted)"><use href="#{% if radio.data.value == 'cod' %}i-cash{% else %}i-card{% endif %}"/></svg>
+            </label>
+          {% endfor %}
+        </div>
+        {% if form.payment_method.errors %}<p class="error">{{ form.payment_method.errors.0 }}</p>{% endif %}
+      </section>
+
+      <section class="form-card">
+        <h2><span class="stepno">4</span>Коментар і підтвердження</h2>
+        <div class="fields">
+          <div class="field full">{{ form.comment }}</div>
+          {% if not user.is_authenticated %}
+            <label class="check full">{{ form.create_account }}<span>{{ form.create_account.label }}</span></label>
+            <div class="field full{% if form.password.errors %} has-error{% endif %}" data-show-if="id_create_account">
+              <label for="{{ form.password.id_for_label }}">{{ form.password.label }}</label>{{ form.password }}
+              {% if form.password.errors %}<p class="error">{{ form.password.errors.0 }}</p>{% endif %}
+            </div>
+          {% endif %}
+          <label class="check full">{{ form.agree }}<span>Погоджуюся з <a class="link" href="{% url 'core:terms' %}" target="_blank">умовами використання</a> та <a class="link" href="{% url 'core:privacy' %}" target="_blank">політикою конфіденційності</a></span></label>
+          {% if form.agree.errors %}<p class="error full">{{ form.agree.errors.0 }}</p>{% endif %}
+        </div>
+      </section>
+    </div>
+
+    <aside class="summary">
+      <h3>Ваше замовлення</h3>
+      <div class="stack" style="max-height:300px;overflow-y:auto;overscroll-behavior:contain;margin-bottom:10px">
+        {% for item in summary.items %}{% if item.product.is_active and item.product.in_stock %}
+          <div class="mc-item" style="display:grid;grid-template-columns:52px 1fr auto;gap:10px;align-items:center">
+            {% product_img item.product "mini" cls="ci-mini" %}
+            <span style="font-size:13px;line-height:1.3"><b style="font-weight:600">{{ item.product.title|truncatechars:48 }}</b><br><span class="muted">{% if item.product.color_id %}{{ item.product.color.display_name }} · {% endif %}{{ item.quantity }} шт.</span></span>
+            <b style="font-size:14px;white-space:nowrap">{{ item.line_total|uah }}</b>
+          </div>
+        {% endif %}{% endfor %}
+      </div>
+      <div class="sum-row"><span>Товари</span><b>{{ summary.subtotal|uah }}</b></div>
+      {% if summary.discount %}<div class="sum-row"><span>Знижка ({{ summary.promo.code }})</span><span class="disc">−{{ summary.discount|uah }}</span></div>{% endif %}
+      <div class="sum-row"><span>Доставка</span><span>{% if free_delivery %}<b style="color:var(--green)">Безкоштовно</b>{% else %}за тарифами перевізника{% endif %}</span></div>
+      <div class="sum-row total"><span>До сплати</span><span>{{ summary.total|uah }}</span></div>
+      <button class="btn btn-lg btn-primary btn-block" type="submit" style="margin-top:14px"><span class="btn-label">Підтвердити замовлення</span></button>
+      <p class="muted" style="font-size:12px;margin:12px 0 0">Натискаючи кнопку, ви оформлюєте замовлення. Менеджер зв'яжеться з вами для підтвердження. Вартість доставки сплачується перевізнику при отриманні{% if SHOP.FREE_DELIVERY_FROM %}, якщо сума менша за {{ SHOP.FREE_DELIVERY_FROM|uah }}{% endif %}.</p>
+    </aside>
+  </form>
+</div>
+{% endblock %}
+{% block scripts %}<script src="{% static 'js/checkout.js' %}" defer></script>{% endblock %}

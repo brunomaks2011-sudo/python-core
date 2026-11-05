@@ -1,0 +1,11 @@
+{% load static shop_tags %}<!doctype html><html lang="uk"><head><meta charset="utf-8"><title>Пакувальний лист {{ order.number }}</title>
+<link rel="stylesheet" href="{% static 'css/app.css' %}"><link rel="stylesheet" href="{% static 'css/panel.css' %}"></head>
+<body style="background:#fff;padding:24px">
+<h1 style="font-size:24px">Замовлення {{ order.number }}</h1>
+<p>{{ order.full_name }} · {{ order.phone }}<br>{{ order.get_delivery_method_display }}: {{ order.delivery_summary }}<br>Оплата: {{ order.get_payment_method_display }} · До сплати: <b>{{ order.total|uah }}</b></p>
+<table class="ptable" style="border:1px solid #ddd"><thead><tr><th>✓</th><th>Місце</th><th>Номер</th><th>Товар</th><th>Колір</th><th>Стан</th><th>К-сть</th></tr></thead><tbody>
+{% for i in items %}<tr><td>☐</td><td class="mono"><b>{{ i.product.inventory.location|default:"—" }}</b></td><td class="mono">{{ i.number|default:i.sku }}</td><td>{{ i.title }}</td><td>{{ i.color_name }}</td><td>{{ i.condition_label }}</td><td class="num"><b>{{ i.quantity }}</b></td></tr>{% endfor %}
+</tbody></table>
+{% if order.comment %}<p><b>Коментар покупця:</b> {{ order.comment }}</p>{% endif %}
+<p class="muted" style="font-size:12px">Позиції відсортовано за місцем на складі.</p>
+</body></html>

@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="container auth-wrap">
+  <div class="auth-card">
+    <h1>Вхід</h1>
+    <p class="muted">Увійдіть, щоб бачити замовлення, обране та оформлювати покупки швидше.</p>
+    <form method="post" novalidate>{% csrf_token %}
+      <input type="hidden" name="next" value="{{ next }}">
+      {% if form.non_field_errors %}<div class="alert alert-red" style="margin-bottom:14px">{{ form.non_field_errors.0 }}</div>{% endif %}
+      <div class="fields">
+        {% include "partials/field.html" with field=form.email %}
+        {% include "partials/field.html" with field=form.password %}
+      </div>
+      <div class="row" style="justify-content:space-between;margin:14px 0 18px">
+        <label class="check">{{ form.remember }}<span>{{ form.remember.label }}</span></label>
+        <a class="link" href="{% url 'accounts:password_reset' %}" style="font-size:14px">Забули пароль?</a>
+      </div>
+      <button class="btn btn-lg btn-dark btn-block" type="submit">Увійти</button>
+    </form>
+    <p class="auth-alt">Ще немає акаунта? <a class="link" href="{% url 'accounts:register' %}{% if next %}?next={{ next|urlencode }}{% endif %}">Зареєструватися</a></p>
+  </div>
+</div>
+{% endblock %}

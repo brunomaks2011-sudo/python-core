@@ -1,0 +1,29 @@
+{% extends "base.html" %}{% load shop_tags %}
+{% block content %}
+<div class="container" style="padding-bottom:40px">
+  <header class="page-head"><h1>Порівняння товарів</h1><p class="lead">До 4 товарів. Рядки з відмінностями підсвічено.</p></header>
+  {% if products %}
+  <div class="compare-wrap">
+    <table class="compare">
+      <tr class="cmp-head"><th></th>
+        {% for p in products %}
+          <td>
+            <a href="{{ p.get_absolute_url }}">{% product_img p "card" %}<b style="display:block;margin-bottom:6px">{{ p.title }}</b></a>
+            <div class="price"><b>{{ p.price|uah }}</b></div>
+            <div class="row" style="margin-top:10px">
+              {% if p.in_stock %}<form method="post" action="{% url 'cart:add' %}" data-add-to-cart>{% csrf_token %}<input type="hidden" name="product" value="{{ p.pk }}"><input type="hidden" name="quantity" value="1"><button class="btn btn-sm btn-primary" type="submit"><span class="btn-label">У кошик</span></button></form>{% endif %}
+              <form method="post" action="{% url 'catalog:toggle_compare' p.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{% url 'catalog:compare' %}"><button class="btn btn-sm btn-ghost" type="submit"><svg class="ic"><use href="#i-x"/></svg>Прибрати</button></form>
+            </div>
+          </td>
+        {% endfor %}
+      </tr>
+      {% for row in rows %}
+        <tr class="{% if row.differs %}differs{% endif %}"><th>{{ row.label }}</th>{% for v in row.values %}<td>{{ v }}</td>{% endfor %}</tr>
+      {% endfor %}
+    </table>
+  </div>
+  {% else %}
+    <div class="empty"><svg class="ic"><use href="#i-compare"/></svg><h3>Немає товарів для порівняння</h3><p class="muted">Додайте товари кнопкою порівняння на картці.</p><a class="btn btn-dark" href="{% url 'catalog:category' 'nabory' %}">До наборів</a></div>
+  {% endif %}
+</div>
+{% endblock %}

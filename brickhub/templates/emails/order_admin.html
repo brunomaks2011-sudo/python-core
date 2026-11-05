@@ -1,0 +1,6 @@
+{% extends "emails/_base.html" %}
+{% block body %}<h2 style="margin:0 0 8px">Нове замовлення {{ order.number }}</h2>
+<p>{{ order.full_name }}, {{ order.phone }}, {{ order.email }}<br>{{ order.get_delivery_method_display }}: {{ order.delivery_summary }}<br>Оплата: {{ order.get_payment_method_display }}</p>
+{% if order.comment %}<p><b>Коментар:</b> {{ order.comment }}</p>{% endif %}
+{% include "emails/_items.html" %}
+<p><a href="{{ admin_link }}">Відкрити в адмін-панелі</a></p>{% endblock %}

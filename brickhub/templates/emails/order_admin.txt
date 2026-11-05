@@ -1,0 +1,8 @@
+Нове замовлення {{ order.number }}
+{{ order.full_name }}, {{ order.phone }}, {{ order.email }}
+{{ order.get_delivery_method_display }}: {{ order.delivery_summary }}
+Оплата: {{ order.get_payment_method_display }}
+{% if order.comment %}Коментар: {{ order.comment }}{% endif %}
+
+{% include "emails/_items.txt" %}
+{{ admin_link }}

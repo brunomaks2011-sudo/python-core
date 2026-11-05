@@ -1,0 +1,30 @@
+{% extends "base.html" %}{% load shop_tags %}
+{% block content %}
+<div class="container order-box">
+  <header class="page-head"><h1>Відстеження замовлення</h1><p class="lead">Введіть номер замовлення та телефон або e-mail, вказані при оформленні.</p></header>
+  <form class="form-card" method="post">{% csrf_token %}
+    <div class="fields">
+      {% include "partials/field.html" with field=form.number %}
+      {% include "partials/field.html" with field=form.contact %}
+    </div>
+    <button class="btn btn-dark" type="submit" style="margin-top:14px"><svg class="ic"><use href="#i-search"/></svg>Знайти замовлення</button>
+  </form>
+  {% if order %}
+    <div class="panel-card" style="margin-bottom:16px">
+      <div class="row" style="justify-content:space-between"><h2 style="margin:0">Замовлення {{ order.number }}</h2><span class="status s-{{ order.status }}">{{ order.get_status_display }}</span></div>
+      {% include "orders/_timeline.html" %}
+      <table class="specs">
+        <tr><th>Створено</th><td>{{ order.created_at|date:"j E Y, H:i" }}</td></tr>
+        <tr><th>Доставка</th><td>{{ order.get_delivery_method_display }} — {{ order.delivery_summary }}</td></tr>
+        {% if order.tracking_number %}<tr><th>ТТН / трек-номер</th><td><a class="link" href="{{ order.tracking_url }}" target="_blank" rel="noopener">{{ order.tracking_number }} <svg class="ic" style="width:14px;height:14px;display:inline"><use href="#i-external"/></svg></a></td></tr>{% endif %}
+        {% if carrier %}<tr><th>Статус у перевізника</th><td>{% if carrier.error %}<span class="muted">{{ carrier.error }}</span>{% else %}{{ carrier.status }}{% if carrier.warehouse %} · {{ carrier.warehouse }}{% endif %}{% endif %}</td></tr>{% endif %}
+      </table>
+      {% with events=order.events.all %}{% if events %}
+        <h3 style="margin-top:18px">Історія</h3>
+        <ul class="events">{% for e in events %}{% if e.is_customer_visible %}<li><time>{{ e.created_at|date:"j E, H:i" }}</time><span><b>{{ e.get_status_display }}</b>{% if e.note %} — {{ e.note }}{% endif %}</span></li>{% endif %}{% endfor %}</ul>
+      {% endif %}{% endwith %}
+    </div>
+    {% include "orders/_order_items.html" %}
+  {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,74 @@
+{% extends "panel/base.html" %}{% load shop_tags %}
+{% block title %}Імпорт{% endblock %}
+{% block heading %}Масовий імпорт товарів{% endblock %}
+{% block actions %}<a class="btn" href="{% url 'panel:export_products' %}"><svg class="ic"><use href="#i-download"/></svg>Експорт усіх товарів</a>{% endblock %}
+{% block content %}
+<div class="pgrid c21">
+  <div>
+    <form class="pcard pform" method="post" enctype="multipart/form-data">{% csrf_token %}
+      <h2>Завантажити файл</h2>
+      <div class="dropzone" data-dropzone>
+        <svg class="ic" style="width:32px;height:32px;margin:0 auto 6px;color:var(--muted)"><use href="#i-upload"/></svg>
+        <b>Перетягніть CSV або Excel (.xlsx)</b><br><span class="muted" style="font-size:13px">до 50 000 рядків · UTF-8 або Windows-1251 · роздільник «;» або «,»</span>
+        <div>{{ form.file }}</div>
+        {% for e in form.file.errors %}<p class="error">{{ e }}</p>{% endfor %}
+      </div>
+      <div class="fields" style="margin-top:14px">
+        {% include "partials/field.html" with field=form.kind %}
+        <label class="check" style="align-self:end">{{ form.allow_new_catalog }}<span>{{ form.allow_new_catalog.label }}</span></label>
+      </div>
+      <div class="row" style="margin-top:16px">
+        <button class="btn btn-dark" type="submit" name="mode" value="check"><svg class="ic"><use href="#i-search"/></svg>Перевірити без збереження</button>
+        <button class="btn btn-primary" type="submit" name="mode" value="apply" data-confirm-import><svg class="ic"><use href="#i-upload"/></svg>Імпортувати</button>
+      </div>
+      <p class="muted" style="font-size:13px;margin:12px 0 0">Спочатку натисніть «Перевірити» — побачите, що буде створено й оновлено, і помилки по рядках. Нічого не збережеться, доки ви не натиснете «Імпортувати».</p>
+    </form>
+
+    {% if report %}
+      <section class="pcard">
+        <h2>{% if report.dry_run %}Результат перевірки{% else %}Результат імпорту{% endif %} <span class="badge {% if report.errors %}badge-orange{% else %}badge-green{% endif %}">{{ report.kind }}</span></h2>
+        <div class="pgrid c4">
+          <div class="stat"><span>Рядків</span><b>{{ report.total }}</b></div>
+          <div class="stat"><span>Нових</span><b style="color:var(--green)">{{ report.created }}</b></div>
+          <div class="stat"><span>Оновлено</span><b>{{ report.updated }}</b></div>
+          <div class="stat"><span>Помилок</span><b style="color:{% if report.errors %}var(--red){% else %}inherit{% endif %}">{{ report.errors }}</b></div>
+        </div>
+        {% if report.dry_run and not report.errors %}<div class="alert alert-ok" style="margin-top:14px"><svg class="ic"><use href="#i-check"/></svg>Помилок немає — можна імпортувати.</div>{% endif %}
+        {% if report.error_rows %}
+          <h2 style="margin-top:16px">Помилки</h2>
+          <div class="ptable-wrap" style="max-height:420px;overflow-y:auto"><table class="ptable"><thead><tr><th>Рядок</th><th>Помилка</th></tr></thead><tbody>
+            {% for r in report.error_rows|slice:":500" %}<tr class="report-row err"><td class="num">{{ r.line }}</td><td>{{ r.message }}</td></tr>{% endfor %}
+          </tbody></table></div>
+        {% endif %}
+      </section>
+    {% endif %}
+  </div>
+  <aside>
+    <section class="pcard">
+      <h2>Шаблони файлів</h2>
+      <p class="muted" style="font-size:14px;margin-top:-4px">Завантажте шаблон, заповніть і поверніть. Назви колонок можна писати українською або англійською.</p>
+      <div class="stack">
+        <a class="btn btn-block" href="{% url 'panel:import_template' 'parts' %}"><svg class="ic"><use href="#i-download"/></svg>Деталі (.xlsx)</a>
+        <a class="btn btn-block" href="{% url 'panel:import_template' 'sets' %}"><svg class="ic"><use href="#i-download"/></svg>Набори (.xlsx)</a>
+        <a class="btn btn-block" href="{% url 'panel:import_template' 'minifigs' %}"><svg class="ic"><use href="#i-download"/></svg>Мініфігурки (.xlsx)</a>
+        <a class="btn btn-block" href="{% url 'panel:import_template' 'stock' %}"><svg class="ic"><use href="#i-download"/></svg>Залишки й ціни (.xlsx)</a>
+      </div>
+    </section>
+    <section class="pcard">
+      <h2>Колонки для деталей</h2>
+      <dl class="dl" style="grid-template-columns:110px 1fr;font-size:13px">
+        <dt class="mono">design_id</dt><dd>Номер деталі (3001). Обов'язково, якщо немає element_id</dd>
+        <dt class="mono">color_id</dt><dd>Номер кольору BrickLink (5 = Red) або RB4 для Rebrickable</dd>
+        <dt class="mono">color</dt><dd>…або назва кольору (Red / Червоний)</dd>
+        <dt class="mono">element_id</dt><dd>Element ID — визначає деталь і колір</dd>
+        <dt class="mono">condition</dt><dd>new / used (новий / б/у)</dd>
+        <dt class="mono">quantity</dt><dd>Залишок, шт.</dd>
+        <dt class="mono">price</dt><dd>Ціна за 1 шт., ₴ (крапка або кома)</dd>
+        <dt class="mono">location</dt><dd>Місце на складі (A-01-03)</dd>
+        <dt class="mono">name_uk</dt><dd>Українська назва деталі (необов'язково)</dd>
+      </dl>
+      <p class="muted" style="font-size:13px;margin:12px 0 0">Номери перевіряються за офіційним каталогом. Рядки з неіснуючими номерами потрапляють у звіт як помилки — нічого не вигадується.</p>
+    </section>
+  </aside>
+</div>
+{% endblock %}
