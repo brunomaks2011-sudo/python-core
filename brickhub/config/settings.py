@@ -24,7 +24,11 @@ def _load_dotenv(path: Path) -> None:
         if not line or line.startswith("#") or "=" not in line:
             continue
         key, value = line.split("=", 1)
-        value = value.strip().strip('"').strip("'")
+        value = value.strip()
+        if value[:1] in ('"', "'") and value[1:].find(value[0]) != -1:
+            value = value[1:1 + value[1:].find(value[0])]  # quoted value: keep everything inside the quotes
+        else:
+            value = value.split(" #", 1)[0].split("\t#", 1)[0].strip()  # drop inline comments
         os.environ.setdefault(key.strip(), value)
 
 
