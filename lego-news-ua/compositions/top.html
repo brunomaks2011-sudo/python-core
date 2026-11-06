@@ -1,0 +1,68 @@
+<template>
+  <style>
+
+@font-face{font-family:'LNU Display';font-weight:700;src:url('assets/fonts/montserrat-latin-700-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Display';font-weight:700;src:url('assets/fonts/montserrat-cyrillic-700-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:'LNU Display';font-weight:800;src:url('assets/fonts/montserrat-latin-800-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Display';font-weight:800;src:url('assets/fonts/montserrat-cyrillic-800-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:'LNU Display';font-weight:900;src:url('assets/fonts/montserrat-latin-900-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Display';font-weight:900;src:url('assets/fonts/montserrat-cyrillic-900-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:'LNU Text';font-weight:500;src:url('assets/fonts/inter-latin-500-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Text';font-weight:500;src:url('assets/fonts/inter-cyrillic-500-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:'LNU Text';font-weight:600;src:url('assets/fonts/inter-latin-600-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Text';font-weight:600;src:url('assets/fonts/inter-cyrillic-600-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:'LNU Text';font-weight:700;src:url('assets/fonts/inter-latin-700-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Text';font-weight:700;src:url('assets/fonts/inter-cyrillic-700-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+
+:root{--red:#E3000B;--red-deep:#A8000A;--yellow:#FFD500;--white:#FFFFFF;--black:#0B0B0D;--ink:#141416;
+--official:#15803D;--leak:#C2410C;--rumor:#1D4ED8;}
+
+    #root { position:absolute; inset:0; overflow:hidden; font-family:'LNU Text',sans-serif; color:var(--white); }
+    #root .bg { position:absolute; inset:0; background:
+        radial-gradient(1200px 700px at 78% 20%, rgba(227,0,11,.38), transparent 60%),
+        radial-gradient(900px 600px at 10% 100%, rgba(255,213,0,.10), transparent 60%),
+        linear-gradient(160deg,#18181b 0%,#0b0b0d 70%); }
+    #root .studs { position:absolute; inset:-60px; opacity:.07;
+        background-image: radial-gradient(circle at 30px 30px, #fff 0 13px, transparent 14px);
+        background-size:60px 60px; }
+
+    #root .head { position:absolute; left:192px; top:150px; font:900 60px 'LNU Display'; color:#fff; }
+    #root .head b { color:var(--yellow); }
+    #root .tile { position:absolute; width:500px; height:300px; border-radius:20px; overflow:hidden; background:#fff; box-shadow:0 20px 50px rgba(0,0,0,.5); }
+    #root .tile img { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; }
+    #root .tile .cap { position:absolute; left:0; right:0; bottom:0; padding:12px 16px; background:linear-gradient(0deg, rgba(11,11,13,.92), rgba(11,11,13,.0)); font:800 28px 'LNU Display'; color:#fff; }
+    #root .tile .st { position:absolute; left:14px; top:14px; padding:5px 12px; border-radius:999px; font:900 28px 'LNU Display'; letter-spacing:.1em; color:#fff; }
+    #root .src { position:absolute; left:192px; top:892px; font:700 26px 'LNU Text'; color:rgba(255,255,255,.85); }
+
+  </style>
+  <div id="root" data-composition-id="top" data-width="1920" data-height="1080" data-duration="24.94">
+    <div class="bg"></div>
+    <div class="studs" data-layout-ignore></div>
+    <div id="top-head" class="head">Головне за <b>тиждень</b></div>
+    <div id="tt0" class="tile" style="left:192px;top:250px"><img id="tt0-img" src="assets/photos/5924_6.jpg" alt=""><div class="st" style="background:var(--official)">OFFICIAL</div><div class="cap">Ґодзіла · 5363 дет.</div></div>
+    <div id="tt1" class="tile" style="left:710px;top:250px"><img id="tt1-img" src="assets/photos/5964_3.jpg" alt=""><div class="st" style="background:var(--leak)">LEAK</div><div class="cap">Новий рік · 3 набори</div></div>
+    <div id="tt2" class="tile" style="left:1228px;top:250px"><img id="tt2-img" src="assets/photos/5949_3.jpg" alt=""><div class="st" style="background:var(--leak)">LEAK</div><div class="cap">Ninjago · Додзьо Іво</div></div>
+    <div id="tt3" class="tile" style="left:192px;top:570px"><img id="tt3-img" src="assets/photos/5932_3.jpg" alt=""><div class="st" style="background:var(--leak)">LEAK</div><div class="cap">Fortnite · Такос Гуакос</div></div>
+    <div id="tt4" class="tile" style="left:710px;top:570px"><img id="tt4-img" src="assets/photos/5936_3.jpg" alt=""><div class="st" style="background:var(--leak)">LEAK</div><div class="cap">Fortnite · P-1000</div></div>
+    <div id="tt5" class="tile" style="left:1228px;top:570px"><img id="tt5-img" src="assets/photos/5897_3.jpg" alt=""><div class="st" style="background:var(--leak)">LEAK</div><div class="cap">Marvel · Санктум</div></div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    const fmt = (v) => Math.round(v).toLocaleString('en-US').replace(/,/g, '\u2009');
+    tl.fromTo('#root .studs', { x: 0, y: 0 }, { x: -60, y: -60, duration: 24.94, ease: 'none' }, 0);
+    tl.fromTo('#top-head', {x:-80, opacity:0}, {x:0, opacity:1, duration:0.6, ease:'power4.out'}, 0.1);
+    tl.fromTo('#tt0', {scale:0.5, rotationY:-60, opacity:0, transformPerspective:1200}, {scale:1, rotationY:0, opacity:1, duration:0.7, ease:'back.out(1.5)'}, 0.4);
+    tl.fromTo('#tt0-img', {scale:1.0}, {scale:1.12, duration:24.54, ease:'none'}, 0.4);
+    tl.fromTo('#tt1', {scale:0.5, rotationY:-60, opacity:0, transformPerspective:1200}, {scale:1, rotationY:0, opacity:1, duration:0.7, ease:'back.out(1.5)'}, 8.99);
+    tl.fromTo('#tt1-img', {scale:1.0}, {scale:1.12, duration:15.95, ease:'none'}, 8.99);
+    tl.fromTo('#tt2', {scale:0.5, rotationY:-60, opacity:0, transformPerspective:1200}, {scale:1, rotationY:0, opacity:1, duration:0.7, ease:'back.out(1.5)'}, 13.48);
+    tl.fromTo('#tt2-img', {scale:1.0}, {scale:1.12, duration:11.46, ease:'none'}, 13.48);
+    tl.fromTo('#tt3', {scale:0.5, rotationY:-60, opacity:0, transformPerspective:1200}, {scale:1, rotationY:0, opacity:1, duration:0.7, ease:'back.out(1.5)'}, 15.89);
+    tl.fromTo('#tt3-img', {scale:1.0}, {scale:1.12, duration:9.05, ease:'none'}, 15.89);
+    tl.fromTo('#tt4', {scale:0.5, rotationY:-60, opacity:0, transformPerspective:1200}, {scale:1, rotationY:0, opacity:1, duration:0.7, ease:'back.out(1.5)'}, 17.35);
+    tl.fromTo('#tt4-img', {scale:1.0}, {scale:1.12, duration:7.59, ease:'none'}, 17.35);
+    tl.fromTo('#tt5', {scale:0.5, rotationY:-60, opacity:0, transformPerspective:1200}, {scale:1, rotationY:0, opacity:1, duration:0.7, ease:'back.out(1.5)'}, 19.18);
+    tl.fromTo('#tt5-img', {scale:1.0}, {scale:1.12, duration:5.76, ease:'none'}, 19.18);
+    window.__timelines["top"] = tl;
+  </script>
+</template>

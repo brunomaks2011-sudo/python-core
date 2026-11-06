@@ -1,0 +1,78 @@
+<template>
+  <style>
+
+@font-face{font-family:'LNU Display';font-weight:700;src:url('assets/fonts/montserrat-latin-700-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Display';font-weight:700;src:url('assets/fonts/montserrat-cyrillic-700-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:'LNU Display';font-weight:800;src:url('assets/fonts/montserrat-latin-800-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Display';font-weight:800;src:url('assets/fonts/montserrat-cyrillic-800-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:'LNU Display';font-weight:900;src:url('assets/fonts/montserrat-latin-900-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Display';font-weight:900;src:url('assets/fonts/montserrat-cyrillic-900-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:'LNU Text';font-weight:500;src:url('assets/fonts/inter-latin-500-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Text';font-weight:500;src:url('assets/fonts/inter-cyrillic-500-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:'LNU Text';font-weight:600;src:url('assets/fonts/inter-latin-600-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Text';font-weight:600;src:url('assets/fonts/inter-cyrillic-600-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:'LNU Text';font-weight:700;src:url('assets/fonts/inter-latin-700-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Text';font-weight:700;src:url('assets/fonts/inter-cyrillic-700-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+
+:root{--red:#E3000B;--red-deep:#A8000A;--yellow:#FFD500;--white:#FFFFFF;--black:#0B0B0D;--ink:#141416;
+--official:#15803D;--leak:#C2410C;--rumor:#1D4ED8;}
+
+    #root { position:absolute; inset:0; overflow:hidden; font-family:'LNU Text',sans-serif; color:var(--white); }
+    #root .bg { position:absolute; inset:0; background:
+        radial-gradient(1200px 700px at 78% 20%, rgba(227,0,11,.38), transparent 60%),
+        radial-gradient(900px 600px at 10% 100%, rgba(255,213,0,.10), transparent 60%),
+        linear-gradient(160deg,#18181b 0%,#0b0b0d 70%); }
+    #root .studs { position:absolute; inset:-60px; opacity:.07;
+        background-image: radial-gradient(circle at 30px 30px, #fff 0 13px, transparent 14px);
+        background-size:60px 60px; }
+
+    #root .q { position:absolute; left:192px; right:192px; top:200px; font:900 76px/1.1 'LNU Display'; color:#fff; }
+    #root .q b { color:var(--yellow); }
+    #root .qs { position:absolute; left:192px; top:560px; display:flex; gap:22px; }
+    #root .qs img { width:280px; height:220px; object-fit:contain; background:#fff; border-radius:18px; box-shadow:0 18px 40px rgba(0,0,0,.5); }
+    #root .sub { position:absolute; left:0; right:0; top:240px; text-align:center; }
+    #root .logo-box { display:inline-block; padding:22px 50px 24px; border-radius:22px; background:var(--red); box-shadow:0 0 0 9px var(--yellow), 0 40px 90px rgba(0,0,0,.6); }
+    #root .l1 { font:900 112px/0.95 'LNU Display'; color:#fff; -webkit-text-stroke:3px #000; paint-order:stroke fill; }
+    #root .l2 { font:900 50px/1 'LNU Display'; color:var(--yellow); letter-spacing:.32em; padding-left:.32em; margin-top:4px; }
+    #root .btn { display:inline-flex; align-items:center; gap:18px; margin-top:70px; padding:24px 54px; border-radius:999px; background:#fff; color:var(--red); font:900 50px 'LNU Display'; letter-spacing:.06em; }
+    #root .btn i { width:0; height:0; border-left:30px solid var(--red); border-top:18px solid transparent; border-bottom:18px solid transparent; display:block; }
+    #root .cred { margin-top:46px; font:700 28px 'LNU Text'; color:rgba(255,255,255,.85); }
+    #root .cred b { color:var(--yellow); }
+
+  </style>
+  <div id="root" data-composition-id="outro" data-width="1920" data-height="1080" data-duration="23.166">
+    <div class="bg"></div>
+    <div class="studs" data-layout-ignore></div>
+    <div id="o-a" class="clip" data-start="0" data-duration="10.202" data-track-index="2" style="position:absolute;inset:0">
+      <div id="o-q" class="q">Яка новина тижня — <b>ваша улюблена?</b><br>Пишіть у коментарях!</div>
+      <div class="qs">
+        <img id="o-i0" src="assets/photos/5924_6.jpg" alt="">
+        <img id="o-i1" src="assets/photos/5897_3.jpg" alt="">
+        <img id="o-i2" src="assets/photos/5932_3.jpg" alt="">
+        <img id="o-i3" src="assets/photos/5955_3.jpg" alt="">
+        <img id="o-i4" src="assets/photos/5964_3.jpg" alt="">
+      </div>
+    </div>
+    <div id="o-b" class="clip" data-start="10.202" data-duration="12.964" data-track-index="3" style="position:absolute;inset:0">
+      <div class="sub"><div id="o-logo" class="logo-box"><div class="l1">LEGO NEWS</div><div class="l2">UA</div></div><br>
+        <div id="o-btn" class="btn"><i></i>ПІДПИСАТИСЯ</div>
+        <div id="o-cred" class="cred">Новини та фото: <b>The Stud Ledger</b> · t.me/thestudledger</div></div>
+    </div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    const fmt = (v) => Math.round(v).toLocaleString('en-US').replace(/,/g, '\u2009');
+    tl.fromTo('#root .studs', { x: 0, y: 0 }, { x: -60, y: -60, duration: 23.166, ease: 'none' }, 0);
+    tl.fromTo('#o-q', {y:50, opacity:0}, {y:0, opacity:1, duration:0.7, ease:'power4.out'}, 0.15);
+    tl.fromTo('#o-i0', {y:120, opacity:0, rotation:-5.0}, {y:0, opacity:1, rotation:0, duration:0.6, ease:'back.out(1.6)'}, 0.8);
+    tl.fromTo('#o-i1', {y:120, opacity:0, rotation:-2.5}, {y:0, opacity:1, rotation:0, duration:0.6, ease:'back.out(1.6)'}, 1.05);
+    tl.fromTo('#o-i2', {y:120, opacity:0, rotation:0.0}, {y:0, opacity:1, rotation:0, duration:0.6, ease:'back.out(1.6)'}, 1.3);
+    tl.fromTo('#o-i3', {y:120, opacity:0, rotation:2.5}, {y:0, opacity:1, rotation:0, duration:0.6, ease:'back.out(1.6)'}, 1.55);
+    tl.fromTo('#o-i4', {y:120, opacity:0, rotation:5.0}, {y:0, opacity:1, rotation:0, duration:0.6, ease:'back.out(1.6)'}, 1.8);
+    tl.fromTo('#o-logo', {scale:0.3, rotationX:70, opacity:0, transformPerspective:900}, {scale:1, rotationX:0, opacity:1, duration:0.8, ease:'back.out(1.6)'}, 10.202);
+    tl.fromTo('#o-btn', {scale:0, opacity:0}, {scale:1, opacity:1, duration:0.5, ease:'back.out(2.6)'}, 10.802);
+    tl.fromTo('#o-btn', {scale:1}, {scale:1.07, duration:0.35, yoyo:true, repeat:5, ease:'sine.inOut'}, 11.702);
+    tl.fromTo('#o-cred', {opacity:0, y:20}, {opacity:1, y:0, duration:0.5}, 11.202);
+    window.__timelines["outro"] = tl;
+  </script>
+</template>

@@ -1,0 +1,483 @@
+<template>
+  <style>
+
+@font-face{font-family:'LNU Display';font-weight:700;src:url('assets/fonts/montserrat-latin-700-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Display';font-weight:700;src:url('assets/fonts/montserrat-cyrillic-700-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:'LNU Display';font-weight:800;src:url('assets/fonts/montserrat-latin-800-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Display';font-weight:800;src:url('assets/fonts/montserrat-cyrillic-800-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:'LNU Display';font-weight:900;src:url('assets/fonts/montserrat-latin-900-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Display';font-weight:900;src:url('assets/fonts/montserrat-cyrillic-900-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:'LNU Text';font-weight:500;src:url('assets/fonts/inter-latin-500-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Text';font-weight:500;src:url('assets/fonts/inter-cyrillic-500-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:'LNU Text';font-weight:600;src:url('assets/fonts/inter-latin-600-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Text';font-weight:600;src:url('assets/fonts/inter-cyrillic-600-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:'LNU Text';font-weight:700;src:url('assets/fonts/inter-latin-700-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Text';font-weight:700;src:url('assets/fonts/inter-cyrillic-700-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+
+:root{--red:#E3000B;--red-deep:#A8000A;--yellow:#FFD500;--white:#FFFFFF;--black:#0B0B0D;--ink:#141416;
+--official:#15803D;--leak:#C2410C;--rumor:#1D4ED8;}
+
+    #root { position:absolute; inset:0; overflow:hidden; font-family:'LNU Text',sans-serif; color:var(--white); }
+    #root .bg { position:absolute; inset:0; background:
+        radial-gradient(1200px 700px at 78% 20%, rgba(227,0,11,.38), transparent 60%),
+        radial-gradient(900px 600px at 10% 100%, rgba(255,213,0,.10), transparent 60%),
+        linear-gradient(160deg,#18181b 0%,#0b0b0d 70%); }
+    #root .studs { position:absolute; inset:-60px; opacity:.07;
+        background-image: radial-gradient(circle at 30px 30px, #fff 0 13px, transparent 14px);
+        background-size:60px 60px; }
+
+    #root { font-family:'LNU Text',sans-serif; }
+    #root .cg { position:absolute; left:0; right:0; top:862px; text-align:center; opacity:0; }
+    #root .cg span { display:inline-block; max-width:1500px; padding:10px 26px 12px; border-radius:14px; background:rgba(11,11,13,.72);
+        font:700 40px/1.2 'LNU Text'; color:#fff; letter-spacing:.005em; }
+
+  </style>
+  <div id="root" data-composition-id="captions" data-width="1920" data-height="1080" data-duration="439.84">
+    <div id="cap0" class="cg"><span>Привіт, друзі!</span></div>
+    <div id="cap1" class="cg"><span>Це LEGO NEWS UA</span></div>
+    <div id="cap2" class="cg"><span>— найцікавіші новини світу LEGO за останній тиждень!</span></div>
+    <div id="cap3" class="cg"><span>Сьогодні поговоримо про нові набори,</span></div>
+    <div id="cap4" class="cg"><span>цікаві витоки, майбутні релізи та несподівані мініфігурки!</span></div>
+    <div id="cap5" class="cg"><span>Починаємо!</span></div>
+    <div id="cap6" class="cg"><span>Блок перший —</span></div>
+    <div id="cap7" class="cg"><span>головні новини тижня.</span></div>
+    <div id="cap8" class="cg"><span>Тиждень видався гарячим!</span></div>
+    <div id="cap9" class="cg"><span>LEGO офіційно представила найбільший набір в історії LEGO</span></div>
+    <div id="cap10" class="cg"><span>Ideas — Ґодзілу.</span></div>
+    <div id="cap11" class="cg"><span>Китайський Новий рік 2027 отримує одразу три новинки,</span></div>
+    <div id="cap12" class="cg"><span>Ninjago показує величезне додзьо,</span></div>
+    <div id="cap13" class="cg"><span>а Fortnite —</span></div>
+    <div id="cap14" class="cg"><span>двох дуже дивакуватих героїв.</span></div>
+    <div id="cap15" class="cg"><span>Усі новини та фотографії</span></div>
+    <div id="cap16" class="cg"><span>— з Telegram-каналу The Stud Ledger.</span></div>
+    <div id="cap17" class="cg"><span>Головна офіційна новина тижня</span></div>
+    <div id="cap18" class="cg"><span>— LEGO Ideas 21375,</span></div>
+    <div id="cap19" class="cg"><span>Ґодзіла!</span></div>
+    <div id="cap20" class="cg"><span>5363 деталі —</span></div>
+    <div id="cap21" class="cg"><span>це найбільший набір в історії LEGO Ideas.</span></div>
+    <div id="cap22" class="cg"><span>Ціна — 400 євро,</span></div>
+    <div id="cap23" class="cg"><span>вихід — 27 листопада.</span></div>
+    <div id="cap24" class="cg"><span>Сірий панцир, сяючі блакитні спинні пластини та атомний</span></div>
+    <div id="cap25" class="cg"><span>промінь — король монстрів виглядає по-справжньому грізно.</span></div>
+    <div id="cap26" class="cg"><span>До Ґодзіли буде подарунковий набір 40888</span></div>
+    <div id="cap27" class="cg"><span>— логотип Ґодзіли зі слідом лапи на 359</span></div>
+    <div id="cap28" class="cg"><span>деталей.</span></div>
+    <div id="cap29" class="cg"><span>Його також чекаємо 27 листопада.</span></div>
+    <div id="cap30" class="cg"><span>Блок другий —</span></div>
+    <div id="cap31" class="cg"><span>нові набори та свіжі фотографії.</span></div>
+    <div id="cap32" class="cg"><span>LEGO Ninjago 71888</span></div>
+    <div id="cap33" class="cg"><span>— Додзьо Іво.</span></div>
+    <div id="cap34" class="cg"><span>3495 деталей, ціна</span></div>
+    <div id="cap35" class="cg"><span>— 280 євро,</span></div>
+    <div id="cap36" class="cg"><span>вихід — 1 січня 2027 року.</span></div>
+    <div id="cap37" class="cg"><span>Це величезна будівля з вежею,</span></div>
+    <div id="cap38" class="cg"><span>кількома поверхами, транспортом і цілою командою мініфігурок.</span></div>
+    <div id="cap39" class="cg"><span>Офіційного анонсу ще не було,</span></div>
+    <div id="cap40" class="cg"><span>тож поки це витік.</span></div>
+    <div id="cap41" class="cg"><span>Для Китайського Нового року 2027 готують справжнє свято.</span></div>
+    <div id="cap42" class="cg"><span>80123 — Подорож на весняне свято.</span></div>
+    <div id="cap43" class="cg"><span>1529 деталей, 100 євро,</span></div>
+    <div id="cap44" class="cg"><span>вихід — 1 січня 2027 року.</span></div>
+    <div id="cap45" class="cg"><span>Яскравий корабель із головою дракона,</span></div>
+    <div id="cap46" class="cg"><span>великим вітрилом і купою мініфігурок.</span></div>
+    <div id="cap47" class="cg"><span>80122 — Сприятлива Піксіу під деревом Щастя:</span></div>
+    <div id="cap48" class="cg"><span>70 євро, вихід</span></div>
+    <div id="cap49" class="cg"><span>— 1 січня 2027 року.</span></div>
+    <div id="cap50" class="cg"><span>Але тут є розбіжність:</span></div>
+    <div id="cap51" class="cg"><span>у дописі вказано 829 деталей,</span></div>
+    <div id="cap52" class="cg"><span>а на фото коробки</span></div>
+    <div id="cap53" class="cg"><span>— 879.</span></div>
+    <div id="cap54" class="cg"><span>Остаточну цифру ще варто перевірити.</span></div>
+    <div id="cap55" class="cg"><span>LEGO Botanicals готує квіткову весну.</span></div>
+    <div id="cap56" class="cg"><span>The Stud Ledger опублікував зображення чотирьох нових наборів,</span></div>
+    <div id="cap57" class="cg"><span>вихід — січень–лютий 2027 року.</span></div>
+    <div id="cap58" class="cg"><span>Пастельний букет —</span></div>
+    <div id="cap59" class="cg"><span>650 деталей, букет півоній</span></div>
+    <div id="cap60" class="cg"><span>— 633, дика орхідея</span></div>
+    <div id="cap61" class="cg"><span>— 606, а гілки сакури</span></div>
+    <div id="cap62" class="cg"><span>— 405 деталей.</span></div>
+    <div id="cap63" class="cg"><span>Цін поки немає.</span></div>
+    <div id="cap64" class="cg"><span>Ще кілька перших поглядів.</span></div>
+    <div id="cap65" class="cg"><span>LEGO Technic 42254</span></div>
+    <div id="cap66" class="cg"><span>— Планети Сонячної системи на орбіті,</span></div>
+    <div id="cap67" class="cg"><span>572 деталі.</span></div>
+    <div id="cap68" class="cg"><span>І новий подарунковий набір 40914</span></div>
+    <div id="cap69" class="cg"><span>— Ретро-музичний автомат на 287 деталей.</span></div>
+    <div id="cap70" class="cg"><span>Умови, за яких його можна буде отримати,</span></div>
+    <div id="cap71" class="cg"><span>поки невідомі.</span></div>
+    <div id="cap72" class="cg"><span>Блок третій —</span></div>
+    <div id="cap73" class="cg"><span>LEGO Leaks 2027!</span></div>
+    <div id="cap74" class="cg"><span>Почнемо з LEGO 67005</span></div>
+    <div id="cap75" class="cg"><span>— Дивний Верховний Санктум!</span></div>
+    <div id="cap76" class="cg"><span>За інформацією з витоку,</span></div>
+    <div id="cap77" class="cg"><span>набір матиме 814 деталей,</span></div>
+    <div id="cap78" class="cg"><span>а його очікувана ціна становитиме 100 євро.</span></div>
+    <div id="cap79" class="cg"><span>Реліз запланований на 1 січня 2027 року.</span></div>
+    <div id="cap80" class="cg"><span>Але найбільше уваги привертають мініфігурки!</span></div>
+    <div id="cap81" class="cg"><span>У наборі очікуються Злий Доктор Стрендж,</span></div>
+    <div id="cap82" class="cg"><span>Залізна Людина, Людина-павук,</span></div>
+    <div id="cap83" class="cg"><span>Зомбі Ванда, Немор та Зомбі Тор!</span></div>
+    <div id="cap84" class="cg"><span>Одразу шість цікавих персонажів!</span></div>
+    <div id="cap85" class="cg"><span>Уточнення: у ранньому списку The Stud Ledger Залізна</span></div>
+    <div id="cap86" class="cg"><span>Людина та Немор позначені як зомбі,</span></div>
+    <div id="cap87" class="cg"><span>а Стрендж —</span></div>
+    <div id="cap88" class="cg"><span>як Дивний Верховний.</span></div>
+    <div id="cap89" class="cg"><span>Остаточний склад покаже офіційний анонс.</span></div>
+    <div id="cap90" class="cg"><span>Наступний цікавий витік</span></div>
+    <div id="cap91" class="cg"><span>— LEGO 77088,</span></div>
+    <div id="cap92" class="cg"><span>Такос Гуакос!</span></div>
+    <div id="cap93" class="cg"><span>За попередньою інформацією,</span></div>
+    <div id="cap94" class="cg"><span>набір матиме 193 деталі,</span></div>
+    <div id="cap95" class="cg"><span>коштуватиме 20 євро,</span></div>
+    <div id="cap96" class="cg"><span>а його вихід очікується 1 січня 2027 року.</span></div>
+    <div id="cap97" class="cg"><span>Тако з величезними очима відкривається,</span></div>
+    <div id="cap98" class="cg"><span>а всередині —</span></div>
+    <div id="cap99" class="cg"><span>маленька сцена з мініфігуркою.</span></div>
+    <div id="cap100" class="cg"><span>А тепер LEGO 77084</span></div>
+    <div id="cap101" class="cg"><span>— P-1000!</span></div>
+    <div id="cap102" class="cg"><span>За інформацією з витоку,</span></div>
+    <div id="cap103" class="cg"><span>набір складатиметься з 1103 деталей,</span></div>
+    <div id="cap104" class="cg"><span>а його очікувана ціна становитиме 90 євро.</span></div>
+    <div id="cap105" class="cg"><span>Дата виходу —</span></div>
+    <div id="cap106" class="cg"><span>1 січня 2027 року.</span></div>
+    <div id="cap107" class="cg"><span>Високий жовтий робот на підставці з табличкою,</span></div>
+    <div id="cap108" class="cg"><span>а поруч —</span></div>
+    <div id="cap109" class="cg"><span>мініфігурка, яку канал показав окремо.</span></div>
+    <div id="cap110" class="cg"><span>І ще одна цікава новинка</span></div>
+    <div id="cap111" class="cg"><span>— LEGO 40976,</span></div>
+    <div id="cap112" class="cg"><span>Лев процвітання!</span></div>
+    <div id="cap113" class="cg"><span>За попередніми даними,</span></div>
+    <div id="cap114" class="cg"><span>набір міститиме 411 деталей,</span></div>
+    <div id="cap115" class="cg"><span>коштуватиме 30 євро,</span></div>
+    <div id="cap116" class="cg"><span>а його реліз очікується 1 січня 2027 року.</span></div>
+    <div id="cap117" class="cg"><span>Червоно-золотий лев для традиційного танцю левів</span></div>
+    <div id="cap118" class="cg"><span>— ідеальний символ свята.</span></div>
+    <div id="cap119" class="cg"><span>Блок четвертий —</span></div>
+    <div id="cap120" class="cg"><span>цікаві деталі та мініфігурки.</span></div>
+    <div id="cap121" class="cg"><span>Перший погляд на торс Червоного Павука з набору</span></div>
+    <div id="cap122" class="cg"><span>67002, Мех Червоного Павука.</span></div>
+    <div id="cap123" class="cg"><span>Але увага: на цьому зразку міспринт</span></div>
+    <div id="cap124" class="cg"><span>— білої частини на фінальній фігурці не буде.</span></div>
+    <div id="cap125" class="cg"><span>А ще погляньте на мініфігурки Додзьо Іво</span></div>
+    <div id="cap126" class="cg"><span>— ціла команда ніндзя та їхніх суперників.</span></div>
+    <div id="cap127" class="cg"><span>І на маленьку мініфігурку з P-1000,</span></div>
+    <div id="cap128" class="cg"><span>яку канал показав окремо.</span></div>
+    <div id="cap129" class="cg"><span>Блок п&#x27;ятий —</span></div>
+    <div id="cap130" class="cg"><span>що чекає нас далі.</span></div>
+    <div id="cap131" class="cg"><span>Січень 2027 обіцяє бути насиченим:</span></div>
+    <div id="cap132" class="cg"><span>Marvel, Fortnite, Ninjago,</span></div>
+    <div id="cap133" class="cg"><span>Китайський Новий рік і Botanicals.</span></div>
+    <div id="cap134" class="cg"><span>За ранніми даними The Stud Ledger,</span></div>
+    <div id="cap135" class="cg"><span>хвиля Marvel включає набори від 67001 до 67005,</span></div>
+    <div id="cap136" class="cg"><span>збірний логотип Людини-павука 67022 та Джеффа Земляну Акулу</span></div>
+    <div id="cap137" class="cg"><span>67023.</span></div>
+    <div id="cap138" class="cg"><span>Для більшості з них фото ще немає,</span></div>
+    <div id="cap139" class="cg"><span>тож поки це на рівні чуток.</span></div>
+    <div id="cap140" class="cg"><span>Стежимо далі!</span></div>
+    <div id="cap141" class="cg"><span>А яка новина цього тижня сподобалася вам найбільше?</span></div>
+    <div id="cap142" class="cg"><span>Який із майбутніх наборів ви хотіли б придбати?</span></div>
+    <div id="cap143" class="cg"><span>Напишіть у коментарях!</span></div>
+    <div id="cap144" class="cg"><span>Підписуйтеся на LEGO NEWS UA,</span></div>
+    <div id="cap145" class="cg"><span>щоб не пропускати найцікавіші новини LEGO!</span></div>
+    <div id="cap146" class="cg"><span>До зустрічі наступного тижня!</span></div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    const fmt = (v) => Math.round(v).toLocaleString('en-US').replace(/,/g, '\u2009');
+    tl.fromTo('#cap0', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 2.247);
+    tl.to('#cap0', {opacity:0, duration:0.1, ease:'power2.in'}, 4.324); tl.set('#cap0', {opacity:0, visibility:'hidden'}, 4.424);
+    tl.fromTo('#cap1', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 4.394);
+    tl.to('#cap1', {opacity:0, duration:0.1, ease:'power2.in'}, 5.394); tl.set('#cap1', {opacity:0, visibility:'hidden'}, 5.494);
+    tl.fromTo('#cap2', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 5.464);
+    tl.to('#cap2', {opacity:0, duration:0.1, ease:'power2.in'}, 8.836); tl.set('#cap2', {opacity:0, visibility:'hidden'}, 8.936);
+    tl.fromTo('#cap3', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 9.917);
+    tl.to('#cap3', {opacity:0, duration:0.1, ease:'power2.in'}, 11.838); tl.set('#cap3', {opacity:0, visibility:'hidden'}, 11.938);
+    tl.fromTo('#cap4', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 11.908);
+    tl.to('#cap4', {opacity:0, duration:0.1, ease:'power2.in'}, 15.624); tl.set('#cap4', {opacity:0, visibility:'hidden'}, 15.724);
+    tl.fromTo('#cap5', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 15.694);
+    tl.to('#cap5', {opacity:0, duration:0.1, ease:'power2.in'}, 17.532); tl.set('#cap5', {opacity:0, visibility:'hidden'}, 17.632);
+    tl.fromTo('#cap6', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 20.593);
+    tl.to('#cap6', {opacity:0, duration:0.1, ease:'power2.in'}, 21.603); tl.set('#cap6', {opacity:0, visibility:'hidden'}, 21.703);
+    tl.fromTo('#cap7', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 21.673);
+    tl.to('#cap7', {opacity:0, duration:0.1, ease:'power2.in'}, 23.234); tl.set('#cap7', {opacity:0, visibility:'hidden'}, 23.334);
+    tl.fromTo('#cap8', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 25.201);
+    tl.to('#cap8', {opacity:0, duration:0.1, ease:'power2.in'}, 27.565); tl.set('#cap8', {opacity:0, visibility:'hidden'}, 27.665);
+    tl.fromTo('#cap9', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 27.635);
+    tl.to('#cap9', {opacity:0, duration:0.1, ease:'power2.in'}, 30.714); tl.set('#cap9', {opacity:0, visibility:'hidden'}, 30.814);
+    tl.fromTo('#cap10', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 30.784);
+    tl.to('#cap10', {opacity:0, duration:0.1, ease:'power2.in'}, 32.474); tl.set('#cap10', {opacity:0, visibility:'hidden'}, 32.574);
+    tl.fromTo('#cap11', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 33.591);
+    tl.to('#cap11', {opacity:0, duration:0.1, ease:'power2.in'}, 36.877); tl.set('#cap11', {opacity:0, visibility:'hidden'}, 36.977);
+    tl.fromTo('#cap12', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 36.947);
+    tl.to('#cap12', {opacity:0, duration:0.1, ease:'power2.in'}, 39.532); tl.set('#cap12', {opacity:0, visibility:'hidden'}, 39.632);
+    tl.fromTo('#cap13', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 39.602);
+    tl.to('#cap13', {opacity:0, duration:0.1, ease:'power2.in'}, 40.635); tl.set('#cap13', {opacity:0, visibility:'hidden'}, 40.735);
+    tl.fromTo('#cap14', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 40.705);
+    tl.to('#cap14', {opacity:0, duration:0.1, ease:'power2.in'}, 43.249); tl.set('#cap14', {opacity:0, visibility:'hidden'}, 43.349);
+    tl.fromTo('#cap15', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 44.381);
+    tl.to('#cap15', {opacity:0, duration:0.1, ease:'power2.in'}, 45.784); tl.set('#cap15', {opacity:0, visibility:'hidden'}, 45.884);
+    tl.fromTo('#cap16', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 45.854);
+    tl.to('#cap16', {opacity:0, duration:0.1, ease:'power2.in'}, 48.131); tl.set('#cap16', {opacity:0, visibility:'hidden'}, 48.231);
+    tl.fromTo('#cap17', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 50.141);
+    tl.to('#cap17', {opacity:0, duration:0.1, ease:'power2.in'}, 53.2); tl.set('#cap17', {opacity:0, visibility:'hidden'}, 53.3);
+    tl.fromTo('#cap18', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 53.27);
+    tl.to('#cap18', {opacity:0, duration:0.1, ease:'power2.in'}, 54.867); tl.set('#cap18', {opacity:0, visibility:'hidden'}, 54.967);
+    tl.fromTo('#cap19', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 54.937);
+    tl.to('#cap19', {opacity:0, duration:0.1, ease:'power2.in'}, 56.19); tl.set('#cap19', {opacity:0, visibility:'hidden'}, 56.29);
+    tl.fromTo('#cap20', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 57.307);
+    tl.to('#cap20', {opacity:0, duration:0.1, ease:'power2.in'}, 58.424); tl.set('#cap20', {opacity:0, visibility:'hidden'}, 58.524);
+    tl.fromTo('#cap21', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 58.494);
+    tl.to('#cap21', {opacity:0, duration:0.1, ease:'power2.in'}, 62.069); tl.set('#cap21', {opacity:0, visibility:'hidden'}, 62.169);
+    tl.fromTo('#cap22', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 62.139);
+    tl.to('#cap22', {opacity:0, duration:0.1, ease:'power2.in'}, 65.095); tl.set('#cap22', {opacity:0, visibility:'hidden'}, 65.195);
+    tl.fromTo('#cap23', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 65.165);
+    tl.to('#cap23', {opacity:0, duration:0.1, ease:'power2.in'}, 67.339); tl.set('#cap23', {opacity:0, visibility:'hidden'}, 67.439);
+    tl.fromTo('#cap24', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 68.457);
+    tl.to('#cap24', {opacity:0, duration:0.1, ease:'power2.in'}, 71.675); tl.set('#cap24', {opacity:0, visibility:'hidden'}, 71.775);
+    tl.fromTo('#cap25', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 71.745);
+    tl.to('#cap25', {opacity:0, duration:0.1, ease:'power2.in'}, 75.178); tl.set('#cap25', {opacity:0, visibility:'hidden'}, 75.278);
+    tl.fromTo('#cap26', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 77.169);
+    tl.to('#cap26', {opacity:0, duration:0.1, ease:'power2.in'}, 80.546); tl.set('#cap26', {opacity:0, visibility:'hidden'}, 80.646);
+    tl.fromTo('#cap27', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 80.616);
+    tl.to('#cap27', {opacity:0, duration:0.1, ease:'power2.in'}, 84.279); tl.set('#cap27', {opacity:0, visibility:'hidden'}, 84.379);
+    tl.fromTo('#cap28', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 84.349);
+    tl.to('#cap28', {opacity:0, duration:0.1, ease:'power2.in'}, 85.27); tl.set('#cap28', {opacity:0, visibility:'hidden'}, 85.37);
+    tl.fromTo('#cap29', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 86.399);
+    tl.to('#cap29', {opacity:0, duration:0.1, ease:'power2.in'}, 89.193); tl.set('#cap29', {opacity:0, visibility:'hidden'}, 89.293);
+    tl.fromTo('#cap30', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 92.251);
+    tl.to('#cap30', {opacity:0, duration:0.1, ease:'power2.in'}, 93.267); tl.set('#cap30', {opacity:0, visibility:'hidden'}, 93.367);
+    tl.fromTo('#cap31', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 93.337);
+    tl.to('#cap31', {opacity:0, duration:0.1, ease:'power2.in'}, 95.458); tl.set('#cap31', {opacity:0, visibility:'hidden'}, 95.558);
+    tl.fromTo('#cap32', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 97.435);
+    tl.to('#cap32', {opacity:0, duration:0.1, ease:'power2.in'}, 99.848); tl.set('#cap32', {opacity:0, visibility:'hidden'}, 99.948);
+    tl.fromTo('#cap33', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 99.918);
+    tl.to('#cap33', {opacity:0, duration:0.1, ease:'power2.in'}, 102.782); tl.set('#cap33', {opacity:0, visibility:'hidden'}, 102.882);
+    tl.fromTo('#cap34', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 102.852);
+    tl.to('#cap34', {opacity:0, duration:0.1, ease:'power2.in'}, 105.005); tl.set('#cap34', {opacity:0, visibility:'hidden'}, 105.105);
+    tl.fromTo('#cap35', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 105.075);
+    tl.to('#cap35', {opacity:0, duration:0.1, ease:'power2.in'}, 106.952); tl.set('#cap35', {opacity:0, visibility:'hidden'}, 107.052);
+    tl.fromTo('#cap36', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 107.022);
+    tl.to('#cap36', {opacity:0, duration:0.1, ease:'power2.in'}, 110.981); tl.set('#cap36', {opacity:0, visibility:'hidden'}, 111.081);
+    tl.fromTo('#cap37', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 112.113);
+    tl.to('#cap37', {opacity:0, duration:0.1, ease:'power2.in'}, 114.002); tl.set('#cap37', {opacity:0, visibility:'hidden'}, 114.102);
+    tl.fromTo('#cap38', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 114.072);
+    tl.to('#cap38', {opacity:0, duration:0.1, ease:'power2.in'}, 117.844); tl.set('#cap38', {opacity:0, visibility:'hidden'}, 117.944);
+    tl.fromTo('#cap39', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 118.967);
+    tl.to('#cap39', {opacity:0, duration:0.1, ease:'power2.in'}, 120.676); tl.set('#cap39', {opacity:0, visibility:'hidden'}, 120.776);
+    tl.fromTo('#cap40', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 120.746);
+    tl.to('#cap40', {opacity:0, duration:0.1, ease:'power2.in'}, 122.233); tl.set('#cap40', {opacity:0, visibility:'hidden'}, 122.333);
+    tl.fromTo('#cap41', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 124.199);
+    tl.to('#cap41', {opacity:0, duration:0.1, ease:'power2.in'}, 129.697); tl.set('#cap41', {opacity:0, visibility:'hidden'}, 129.797);
+    tl.fromTo('#cap42', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 129.767);
+    tl.to('#cap42', {opacity:0, duration:0.1, ease:'power2.in'}, 133.017); tl.set('#cap42', {opacity:0, visibility:'hidden'}, 133.117);
+    tl.fromTo('#cap43', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 134.173);
+    tl.to('#cap43', {opacity:0, duration:0.1, ease:'power2.in'}, 135.838); tl.set('#cap43', {opacity:0, visibility:'hidden'}, 135.938);
+    tl.fromTo('#cap44', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 135.908);
+    tl.to('#cap44', {opacity:0, duration:0.1, ease:'power2.in'}, 138.857); tl.set('#cap44', {opacity:0, visibility:'hidden'}, 138.957);
+    tl.fromTo('#cap45', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 138.927);
+    tl.to('#cap45', {opacity:0, duration:0.1, ease:'power2.in'}, 142.774); tl.set('#cap45', {opacity:0, visibility:'hidden'}, 142.874);
+    tl.fromTo('#cap46', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 142.844);
+    tl.to('#cap46', {opacity:0, duration:0.1, ease:'power2.in'}, 146.481); tl.set('#cap46', {opacity:0, visibility:'hidden'}, 146.581);
+    tl.fromTo('#cap47', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 148.453);
+    tl.to('#cap47', {opacity:0, duration:0.1, ease:'power2.in'}, 153.064); tl.set('#cap47', {opacity:0, visibility:'hidden'}, 153.164);
+    tl.fromTo('#cap48', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 153.134);
+    tl.to('#cap48', {opacity:0, duration:0.1, ease:'power2.in'}, 155.086); tl.set('#cap48', {opacity:0, visibility:'hidden'}, 155.186);
+    tl.fromTo('#cap49', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 155.156);
+    tl.to('#cap49', {opacity:0, duration:0.1, ease:'power2.in'}, 157.191); tl.set('#cap49', {opacity:0, visibility:'hidden'}, 157.291);
+    tl.fromTo('#cap50', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 158.331);
+    tl.to('#cap50', {opacity:0, duration:0.1, ease:'power2.in'}, 160.188); tl.set('#cap50', {opacity:0, visibility:'hidden'}, 160.288);
+    tl.fromTo('#cap51', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 160.258);
+    tl.to('#cap51', {opacity:0, duration:0.1, ease:'power2.in'}, 162.407); tl.set('#cap51', {opacity:0, visibility:'hidden'}, 162.507);
+    tl.fromTo('#cap52', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 162.477);
+    tl.to('#cap52', {opacity:0, duration:0.1, ease:'power2.in'}, 164.13); tl.set('#cap52', {opacity:0, visibility:'hidden'}, 164.23);
+    tl.fromTo('#cap53', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 164.2);
+    tl.to('#cap53', {opacity:0, duration:0.1, ease:'power2.in'}, 164.654); tl.set('#cap53', {opacity:0, visibility:'hidden'}, 164.754);
+    tl.fromTo('#cap54', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 164.724);
+    tl.to('#cap54', {opacity:0, duration:0.1, ease:'power2.in'}, 168.705); tl.set('#cap54', {opacity:0, visibility:'hidden'}, 168.805);
+    tl.fromTo('#cap55', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 170.715);
+    tl.to('#cap55', {opacity:0, duration:0.1, ease:'power2.in'}, 174.416); tl.set('#cap55', {opacity:0, visibility:'hidden'}, 174.516);
+    tl.fromTo('#cap56', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 174.486);
+    tl.to('#cap56', {opacity:0, duration:0.1, ease:'power2.in'}, 178.92); tl.set('#cap56', {opacity:0, visibility:'hidden'}, 179.02);
+    tl.fromTo('#cap57', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 178.99);
+    tl.to('#cap57', {opacity:0, duration:0.1, ease:'power2.in'}, 181.16); tl.set('#cap57', {opacity:0, visibility:'hidden'}, 181.26);
+    tl.fromTo('#cap58', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 182.297);
+    tl.to('#cap58', {opacity:0, duration:0.1, ease:'power2.in'}, 183.898); tl.set('#cap58', {opacity:0, visibility:'hidden'}, 183.998);
+    tl.fromTo('#cap59', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 183.968);
+    tl.to('#cap59', {opacity:0, duration:0.1, ease:'power2.in'}, 186.507); tl.set('#cap59', {opacity:0, visibility:'hidden'}, 186.607);
+    tl.fromTo('#cap60', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 186.577);
+    tl.to('#cap60', {opacity:0, duration:0.1, ease:'power2.in'}, 188.652); tl.set('#cap60', {opacity:0, visibility:'hidden'}, 188.752);
+    tl.fromTo('#cap61', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 188.722);
+    tl.to('#cap61', {opacity:0, duration:0.1, ease:'power2.in'}, 190.898); tl.set('#cap61', {opacity:0, visibility:'hidden'}, 190.998);
+    tl.fromTo('#cap62', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 190.968);
+    tl.to('#cap62', {opacity:0, duration:0.1, ease:'power2.in'}, 192.379); tl.set('#cap62', {opacity:0, visibility:'hidden'}, 192.479);
+    tl.fromTo('#cap63', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 193.495);
+    tl.to('#cap63', {opacity:0, duration:0.1, ease:'power2.in'}, 194.792); tl.set('#cap63', {opacity:0, visibility:'hidden'}, 194.892);
+    tl.fromTo('#cap64', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 196.783);
+    tl.to('#cap64', {opacity:0, duration:0.1, ease:'power2.in'}, 200.128); tl.set('#cap64', {opacity:0, visibility:'hidden'}, 200.228);
+    tl.fromTo('#cap65', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 200.198);
+    tl.to('#cap65', {opacity:0, duration:0.1, ease:'power2.in'}, 201.544); tl.set('#cap65', {opacity:0, visibility:'hidden'}, 201.644);
+    tl.fromTo('#cap66', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 201.614);
+    tl.to('#cap66', {opacity:0, duration:0.1, ease:'power2.in'}, 205.057); tl.set('#cap66', {opacity:0, visibility:'hidden'}, 205.157);
+    tl.fromTo('#cap67', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 205.127);
+    tl.to('#cap67', {opacity:0, duration:0.1, ease:'power2.in'}, 206.367); tl.set('#cap67', {opacity:0, visibility:'hidden'}, 206.467);
+    tl.fromTo('#cap68', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 207.477);
+    tl.to('#cap68', {opacity:0, duration:0.1, ease:'power2.in'}, 209.634); tl.set('#cap68', {opacity:0, visibility:'hidden'}, 209.734);
+    tl.fromTo('#cap69', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 209.704);
+    tl.to('#cap69', {opacity:0, duration:0.1, ease:'power2.in'}, 212.717); tl.set('#cap69', {opacity:0, visibility:'hidden'}, 212.817);
+    tl.fromTo('#cap70', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 212.787);
+    tl.to('#cap70', {opacity:0, duration:0.1, ease:'power2.in'}, 216.894); tl.set('#cap70', {opacity:0, visibility:'hidden'}, 216.994);
+    tl.fromTo('#cap71', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 216.964);
+    tl.to('#cap71', {opacity:0, duration:0.1, ease:'power2.in'}, 218.453); tl.set('#cap71', {opacity:0, visibility:'hidden'}, 218.553);
+    tl.fromTo('#cap72', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 221.513);
+    tl.to('#cap72', {opacity:0, duration:0.1, ease:'power2.in'}, 223.158); tl.set('#cap72', {opacity:0, visibility:'hidden'}, 223.258);
+    tl.fromTo('#cap73', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 223.228);
+    tl.to('#cap73', {opacity:0, duration:0.1, ease:'power2.in'}, 224.85); tl.set('#cap73', {opacity:0, visibility:'hidden'}, 224.95);
+    tl.fromTo('#cap74', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 226.841);
+    tl.to('#cap74', {opacity:0, duration:0.1, ease:'power2.in'}, 228.252); tl.set('#cap74', {opacity:0, visibility:'hidden'}, 228.352);
+    tl.fromTo('#cap75', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 228.322);
+    tl.to('#cap75', {opacity:0, duration:0.1, ease:'power2.in'}, 230.25); tl.set('#cap75', {opacity:0, visibility:'hidden'}, 230.35);
+    tl.fromTo('#cap76', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 230.32);
+    tl.to('#cap76', {opacity:0, duration:0.1, ease:'power2.in'}, 233.055); tl.set('#cap76', {opacity:0, visibility:'hidden'}, 233.155);
+    tl.fromTo('#cap77', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 233.125);
+    tl.to('#cap77', {opacity:0, duration:0.1, ease:'power2.in'}, 234.971); tl.set('#cap77', {opacity:0, visibility:'hidden'}, 235.071);
+    tl.fromTo('#cap78', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 235.041);
+    tl.to('#cap78', {opacity:0, duration:0.1, ease:'power2.in'}, 238.607); tl.set('#cap78', {opacity:0, visibility:'hidden'}, 238.707);
+    tl.fromTo('#cap79', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 239.743);
+    tl.to('#cap79', {opacity:0, duration:0.1, ease:'power2.in'}, 243.858); tl.set('#cap79', {opacity:0, visibility:'hidden'}, 243.958);
+    tl.fromTo('#cap80', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 245.839);
+    tl.to('#cap80', {opacity:0, duration:0.1, ease:'power2.in'}, 248.326); tl.set('#cap80', {opacity:0, visibility:'hidden'}, 248.426);
+    tl.fromTo('#cap81', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 248.396);
+    tl.to('#cap81', {opacity:0, duration:0.1, ease:'power2.in'}, 251.451); tl.set('#cap81', {opacity:0, visibility:'hidden'}, 251.551);
+    tl.fromTo('#cap82', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 251.521);
+    tl.to('#cap82', {opacity:0, duration:0.1, ease:'power2.in'}, 253.627); tl.set('#cap82', {opacity:0, visibility:'hidden'}, 253.727);
+    tl.fromTo('#cap83', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 253.697);
+    tl.to('#cap83', {opacity:0, duration:0.1, ease:'power2.in'}, 256.296); tl.set('#cap83', {opacity:0, visibility:'hidden'}, 256.396);
+    tl.fromTo('#cap84', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 257.469);
+    tl.to('#cap84', {opacity:0, duration:0.1, ease:'power2.in'}, 259.721); tl.set('#cap84', {opacity:0, visibility:'hidden'}, 259.821);
+    tl.fromTo('#cap85', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 260.867);
+    tl.to('#cap85', {opacity:0, duration:0.1, ease:'power2.in'}, 263.953); tl.set('#cap85', {opacity:0, visibility:'hidden'}, 264.053);
+    tl.fromTo('#cap86', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 264.023);
+    tl.to('#cap86', {opacity:0, duration:0.1, ease:'power2.in'}, 266.043); tl.set('#cap86', {opacity:0, visibility:'hidden'}, 266.143);
+    tl.fromTo('#cap87', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 266.113);
+    tl.to('#cap87', {opacity:0, duration:0.1, ease:'power2.in'}, 267.108); tl.set('#cap87', {opacity:0, visibility:'hidden'}, 267.208);
+    tl.fromTo('#cap88', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 267.178);
+    tl.to('#cap88', {opacity:0, duration:0.1, ease:'power2.in'}, 269.108); tl.set('#cap88', {opacity:0, visibility:'hidden'}, 269.208);
+    tl.fromTo('#cap89', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 269.178);
+    tl.to('#cap89', {opacity:0, duration:0.1, ease:'power2.in'}, 271.795); tl.set('#cap89', {opacity:0, visibility:'hidden'}, 271.895);
+    tl.fromTo('#cap90', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 273.755);
+    tl.to('#cap90', {opacity:0, duration:0.1, ease:'power2.in'}, 275.911); tl.set('#cap90', {opacity:0, visibility:'hidden'}, 276.011);
+    tl.fromTo('#cap91', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 275.981);
+    tl.to('#cap91', {opacity:0, duration:0.1, ease:'power2.in'}, 276.97); tl.set('#cap91', {opacity:0, visibility:'hidden'}, 277.07);
+    tl.fromTo('#cap92', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 277.04);
+    tl.to('#cap92', {opacity:0, duration:0.1, ease:'power2.in'}, 278.44); tl.set('#cap92', {opacity:0, visibility:'hidden'}, 278.54);
+    tl.fromTo('#cap93', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 278.51);
+    tl.to('#cap93', {opacity:0, duration:0.1, ease:'power2.in'}, 281.825); tl.set('#cap93', {opacity:0, visibility:'hidden'}, 281.925);
+    tl.fromTo('#cap94', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 281.895);
+    tl.to('#cap94', {opacity:0, duration:0.1, ease:'power2.in'}, 283.994); tl.set('#cap94', {opacity:0, visibility:'hidden'}, 284.094);
+    tl.fromTo('#cap95', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 284.064);
+    tl.to('#cap95', {opacity:0, duration:0.1, ease:'power2.in'}, 285.766); tl.set('#cap95', {opacity:0, visibility:'hidden'}, 285.866);
+    tl.fromTo('#cap96', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 285.836);
+    tl.to('#cap96', {opacity:0, duration:0.1, ease:'power2.in'}, 289.4); tl.set('#cap96', {opacity:0, visibility:'hidden'}, 289.5);
+    tl.fromTo('#cap97', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 290.521);
+    tl.to('#cap97', {opacity:0, duration:0.1, ease:'power2.in'}, 292.501); tl.set('#cap97', {opacity:0, visibility:'hidden'}, 292.601);
+    tl.fromTo('#cap98', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 292.571);
+    tl.to('#cap98', {opacity:0, duration:0.1, ease:'power2.in'}, 293.638); tl.set('#cap98', {opacity:0, visibility:'hidden'}, 293.738);
+    tl.fromTo('#cap99', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 293.708);
+    tl.to('#cap99', {opacity:0, duration:0.1, ease:'power2.in'}, 295.745); tl.set('#cap99', {opacity:0, visibility:'hidden'}, 295.845);
+    tl.fromTo('#cap100', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 297.721);
+    tl.to('#cap100', {opacity:0, duration:0.1, ease:'power2.in'}, 299.254); tl.set('#cap100', {opacity:0, visibility:'hidden'}, 299.354);
+    tl.fromTo('#cap101', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 299.324);
+    tl.to('#cap101', {opacity:0, duration:0.1, ease:'power2.in'}, 299.992); tl.set('#cap101', {opacity:0, visibility:'hidden'}, 300.092);
+    tl.fromTo('#cap102', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 300.062);
+    tl.to('#cap102', {opacity:0, duration:0.1, ease:'power2.in'}, 303.314); tl.set('#cap102', {opacity:0, visibility:'hidden'}, 303.414);
+    tl.fromTo('#cap103', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 303.384);
+    tl.to('#cap103', {opacity:0, duration:0.1, ease:'power2.in'}, 306.42); tl.set('#cap103', {opacity:0, visibility:'hidden'}, 306.52);
+    tl.fromTo('#cap104', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 306.49);
+    tl.to('#cap104', {opacity:0, duration:0.1, ease:'power2.in'}, 311.122); tl.set('#cap104', {opacity:0, visibility:'hidden'}, 311.222);
+    tl.fromTo('#cap105', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 311.192);
+    tl.to('#cap105', {opacity:0, duration:0.1, ease:'power2.in'}, 312.531); tl.set('#cap105', {opacity:0, visibility:'hidden'}, 312.631);
+    tl.fromTo('#cap106', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 312.601);
+    tl.to('#cap106', {opacity:0, duration:0.1, ease:'power2.in'}, 314.251); tl.set('#cap106', {opacity:0, visibility:'hidden'}, 314.351);
+    tl.fromTo('#cap107', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 315.399);
+    tl.to('#cap107', {opacity:0, duration:0.1, ease:'power2.in'}, 317.985); tl.set('#cap107', {opacity:0, visibility:'hidden'}, 318.085);
+    tl.fromTo('#cap108', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 318.055);
+    tl.to('#cap108', {opacity:0, duration:0.1, ease:'power2.in'}, 318.987); tl.set('#cap108', {opacity:0, visibility:'hidden'}, 319.087);
+    tl.fromTo('#cap109', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 319.057);
+    tl.to('#cap109', {opacity:0, duration:0.1, ease:'power2.in'}, 322.002); tl.set('#cap109', {opacity:0, visibility:'hidden'}, 322.102);
+    tl.fromTo('#cap110', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 323.967);
+    tl.to('#cap110', {opacity:0, duration:0.1, ease:'power2.in'}, 326.332); tl.set('#cap110', {opacity:0, visibility:'hidden'}, 326.432);
+    tl.fromTo('#cap111', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 326.402);
+    tl.to('#cap111', {opacity:0, duration:0.1, ease:'power2.in'}, 327.404); tl.set('#cap111', {opacity:0, visibility:'hidden'}, 327.504);
+    tl.fromTo('#cap112', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 327.474);
+    tl.to('#cap112', {opacity:0, duration:0.1, ease:'power2.in'}, 329.925); tl.set('#cap112', {opacity:0, visibility:'hidden'}, 330.025);
+    tl.fromTo('#cap113', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 329.995);
+    tl.to('#cap113', {opacity:0, duration:0.1, ease:'power2.in'}, 331.846); tl.set('#cap113', {opacity:0, visibility:'hidden'}, 331.946);
+    tl.fromTo('#cap114', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 331.916);
+    tl.to('#cap114', {opacity:0, duration:0.1, ease:'power2.in'}, 334.296); tl.set('#cap114', {opacity:0, visibility:'hidden'}, 334.396);
+    tl.fromTo('#cap115', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 334.366);
+    tl.to('#cap115', {opacity:0, duration:0.1, ease:'power2.in'}, 336.073); tl.set('#cap115', {opacity:0, visibility:'hidden'}, 336.173);
+    tl.fromTo('#cap116', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 336.143);
+    tl.to('#cap116', {opacity:0, duration:0.1, ease:'power2.in'}, 339.707); tl.set('#cap116', {opacity:0, visibility:'hidden'}, 339.807);
+    tl.fromTo('#cap117', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 340.829);
+    tl.to('#cap117', {opacity:0, duration:0.1, ease:'power2.in'}, 343.372); tl.set('#cap117', {opacity:0, visibility:'hidden'}, 343.472);
+    tl.fromTo('#cap118', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 343.442);
+    tl.to('#cap118', {opacity:0, duration:0.1, ease:'power2.in'}, 345.274); tl.set('#cap118', {opacity:0, visibility:'hidden'}, 345.374);
+    tl.fromTo('#cap119', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 348.361);
+    tl.to('#cap119', {opacity:0, duration:0.1, ease:'power2.in'}, 349.558); tl.set('#cap119', {opacity:0, visibility:'hidden'}, 349.658);
+    tl.fromTo('#cap120', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 349.628);
+    tl.to('#cap120', {opacity:0, duration:0.1, ease:'power2.in'}, 351.568); tl.set('#cap120', {opacity:0, visibility:'hidden'}, 351.668);
+    tl.fromTo('#cap121', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 353.569);
+    tl.to('#cap121', {opacity:0, duration:0.1, ease:'power2.in'}, 356.929); tl.set('#cap121', {opacity:0, visibility:'hidden'}, 357.029);
+    tl.fromTo('#cap122', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 356.999);
+    tl.to('#cap122', {opacity:0, duration:0.1, ease:'power2.in'}, 359.595); tl.set('#cap122', {opacity:0, visibility:'hidden'}, 359.695);
+    tl.fromTo('#cap123', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 360.711);
+    tl.to('#cap123', {opacity:0, duration:0.1, ease:'power2.in'}, 362.886); tl.set('#cap123', {opacity:0, visibility:'hidden'}, 362.986);
+    tl.fromTo('#cap124', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 362.956);
+    tl.to('#cap124', {opacity:0, duration:0.1, ease:'power2.in'}, 365.864); tl.set('#cap124', {opacity:0, visibility:'hidden'}, 365.964);
+    tl.fromTo('#cap125', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 367.839);
+    tl.to('#cap125', {opacity:0, duration:0.1, ease:'power2.in'}, 370.113); tl.set('#cap125', {opacity:0, visibility:'hidden'}, 370.213);
+    tl.fromTo('#cap126', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 370.183);
+    tl.to('#cap126', {opacity:0, duration:0.1, ease:'power2.in'}, 373.051); tl.set('#cap126', {opacity:0, visibility:'hidden'}, 373.151);
+    tl.fromTo('#cap127', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 374.165);
+    tl.to('#cap127', {opacity:0, duration:0.1, ease:'power2.in'}, 376.138); tl.set('#cap127', {opacity:0, visibility:'hidden'}, 376.238);
+    tl.fromTo('#cap128', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 376.208);
+    tl.to('#cap128', {opacity:0, duration:0.1, ease:'power2.in'}, 378.327); tl.set('#cap128', {opacity:0, visibility:'hidden'}, 378.427);
+    tl.fromTo('#cap129', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 381.385);
+    tl.to('#cap129', {opacity:0, duration:0.1, ease:'power2.in'}, 382.411); tl.set('#cap129', {opacity:0, visibility:'hidden'}, 382.511);
+    tl.fromTo('#cap130', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 382.481);
+    tl.to('#cap130', {opacity:0, duration:0.1, ease:'power2.in'}, 383.79); tl.set('#cap130', {opacity:0, visibility:'hidden'}, 383.89);
+    tl.fromTo('#cap131', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 385.801);
+    tl.to('#cap131', {opacity:0, duration:0.1, ease:'power2.in'}, 388.033); tl.set('#cap131', {opacity:0, visibility:'hidden'}, 388.133);
+    tl.fromTo('#cap132', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 388.103);
+    tl.to('#cap132', {opacity:0, duration:0.1, ease:'power2.in'}, 390.734); tl.set('#cap132', {opacity:0, visibility:'hidden'}, 390.834);
+    tl.fromTo('#cap133', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 390.804);
+    tl.to('#cap133', {opacity:0, duration:0.1, ease:'power2.in'}, 393.808); tl.set('#cap133', {opacity:0, visibility:'hidden'}, 393.908);
+    tl.fromTo('#cap134', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 394.911);
+    tl.to('#cap134', {opacity:0, duration:0.1, ease:'power2.in'}, 398.127); tl.set('#cap134', {opacity:0, visibility:'hidden'}, 398.227);
+    tl.fromTo('#cap135', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 398.197);
+    tl.to('#cap135', {opacity:0, duration:0.1, ease:'power2.in'}, 402.334); tl.set('#cap135', {opacity:0, visibility:'hidden'}, 402.434);
+    tl.fromTo('#cap136', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 402.404);
+    tl.to('#cap136', {opacity:0, duration:0.1, ease:'power2.in'}, 407.481); tl.set('#cap136', {opacity:0, visibility:'hidden'}, 407.581);
+    tl.fromTo('#cap137', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 407.551);
+    tl.to('#cap137', {opacity:0, duration:0.1, ease:'power2.in'}, 408.401); tl.set('#cap137', {opacity:0, visibility:'hidden'}, 408.501);
+    tl.fromTo('#cap138', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 409.421);
+    tl.to('#cap138', {opacity:0, duration:0.1, ease:'power2.in'}, 411.386); tl.set('#cap138', {opacity:0, visibility:'hidden'}, 411.486);
+    tl.fromTo('#cap139', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 411.456);
+    tl.to('#cap139', {opacity:0, duration:0.1, ease:'power2.in'}, 413.129); tl.set('#cap139', {opacity:0, visibility:'hidden'}, 413.229);
+    tl.fromTo('#cap140', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 413.199);
+    tl.to('#cap140', {opacity:0, duration:0.1, ease:'power2.in'}, 415.232); tl.set('#cap140', {opacity:0, visibility:'hidden'}, 415.332);
+    tl.fromTo('#cap141', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 417.221);
+    tl.to('#cap141', {opacity:0, duration:0.1, ease:'power2.in'}, 419.908); tl.set('#cap141', {opacity:0, visibility:'hidden'}, 420.008);
+    tl.fromTo('#cap142', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 419.978);
+    tl.to('#cap142', {opacity:0, duration:0.1, ease:'power2.in'}, 423.432); tl.set('#cap142', {opacity:0, visibility:'hidden'}, 423.532);
+    tl.fromTo('#cap143', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 423.502);
+    tl.to('#cap143', {opacity:0, duration:0.1, ease:'power2.in'}, 426.015); tl.set('#cap143', {opacity:0, visibility:'hidden'}, 426.115);
+    tl.fromTo('#cap144', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 427.123);
+    tl.to('#cap144', {opacity:0, duration:0.1, ease:'power2.in'}, 428.81); tl.set('#cap144', {opacity:0, visibility:'hidden'}, 428.91);
+    tl.fromTo('#cap145', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 428.88);
+    tl.to('#cap145', {opacity:0, duration:0.1, ease:'power2.in'}, 431.392); tl.set('#cap145', {opacity:0, visibility:'hidden'}, 431.492);
+    tl.fromTo('#cap146', {opacity:0, y:12}, {opacity:1, y:0, duration:0.14, ease:'power2.out'}, 431.462);
+    tl.to('#cap146', {opacity:0, duration:0.1, ease:'power2.in'}, 434.169); tl.set('#cap146', {opacity:0, visibility:'hidden'}, 434.269);
+    window.__timelines["captions"] = tl;
+  </script>
+</template>

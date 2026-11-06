@@ -1,0 +1,97 @@
+<template>
+  <style>
+
+@font-face{font-family:'LNU Display';font-weight:700;src:url('assets/fonts/montserrat-latin-700-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Display';font-weight:700;src:url('assets/fonts/montserrat-cyrillic-700-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:'LNU Display';font-weight:800;src:url('assets/fonts/montserrat-latin-800-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Display';font-weight:800;src:url('assets/fonts/montserrat-cyrillic-800-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:'LNU Display';font-weight:900;src:url('assets/fonts/montserrat-latin-900-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Display';font-weight:900;src:url('assets/fonts/montserrat-cyrillic-900-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:'LNU Text';font-weight:500;src:url('assets/fonts/inter-latin-500-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Text';font-weight:500;src:url('assets/fonts/inter-cyrillic-500-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:'LNU Text';font-weight:600;src:url('assets/fonts/inter-latin-600-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Text';font-weight:600;src:url('assets/fonts/inter-cyrillic-600-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:'LNU Text';font-weight:700;src:url('assets/fonts/inter-latin-700-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Text';font-weight:700;src:url('assets/fonts/inter-cyrillic-700-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+
+:root{--red:#E3000B;--red-deep:#A8000A;--yellow:#FFD500;--white:#FFFFFF;--black:#0B0B0D;--ink:#141416;
+--official:#15803D;--leak:#C2410C;--rumor:#1D4ED8;}
+
+    #root { position:absolute; inset:0; overflow:hidden; font-family:'LNU Text',sans-serif; color:var(--white); }
+    #root .bg { position:absolute; inset:0; background:
+        radial-gradient(1200px 700px at 78% 20%, rgba(227,0,11,.38), transparent 60%),
+        radial-gradient(900px 600px at 10% 100%, rgba(255,213,0,.10), transparent 60%),
+        linear-gradient(160deg,#18181b 0%,#0b0b0d 70%); }
+    #root .studs { position:absolute; inset:-60px; opacity:.07;
+        background-image: radial-gradient(circle at 30px 30px, #fff 0 13px, transparent 14px);
+        background-size:60px 60px; }
+
+    #root .brick { position:absolute; width:240px; height:96px; border-radius:10px; }
+    #root .brick::before { content:''; position:absolute; left:18px; right:18px; top:-26px; height:28px;
+        background:radial-gradient(circle at 24px 14px, var(--c) 0 17px, transparent 18px) 0 0/50px 28px repeat-x; }
+    #root .brick { background:linear-gradient(180deg, color-mix(in srgb, var(--c), #fff 14%), var(--c) 40%, color-mix(in srgb, var(--c), #000 22%)); box-shadow:inset 0 -8px 0 rgba(0,0,0,.18), 0 18px 30px rgba(0,0,0,.45); }
+    #root .logo { position:absolute; left:0; right:0; top:330px; text-align:center; }
+    #root .logo-box { display:inline-block; padding:28px 60px 30px; border-radius:26px; background:var(--red); box-shadow:0 0 0 10px var(--yellow), 0 40px 90px rgba(0,0,0,.6); }
+    #root .logo-l1 { font:900 150px/0.95 'LNU Display'; color:#fff; letter-spacing:-.02em; -webkit-text-stroke:4px #000; paint-order:stroke fill; }
+    #root .logo-l2 { margin-top:6px; font:900 64px/1 'LNU Display'; color:var(--yellow); letter-spacing:.32em; padding-left:.32em; }
+    #root .tag { position:absolute; left:0; right:0; top:744px; text-align:center; font:800 34px 'LNU Display'; letter-spacing:.2em; color:#fff; text-transform:uppercase; }
+    #root .tag b { color:var(--yellow); }
+    #root .flash { position:absolute; inset:0; background:#fff; opacity:0; }
+
+  </style>
+  <div id="root" data-composition-id="intro" data-width="1920" data-height="1080" data-duration="18.946">
+    <div class="bg"></div>
+    <div class="studs" data-layout-ignore></div>
+    <div id="ib0" class="brick" style="left:150px;top:880px;--c:var(--red)"></div>
+    <div id="ib1" class="brick" style="left:420px;top:880px;--c:var(--yellow)"></div>
+    <div id="ib2" class="brick" style="left:690px;top:880px;--c:#ffffff"></div>
+    <div id="ib3" class="brick" style="left:960px;top:880px;--c:#1f1f23"></div>
+    <div id="ib4" class="brick" style="left:1230px;top:880px;--c:var(--red)"></div>
+    <div id="ib5" class="brick" style="left:1500px;top:880px;--c:var(--yellow)"></div>
+    <div id="ib6" class="brick" style="left:285px;top:750px;--c:#2563EB"></div>
+    <div id="ib7" class="brick" style="left:555px;top:750px;--c:var(--red)"></div>
+    <div id="ib8" class="brick" style="left:825px;top:750px;--c:#ffffff"></div>
+    <div id="ib9" class="brick" style="left:1095px;top:750px;--c:var(--yellow)"></div>
+    <div id="ib10" class="brick" style="left:1365px;top:750px;--c:#1f1f23"></div>
+    <div id="ib11" class="brick" style="left:1635px;top:750px;--c:var(--red)"></div>
+    <div id="i-flash" class="flash"></div>
+    <div class="logo"><div id="i-logo" class="logo-box"><div class="logo-l1">LEGO NEWS</div><div class="logo-l2">UA</div></div></div>
+    <div id="i-tag" class="tag">Щотижневий випуск · <b>06.11.2026</b></div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    const fmt = (v) => Math.round(v).toLocaleString('en-US').replace(/,/g, '\u2009');
+    tl.fromTo('#root .studs', { x: 0, y: 0 }, { x: -60, y: -60, duration: 18.946, ease: 'none' }, 0);
+    tl.fromTo('#ib0', {y:-1100, rotation:-8}, {y:0, rotation:0, duration:0.55, ease:'bounce.out'}, 0.0);
+    tl.fromTo('#ib1', {y:-1100, rotation:-1}, {y:0, rotation:0, duration:0.55, ease:'bounce.out'}, 0.08);
+    tl.fromTo('#ib2', {y:-1100, rotation:6}, {y:0, rotation:0, duration:0.55, ease:'bounce.out'}, 0.16);
+    tl.fromTo('#ib3', {y:-1100, rotation:-4}, {y:0, rotation:0, duration:0.55, ease:'bounce.out'}, 0.24);
+    tl.fromTo('#ib4', {y:-1100, rotation:3}, {y:0, rotation:0, duration:0.55, ease:'bounce.out'}, 0.32);
+    tl.fromTo('#ib5', {y:-1100, rotation:-7}, {y:0, rotation:0, duration:0.55, ease:'bounce.out'}, 0.4);
+    tl.fromTo('#ib6', {y:-1100, rotation:0}, {y:0, rotation:0, duration:0.55, ease:'bounce.out'}, 0.48);
+    tl.fromTo('#ib7', {y:-1100, rotation:7}, {y:0, rotation:0, duration:0.55, ease:'bounce.out'}, 0.56);
+    tl.fromTo('#ib8', {y:-1100, rotation:-3}, {y:0, rotation:0, duration:0.55, ease:'bounce.out'}, 0.64);
+    tl.fromTo('#ib9', {y:-1100, rotation:4}, {y:0, rotation:0, duration:0.55, ease:'bounce.out'}, 0.72);
+    tl.fromTo('#ib10', {y:-1100, rotation:-6}, {y:0, rotation:0, duration:0.55, ease:'bounce.out'}, 0.8);
+    tl.fromTo('#ib11', {y:-1100, rotation:1}, {y:0, rotation:0, duration:0.55, ease:'bounce.out'}, 0.88);
+    tl.to('#ib0', {y:620, opacity:0, duration:0.6, ease:'power3.in'}, 1.55);
+    tl.to('#ib1', {y:620, opacity:0, duration:0.6, ease:'power3.in'}, 1.58);
+    tl.to('#ib2', {y:620, opacity:0, duration:0.6, ease:'power3.in'}, 1.61);
+    tl.to('#ib3', {y:620, opacity:0, duration:0.6, ease:'power3.in'}, 1.64);
+    tl.to('#ib4', {y:620, opacity:0, duration:0.6, ease:'power3.in'}, 1.67);
+    tl.to('#ib5', {y:620, opacity:0, duration:0.6, ease:'power3.in'}, 1.7);
+    tl.to('#ib6', {y:620, opacity:0, duration:0.6, ease:'power3.in'}, 1.73);
+    tl.to('#ib7', {y:620, opacity:0, duration:0.6, ease:'power3.in'}, 1.76);
+    tl.to('#ib8', {y:620, opacity:0, duration:0.6, ease:'power3.in'}, 1.79);
+    tl.to('#ib9', {y:620, opacity:0, duration:0.6, ease:'power3.in'}, 1.82);
+    tl.to('#ib10', {y:620, opacity:0, duration:0.6, ease:'power3.in'}, 1.85);
+    tl.to('#ib11', {y:620, opacity:0, duration:0.6, ease:'power3.in'}, 1.88);
+    tl.fromTo('#i-flash', {opacity:0}, {opacity:0.85, duration:0.08}, 1.9);
+    tl.to('#i-flash', {opacity:0, duration:0.5, ease:'power2.out'}, 1.98);
+    tl.fromTo('#i-logo', {scale:0.2, rotationX:80, opacity:0, transformPerspective:900}, {scale:1, rotationX:0, opacity:1, duration:0.9, ease:'back.out(1.6)'}, 1.9);
+    tl.fromTo('#i-tag', {y:30, opacity:0}, {y:0, opacity:1, duration:0.6, ease:'power3.out'}, 2.6);
+    tl.fromTo('#i-logo', {scale:1}, {scale:1.06, duration:15.95, ease:'sine.inOut'}, 2.8);
+    tl.to('#i-logo, #i-tag', {y:-40, opacity:0, duration:0.4, ease:'power2.in'}, 18.45);
+    window.__timelines["intro"] = tl;
+  </script>
+</template>

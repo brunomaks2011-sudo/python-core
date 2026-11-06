@@ -1,0 +1,7 @@
+renders/work-*
+renders/.*
+renders/render.log
+.hyperframes/artifacts/
+.hyperframes/cache/
+script/tts/*.mp3
+node_modules/

@@ -1,0 +1,108 @@
+<template>
+  <style>
+
+@font-face{font-family:'LNU Display';font-weight:700;src:url('assets/fonts/montserrat-latin-700-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Display';font-weight:700;src:url('assets/fonts/montserrat-cyrillic-700-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:'LNU Display';font-weight:800;src:url('assets/fonts/montserrat-latin-800-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Display';font-weight:800;src:url('assets/fonts/montserrat-cyrillic-800-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:'LNU Display';font-weight:900;src:url('assets/fonts/montserrat-latin-900-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Display';font-weight:900;src:url('assets/fonts/montserrat-cyrillic-900-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:'LNU Text';font-weight:500;src:url('assets/fonts/inter-latin-500-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Text';font-weight:500;src:url('assets/fonts/inter-cyrillic-500-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:'LNU Text';font-weight:600;src:url('assets/fonts/inter-latin-600-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Text';font-weight:600;src:url('assets/fonts/inter-cyrillic-600-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:'LNU Text';font-weight:700;src:url('assets/fonts/inter-latin-700-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Text';font-weight:700;src:url('assets/fonts/inter-cyrillic-700-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+
+:root{--red:#E3000B;--red-deep:#A8000A;--yellow:#FFD500;--white:#FFFFFF;--black:#0B0B0D;--ink:#141416;
+--official:#15803D;--leak:#C2410C;--rumor:#1D4ED8;}
+
+    #root { position:absolute; inset:0; overflow:hidden; font-family:'LNU Text',sans-serif; color:var(--white); }
+    #root .bg { position:absolute; inset:0; background:
+        radial-gradient(1200px 700px at 78% 20%, rgba(227,0,11,.38), transparent 60%),
+        radial-gradient(900px 600px at 10% 100%, rgba(255,213,0,.10), transparent 60%),
+        linear-gradient(160deg,#18181b 0%,#0b0b0d 70%); }
+    #root .studs { position:absolute; inset:-60px; opacity:.07;
+        background-image: radial-gradient(circle at 30px 30px, #fff 0 13px, transparent 14px);
+        background-size:60px 60px; }
+
+    #root .wp { position:absolute; top:-40px; bottom:-40px; left:0; width:2300px; display:flex; }
+    #root .wp .a { width:140px; background:var(--yellow); }
+    #root .wp .b { flex:1; background:var(--red); background-image:radial-gradient(circle at 40px 40px, rgba(255,255,255,.18) 0 18px, transparent 19px); background-size:80px 80px; }
+    #root .wp .c { width:60px; background:#fff; }
+
+  </style>
+  <div id="root" data-composition-id="wipe" data-width="1920" data-height="1080" data-duration="439.84">
+    <div id="wp0" class="wp" data-layout-ignore><div class="c"></div><div class="a"></div><div class="b"></div></div>
+    <div id="wp1" class="wp" data-layout-ignore><div class="c"></div><div class="a"></div><div class="b"></div></div>
+    <div id="wp2" class="wp" data-layout-ignore><div class="c"></div><div class="a"></div><div class="b"></div></div>
+    <div id="wp3" class="wp" data-layout-ignore><div class="c"></div><div class="a"></div><div class="b"></div></div>
+    <div id="wp4" class="wp" data-layout-ignore><div class="c"></div><div class="a"></div><div class="b"></div></div>
+    <div id="wp5" class="wp" data-layout-ignore><div class="c"></div><div class="a"></div><div class="b"></div></div>
+    <div id="wp6" class="wp" data-layout-ignore><div class="c"></div><div class="a"></div><div class="b"></div></div>
+    <div id="wp7" class="wp" data-layout-ignore><div class="c"></div><div class="a"></div><div class="b"></div></div>
+    <div id="wp8" class="wp" data-layout-ignore><div class="c"></div><div class="a"></div><div class="b"></div></div>
+    <div id="wp9" class="wp" data-layout-ignore><div class="c"></div><div class="a"></div><div class="b"></div></div>
+    <div id="wp10" class="wp" data-layout-ignore><div class="c"></div><div class="a"></div><div class="b"></div></div>
+    <div id="wp11" class="wp" data-layout-ignore><div class="c"></div><div class="a"></div><div class="b"></div></div>
+    <div id="wp12" class="wp" data-layout-ignore><div class="c"></div><div class="a"></div><div class="b"></div></div>
+    <div id="wp13" class="wp" data-layout-ignore><div class="c"></div><div class="a"></div><div class="b"></div></div>
+    <div id="wp14" class="wp" data-layout-ignore><div class="c"></div><div class="a"></div><div class="b"></div></div>
+    <div id="wp15" class="wp" data-layout-ignore><div class="c"></div><div class="a"></div><div class="b"></div></div>
+    <div id="wp16" class="wp" data-layout-ignore><div class="c"></div><div class="a"></div><div class="b"></div></div>
+    <div id="wp17" class="wp" data-layout-ignore><div class="c"></div><div class="a"></div><div class="b"></div></div>
+    <div id="wp18" class="wp" data-layout-ignore><div class="c"></div><div class="a"></div><div class="b"></div></div>
+    <div id="wp19" class="wp" data-layout-ignore><div class="c"></div><div class="a"></div><div class="b"></div></div>
+    <div id="wp20" class="wp" data-layout-ignore><div class="c"></div><div class="a"></div><div class="b"></div></div>
+    <div id="wp21" class="wp" data-layout-ignore><div class="c"></div><div class="a"></div><div class="b"></div></div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    const fmt = (v) => Math.round(v).toLocaleString('en-US').replace(/,/g, '\u2009');
+    tl.fromTo('#wp0', {x:1960}, {x:-120, duration:0.32, ease:'power3.in'}, 18.626);
+    tl.to('#wp0', {x:-2420, duration:0.38, ease:'power3.out'}, 18.946);
+    tl.fromTo('#wp1', {x:1960}, {x:-120, duration:0.32, ease:'power3.in'}, 24.334);
+    tl.to('#wp1', {x:-2420, duration:0.38, ease:'power3.out'}, 24.654);
+    tl.fromTo('#wp2', {x:1960}, {x:-120, duration:0.32, ease:'power3.in'}, 49.274);
+    tl.to('#wp2', {x:-2420, duration:0.38, ease:'power3.out'}, 49.594);
+    tl.fromTo('#wp3', {x:1960}, {x:-120, duration:0.32, ease:'power3.in'}, 76.302);
+    tl.to('#wp3', {x:-2420, duration:0.38, ease:'power3.out'}, 76.622);
+    tl.fromTo('#wp4', {x:1960}, {x:-120, duration:0.32, ease:'power3.in'}, 90.284);
+    tl.to('#wp4', {x:-2420, duration:0.38, ease:'power3.out'}, 90.604);
+    tl.fromTo('#wp5', {x:1960}, {x:-120, duration:0.32, ease:'power3.in'}, 96.568);
+    tl.to('#wp5', {x:-2420, duration:0.38, ease:'power3.out'}, 96.888);
+    tl.fromTo('#wp6', {x:1960}, {x:-120, duration:0.32, ease:'power3.in'}, 123.332);
+    tl.to('#wp6', {x:-2420, duration:0.38, ease:'power3.out'}, 123.652);
+    tl.fromTo('#wp7', {x:1960}, {x:-120, duration:0.32, ease:'power3.in'}, 147.586);
+    tl.to('#wp7', {x:-2420, duration:0.38, ease:'power3.out'}, 147.906);
+    tl.fromTo('#wp8', {x:1960}, {x:-120, duration:0.32, ease:'power3.in'}, 169.848);
+    tl.to('#wp8', {x:-2420, duration:0.38, ease:'power3.out'}, 170.168);
+    tl.fromTo('#wp9', {x:1960}, {x:-120, duration:0.32, ease:'power3.in'}, 195.916);
+    tl.to('#wp9', {x:-2420, duration:0.38, ease:'power3.out'}, 196.236);
+    tl.fromTo('#wp10', {x:1960}, {x:-120, duration:0.32, ease:'power3.in'}, 219.546);
+    tl.to('#wp10', {x:-2420, duration:0.38, ease:'power3.out'}, 219.866);
+    tl.fromTo('#wp11', {x:1960}, {x:-120, duration:0.32, ease:'power3.in'}, 225.974);
+    tl.to('#wp11', {x:-2420, duration:0.38, ease:'power3.out'}, 226.294);
+    tl.fromTo('#wp12', {x:1960}, {x:-120, duration:0.32, ease:'power3.in'}, 244.972);
+    tl.to('#wp12', {x:-2420, duration:0.38, ease:'power3.out'}, 245.292);
+    tl.fromTo('#wp13', {x:1960}, {x:-120, duration:0.32, ease:'power3.in'}, 272.888);
+    tl.to('#wp13', {x:-2420, duration:0.38, ease:'power3.out'}, 273.208);
+    tl.fromTo('#wp14', {x:1960}, {x:-120, duration:0.32, ease:'power3.in'}, 296.854);
+    tl.to('#wp14', {x:-2420, duration:0.38, ease:'power3.out'}, 297.174);
+    tl.fromTo('#wp15', {x:1960}, {x:-120, duration:0.32, ease:'power3.in'}, 323.1);
+    tl.to('#wp15', {x:-2420, duration:0.38, ease:'power3.out'}, 323.42);
+    tl.fromTo('#wp16', {x:1960}, {x:-120, duration:0.32, ease:'power3.in'}, 346.394);
+    tl.to('#wp16', {x:-2420, duration:0.38, ease:'power3.out'}, 346.714);
+    tl.fromTo('#wp17', {x:1960}, {x:-120, duration:0.32, ease:'power3.in'}, 352.702);
+    tl.to('#wp17', {x:-2420, duration:0.38, ease:'power3.out'}, 353.022);
+    tl.fromTo('#wp18', {x:1960}, {x:-120, duration:0.32, ease:'power3.in'}, 366.972);
+    tl.to('#wp18', {x:-2420, duration:0.38, ease:'power3.out'}, 367.292);
+    tl.fromTo('#wp19', {x:1960}, {x:-120, duration:0.32, ease:'power3.in'}, 379.418);
+    tl.to('#wp19', {x:-2420, duration:0.38, ease:'power3.out'}, 379.738);
+    tl.fromTo('#wp20', {x:1960}, {x:-120, duration:0.32, ease:'power3.in'}, 384.934);
+    tl.to('#wp20', {x:-2420, duration:0.38, ease:'power3.out'}, 385.254);
+    tl.fromTo('#wp21', {x:1960}, {x:-120, duration:0.32, ease:'power3.in'}, 416.354);
+    tl.to('#wp21', {x:-2420, duration:0.38, ease:'power3.out'}, 416.674);
+    window.__timelines["wipe"] = tl;
+  </script>
+</template>

@@ -1,0 +1,59 @@
+<template>
+  <style>
+
+@font-face{font-family:'LNU Display';font-weight:700;src:url('assets/fonts/montserrat-latin-700-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Display';font-weight:700;src:url('assets/fonts/montserrat-cyrillic-700-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:'LNU Display';font-weight:800;src:url('assets/fonts/montserrat-latin-800-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Display';font-weight:800;src:url('assets/fonts/montserrat-cyrillic-800-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:'LNU Display';font-weight:900;src:url('assets/fonts/montserrat-latin-900-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Display';font-weight:900;src:url('assets/fonts/montserrat-cyrillic-900-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:'LNU Text';font-weight:500;src:url('assets/fonts/inter-latin-500-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Text';font-weight:500;src:url('assets/fonts/inter-cyrillic-500-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:'LNU Text';font-weight:600;src:url('assets/fonts/inter-latin-600-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Text';font-weight:600;src:url('assets/fonts/inter-cyrillic-600-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:'LNU Text';font-weight:700;src:url('assets/fonts/inter-latin-700-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Text';font-weight:700;src:url('assets/fonts/inter-cyrillic-700-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+
+:root{--red:#E3000B;--red-deep:#A8000A;--yellow:#FFD500;--white:#FFFFFF;--black:#0B0B0D;--ink:#141416;
+--official:#15803D;--leak:#C2410C;--rumor:#1D4ED8;}
+
+    #root { position:absolute; inset:0; overflow:hidden; font-family:'LNU Text',sans-serif; color:var(--white); }
+    #root .bg { position:absolute; inset:0; background:
+        radial-gradient(1200px 700px at 78% 20%, rgba(227,0,11,.38), transparent 60%),
+        radial-gradient(900px 600px at 10% 100%, rgba(255,213,0,.10), transparent 60%),
+        linear-gradient(160deg,#18181b 0%,#0b0b0d 70%); }
+    #root .studs { position:absolute; inset:-60px; opacity:.07;
+        background-image: radial-gradient(circle at 30px 30px, #fff 0 13px, transparent 14px);
+        background-size:60px 60px; }
+
+    #root .bg { background: linear-gradient(135deg, var(--red) 0%, var(--red-deep) 100%); }
+    #root .studs { opacity:.16; }
+    #root .bn { position:absolute; left:192px; top:300px; font:900 64px 'LNU Display'; letter-spacing:.3em; color:var(--yellow); }
+    #root .bt { position:absolute; left:192px; right:192px; top:390px; font:900 128px/1.0 'LNU Display'; color:#fff; letter-spacing:-.02em; text-shadow:0 10px 0 rgba(0,0,0,.25); }
+    #root .bs { position:absolute; left:192px; top:690px; font:700 34px 'LNU Text'; color:rgba(255,255,255,.88); }
+    #root .bar { position:absolute; left:192px; top:270px; width:220px; height:12px; background:var(--yellow); transform-origin:left center; }
+    #root .big { position:absolute; right:150px; top:150px; font:900 640px/1 'LNU Display'; color:rgba(0,0,0,.16); }
+
+  </style>
+  <div id="root" data-composition-id="b4" data-width="1920" data-height="1080" data-duration="6.308">
+    <div class="bg"></div>
+    <div class="studs" data-layout-ignore></div>
+    <div id="b4-big" class="big" data-layout-ignore>4</div>
+    <div id="b4-bar" class="bar"></div>
+    <div id="b4-n" class="bn">БЛОК 4</div>
+    <div id="b4-t" class="bt">Деталі та мініфігурки</div>
+    <div id="b4-s" class="bs">Торси, принти й цілі команди героїв</div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    const fmt = (v) => Math.round(v).toLocaleString('en-US').replace(/,/g, '\u2009');
+    tl.fromTo('#root .studs', { x: 0, y: 0 }, { x: -60, y: -60, duration: 6.308, ease: 'none' }, 0);
+    tl.fromTo('#b4-big', {x:200, opacity:0}, {x:0, opacity:1, duration:0.8, ease:'power4.out'}, 0.05);
+    tl.fromTo('#b4-bar', {scaleX:0}, {scaleX:1, duration:0.5, ease:'power3.out'}, 0.2);
+    tl.fromTo('#b4-n', {x:-60, opacity:0}, {x:0, opacity:1, duration:0.5, ease:'power3.out'}, 0.3);
+    tl.fromTo('#b4-t', {y:70, opacity:0, rotationX:-50, transformPerspective:900}, {y:0, opacity:1, rotationX:0, duration:0.75, ease:'power4.out'}, 0.45);
+    tl.fromTo('#b4-s', {y:20, opacity:0}, {y:0, opacity:1, duration:0.5, ease:'power2.out'}, 0.85);
+    tl.fromTo('#b4-big', {scale:1}, {scale:1.08, duration:6.308, ease:'none'}, 0);
+    window.__timelines["b4"] = tl;
+  </script>
+</template>
