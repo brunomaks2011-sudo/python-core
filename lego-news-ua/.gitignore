@@ -7,3 +7,4 @@ script/tts/*.mp3
 node_modules/
 renders/*.log
 renders/test*.mp4
+renders/*.mp4

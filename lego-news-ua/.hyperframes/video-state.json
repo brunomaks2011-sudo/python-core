@@ -1588,15 +1588,14 @@
   },
   "checks": {
     "latest": {
-      "revision": "27abf54c-f377-4a62-aa8b-573dc2ffdc73",
-      "id": "fc3adfb2-f2e0-4adc-b101-59a9220508e5"
+      "revision": null,
+      "id": "60caf599-e4dc-443a-8faf-3d98545aad2d"
     },
     "revisions": {
       "a1087ca5-5766-43a9-b895-a20248def319": [
         {
           "id": "dc973acb-aacb-4e70-947e-da67155f8b93",
           "scope": "project",
-          "report": "/home/user/python-core/lego-news-ua/.hyperframes/artifacts/checks/dc973acb-aacb-4e70-947e-da67155f8b93.json",
           "metadata": {
             "ok": true,
             "browserSkipped": false,
@@ -1618,14 +1617,15 @@
           "revision": "a1087ca5-5766-43a9-b895-a20248def319",
           "inputFingerprint": "650893aa86c76334e0c09d296c6d82dea1e8564de19685a296752f80cf29fd8a",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "09609983-195a-43ec-b120-f6e70f52f8e9"
         }
       ],
       "d5193471-810a-419f-af3a-e2afb59654be": [
         {
           "id": "b3244e82-a869-4de7-8154-94d53724f268",
           "scope": "project",
-          "report": "/home/user/python-core/lego-news-ua/.hyperframes/artifacts/checks/b3244e82-a869-4de7-8154-94d53724f268.json",
           "metadata": {
             "ok": true,
             "browserSkipped": false,
@@ -1647,14 +1647,15 @@
           "revision": "d5193471-810a-419f-af3a-e2afb59654be",
           "inputFingerprint": "e3af5956bf9bc0ad8b5dfc455d34e0ae9f41200c9015faf36015143297d408d4",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "09609983-195a-43ec-b120-f6e70f52f8e9"
         }
       ],
       "27abf54c-f377-4a62-aa8b-573dc2ffdc73": [
         {
           "id": "032b6009-7db9-48bb-a4cb-24314e2e5902",
           "scope": "project",
-          "report": "/home/user/python-core/lego-news-ua/.hyperframes/artifacts/checks/032b6009-7db9-48bb-a4cb-24314e2e5902.json",
           "metadata": {
             "ok": true,
             "browserSkipped": false,
@@ -1676,12 +1677,13 @@
           "revision": "27abf54c-f377-4a62-aa8b-573dc2ffdc73",
           "inputFingerprint": "c20d4c4faabeaa0af31bad9ce747fbf9bf2b915799151b86f450fe065317661b",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "09609983-195a-43ec-b120-f6e70f52f8e9"
         },
         {
           "id": "fc3adfb2-f2e0-4adc-b101-59a9220508e5",
           "scope": "project",
-          "report": "/home/user/python-core/lego-news-ua/.hyperframes/artifacts/checks/fc3adfb2-f2e0-4adc-b101-59a9220508e5.json",
           "metadata": {
             "ok": true,
             "browserSkipped": false,
@@ -1703,7 +1705,9 @@
           "revision": "27abf54c-f377-4a62-aa8b-573dc2ffdc73",
           "inputFingerprint": "c20d4c4faabeaa0af31bad9ce747fbf9bf2b915799151b86f450fe065317661b",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "09609983-195a-43ec-b120-f6e70f52f8e9"
         }
       ]
     },
@@ -1738,16 +1742,12 @@
     ]
   },
   "snapshots": {
-    "latest": {
-      "revision": "19fce4bc-92e1-4c4b-94c2-f261395a5d89",
-      "id": "88c2bc18-ce64-4ced-8f2c-65d3ce1e130d-1"
-    },
+    "latest": null,
     "revisions": {
       "2887a786-3791-4fb4-af58-86a46191fef0": [
         {
           "scope": "full",
           "id": "87fdc963-92c9-42ea-b6bc-3ce8c84ad686-0",
-          "image": "/home/user/python-core/lego-news-ua/.hyperframes/artifacts/snapshots/2f12d29c-e55f-4e60-8acc-f3842af91bd3/frame-00-at-1s.png",
           "time": 1,
           "metadata": {
             "width": 1920,
@@ -1762,12 +1762,13 @@
           "revision": "2887a786-3791-4fb4-af58-86a46191fef0",
           "inputFingerprint": "2d594c051d49e79019fea4979385f307c6f04edad06cddc2f9594eb8b4f5e2af",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "09609983-195a-43ec-b120-f6e70f52f8e9"
         },
         {
           "scope": "full",
           "id": "87fdc963-92c9-42ea-b6bc-3ce8c84ad686-1",
-          "image": "/home/user/python-core/lego-news-ua/.hyperframes/artifacts/snapshots/2f12d29c-e55f-4e60-8acc-f3842af91bd3/frame-01-at-3s.png",
           "time": 3,
           "metadata": {
             "width": 1920,
@@ -1782,12 +1783,13 @@
           "revision": "2887a786-3791-4fb4-af58-86a46191fef0",
           "inputFingerprint": "2d594c051d49e79019fea4979385f307c6f04edad06cddc2f9594eb8b4f5e2af",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "09609983-195a-43ec-b120-f6e70f52f8e9"
         },
         {
           "scope": "full",
           "id": "87fdc963-92c9-42ea-b6bc-3ce8c84ad686-2",
-          "image": "/home/user/python-core/lego-news-ua/.hyperframes/artifacts/snapshots/2f12d29c-e55f-4e60-8acc-f3842af91bd3/frame-02-at-12s.png",
           "time": 12,
           "metadata": {
             "width": 1920,
@@ -1802,12 +1804,13 @@
           "revision": "2887a786-3791-4fb4-af58-86a46191fef0",
           "inputFingerprint": "2d594c051d49e79019fea4979385f307c6f04edad06cddc2f9594eb8b4f5e2af",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "09609983-195a-43ec-b120-f6e70f52f8e9"
         },
         {
           "scope": "full",
           "id": "87fdc963-92c9-42ea-b6bc-3ce8c84ad686-3",
-          "image": "/home/user/python-core/lego-news-ua/.hyperframes/artifacts/snapshots/2f12d29c-e55f-4e60-8acc-f3842af91bd3/frame-03-at-22s.png",
           "time": 22,
           "metadata": {
             "width": 1920,
@@ -1822,12 +1825,13 @@
           "revision": "2887a786-3791-4fb4-af58-86a46191fef0",
           "inputFingerprint": "2d594c051d49e79019fea4979385f307c6f04edad06cddc2f9594eb8b4f5e2af",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "09609983-195a-43ec-b120-f6e70f52f8e9"
         },
         {
           "scope": "full",
           "id": "87fdc963-92c9-42ea-b6bc-3ce8c84ad686-4",
-          "image": "/home/user/python-core/lego-news-ua/.hyperframes/artifacts/snapshots/2f12d29c-e55f-4e60-8acc-f3842af91bd3/frame-04-at-40s.png",
           "time": 40,
           "metadata": {
             "width": 1920,
@@ -1842,12 +1846,13 @@
           "revision": "2887a786-3791-4fb4-af58-86a46191fef0",
           "inputFingerprint": "2d594c051d49e79019fea4979385f307c6f04edad06cddc2f9594eb8b4f5e2af",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "09609983-195a-43ec-b120-f6e70f52f8e9"
         },
         {
           "scope": "full",
           "id": "87fdc963-92c9-42ea-b6bc-3ce8c84ad686-5",
-          "image": "/home/user/python-core/lego-news-ua/.hyperframes/artifacts/snapshots/2f12d29c-e55f-4e60-8acc-f3842af91bd3/frame-05-at-60s.png",
           "time": 60,
           "metadata": {
             "width": 1920,
@@ -1862,12 +1867,13 @@
           "revision": "2887a786-3791-4fb4-af58-86a46191fef0",
           "inputFingerprint": "2d594c051d49e79019fea4979385f307c6f04edad06cddc2f9594eb8b4f5e2af",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "09609983-195a-43ec-b120-f6e70f52f8e9"
         },
         {
           "scope": "full",
           "id": "87fdc963-92c9-42ea-b6bc-3ce8c84ad686-6",
-          "image": "/home/user/python-core/lego-news-ua/.hyperframes/artifacts/snapshots/2f12d29c-e55f-4e60-8acc-f3842af91bd3/frame-06-at-85s.png",
           "time": 85,
           "metadata": {
             "width": 1920,
@@ -1882,12 +1888,13 @@
           "revision": "2887a786-3791-4fb4-af58-86a46191fef0",
           "inputFingerprint": "2d594c051d49e79019fea4979385f307c6f04edad06cddc2f9594eb8b4f5e2af",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "09609983-195a-43ec-b120-f6e70f52f8e9"
         },
         {
           "scope": "full",
           "id": "87fdc963-92c9-42ea-b6bc-3ce8c84ad686-7",
-          "image": "/home/user/python-core/lego-news-ua/.hyperframes/artifacts/snapshots/2f12d29c-e55f-4e60-8acc-f3842af91bd3/frame-07-at-100s.png",
           "time": 100,
           "metadata": {
             "width": 1920,
@@ -1902,12 +1909,13 @@
           "revision": "2887a786-3791-4fb4-af58-86a46191fef0",
           "inputFingerprint": "2d594c051d49e79019fea4979385f307c6f04edad06cddc2f9594eb8b4f5e2af",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "09609983-195a-43ec-b120-f6e70f52f8e9"
         },
         {
           "scope": "full",
           "id": "87fdc963-92c9-42ea-b6bc-3ce8c84ad686-8",
-          "image": "/home/user/python-core/lego-news-ua/.hyperframes/artifacts/snapshots/2f12d29c-e55f-4e60-8acc-f3842af91bd3/frame-08-at-150s.png",
           "time": 150,
           "metadata": {
             "width": 1920,
@@ -1922,12 +1930,13 @@
           "revision": "2887a786-3791-4fb4-af58-86a46191fef0",
           "inputFingerprint": "2d594c051d49e79019fea4979385f307c6f04edad06cddc2f9594eb8b4f5e2af",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "09609983-195a-43ec-b120-f6e70f52f8e9"
         },
         {
           "scope": "full",
           "id": "87fdc963-92c9-42ea-b6bc-3ce8c84ad686-9",
-          "image": "/home/user/python-core/lego-news-ua/.hyperframes/artifacts/snapshots/2f12d29c-e55f-4e60-8acc-f3842af91bd3/frame-09-at-185s.png",
           "time": 185,
           "metadata": {
             "width": 1920,
@@ -1942,12 +1951,13 @@
           "revision": "2887a786-3791-4fb4-af58-86a46191fef0",
           "inputFingerprint": "2d594c051d49e79019fea4979385f307c6f04edad06cddc2f9594eb8b4f5e2af",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "09609983-195a-43ec-b120-f6e70f52f8e9"
         },
         {
           "scope": "full",
           "id": "87fdc963-92c9-42ea-b6bc-3ce8c84ad686-10",
-          "image": "/home/user/python-core/lego-news-ua/.hyperframes/artifacts/snapshots/2f12d29c-e55f-4e60-8acc-f3842af91bd3/frame-10-at-210s.png",
           "time": 210,
           "metadata": {
             "width": 1920,
@@ -1962,12 +1972,13 @@
           "revision": "2887a786-3791-4fb4-af58-86a46191fef0",
           "inputFingerprint": "2d594c051d49e79019fea4979385f307c6f04edad06cddc2f9594eb8b4f5e2af",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "09609983-195a-43ec-b120-f6e70f52f8e9"
         },
         {
           "scope": "full",
           "id": "87fdc963-92c9-42ea-b6bc-3ce8c84ad686-11",
-          "image": "/home/user/python-core/lego-news-ua/.hyperframes/artifacts/snapshots/2f12d29c-e55f-4e60-8acc-f3842af91bd3/frame-11-at-235s.png",
           "time": 235,
           "metadata": {
             "width": 1920,
@@ -1982,12 +1993,13 @@
           "revision": "2887a786-3791-4fb4-af58-86a46191fef0",
           "inputFingerprint": "2d594c051d49e79019fea4979385f307c6f04edad06cddc2f9594eb8b4f5e2af",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "09609983-195a-43ec-b120-f6e70f52f8e9"
         },
         {
           "scope": "full",
           "id": "87fdc963-92c9-42ea-b6bc-3ce8c84ad686-12",
-          "image": "/home/user/python-core/lego-news-ua/.hyperframes/artifacts/snapshots/2f12d29c-e55f-4e60-8acc-f3842af91bd3/frame-12-at-250s.png",
           "time": 250,
           "metadata": {
             "width": 1920,
@@ -2002,12 +2014,13 @@
           "revision": "2887a786-3791-4fb4-af58-86a46191fef0",
           "inputFingerprint": "2d594c051d49e79019fea4979385f307c6f04edad06cddc2f9594eb8b4f5e2af",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "09609983-195a-43ec-b120-f6e70f52f8e9"
         },
         {
           "scope": "full",
           "id": "87fdc963-92c9-42ea-b6bc-3ce8c84ad686-13",
-          "image": "/home/user/python-core/lego-news-ua/.hyperframes/artifacts/snapshots/2f12d29c-e55f-4e60-8acc-f3842af91bd3/frame-13-at-262s.png",
           "time": 262,
           "metadata": {
             "width": 1920,
@@ -2022,12 +2035,13 @@
           "revision": "2887a786-3791-4fb4-af58-86a46191fef0",
           "inputFingerprint": "2d594c051d49e79019fea4979385f307c6f04edad06cddc2f9594eb8b4f5e2af",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "09609983-195a-43ec-b120-f6e70f52f8e9"
         },
         {
           "scope": "full",
           "id": "87fdc963-92c9-42ea-b6bc-3ce8c84ad686-14",
-          "image": "/home/user/python-core/lego-news-ua/.hyperframes/artifacts/snapshots/2f12d29c-e55f-4e60-8acc-f3842af91bd3/frame-14-at-270s.png",
           "time": 270,
           "metadata": {
             "width": 1920,
@@ -2042,12 +2056,13 @@
           "revision": "2887a786-3791-4fb4-af58-86a46191fef0",
           "inputFingerprint": "2d594c051d49e79019fea4979385f307c6f04edad06cddc2f9594eb8b4f5e2af",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "09609983-195a-43ec-b120-f6e70f52f8e9"
         },
         {
           "scope": "full",
           "id": "87fdc963-92c9-42ea-b6bc-3ce8c84ad686-15",
-          "image": "/home/user/python-core/lego-news-ua/.hyperframes/artifacts/snapshots/2f12d29c-e55f-4e60-8acc-f3842af91bd3/frame-15-at-290s.png",
           "time": 290,
           "metadata": {
             "width": 1920,
@@ -2062,12 +2077,13 @@
           "revision": "2887a786-3791-4fb4-af58-86a46191fef0",
           "inputFingerprint": "2d594c051d49e79019fea4979385f307c6f04edad06cddc2f9594eb8b4f5e2af",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "09609983-195a-43ec-b120-f6e70f52f8e9"
         },
         {
           "scope": "full",
           "id": "87fdc963-92c9-42ea-b6bc-3ce8c84ad686-16",
-          "image": "/home/user/python-core/lego-news-ua/.hyperframes/artifacts/snapshots/2f12d29c-e55f-4e60-8acc-f3842af91bd3/frame-16-at-320s.png",
           "time": 320,
           "metadata": {
             "width": 1920,
@@ -2082,12 +2098,13 @@
           "revision": "2887a786-3791-4fb4-af58-86a46191fef0",
           "inputFingerprint": "2d594c051d49e79019fea4979385f307c6f04edad06cddc2f9594eb8b4f5e2af",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "09609983-195a-43ec-b120-f6e70f52f8e9"
         },
         {
           "scope": "full",
           "id": "87fdc963-92c9-42ea-b6bc-3ce8c84ad686-17",
-          "image": "/home/user/python-core/lego-news-ua/.hyperframes/artifacts/snapshots/2f12d29c-e55f-4e60-8acc-f3842af91bd3/frame-17-at-360s.png",
           "time": 360,
           "metadata": {
             "width": 1920,
@@ -2102,12 +2119,13 @@
           "revision": "2887a786-3791-4fb4-af58-86a46191fef0",
           "inputFingerprint": "2d594c051d49e79019fea4979385f307c6f04edad06cddc2f9594eb8b4f5e2af",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "09609983-195a-43ec-b120-f6e70f52f8e9"
         },
         {
           "scope": "full",
           "id": "87fdc963-92c9-42ea-b6bc-3ce8c84ad686-18",
-          "image": "/home/user/python-core/lego-news-ua/.hyperframes/artifacts/snapshots/2f12d29c-e55f-4e60-8acc-f3842af91bd3/frame-18-at-400s.png",
           "time": 400,
           "metadata": {
             "width": 1920,
@@ -2122,12 +2140,13 @@
           "revision": "2887a786-3791-4fb4-af58-86a46191fef0",
           "inputFingerprint": "2d594c051d49e79019fea4979385f307c6f04edad06cddc2f9594eb8b4f5e2af",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "09609983-195a-43ec-b120-f6e70f52f8e9"
         },
         {
           "scope": "full",
           "id": "87fdc963-92c9-42ea-b6bc-3ce8c84ad686-19",
-          "image": "/home/user/python-core/lego-news-ua/.hyperframes/artifacts/snapshots/2f12d29c-e55f-4e60-8acc-f3842af91bd3/frame-19-at-410s.png",
           "time": 410,
           "metadata": {
             "width": 1920,
@@ -2142,12 +2161,13 @@
           "revision": "2887a786-3791-4fb4-af58-86a46191fef0",
           "inputFingerprint": "2d594c051d49e79019fea4979385f307c6f04edad06cddc2f9594eb8b4f5e2af",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "09609983-195a-43ec-b120-f6e70f52f8e9"
         },
         {
           "scope": "full",
           "id": "87fdc963-92c9-42ea-b6bc-3ce8c84ad686-20",
-          "image": "/home/user/python-core/lego-news-ua/.hyperframes/artifacts/snapshots/2f12d29c-e55f-4e60-8acc-f3842af91bd3/frame-20-at-430s.png",
           "time": 430,
           "metadata": {
             "width": 1920,
@@ -2162,12 +2182,13 @@
           "revision": "2887a786-3791-4fb4-af58-86a46191fef0",
           "inputFingerprint": "2d594c051d49e79019fea4979385f307c6f04edad06cddc2f9594eb8b4f5e2af",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "09609983-195a-43ec-b120-f6e70f52f8e9"
         },
         {
           "scope": "full",
           "id": "87fdc963-92c9-42ea-b6bc-3ce8c84ad686-21",
-          "image": "/home/user/python-core/lego-news-ua/.hyperframes/artifacts/snapshots/2f12d29c-e55f-4e60-8acc-f3842af91bd3/frame-21-at-439.59s.png",
           "time": 439.59,
           "metadata": {
             "width": 1920,
@@ -2182,14 +2203,15 @@
           "revision": "2887a786-3791-4fb4-af58-86a46191fef0",
           "inputFingerprint": "2d594c051d49e79019fea4979385f307c6f04edad06cddc2f9594eb8b4f5e2af",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "09609983-195a-43ec-b120-f6e70f52f8e9"
         }
       ],
       "a8ef489c-bbca-465a-9280-c8b52cc321ae": [
         {
           "scope": "full",
           "id": "5128589a-709c-4bf4-a8b3-4c49993be66d-0",
-          "image": "/home/user/python-core/lego-news-ua/.hyperframes/artifacts/snapshots/509709bd-d579-4d67-9781-194fbbe4cfe2/frame-00-at-251.3s.png",
           "time": 251.3,
           "metadata": {
             "width": 1920,
@@ -2204,12 +2226,13 @@
           "revision": "a8ef489c-bbca-465a-9280-c8b52cc321ae",
           "inputFingerprint": "21f525c0828cfc87b18da3243c1975d287001bf8cd24fec7b8dad97884a25e75",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "09609983-195a-43ec-b120-f6e70f52f8e9"
         },
         {
           "scope": "full",
           "id": "5128589a-709c-4bf4-a8b3-4c49993be66d-1",
-          "image": "/home/user/python-core/lego-news-ua/.hyperframes/artifacts/snapshots/509709bd-d579-4d67-9781-194fbbe4cfe2/frame-01-at-252.4s.png",
           "time": 252.4,
           "metadata": {
             "width": 1920,
@@ -2224,12 +2247,13 @@
           "revision": "a8ef489c-bbca-465a-9280-c8b52cc321ae",
           "inputFingerprint": "21f525c0828cfc87b18da3243c1975d287001bf8cd24fec7b8dad97884a25e75",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "09609983-195a-43ec-b120-f6e70f52f8e9"
         },
         {
           "scope": "full",
           "id": "5128589a-709c-4bf4-a8b3-4c49993be66d-2",
-          "image": "/home/user/python-core/lego-news-ua/.hyperframes/artifacts/snapshots/509709bd-d579-4d67-9781-194fbbe4cfe2/frame-02-at-253.4s.png",
           "time": 253.4,
           "metadata": {
             "width": 1920,
@@ -2244,12 +2268,13 @@
           "revision": "a8ef489c-bbca-465a-9280-c8b52cc321ae",
           "inputFingerprint": "21f525c0828cfc87b18da3243c1975d287001bf8cd24fec7b8dad97884a25e75",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "09609983-195a-43ec-b120-f6e70f52f8e9"
         },
         {
           "scope": "full",
           "id": "5128589a-709c-4bf4-a8b3-4c49993be66d-3",
-          "image": "/home/user/python-core/lego-news-ua/.hyperframes/artifacts/snapshots/509709bd-d579-4d67-9781-194fbbe4cfe2/frame-03-at-256.6s.png",
           "time": 256.6,
           "metadata": {
             "width": 1920,
@@ -2264,12 +2289,13 @@
           "revision": "a8ef489c-bbca-465a-9280-c8b52cc321ae",
           "inputFingerprint": "21f525c0828cfc87b18da3243c1975d287001bf8cd24fec7b8dad97884a25e75",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "09609983-195a-43ec-b120-f6e70f52f8e9"
         },
         {
           "scope": "full",
           "id": "5128589a-709c-4bf4-a8b3-4c49993be66d-4",
-          "image": "/home/user/python-core/lego-news-ua/.hyperframes/artifacts/snapshots/509709bd-d579-4d67-9781-194fbbe4cfe2/frame-04-at-259s.png",
           "time": 259,
           "metadata": {
             "width": 1920,
@@ -2284,12 +2310,13 @@
           "revision": "a8ef489c-bbca-465a-9280-c8b52cc321ae",
           "inputFingerprint": "21f525c0828cfc87b18da3243c1975d287001bf8cd24fec7b8dad97884a25e75",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "09609983-195a-43ec-b120-f6e70f52f8e9"
         },
         {
           "scope": "full",
           "id": "5128589a-709c-4bf4-a8b3-4c49993be66d-5",
-          "image": "/home/user/python-core/lego-news-ua/.hyperframes/artifacts/snapshots/509709bd-d579-4d67-9781-194fbbe4cfe2/frame-05-at-300s.png",
           "time": 300,
           "metadata": {
             "width": 1920,
@@ -2304,12 +2331,13 @@
           "revision": "a8ef489c-bbca-465a-9280-c8b52cc321ae",
           "inputFingerprint": "21f525c0828cfc87b18da3243c1975d287001bf8cd24fec7b8dad97884a25e75",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "09609983-195a-43ec-b120-f6e70f52f8e9"
         },
         {
           "scope": "full",
           "id": "5128589a-709c-4bf4-a8b3-4c49993be66d-6",
-          "image": "/home/user/python-core/lego-news-ua/.hyperframes/artifacts/snapshots/509709bd-d579-4d67-9781-194fbbe4cfe2/frame-06-at-345s.png",
           "time": 345,
           "metadata": {
             "width": 1920,
@@ -2324,12 +2352,13 @@
           "revision": "a8ef489c-bbca-465a-9280-c8b52cc321ae",
           "inputFingerprint": "21f525c0828cfc87b18da3243c1975d287001bf8cd24fec7b8dad97884a25e75",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "09609983-195a-43ec-b120-f6e70f52f8e9"
         },
         {
           "scope": "full",
           "id": "5128589a-709c-4bf4-a8b3-4c49993be66d-7",
-          "image": "/home/user/python-core/lego-news-ua/.hyperframes/artifacts/snapshots/509709bd-d579-4d67-9781-194fbbe4cfe2/frame-07-at-380s.png",
           "time": 380,
           "metadata": {
             "width": 1920,
@@ -2344,12 +2373,13 @@
           "revision": "a8ef489c-bbca-465a-9280-c8b52cc321ae",
           "inputFingerprint": "21f525c0828cfc87b18da3243c1975d287001bf8cd24fec7b8dad97884a25e75",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "09609983-195a-43ec-b120-f6e70f52f8e9"
         },
         {
           "scope": "full",
           "id": "5128589a-709c-4bf4-a8b3-4c49993be66d-8",
-          "image": "/home/user/python-core/lego-news-ua/.hyperframes/artifacts/snapshots/509709bd-d579-4d67-9781-194fbbe4cfe2/frame-08-at-439.59s.png",
           "time": 439.59,
           "metadata": {
             "width": 1920,
@@ -2364,14 +2394,15 @@
           "revision": "a8ef489c-bbca-465a-9280-c8b52cc321ae",
           "inputFingerprint": "21f525c0828cfc87b18da3243c1975d287001bf8cd24fec7b8dad97884a25e75",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "09609983-195a-43ec-b120-f6e70f52f8e9"
         }
       ],
       "a7258821-e21c-4510-852f-0dd1ade7d604": [
         {
           "scope": "full",
           "id": "1b25204d-ff05-4e64-9405-46b1428e9612-0",
-          "image": "/home/user/python-core/lego-news-ua/.hyperframes/artifacts/snapshots/7b13d574-385e-40a2-bd9d-f44da604c688/frame-00-at-0.4s.png",
           "time": 0.4,
           "metadata": {
             "width": 1920,
@@ -2386,12 +2417,13 @@
           "revision": "a7258821-e21c-4510-852f-0dd1ade7d604",
           "inputFingerprint": "92c3bdf66961ebd0fadbb3267f73109052a197405628ff2f481206ced6bfc8b3",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "09609983-195a-43ec-b120-f6e70f52f8e9"
         },
         {
           "scope": "full",
           "id": "1b25204d-ff05-4e64-9405-46b1428e9612-1",
-          "image": "/home/user/python-core/lego-news-ua/.hyperframes/artifacts/snapshots/7b13d574-385e-40a2-bd9d-f44da604c688/frame-01-at-150.5s.png",
           "time": 150.5,
           "metadata": {
             "width": 1920,
@@ -2406,12 +2438,13 @@
           "revision": "a7258821-e21c-4510-852f-0dd1ade7d604",
           "inputFingerprint": "92c3bdf66961ebd0fadbb3267f73109052a197405628ff2f481206ced6bfc8b3",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "09609983-195a-43ec-b120-f6e70f52f8e9"
         },
         {
           "scope": "full",
           "id": "1b25204d-ff05-4e64-9405-46b1428e9612-2",
-          "image": "/home/user/python-core/lego-news-ua/.hyperframes/artifacts/snapshots/7b13d574-385e-40a2-bd9d-f44da604c688/frame-02-at-160s.png",
           "time": 160,
           "metadata": {
             "width": 1920,
@@ -2426,12 +2459,13 @@
           "revision": "a7258821-e21c-4510-852f-0dd1ade7d604",
           "inputFingerprint": "92c3bdf66961ebd0fadbb3267f73109052a197405628ff2f481206ced6bfc8b3",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "09609983-195a-43ec-b120-f6e70f52f8e9"
         },
         {
           "scope": "full",
           "id": "1b25204d-ff05-4e64-9405-46b1428e9612-3",
-          "image": "/home/user/python-core/lego-news-ua/.hyperframes/artifacts/snapshots/7b13d574-385e-40a2-bd9d-f44da604c688/frame-03-at-362s.png",
           "time": 362,
           "metadata": {
             "width": 1920,
@@ -2446,12 +2480,13 @@
           "revision": "a7258821-e21c-4510-852f-0dd1ade7d604",
           "inputFingerprint": "92c3bdf66961ebd0fadbb3267f73109052a197405628ff2f481206ced6bfc8b3",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "09609983-195a-43ec-b120-f6e70f52f8e9"
         },
         {
           "scope": "full",
           "id": "1b25204d-ff05-4e64-9405-46b1428e9612-4",
-          "image": "/home/user/python-core/lego-news-ua/.hyperframes/artifacts/snapshots/7b13d574-385e-40a2-bd9d-f44da604c688/frame-04-at-439.59s.png",
           "time": 439.59,
           "metadata": {
             "width": 1920,
@@ -2466,14 +2501,15 @@
           "revision": "a7258821-e21c-4510-852f-0dd1ade7d604",
           "inputFingerprint": "92c3bdf66961ebd0fadbb3267f73109052a197405628ff2f481206ced6bfc8b3",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "09609983-195a-43ec-b120-f6e70f52f8e9"
         }
       ],
       "19fce4bc-92e1-4c4b-94c2-f261395a5d89": [
         {
           "scope": "full",
           "id": "88c2bc18-ce64-4ced-8f2c-65d3ce1e130d-0",
-          "image": "/home/user/python-core/lego-news-ua/.hyperframes/artifacts/snapshots/58b560db-1d61-4f6f-a359-9321d6763332/frame-00-at-160s.png",
           "time": 160,
           "metadata": {
             "width": 1920,
@@ -2488,12 +2524,13 @@
           "revision": "19fce4bc-92e1-4c4b-94c2-f261395a5d89",
           "inputFingerprint": "55ec0fd9ecd9351754bda48a9209f7ecd5f18d43ef68b75d3d42092a58e714e4",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "09609983-195a-43ec-b120-f6e70f52f8e9"
         },
         {
           "scope": "full",
           "id": "88c2bc18-ce64-4ced-8f2c-65d3ce1e130d-1",
-          "image": "/home/user/python-core/lego-news-ua/.hyperframes/artifacts/snapshots/58b560db-1d61-4f6f-a359-9321d6763332/frame-01-at-439.59s.png",
           "time": 439.59,
           "metadata": {
             "width": 1920,
@@ -2508,10 +2545,25 @@
           "revision": "19fce4bc-92e1-4c4b-94c2-f261395a5d89",
           "inputFingerprint": "55ec0fd9ecd9351754bda48a9209f7ecd5f18d43ef68b75d3d42092a58e714e4",
           "inputScope": "local-project-files",
-          "attribution": "recorded-revision"
+          "attribution": "recorded-revision",
+          "status": "cleaned",
+          "cleanedAfterRender": "09609983-195a-43ec-b120-f6e70f52f8e9"
         }
       ]
     },
     "unversioned": []
-  }
+  },
+  "renders": {
+    "latest": {
+      "id": "09609983-195a-43ec-b120-f6e70f52f8e9",
+      "completedAt": 1793992393241,
+      "output": "/home/user/python-core/lego-news-ua/renders/LEGO_NEWS_UA_2026-11-06.mp4",
+      "status": "completed",
+      "revision": "9cf1c90e-ad1e-434f-bf61-db21bcfd68e4"
+    },
+    "retainedRevisions": [
+      "9cf1c90e-ad1e-434f-bf61-db21bcfd68e4"
+    ]
+  },
+  "pendingArtifactCleanup": []
 }
