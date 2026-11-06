@@ -1,0 +1,91 @@
+<template>
+  <style>
+@font-face{font-family:'LNU Display';font-weight:700;src:url('assets/fonts/montserrat-latin-700-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Display';font-weight:700;src:url('assets/fonts/montserrat-cyrillic-700-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:'LNU Display';font-weight:800;src:url('assets/fonts/montserrat-latin-800-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Display';font-weight:800;src:url('assets/fonts/montserrat-cyrillic-800-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:'LNU Display';font-weight:900;src:url('assets/fonts/montserrat-latin-900-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Display';font-weight:900;src:url('assets/fonts/montserrat-cyrillic-900-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:'LNU Text';font-weight:600;src:url('assets/fonts/inter-latin-600-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Text';font-weight:600;src:url('assets/fonts/inter-cyrillic-600-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:'LNU Text';font-weight:700;src:url('assets/fonts/inter-latin-700-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Text';font-weight:700;src:url('assets/fonts/inter-cyrillic-700-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+:root{--red:#E3000B;--red-deep:#A8000A;--yellow:#FFD500;--white:#fff;--black:#0B0B0D;--official:#15803D;--leak:#C2410C;--rumor:#1D4ED8;}
+
+    #root { position:absolute; inset:0; overflow:hidden; font-family:'LNU Text',sans-serif; color:#fff; }
+    #root .bg { position:absolute; inset:0; background:
+        radial-gradient(900px 900px at 80% 25%, rgba(227,0,11,.55), transparent 62%),
+        radial-gradient(800px 700px at 0% 100%, rgba(255,213,0,.14), transparent 60%),
+        linear-gradient(170deg,#1b1b1f 0%,#0b0b0d 70%); }
+    #root .studs { position:absolute; left:-80px; top:-80px; width:1240px; height:2080px; opacity:.08;
+        background-image:radial-gradient(circle at 40px 40px,#fff 0 17px,transparent 18px); background-size:80px 80px; }
+    #root .badge { position:absolute; right:90px; top:196px; display:flex; align-items:center; gap:12px; padding:10px 22px 10px 18px; border-radius:999px;
+        font:900 32px 'LNU Display'; letter-spacing:.1em; color:#fff; }
+    #root .badge i { width:18px; height:18px; border-radius:50%; background:#fff; display:block; }
+    #root .theme { position:absolute; left:90px; top:272px; font:800 34px 'LNU Display'; letter-spacing:.12em; color:var(--yellow); text-transform:uppercase; }
+    #root .num { position:absolute; left:84px; top:312px; font:900 150px/1 'LNU Display'; color:#fff; letter-spacing:-.03em; text-shadow:0 8px 0 rgba(0,0,0,.35); }
+    #root .name { position:absolute; left:90px; right:90px; top:470px; font:900 52px/1.05 'LNU Display'; color:#fff; white-space:nowrap; }
+    #root .stage { position:absolute; left:60px; top:548px; width:960px; height:520px; border-radius:34px; background:#fff; overflow:hidden;
+        box-shadow:0 0 0 8px var(--yellow), 0 40px 90px rgba(0,0,0,.6); }
+    #root .ph { position:absolute; inset:0; }
+    #root .ph img { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; }
+    #root .src { position:absolute; right:16px; bottom:12px; padding:5px 12px; border-radius:8px; background:rgba(11,11,13,.78); font:600 28px 'LNU Text'; color:#fff; z-index:50; }
+    #root .ghost { position:absolute; left:0; right:0; top:1390px; text-align:center; font:900 330px/1 'LNU Display'; color:rgba(255,255,255,.05); letter-spacing:-.04em; }
+    #root .chips { position:absolute; left:60px; top:1088px; width:880px; height:100px; }
+    #root .chip { position:absolute; top:0; height:100px; border-radius:22px; display:flex; align-items:center; justify-content:center; gap:10px;
+        font:900 46px 'LNU Display'; white-space:nowrap; box-shadow:0 10px 0 rgba(0,0,0,.35); }
+    #root .chip small { font:800 28px 'LNU Display'; opacity:.85; }
+    #root .c-pcs { left:0; width:300px; background:#fff; color:var(--black); }
+    #root .c-pcs::before { content:''; width:34px; height:26px; border-radius:6px; background:var(--red); box-shadow:inset 0 -5px 0 rgba(0,0,0,.2); margin-right:4px; }
+    #root .c-price { left:318px; width:250px; background:var(--yellow); color:var(--black); }
+    #root .c-date { left:586px; width:294px; background:var(--red); color:#fff; font-size:42px; }
+
+    #root .hero { position:absolute; left:0; top:0; width:1080px; height:1920px; }
+    #root .hero .ph { position:absolute; left:60px; top:520px; width:960px; height:640px; border-radius:34px; background:#fff; overflow:hidden; box-shadow:0 0 0 8px var(--yellow), 0 40px 90px rgba(0,0,0,.6); }
+    #root .hero .ph img { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; }
+    #root .t1 { position:absolute; left:70px; right:70px; top:196px; text-align:center; font:900 96px/0.95 'LNU Display'; color:#fff; text-transform:uppercase;
+        -webkit-text-stroke:4px #000; paint-order:stroke fill; text-shadow:0 10px 0 rgba(0,0,0,.45); }
+    #root .t1 b { color:var(--yellow); }
+    #root .figrow { position:absolute; left:60px; top:520px; width:960px; height:640px; border-radius:34px; background:#fff; box-shadow:0 0 0 8px var(--red), 0 40px 90px rgba(0,0,0,.6); }
+    #root .figrow img { position:absolute; top:70px; width:150px; height:430px; object-fit:contain; }
+    #root .six { position:absolute; left:0; right:0; top:1048px; z-index:20; text-align:center; }
+    #root .six span { display:inline-block; padding:12px 34px; border-radius:22px; background:var(--red); font:900 76px 'LNU Display'; color:#fff; box-shadow:0 0 0 6px var(--yellow); }
+
+  </style>
+  <div id="root" data-composition-id="hook" data-width="1080" data-height="1920" data-duration="6.394">
+    <div class="bg"></div>
+    <div id="hook-studs" class="studs" data-layout-ignore></div>
+    <div class="hero">
+      <div id="hk-p0" class="ph clip" data-start="0" data-duration="0.89" data-track-index="2" style="z-index:1"><img id="hk-p0-i" src="assets/photos/5897_3.jpg" alt=""></div>
+      <div id="hk-p1" class="ph clip" data-start="0.85" data-duration="0.79" data-track-index="3" style="z-index:2"><img id="hk-p1-i" src="assets/photos/5932_3.jpg" alt=""></div>
+      <div id="hk-p2" class="ph clip" data-start="1.6" data-duration="0.79" data-track-index="2" style="z-index:3"><img id="hk-p2-i" src="assets/photos/5936_3.jpg" alt=""></div>
+      <div id="hk-p3" class="ph clip" data-start="2.35" data-duration="1.085" data-track-index="3" style="z-index:4"><img id="hk-p3-i" src="assets/photos/5955_3.jpg" alt=""></div>
+    </div>
+    <div id="hk-t1" class="t1">4 нові <b>LEGO</b>-витоки на <b>2027</b>!</div>
+    <div id="hk-fr" class="figrow clip" data-start="3.395" data-duration="2.999" data-track-index="4" style="z-index:10"><img id="hk-f0" src="assets/photos/fig1.png" alt="" style="left:18px"><img id="hk-f1" src="assets/photos/fig2.png" alt="" style="left:172px"><img id="hk-f2" src="assets/photos/fig3.png" alt="" style="left:326px"><img id="hk-f3" src="assets/photos/fig4.png" alt="" style="left:480px"><img id="hk-f4" src="assets/photos/fig5.png" alt="" style="left:634px"><img id="hk-f5" src="assets/photos/fig6.png" alt="" style="left:788px"></div>
+    <div class="six"><span id="hk-six">6 МІНІФІГУРОК!</span></div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    const fmt = (v) => Math.round(v).toLocaleString('en-US').replace(/,/g, '\u2009');
+    tl.fromTo('#hook-studs', { y: 0 }, { y: -80, duration: 6.394, ease: 'none' }, 0);
+    tl.fromTo('#hk-p0-i', {scale:1.0}, {scale:1.16, duration:0.89, ease:'none'}, 0);
+    tl.fromTo('#hk-p1-i', {scale:1.0}, {scale:1.16, duration:0.79, ease:'none'}, 0.85);
+    tl.fromTo('#hk-p1', {x:1100}, {x:0, duration:0.22, ease:'expo.out'}, 0.85);
+    tl.fromTo('#hk-p2-i', {scale:1.0}, {scale:1.16, duration:0.79, ease:'none'}, 1.6);
+    tl.fromTo('#hk-p2', {x:-1100}, {x:0, duration:0.22, ease:'expo.out'}, 1.6);
+    tl.fromTo('#hk-p3-i', {scale:1.0}, {scale:1.16, duration:1.085, ease:'none'}, 2.35);
+    tl.fromTo('#hk-p3', {x:1100}, {x:0, duration:0.22, ease:'expo.out'}, 2.35);
+    tl.fromTo('#hk-t1', {scale:1.0}, {scale:1.06, duration:3.44, ease:'sine.inOut'}, 0);
+    tl.fromTo('#hk-fr', {scale:1.25, opacity:0}, {scale:1, opacity:1, duration:0.3, ease:'expo.out'}, 3.395);
+    tl.fromTo('#hk-f0', {y:260, opacity:0}, {y:0, opacity:1, duration:0.35, ease:'back.out(2)'}, 3.545);
+    tl.fromTo('#hk-f1', {y:260, opacity:0}, {y:0, opacity:1, duration:0.35, ease:'back.out(2)'}, 3.635);
+    tl.fromTo('#hk-f2', {y:260, opacity:0}, {y:0, opacity:1, duration:0.35, ease:'back.out(2)'}, 3.725);
+    tl.fromTo('#hk-f3', {y:260, opacity:0}, {y:0, opacity:1, duration:0.35, ease:'back.out(2)'}, 3.815);
+    tl.fromTo('#hk-f4', {y:260, opacity:0}, {y:0, opacity:1, duration:0.35, ease:'back.out(2)'}, 3.905);
+    tl.fromTo('#hk-f5', {y:260, opacity:0}, {y:0, opacity:1, duration:0.35, ease:'back.out(2)'}, 3.995);
+    tl.fromTo('#hk-six', {scale:0, rotation:-12}, {scale:1, rotation:-3, duration:0.4, ease:'back.out(3)'}, 4.959);
+    tl.to('#hk-t1', {y:-30, opacity:0.0, duration:0.2, ease:'power3.in'}, 6.194);
+    window.__timelines["hook"] = tl;
+  </script>
+</template>

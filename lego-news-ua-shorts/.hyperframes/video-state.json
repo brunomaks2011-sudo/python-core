@@ -1,0 +1,1347 @@
+{
+  "version": 1,
+  "historyId": "92d30227-89c2-490f-8a6e-afc6a5aa7e7d",
+  "currentRevision": "7da9d6a3-4794-4272-939f-9e534a6e36de",
+  "pendingChanges": false,
+  "files": {
+    "AGENTS.md": {
+      "hash": "1a68041fc901ff835682a2a8d6f63c96dbb0b9eef8fb0971e97a79eaf69303d3",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/1a/1a68041fc901ff835682a2a8d6f63c96dbb0b9eef8fb0971e97a79eaf69303d3"
+    },
+    "CLAUDE.md": {
+      "hash": "1a68041fc901ff835682a2a8d6f63c96dbb0b9eef8fb0971e97a79eaf69303d3",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/1a/1a68041fc901ff835682a2a8d6f63c96dbb0b9eef8fb0971e97a79eaf69303d3"
+    },
+    "assets/fonts/inter-cyrillic-500-normal.woff2": {
+      "hash": "b77a86ec16aadc157f4a99e8898d71cd75ea264753d9bdf13f962f8c3988cbb0",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/b7/b77a86ec16aadc157f4a99e8898d71cd75ea264753d9bdf13f962f8c3988cbb0"
+    },
+    "assets/fonts/inter-cyrillic-600-normal.woff2": {
+      "hash": "6c2a37f82a676bcd441b735e4e2cda4edb8873a059ab9c362a84f0711f257041",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/6c/6c2a37f82a676bcd441b735e4e2cda4edb8873a059ab9c362a84f0711f257041"
+    },
+    "assets/fonts/inter-cyrillic-700-normal.woff2": {
+      "hash": "5917871d3cc970d8ce195101cbf65c1f68ec948022eb6070030342bb7edfb3bb",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/59/5917871d3cc970d8ce195101cbf65c1f68ec948022eb6070030342bb7edfb3bb"
+    },
+    "assets/fonts/inter-latin-500-normal.woff2": {
+      "hash": "f3779f1efccc4bdcdf9c0a02ab95bf6bd092ed09c48c08cedc725889edd1d19f",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/f3/f3779f1efccc4bdcdf9c0a02ab95bf6bd092ed09c48c08cedc725889edd1d19f"
+    },
+    "assets/fonts/inter-latin-600-normal.woff2": {
+      "hash": "f9a06e79cd3a2a20951c0f0e28f66dd0e6d3fda73911d640a2125c8fcb78f21a",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/f9/f9a06e79cd3a2a20951c0f0e28f66dd0e6d3fda73911d640a2125c8fcb78f21a"
+    },
+    "assets/fonts/inter-latin-700-normal.woff2": {
+      "hash": "6f56409fd3d64bb85f7d070bce20749db2d66b6d63cec586cc22d1c761be2491",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/6f/6f56409fd3d64bb85f7d070bce20749db2d66b6d63cec586cc22d1c761be2491"
+    },
+    "assets/fonts/montserrat-cyrillic-700-normal.woff2": {
+      "hash": "c6880741986ff5648d6b6c08ebbacfe7ba77861a002bff2643b8af4221f40d34",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/c6/c6880741986ff5648d6b6c08ebbacfe7ba77861a002bff2643b8af4221f40d34"
+    },
+    "assets/fonts/montserrat-cyrillic-800-normal.woff2": {
+      "hash": "e9796e8de1954ee72e8d5de23d26bb8f577d4b903abae1fe11db8904279516ef",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/e9/e9796e8de1954ee72e8d5de23d26bb8f577d4b903abae1fe11db8904279516ef"
+    },
+    "assets/fonts/montserrat-cyrillic-900-normal.woff2": {
+      "hash": "d7197257ad3cbc21bf3527e867355206b2399d74652a88372a523e19df630edf",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/d7/d7197257ad3cbc21bf3527e867355206b2399d74652a88372a523e19df630edf"
+    },
+    "assets/fonts/montserrat-latin-700-normal.woff2": {
+      "hash": "f9d9e65b15372cebcafc3acd1e664a564c5c4b23278de4d5760de9a13c530371",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/f9/f9d9e65b15372cebcafc3acd1e664a564c5c4b23278de4d5760de9a13c530371"
+    },
+    "assets/fonts/montserrat-latin-800-normal.woff2": {
+      "hash": "ba826fb84c2e961578adf3a08b5778b87905d4443445d1d56d84f9f157d5ea4b",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/ba/ba826fb84c2e961578adf3a08b5778b87905d4443445d1d56d84f9f157d5ea4b"
+    },
+    "assets/fonts/montserrat-latin-900-normal.woff2": {
+      "hash": "5b6958520638bb8609f9eacb17c4d189563efeae96d5da49f7c2043988697205",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/5b/5b6958520638bb8609f9eacb17c4d189563efeae96d5da49f7c2043988697205"
+    },
+    "assets/photos/5897_1.jpg": {
+      "hash": "5a362a3321bc25fcdc7fce4e3254a634d25b3168ddbd9fd25f395ffed0d9412c",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/5a/5a362a3321bc25fcdc7fce4e3254a634d25b3168ddbd9fd25f395ffed0d9412c"
+    },
+    "assets/photos/5897_2.jpg": {
+      "hash": "4dad7c80505f09af5a8119fe4976e7f2cea63c10b4226c44b6c14b275444d415",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/4d/4dad7c80505f09af5a8119fe4976e7f2cea63c10b4226c44b6c14b275444d415"
+    },
+    "assets/photos/5897_3.jpg": {
+      "hash": "15566bd5ec87b00d285c31b2b7907788c06d1a2518c118e1e987bf66dbe47763",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/15/15566bd5ec87b00d285c31b2b7907788c06d1a2518c118e1e987bf66dbe47763"
+    },
+    "assets/photos/5897_4.jpg": {
+      "hash": "cbbb23673af73d38c9497589182a30734121923c62de9b7e57354ff09001772c",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/cb/cbbb23673af73d38c9497589182a30734121923c62de9b7e57354ff09001772c"
+    },
+    "assets/photos/5897_5.jpg": {
+      "hash": "49abe878eaf213e0d2ca6b7ad1b690ed7bc8446baa1d32aea0c91b5c1f5e9d71",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/49/49abe878eaf213e0d2ca6b7ad1b690ed7bc8446baa1d32aea0c91b5c1f5e9d71"
+    },
+    "assets/photos/5911_2.jpg": {
+      "hash": "37694501cb7ae6ee4d9805c0d349a805cb0ba0eb597bf71b1959ab50c0f99904",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/37/37694501cb7ae6ee4d9805c0d349a805cb0ba0eb597bf71b1959ab50c0f99904"
+    },
+    "assets/photos/5915_1.jpg": {
+      "hash": "bbd2e200651760fb81b26569b990858fef18c1a8941c77be86afa1fa268e250c",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/bb/bbd2e200651760fb81b26569b990858fef18c1a8941c77be86afa1fa268e250c"
+    },
+    "assets/photos/5916_1.jpg": {
+      "hash": "7a7201c3b8f2309421c3dfe20d4c62c223e0a8d7d4b18bffdee4cdf217c72aa6",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/7a/7a7201c3b8f2309421c3dfe20d4c62c223e0a8d7d4b18bffdee4cdf217c72aa6"
+    },
+    "assets/photos/5916_2.jpg": {
+      "hash": "90f6b7b257449498b53ec57b6b3d25afd9e8afca9e8eaeef71eae704c1b0d2ca",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/90/90f6b7b257449498b53ec57b6b3d25afd9e8afca9e8eaeef71eae704c1b0d2ca"
+    },
+    "assets/photos/5916_3.jpg": {
+      "hash": "38335dc549d395e2103d55c7afadf236e03446ebbb9af47b8bceb7926a0801b4",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/38/38335dc549d395e2103d55c7afadf236e03446ebbb9af47b8bceb7926a0801b4"
+    },
+    "assets/photos/5916_4.jpg": {
+      "hash": "f2547ab1d5cced0d13957c25764a8b12b77794a2e9497f761a0a0cd8774b3dc5",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/f2/f2547ab1d5cced0d13957c25764a8b12b77794a2e9497f761a0a0cd8774b3dc5"
+    },
+    "assets/photos/5924_4.jpg": {
+      "hash": "63b54b7c8ec4f423bd5d95cb35bf25b7d3fe00af5060a1fcbf61392a7f0dfec1",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/63/63b54b7c8ec4f423bd5d95cb35bf25b7d3fe00af5060a1fcbf61392a7f0dfec1"
+    },
+    "assets/photos/5924_5.jpg": {
+      "hash": "2c01ae846a44c74d4c4cdfac3ab5f548906718f1d00bb1c8090162edd833348c",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/2c/2c01ae846a44c74d4c4cdfac3ab5f548906718f1d00bb1c8090162edd833348c"
+    },
+    "assets/photos/5924_6.jpg": {
+      "hash": "87d6ad5a98400d60e3e87c7e971f34074b9c533706232c3d0d31db783aa4fe8c",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/87/87d6ad5a98400d60e3e87c7e971f34074b9c533706232c3d0d31db783aa4fe8c"
+    },
+    "assets/photos/5932_1.jpg": {
+      "hash": "06d7cbafd3ad48024e1c6248b47c00e568e4e6a6a1b5ebe87758e0f87a49205a",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/06/06d7cbafd3ad48024e1c6248b47c00e568e4e6a6a1b5ebe87758e0f87a49205a"
+    },
+    "assets/photos/5932_2.jpg": {
+      "hash": "7110cb991342c0b7c4a2e1c5f9c467c06eb971b2f998af9e6424ae47306fc360",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/71/7110cb991342c0b7c4a2e1c5f9c467c06eb971b2f998af9e6424ae47306fc360"
+    },
+    "assets/photos/5932_3.jpg": {
+      "hash": "589d4d09584948e94dcfd4cabbafc294e2ae8db2721d651e4d6898d32a0b3101",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/58/589d4d09584948e94dcfd4cabbafc294e2ae8db2721d651e4d6898d32a0b3101"
+    },
+    "assets/photos/5932_4.jpg": {
+      "hash": "14ad98d6b8209363f70aa00840377863c3920bfc968778273220c75f342642c1",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/14/14ad98d6b8209363f70aa00840377863c3920bfc968778273220c75f342642c1"
+    },
+    "assets/photos/5936_1.jpg": {
+      "hash": "c7de109b5e707698c405748cfefff29b8ca0d36b9f743db0b367cee7739070f0",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/c7/c7de109b5e707698c405748cfefff29b8ca0d36b9f743db0b367cee7739070f0"
+    },
+    "assets/photos/5936_2.jpg": {
+      "hash": "e74d8294a8d445d1ff9e6a9edd4801f1a4bbecaab134f37329b3ec469c249339",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/e7/e74d8294a8d445d1ff9e6a9edd4801f1a4bbecaab134f37329b3ec469c249339"
+    },
+    "assets/photos/5936_3.jpg": {
+      "hash": "3fd37554fc299f0d16de5e5b0f4a379bd23277aff66322498d930db2b8f5d2b9",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/3f/3fd37554fc299f0d16de5e5b0f4a379bd23277aff66322498d930db2b8f5d2b9"
+    },
+    "assets/photos/5936_4.jpg": {
+      "hash": "b6da9f47d1e709f2b7821520ad8425019b06715f3309ce6da8a15f70ec4cbd26",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/b6/b6da9f47d1e709f2b7821520ad8425019b06715f3309ce6da8a15f70ec4cbd26"
+    },
+    "assets/photos/5936_5.jpg": {
+      "hash": "59a8714777a9e2a28990ef07a1d50f6fee62ca806160e3c7501c64c8e87433c6",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/59/59a8714777a9e2a28990ef07a1d50f6fee62ca806160e3c7501c64c8e87433c6"
+    },
+    "assets/photos/5949_3.jpg": {
+      "hash": "ca6887f9e7280112d475d29e92979c92fd00fea10239710416a641e7c4ac810b",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/ca/ca6887f9e7280112d475d29e92979c92fd00fea10239710416a641e7c4ac810b"
+    },
+    "assets/photos/5955_1.jpg": {
+      "hash": "9d35fd3cd9fc23fd3a035694942ae32a095277f22dab0468b696d9c255333e8d",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/9d/9d35fd3cd9fc23fd3a035694942ae32a095277f22dab0468b696d9c255333e8d"
+    },
+    "assets/photos/5955_2.jpg": {
+      "hash": "60bdef44c3235e45c1470cc8c85a173072a022f996ff25615937d1d36a34ca63",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/60/60bdef44c3235e45c1470cc8c85a173072a022f996ff25615937d1d36a34ca63"
+    },
+    "assets/photos/5955_3.jpg": {
+      "hash": "50f4b8eb8bf23b94db93d306a14bc5adef4bd0b1f42eaf8f8f232ec5e4b8c3a1",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/50/50f4b8eb8bf23b94db93d306a14bc5adef4bd0b1f42eaf8f8f232ec5e4b8c3a1"
+    },
+    "assets/photos/5955_4.jpg": {
+      "hash": "5ed6ff6cfb2ddb572540f7f5b864320e3f2a5c6a225147acb4595b4fd809558f",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/5e/5ed6ff6cfb2ddb572540f7f5b864320e3f2a5c6a225147acb4595b4fd809558f"
+    },
+    "assets/photos/fig1.png": {
+      "hash": "fe6bf003060a5db37f5da76999392e08e311c564a5c761b77fb7ac1e9ba82948",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/fe/fe6bf003060a5db37f5da76999392e08e311c564a5c761b77fb7ac1e9ba82948"
+    },
+    "assets/photos/fig2.png": {
+      "hash": "18801bb75a936c7b344f2b5875c9d2ceb8503f813770af56d478923f9575986c",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/18/18801bb75a936c7b344f2b5875c9d2ceb8503f813770af56d478923f9575986c"
+    },
+    "assets/photos/fig3.png": {
+      "hash": "e51790d49e47e3d7ce440a50bca68f036961bda06cdebe4ee404ba52f247f8e9",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/e5/e51790d49e47e3d7ce440a50bca68f036961bda06cdebe4ee404ba52f247f8e9"
+    },
+    "assets/photos/fig4.png": {
+      "hash": "d93b5115cf3d8465254dddf2c204264283301b391eeb82a6ba6208f4f05d2fb7",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/d9/d93b5115cf3d8465254dddf2c204264283301b391eeb82a6ba6208f4f05d2fb7"
+    },
+    "assets/photos/fig5.png": {
+      "hash": "a18d665e9cc327dc49ff27dfdc0b396ad2a9bc7b1289d084d740fc13b7b0d94c",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/a1/a18d665e9cc327dc49ff27dfdc0b396ad2a9bc7b1289d084d740fc13b7b0d94c"
+    },
+    "assets/photos/fig6.png": {
+      "hash": "8d21a30b279b9987c958816293ce70381730f7f7c74c81444829b1b4abc78b23",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/8d/8d21a30b279b9987c958816293ce70381730f7f7c74c81444829b1b4abc78b23"
+    },
+    "assets/sfx/CREDITS.md": {
+      "hash": "79590c7738b0427b10f362f76b02cfd2643158a40e1d5fd787f9ac6b33bcf4ce",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/79/79590c7738b0427b10f362f76b02cfd2643158a40e1d5fd787f9ac6b33bcf4ce"
+    },
+    "assets/sfx/click-soft.mp3": {
+      "hash": "075e17bdac5c13662a1c9530050e0046f81d4138e00eb3bf30427a7b4404103d",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/07/075e17bdac5c13662a1c9530050e0046f81d4138e00eb3bf30427a7b4404103d"
+    },
+    "assets/sfx/impact-bass-1.mp3": {
+      "hash": "634d5eda5eb7b501aca98393a64f3815eccf24157cd1d95df55aaec1b5000bd7",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/63/634d5eda5eb7b501aca98393a64f3815eccf24157cd1d95df55aaec1b5000bd7"
+    },
+    "assets/sfx/impact-bass-2.mp3": {
+      "hash": "fb832995477784f44ba8533359d20caf706195b52117ecc2a33b3e63e3c1307b",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/fb/fb832995477784f44ba8533359d20caf706195b52117ecc2a33b3e63e3c1307b"
+    },
+    "assets/sfx/pop.mp3": {
+      "hash": "19ab7193f626ff57fdeef60b45543bac416fcbcec803cfb417abe4b271c1b352",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/19/19ab7193f626ff57fdeef60b45543bac416fcbcec803cfb417abe4b271c1b352"
+    },
+    "assets/sfx/riser.mp3": {
+      "hash": "d2f29d49f27dee7d3b25af22ffe5bebc39390cc5d5fb3b3e1c433499c77f3d1d",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/d2/d2f29d49f27dee7d3b25af22ffe5bebc39390cc5d5fb3b3e1c433499c77f3d1d"
+    },
+    "assets/sfx/sparkle.mp3": {
+      "hash": "a66b2829a307bcb5b1f6551d7cdc72fe45bbe9a91abfb994d28db8d5e4e42ea8",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/a6/a66b2829a307bcb5b1f6551d7cdc72fe45bbe9a91abfb994d28db8d5e4e42ea8"
+    },
+    "assets/sfx/whoosh-cinematic.mp3": {
+      "hash": "0a0f3505856fdfa84ac6b86b3c55ccd0ef1eb4ff0907d7b6934002218a73404e",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/0a/0a0f3505856fdfa84ac6b86b3c55ccd0ef1eb4ff0907d7b6934002218a73404e"
+    },
+    "assets/sfx/whoosh-short.mp3": {
+      "hash": "c2efd9d902a59bf9ec5019035d7deadd17762136896b6e3cb6dd99ea50997a30",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/c2/c2efd9d902a59bf9ec5019035d7deadd17762136896b6e3cb6dd99ea50997a30"
+    },
+    "assets/sfx/whoosh.mp3": {
+      "hash": "c2efd9d902a59bf9ec5019035d7deadd17762136896b6e3cb6dd99ea50997a30",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/c2/c2efd9d902a59bf9ec5019035d7deadd17762136896b6e3cb6dd99ea50997a30"
+    },
+    "assets/vendor/gsap.min.js": {
+      "hash": "92bb9a96476f983d212a2bc4f54c889039c1696dd4461d40a736860938570fbb",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/92/92bb9a96476f983d212a2bc4f54c889039c1696dd4461d40a736860938570fbb"
+    },
+    "compositions/captions.html": {
+      "hash": "79bc76b85a5f444dccad5ed1b0e5ca0be0830eeae75a2df5839679829b52940a",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/79/79bc76b85a5f444dccad5ed1b0e5ca0be0830eeae75a2df5839679829b52940a"
+    },
+    "compositions/chrome.html": {
+      "hash": "a636b1e68bbfc163ade83f0e4315d06459ee4e496a12dfbaa6f3108e9015aa53",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/a6/a636b1e68bbfc163ade83f0e4315d06459ee4e496a12dfbaa6f3108e9015aa53"
+    },
+    "compositions/figs.html": {
+      "hash": "98518bf55b06bebd9df03a57e3f3262ba8dcaf87dc82f9967294c46719c77ee1",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/98/98518bf55b06bebd9df03a57e3f3262ba8dcaf87dc82f9967294c46719c77ee1"
+    },
+    "compositions/hook.html": {
+      "hash": "d78942a209b4a4b0a49f8dd9d6d33a399e6c78a3d6899074d775d1d094f75dc2",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/d7/d78942a209b4a4b0a49f8dd9d6d33a399e6c78a3d6899074d775d1d094f75dc2"
+    },
+    "compositions/lion.html": {
+      "hash": "b36f02bfe4f6e78a81fd02aeae5b9798cbd26e724be70d7a67582a744ae0237e",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/b3/b36f02bfe4f6e78a81fd02aeae5b9798cbd26e724be70d7a67582a744ae0237e"
+    },
+    "compositions/news.html": {
+      "hash": "4ecfc812bb2ce82e641f08016877f532a774632f444342325191c9b1197c0238",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/4e/4ecfc812bb2ce82e641f08016877f532a774632f444342325191c9b1197c0238"
+    },
+    "compositions/outro.html": {
+      "hash": "01b8ddf6e84b1269e9bc3e260468e5198762ab2d774a1f86a2840a2122792b3a",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/01/01b8ddf6e84b1269e9bc3e260468e5198762ab2d774a1f86a2840a2122792b3a"
+    },
+    "compositions/p1000.html": {
+      "hash": "c046cb814e2ff2c07f2474a4545f71028f6fcb18f3d3cb340917782e50286e05",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/c0/c046cb814e2ff2c07f2474a4545f71028f6fcb18f3d3cb340917782e50286e05"
+    },
+    "compositions/sanctum.html": {
+      "hash": "127dfae68f5c34257743797488ad0db7b4861a0c7e4020df5a448fe20a078b7c",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/12/127dfae68f5c34257743797488ad0db7b4861a0c7e4020df5a448fe20a078b7c"
+    },
+    "compositions/tacos.html": {
+      "hash": "774ae625dfd357a4c0fa1cbd6dc95dd82f15a67899ce47b50a73f71bf5c566ef",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/77/774ae625dfd357a4c0fa1cbd6dc95dd82f15a67899ce47b50a73f71bf5c566ef"
+    },
+    "hyperframes.json": {
+      "hash": "35a6d4ea79ebe911f0d81705f7aace5d8ff0316b745b0311d56af50c9c237cb7",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/35/35a6d4ea79ebe911f0d81705f7aace5d8ff0316b745b0311d56af50c9c237cb7"
+    },
+    "index.html": {
+      "hash": "a6d7aa723daada4b1f43e672ba7c694bdd7ebb409f0298ee7c3c2702f7ef7436",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/a6/a6d7aa723daada4b1f43e672ba7c694bdd7ebb409f0298ee7c3c2702f7ef7436"
+    },
+    "meta.json": {
+      "hash": "4c24798a184533fe7e4fa210eefe18cb2413c8415d977d399e5a9d90f80e1ddf",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/4c/4c24798a184533fe7e4fa210eefe18cb2413c8415d977d399e5a9d90f80e1ddf"
+    },
+    "package.json": {
+      "hash": "7dbc4f7f5940e701dc11d59e565c1b8b6ee151d343b20ded4a0d1931c2dce100",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/7d/7dbc4f7f5940e701dc11d59e565c1b8b6ee151d343b20ded4a0d1931c2dce100"
+    },
+    "script/build.py": {
+      "hash": "5f9ece87c51662422b9d9362f887c3bfec4574c1ce33aefddb767224ec70d4f7",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/5f/5f9ece87c51662422b9d9362f887c3bfec4574c1ce33aefddb767224ec70d4f7"
+    },
+    "script/caption_groups.json": {
+      "hash": "5e8981ed44f7c306672e5bed6407529d4c169ac18cf896985cf64605680350e0",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/5e/5e8981ed44f7c306672e5bed6407529d4c169ac18cf896985cf64605680350e0"
+    },
+    "script/script.json": {
+      "hash": "888c6a2c869eaf29e3dfd13c9a80e0a6d00ee4c64c2b8fa00e56ae626b30cdc9",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/88/888c6a2c869eaf29e3dfd13c9a80e0a6d00ee4c64c2b8fa00e56ae626b30cdc9"
+    },
+    "script/timeline.json": {
+      "hash": "43e3e4cc068744bff4a4d9d2dd79a42495e6d4db7a03fd469d72e19ba37c2980",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/43/43e3e4cc068744bff4a4d9d2dd79a42495e6d4db7a03fd469d72e19ba37c2980"
+    },
+    "script/tts/figs_0.json": {
+      "hash": "b842cc56df78f9f802df196cec76b6b2cb9839d6f1f065bf07766c6d6cd6b88c",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/b8/b842cc56df78f9f802df196cec76b6b2cb9839d6f1f065bf07766c6d6cd6b88c"
+    },
+    "script/tts/figs_0.mp3": {
+      "hash": "ee706047e7b52404b5e526ef502d8801237d38bb191a6236105001cbe0492182",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/ee/ee706047e7b52404b5e526ef502d8801237d38bb191a6236105001cbe0492182"
+    },
+    "script/tts/figs_1.json": {
+      "hash": "6d87cee1b1cac728f5cbeb1cf5bf57ef13867f7662bd08ff73bed3bb2a9cbf6d",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/6d/6d87cee1b1cac728f5cbeb1cf5bf57ef13867f7662bd08ff73bed3bb2a9cbf6d"
+    },
+    "script/tts/figs_1.mp3": {
+      "hash": "855286540205d44d000c940244ce1d4e508081159defccbfc19a37b5b23b19ad",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/85/855286540205d44d000c940244ce1d4e508081159defccbfc19a37b5b23b19ad"
+    },
+    "script/tts/hook_0.json": {
+      "hash": "8d80869cfe61edec3a4469ab80d51b584ae95bef915f8ebb370d17bf3819bb6f",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/8d/8d80869cfe61edec3a4469ab80d51b584ae95bef915f8ebb370d17bf3819bb6f"
+    },
+    "script/tts/hook_0.mp3": {
+      "hash": "aa7d575211982086627efa03c39b24f8e1cb79d796ff3b588875a5ee36407a59",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/aa/aa7d575211982086627efa03c39b24f8e1cb79d796ff3b588875a5ee36407a59"
+    },
+    "script/tts/hook_1.json": {
+      "hash": "1fd0282e038972f5e6542657d7a93b03398f43ae87f5616c73b693c7d2144723",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/1f/1fd0282e038972f5e6542657d7a93b03398f43ae87f5616c73b693c7d2144723"
+    },
+    "script/tts/hook_1.mp3": {
+      "hash": "570131b634d8f5b1236dee9c3bf263cfefbc62a23156afe83376af30380262ec",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/57/570131b634d8f5b1236dee9c3bf263cfefbc62a23156afe83376af30380262ec"
+    },
+    "script/tts/lion_0.json": {
+      "hash": "9339f16f140b8943964c9cdcf690363ca8aeb4f4569288c3c920f7ae21247855",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/93/9339f16f140b8943964c9cdcf690363ca8aeb4f4569288c3c920f7ae21247855"
+    },
+    "script/tts/lion_0.mp3": {
+      "hash": "818209ba6c0d57cee5da853ff386dbee433b1d72d9c7f364a09e022b53c2cfa8",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/81/818209ba6c0d57cee5da853ff386dbee433b1d72d9c7f364a09e022b53c2cfa8"
+    },
+    "script/tts/lion_1.json": {
+      "hash": "57cdbcb1465741ef9ce02c23cf1a80de3f4f059b022280f872e51a89caa9780c",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/57/57cdbcb1465741ef9ce02c23cf1a80de3f4f059b022280f872e51a89caa9780c"
+    },
+    "script/tts/lion_1.mp3": {
+      "hash": "a5b278659fa8e5504559efb8d658aba6d6c55b341b4733cab53aabb0eb00742e",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/a5/a5b278659fa8e5504559efb8d658aba6d6c55b341b4733cab53aabb0eb00742e"
+    },
+    "script/tts/news_0.json": {
+      "hash": "932fb03c343712e9bc19a8094147492065aa79351274f8961bd388d106668468",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/93/932fb03c343712e9bc19a8094147492065aa79351274f8961bd388d106668468"
+    },
+    "script/tts/news_0.mp3": {
+      "hash": "79cb749ed8814c25909da4cbf8aeb0bc297cfba46ef3389c1961677417659954",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/79/79cb749ed8814c25909da4cbf8aeb0bc297cfba46ef3389c1961677417659954"
+    },
+    "script/tts/news_1.json": {
+      "hash": "4ef95a3b7907c4bb2231bc61bdb289a34b639c61ee6a04e4b9c621083348a7ad",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/4e/4ef95a3b7907c4bb2231bc61bdb289a34b639c61ee6a04e4b9c621083348a7ad"
+    },
+    "script/tts/news_1.mp3": {
+      "hash": "a55e826fd1d0ba61f0a51954244a6fab269c455ecace6afe833765cb952c46a3",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/a5/a55e826fd1d0ba61f0a51954244a6fab269c455ecace6afe833765cb952c46a3"
+    },
+    "script/tts/outro_0.json": {
+      "hash": "819361620b164203d20bd035b829a9d6484fab6cd0fd38b43b33c9cfb366ed50",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/81/819361620b164203d20bd035b829a9d6484fab6cd0fd38b43b33c9cfb366ed50"
+    },
+    "script/tts/outro_0.mp3": {
+      "hash": "29075439135ed2e0f0d251e613c07b0c59085437483ebddc36965b43d76aa2c5",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/29/29075439135ed2e0f0d251e613c07b0c59085437483ebddc36965b43d76aa2c5"
+    },
+    "script/tts/outro_1.json": {
+      "hash": "eefd5c5959dc0922bcf5146426cf1514de51c81c093fa84a44db5e57e5bb2a70",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/ee/eefd5c5959dc0922bcf5146426cf1514de51c81c093fa84a44db5e57e5bb2a70"
+    },
+    "script/tts/outro_1.mp3": {
+      "hash": "c9ecb959aedd09b18ac6c5a4d5386ce193aa008467b6230451ed78ab1184a6f3",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/c9/c9ecb959aedd09b18ac6c5a4d5386ce193aa008467b6230451ed78ab1184a6f3"
+    },
+    "script/tts/p1000_0.json": {
+      "hash": "dfca69135d424fc807b2c434036c9cc23dbf62212067474b2506fb29d70aefd9",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/df/dfca69135d424fc807b2c434036c9cc23dbf62212067474b2506fb29d70aefd9"
+    },
+    "script/tts/p1000_0.mp3": {
+      "hash": "b7e99b38527fefad50db37d21f47287cecbe26faf6c81b1be03856388629cb30",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/b7/b7e99b38527fefad50db37d21f47287cecbe26faf6c81b1be03856388629cb30"
+    },
+    "script/tts/p1000_1.json": {
+      "hash": "46e28bf808f03e1326f8a6d98c3e88efc1f0a4d785fe4d4e6150bd6daab1e81a",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/46/46e28bf808f03e1326f8a6d98c3e88efc1f0a4d785fe4d4e6150bd6daab1e81a"
+    },
+    "script/tts/p1000_1.mp3": {
+      "hash": "69000bf9bf7a543c11a36c3ff0806d523ce34aab5bdd85f434fb2f67b6fc8cd3",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/69/69000bf9bf7a543c11a36c3ff0806d523ce34aab5bdd85f434fb2f67b6fc8cd3"
+    },
+    "script/tts/p1000_2.json": {
+      "hash": "6eb9bf4ebe3fd71f0f8e3a758a30e6690daedadcbd8f266be9f890ea2a171381",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/6e/6eb9bf4ebe3fd71f0f8e3a758a30e6690daedadcbd8f266be9f890ea2a171381"
+    },
+    "script/tts/p1000_2.mp3": {
+      "hash": "024d0f74442890b4684937f1c06424badfa89145deec023598dfb27f6099b9bd",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/02/024d0f74442890b4684937f1c06424badfa89145deec023598dfb27f6099b9bd"
+    },
+    "script/tts/sanctum_0.json": {
+      "hash": "737d33e4ce87ad05df9df5331c10d89f47b5f6dbb3f860ad7c313c219dff60a4",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/73/737d33e4ce87ad05df9df5331c10d89f47b5f6dbb3f860ad7c313c219dff60a4"
+    },
+    "script/tts/sanctum_0.mp3": {
+      "hash": "152c61c842b1d42190cb99e80368acbbe5d8e7810e1791d9d462416a440f25f7",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/15/152c61c842b1d42190cb99e80368acbbe5d8e7810e1791d9d462416a440f25f7"
+    },
+    "script/tts/sanctum_1.json": {
+      "hash": "951f0aac2eebdd24b9a7b3c56615b9dc00829f067a27442e8a9b74f7441af3a0",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/95/951f0aac2eebdd24b9a7b3c56615b9dc00829f067a27442e8a9b74f7441af3a0"
+    },
+    "script/tts/sanctum_1.mp3": {
+      "hash": "311050129f63a0b86810182255a4a0827303b179eead74b5391d7f5d830591c0",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/31/311050129f63a0b86810182255a4a0827303b179eead74b5391d7f5d830591c0"
+    },
+    "script/tts/sanctum_2.json": {
+      "hash": "1e1705d26b607fe0a68ef6b95884226baeea2360a790c7af0fcab10f06ab8e90",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/1e/1e1705d26b607fe0a68ef6b95884226baeea2360a790c7af0fcab10f06ab8e90"
+    },
+    "script/tts/sanctum_2.mp3": {
+      "hash": "8b7d476db84cb6ec5a946dd757767e66ba2b5b6b9607a2ca27691690fa809f77",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/8b/8b7d476db84cb6ec5a946dd757767e66ba2b5b6b9607a2ca27691690fa809f77"
+    },
+    "script/tts/sanctum_3.json": {
+      "hash": "9eca37da3a3353892e1e9c16dc941b4ee0552d73b335ade0022c67478f292b13",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/9e/9eca37da3a3353892e1e9c16dc941b4ee0552d73b335ade0022c67478f292b13"
+    },
+    "script/tts/sanctum_3.mp3": {
+      "hash": "58d57772f3cb122e2287c8abe568444db82369b336f19b5d96d7b7b957bc6a35",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/58/58d57772f3cb122e2287c8abe568444db82369b336f19b5d96d7b7b957bc6a35"
+    },
+    "script/tts/tacos_0.json": {
+      "hash": "942e321f6bddf33a54f103308b3b7c59cd660034d1407ea65b00ef5c154072a3",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/94/942e321f6bddf33a54f103308b3b7c59cd660034d1407ea65b00ef5c154072a3"
+    },
+    "script/tts/tacos_0.mp3": {
+      "hash": "fa15a24b533ee46d9224e140d26f25c18345b1af32a4088b3f0e4b7f21ae431c",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/fa/fa15a24b533ee46d9224e140d26f25c18345b1af32a4088b3f0e4b7f21ae431c"
+    },
+    "script/tts/tacos_1.json": {
+      "hash": "be07eea131a4ca753cdc95ac3bc29d2ed13be0d9da9ab811e910c0675d6c933e",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/be/be07eea131a4ca753cdc95ac3bc29d2ed13be0d9da9ab811e910c0675d6c933e"
+    },
+    "script/tts/tacos_1.mp3": {
+      "hash": "34a45abd2bf73931112f45cde48a85832101fb89d87436c1ded61f0eb235c67a",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/34/34a45abd2bf73931112f45cde48a85832101fb89d87436c1ded61f0eb235c67a"
+    },
+    "script/tts/tacos_2.json": {
+      "hash": "5dc92a44a01d3b64dde0518db1cb3198c590f2432fbb17f03a2aa0d924535be9",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/5d/5dc92a44a01d3b64dde0518db1cb3198c590f2432fbb17f03a2aa0d924535be9"
+    },
+    "script/tts/tacos_2.mp3": {
+      "hash": "5295712aeb53fd94b559c58eaf7bd8d96809bdbb657af257f4f6f322027944cf",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/52/5295712aeb53fd94b559c58eaf7bd8d96809bdbb657af257f4f6f322027944cf"
+    },
+    "script/tts/tacos_3.json": {
+      "hash": "49720e71c799d856999bc599198045220a7bc67a341b4ade93198c340935dfc7",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/49/49720e71c799d856999bc599198045220a7bc67a341b4ade93198c340935dfc7"
+    },
+    "script/tts/tacos_3.mp3": {
+      "hash": "3fedf43d87d8917591f6d98ae98cad095e8f48387029c5876c9a3b095bc3f51a",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/3f/3fedf43d87d8917591f6d98ae98cad095e8f48387029c5876c9a3b095bc3f51a"
+    },
+    "script/voice.py": {
+      "hash": "ccb40881eb0ebd5fdbe05ca2e2ef30d5e22e542ad335d7b366de6ce20cfa6cae",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/cc/ccb40881eb0ebd5fdbe05ca2e2ef30d5e22e542ad335d7b366de6ce20cfa6cae"
+    },
+    "subtitles_uk.srt": {
+      "hash": "0cbbc3565f0f77ad773f62fa664ecf67ea015fd7c6608680597d858d5a11dea3",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/0c/0cbbc3565f0f77ad773f62fa664ecf67ea015fd7c6608680597d858d5a11dea3"
+    },
+    "assets/audio/voice.mp3": {
+      "hash": "8e9534d08ee1ddfc74ac7cbb1e9b6336841f8ec2d85c8f48c82cb2a8449fe497",
+      "content": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/8e/8e9534d08ee1ddfc74ac7cbb1e9b6336841f8ec2d85c8f48c82cb2a8449fe497"
+    }
+  },
+  "revisions": {
+    "fdbb2f77-e8f9-40b6-8739-3d92dd6f93f1": {
+      "actor": {
+        "kind": "outside",
+        "name": "Outside"
+      },
+      "label": "Changed outside the app",
+      "startedAt": 1793993792417,
+      "endedAt": 1793993793514,
+      "files": {
+        "compositions/figs.html": {
+          "before": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/65/65346989e6cf9b117fa425146c03c1b761cc837cd1b5f584d2b267e3dda99451",
+          "after": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/52/525ddc5c01afe1cb2b2d88ed0a244f223ccdcbad1695c36a7a57b1a59673e529"
+        },
+        "compositions/hook.html": {
+          "before": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/0e/0e73b834a2ef47139f982c1a9bdaeec4f64d4ee8edf5171c7ad3e77101ddcd1f",
+          "after": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/86/86d050eac837fc2ddbc7f117b0017f441b1b01dd9f225430ef79bca1e61bbb21"
+        },
+        "compositions/outro.html": {
+          "before": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/ed/ed5e9b969edacdf9c8b44c03f8504a1208e1fab3f10ce382d5d9988613dd7f3a",
+          "after": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/06/06b8bac89dd048847bc85454034b4836e8db01583f2e28a9ab3bd6cb74793140"
+        },
+        "compositions/sanctum.html": {
+          "before": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/33/3308d5f89d86979d7c5a20b9117a8f59d6cde1bb1f5b05c0bb8bd94340547e21",
+          "after": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/9a/9a6ba473919fa95e9553bcedfa4b37a2379c21d8840c45fd180ea6b1f00b5b3c"
+        },
+        "script/build.py": {
+          "before": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/bc/bcd5fd0cefd5c988b8009d94bc37eb22156aa41eddda3165532902f47ad840df",
+          "after": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/30/302435f96830a0ca0ce094ae029a49bf0c68ae665bc834a5ad033cc6816e4b2f"
+        }
+      }
+    },
+    "bfa90aec-1334-4435-a064-1063736a5804": {
+      "actor": {
+        "kind": "outside",
+        "name": "Outside"
+      },
+      "label": "Changed outside the app",
+      "startedAt": 1793993827184,
+      "endedAt": 1793993828214,
+      "files": {
+        "compositions/figs.html": {
+          "before": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/52/525ddc5c01afe1cb2b2d88ed0a244f223ccdcbad1695c36a7a57b1a59673e529",
+          "after": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/69/69437afcb08bf49bc680d7cc646f024c8691f840587782ac67120b11dfd4ec9e"
+        },
+        "script/build.py": {
+          "before": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/30/302435f96830a0ca0ce094ae029a49bf0c68ae665bc834a5ad033cc6816e4b2f",
+          "after": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/17/17bc65b70faf5b49bf061fd19f993a6dc0f3b205fa1d7846e0b8aca728350a80"
+        }
+      }
+    },
+    "7da9d6a3-4794-4272-939f-9e534a6e36de": {
+      "actor": {
+        "kind": "outside",
+        "name": "Outside"
+      },
+      "label": "Changed outside the app",
+      "startedAt": 1793993899044,
+      "endedAt": 1793993900169,
+      "files": {
+        "compositions/captions.html": {
+          "before": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/6a/6a74ab55a271d5cb0b106e20c0873084a5e7b10366ca5bc0d5b1d238cfe6030f",
+          "after": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/79/79bc76b85a5f444dccad5ed1b0e5ca0be0830eeae75a2df5839679829b52940a"
+        },
+        "compositions/chrome.html": {
+          "before": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/84/84e26ec7954feb0501333ac8e4a54528240ecc648a2deda505f75cfbfc254f45",
+          "after": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/a6/a636b1e68bbfc163ade83f0e4315d06459ee4e496a12dfbaa6f3108e9015aa53"
+        },
+        "compositions/figs.html": {
+          "before": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/69/69437afcb08bf49bc680d7cc646f024c8691f840587782ac67120b11dfd4ec9e",
+          "after": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/98/98518bf55b06bebd9df03a57e3f3262ba8dcaf87dc82f9967294c46719c77ee1"
+        },
+        "compositions/hook.html": {
+          "before": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/86/86d050eac837fc2ddbc7f117b0017f441b1b01dd9f225430ef79bca1e61bbb21",
+          "after": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/d7/d78942a209b4a4b0a49f8dd9d6d33a399e6c78a3d6899074d775d1d094f75dc2"
+        },
+        "compositions/lion.html": {
+          "before": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/f0/f0cb026395111a2cba0c8b968e209b00ffd90c53370d52aedf2fe8017396d405",
+          "after": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/b3/b36f02bfe4f6e78a81fd02aeae5b9798cbd26e724be70d7a67582a744ae0237e"
+        },
+        "compositions/news.html": {
+          "before": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/4c/4c760657723acfe3a33d98387fd9c7472687009ea11c88d7aeb095629a1dd99a",
+          "after": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/4e/4ecfc812bb2ce82e641f08016877f532a774632f444342325191c9b1197c0238"
+        },
+        "compositions/outro.html": {
+          "before": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/06/06b8bac89dd048847bc85454034b4836e8db01583f2e28a9ab3bd6cb74793140",
+          "after": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/01/01b8ddf6e84b1269e9bc3e260468e5198762ab2d774a1f86a2840a2122792b3a"
+        },
+        "compositions/p1000.html": {
+          "before": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/e9/e997d4707301173c64937b8ceb97c669c94442c731360c3965302762b98d85a6",
+          "after": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/c0/c046cb814e2ff2c07f2474a4545f71028f6fcb18f3d3cb340917782e50286e05"
+        },
+        "compositions/sanctum.html": {
+          "before": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/9a/9a6ba473919fa95e9553bcedfa4b37a2379c21d8840c45fd180ea6b1f00b5b3c",
+          "after": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/12/127dfae68f5c34257743797488ad0db7b4861a0c7e4020df5a448fe20a078b7c"
+        },
+        "compositions/tacos.html": {
+          "before": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/2b/2b370426d7df1bc8c8dcba3365945259816d7cfacf8a035b0a65ddbd0ee85e8f",
+          "after": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/77/774ae625dfd357a4c0fa1cbd6dc95dd82f15a67899ce47b50a73f71bf5c566ef"
+        },
+        "script/build.py": {
+          "before": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/17/17bc65b70faf5b49bf061fd19f993a6dc0f3b205fa1d7846e0b8aca728350a80",
+          "after": "/root/.cache/hyperframes/history/92d30227-89c2-490f-8a6e-afc6a5aa7e7d/blobs/5f/5f9ece87c51662422b9d9362f887c3bfec4574c1ce33aefddb767224ec70d4f7"
+        }
+      }
+    }
+  },
+  "checks": {
+    "latest": {
+      "revision": "7da9d6a3-4794-4272-939f-9e534a6e36de",
+      "id": "4d7b419b-f2e5-4c07-a1c8-045585b97b3b"
+    },
+    "revisions": {
+      "fdbb2f77-e8f9-40b6-8739-3d92dd6f93f1": [
+        {
+          "id": "fa4148bf-2be7-45f5-8106-047035bfbfc4",
+          "scope": "project",
+          "report": "/home/user/python-core/lego-news-ua-shorts/.hyperframes/artifacts/checks/fa4148bf-2be7-45f5-8106-047035bfbfc4.json",
+          "metadata": {
+            "ok": false,
+            "browserSkipped": false,
+            "options": {
+              "samples": 9,
+              "atTransitions": false,
+              "maxIssues": 80,
+              "collapseStatic": true,
+              "tolerance": 2,
+              "timeout": 45000,
+              "contrast": true,
+              "strict": false,
+              "snapshots": false,
+              "browserGpuMode": "auto"
+            }
+          },
+          "createdAt": 1793993819227,
+          "contentHash": "0ed03478a67b03e4bed1c7b2fffcf3325e11fc4594fbebbc02135f67af1a2fb1",
+          "revision": "fdbb2f77-e8f9-40b6-8739-3d92dd6f93f1",
+          "inputFingerprint": "a480aeb310ba530a0244f15c00c62eebf557787f68bae7f89d9f261fe74f02af",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        }
+      ],
+      "bfa90aec-1334-4435-a064-1063736a5804": [
+        {
+          "id": "2d9c615e-0aa6-4733-baf6-0777dd3fd7c0",
+          "scope": "project",
+          "report": "/home/user/python-core/lego-news-ua-shorts/.hyperframes/artifacts/checks/2d9c615e-0aa6-4733-baf6-0777dd3fd7c0.json",
+          "metadata": {
+            "ok": true,
+            "browserSkipped": false,
+            "options": {
+              "samples": 9,
+              "atTransitions": false,
+              "maxIssues": 80,
+              "collapseStatic": true,
+              "tolerance": 2,
+              "timeout": 45000,
+              "contrast": true,
+              "strict": false,
+              "snapshots": false,
+              "browserGpuMode": "auto"
+            }
+          },
+          "createdAt": 1793993854503,
+          "contentHash": "75ea6a04550f39a520686ad5229226d1c34567ac4f16af9d97077240877baed0",
+          "revision": "bfa90aec-1334-4435-a064-1063736a5804",
+          "inputFingerprint": "2e493cc74a14e345224b3a5dec62e82b1821b6b637c61cc497cb98501453c234",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        }
+      ],
+      "7da9d6a3-4794-4272-939f-9e534a6e36de": [
+        {
+          "id": "4d7b419b-f2e5-4c07-a1c8-045585b97b3b",
+          "scope": "project",
+          "report": "/home/user/python-core/lego-news-ua-shorts/.hyperframes/artifacts/checks/4d7b419b-f2e5-4c07-a1c8-045585b97b3b.json",
+          "metadata": {
+            "ok": true,
+            "browserSkipped": false,
+            "options": {
+              "samples": 9,
+              "atTransitions": false,
+              "maxIssues": 80,
+              "collapseStatic": true,
+              "tolerance": 2,
+              "timeout": 45000,
+              "contrast": true,
+              "strict": false,
+              "snapshots": false,
+              "browserGpuMode": "auto"
+            }
+          },
+          "createdAt": 1793993927628,
+          "contentHash": "55305b3bb1c055f66389e6f100e71e5ae562d690c03ca12799a0b322c71b7727",
+          "revision": "7da9d6a3-4794-4272-939f-9e534a6e36de",
+          "inputFingerprint": "012953a29b15f49e1e2576fcf442e4adb8dc35399550c3213c3fcd98f12beb8d",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        }
+      ]
+    },
+    "unversioned": [
+      {
+        "id": "5bb89003-6245-462a-b73a-f894d0187a09",
+        "scope": "project",
+        "report": "/home/user/python-core/lego-news-ua-shorts/.hyperframes/artifacts/checks/5bb89003-6245-462a-b73a-f894d0187a09.json",
+        "metadata": {
+          "ok": false,
+          "browserSkipped": false,
+          "options": {
+            "samples": 9,
+            "atTransitions": false,
+            "maxIssues": 80,
+            "collapseStatic": true,
+            "tolerance": 2,
+            "timeout": 45000,
+            "contrast": true,
+            "strict": false,
+            "snapshots": false,
+            "browserGpuMode": "auto"
+          }
+        },
+        "createdAt": 1793993741100,
+        "contentHash": "b979f2b51bd1579cee6ede3c9c00a92367754f8cf8fcc924f49e99136b1b4e5c",
+        "revision": null,
+        "inputFingerprint": "dbbe4565ec11bd3189317c5817272402766bb3229de1bf274cb2654d467bb248",
+        "inputScope": "local-project-files",
+        "attribution": "unversioned"
+      },
+      {
+        "id": "dbdb1663-faa5-43a5-8254-91d23bfddb3c",
+        "scope": "project",
+        "report": "/home/user/python-core/lego-news-ua-shorts/.hyperframes/artifacts/checks/dbdb1663-faa5-43a5-8254-91d23bfddb3c.json",
+        "metadata": {
+          "ok": false,
+          "browserSkipped": false,
+          "options": {
+            "samples": 9,
+            "atTransitions": false,
+            "maxIssues": 80,
+            "collapseStatic": true,
+            "tolerance": 2,
+            "timeout": 45000,
+            "contrast": true,
+            "strict": false,
+            "snapshots": false,
+            "browserGpuMode": "auto"
+          }
+        },
+        "createdAt": 1793993774405,
+        "contentHash": "b979f2b51bd1579cee6ede3c9c00a92367754f8cf8fcc924f49e99136b1b4e5c",
+        "revision": null,
+        "inputFingerprint": "dbbe4565ec11bd3189317c5817272402766bb3229de1bf274cb2654d467bb248",
+        "inputScope": "local-project-files",
+        "attribution": "unversioned"
+      }
+    ]
+  },
+  "snapshots": {
+    "latest": {
+      "revision": "7da9d6a3-4794-4272-939f-9e534a6e36de",
+      "id": "ded01bcb-88ab-4658-bcc3-55faa9330afa-3"
+    },
+    "revisions": {
+      "bfa90aec-1334-4435-a064-1063736a5804": [
+        {
+          "scope": "full",
+          "id": "3ec2eea3-4ef7-4602-a883-9bbd8db4ce10-0",
+          "image": "/home/user/python-core/lego-news-ua-shorts/.hyperframes/artifacts/snapshots/c91dc2c1-cef9-4c2c-a812-1af3e3f35f98/frame-00-at-0s.png",
+          "time": 0,
+          "metadata": {
+            "width": 1080,
+            "height": 1920,
+            "zoomScale": 1,
+            "browserGpuMode": "auto",
+            "warnings": [],
+            "partial": false
+          },
+          "createdAt": 1793993870746,
+          "contentHash": "dcc3e386862f642a66481f1e601c36d678abea3c9a9d27f26972bb2f6e137118",
+          "revision": "bfa90aec-1334-4435-a064-1063736a5804",
+          "inputFingerprint": "2e493cc74a14e345224b3a5dec62e82b1821b6b637c61cc497cb98501453c234",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        },
+        {
+          "scope": "full",
+          "id": "3ec2eea3-4ef7-4602-a883-9bbd8db4ce10-1",
+          "image": "/home/user/python-core/lego-news-ua-shorts/.hyperframes/artifacts/snapshots/c91dc2c1-cef9-4c2c-a812-1af3e3f35f98/frame-01-at-1.2s.png",
+          "time": 1.2,
+          "metadata": {
+            "width": 1080,
+            "height": 1920,
+            "zoomScale": 1,
+            "browserGpuMode": "auto",
+            "warnings": [],
+            "partial": false
+          },
+          "createdAt": 1793993870746,
+          "contentHash": "20f1657fe876e25b6046eecf2ab5a419ca0bd8bb2bafa9d7534853e280cb4240",
+          "revision": "bfa90aec-1334-4435-a064-1063736a5804",
+          "inputFingerprint": "2e493cc74a14e345224b3a5dec62e82b1821b6b637c61cc497cb98501453c234",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        },
+        {
+          "scope": "full",
+          "id": "3ec2eea3-4ef7-4602-a883-9bbd8db4ce10-2",
+          "image": "/home/user/python-core/lego-news-ua-shorts/.hyperframes/artifacts/snapshots/c91dc2c1-cef9-4c2c-a812-1af3e3f35f98/frame-02-at-4.6s.png",
+          "time": 4.6,
+          "metadata": {
+            "width": 1080,
+            "height": 1920,
+            "zoomScale": 1,
+            "browserGpuMode": "auto",
+            "warnings": [],
+            "partial": false
+          },
+          "createdAt": 1793993870746,
+          "contentHash": "6c6505277955a05dc1c2325ebdb32395d42980760a0b950b81d804f11463e93a",
+          "revision": "bfa90aec-1334-4435-a064-1063736a5804",
+          "inputFingerprint": "2e493cc74a14e345224b3a5dec62e82b1821b6b637c61cc497cb98501453c234",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        },
+        {
+          "scope": "full",
+          "id": "3ec2eea3-4ef7-4602-a883-9bbd8db4ce10-3",
+          "image": "/home/user/python-core/lego-news-ua-shorts/.hyperframes/artifacts/snapshots/c91dc2c1-cef9-4c2c-a812-1af3e3f35f98/frame-03-at-6.2s.png",
+          "time": 6.2,
+          "metadata": {
+            "width": 1080,
+            "height": 1920,
+            "zoomScale": 1,
+            "browserGpuMode": "auto",
+            "warnings": [],
+            "partial": false
+          },
+          "createdAt": 1793993870746,
+          "contentHash": "4ce7381895655e379b161c1dc7dff56c2580e9a23af402df75193518295b3fb0",
+          "revision": "bfa90aec-1334-4435-a064-1063736a5804",
+          "inputFingerprint": "2e493cc74a14e345224b3a5dec62e82b1821b6b637c61cc497cb98501453c234",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        },
+        {
+          "scope": "full",
+          "id": "3ec2eea3-4ef7-4602-a883-9bbd8db4ce10-4",
+          "image": "/home/user/python-core/lego-news-ua-shorts/.hyperframes/artifacts/snapshots/c91dc2c1-cef9-4c2c-a812-1af3e3f35f98/frame-04-at-9.5s.png",
+          "time": 9.5,
+          "metadata": {
+            "width": 1080,
+            "height": 1920,
+            "zoomScale": 1,
+            "browserGpuMode": "auto",
+            "warnings": [],
+            "partial": false
+          },
+          "createdAt": 1793993870746,
+          "contentHash": "24d58096e7aab138808789b3ea231b3011a3a62f03e541bf1bb35d144fcb9b33",
+          "revision": "bfa90aec-1334-4435-a064-1063736a5804",
+          "inputFingerprint": "2e493cc74a14e345224b3a5dec62e82b1821b6b637c61cc497cb98501453c234",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        },
+        {
+          "scope": "full",
+          "id": "3ec2eea3-4ef7-4602-a883-9bbd8db4ce10-5",
+          "image": "/home/user/python-core/lego-news-ua-shorts/.hyperframes/artifacts/snapshots/c91dc2c1-cef9-4c2c-a812-1af3e3f35f98/frame-05-at-13s.png",
+          "time": 13,
+          "metadata": {
+            "width": 1080,
+            "height": 1920,
+            "zoomScale": 1,
+            "browserGpuMode": "auto",
+            "warnings": [],
+            "partial": false
+          },
+          "createdAt": 1793993870746,
+          "contentHash": "0d3605641bfa200cd39361899d7b97b704eb51f43c5d2ed480c93a8dd31ca57e",
+          "revision": "bfa90aec-1334-4435-a064-1063736a5804",
+          "inputFingerprint": "2e493cc74a14e345224b3a5dec62e82b1821b6b637c61cc497cb98501453c234",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        },
+        {
+          "scope": "full",
+          "id": "3ec2eea3-4ef7-4602-a883-9bbd8db4ce10-6",
+          "image": "/home/user/python-core/lego-news-ua-shorts/.hyperframes/artifacts/snapshots/c91dc2c1-cef9-4c2c-a812-1af3e3f35f98/frame-06-at-17s.png",
+          "time": 17,
+          "metadata": {
+            "width": 1080,
+            "height": 1920,
+            "zoomScale": 1,
+            "browserGpuMode": "auto",
+            "warnings": [],
+            "partial": false
+          },
+          "createdAt": 1793993870746,
+          "contentHash": "edfb99df31e967e6e33b080fd0c760394b92f23ffc5d9815e62884200f5987b9",
+          "revision": "bfa90aec-1334-4435-a064-1063736a5804",
+          "inputFingerprint": "2e493cc74a14e345224b3a5dec62e82b1821b6b637c61cc497cb98501453c234",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        },
+        {
+          "scope": "full",
+          "id": "3ec2eea3-4ef7-4602-a883-9bbd8db4ce10-7",
+          "image": "/home/user/python-core/lego-news-ua-shorts/.hyperframes/artifacts/snapshots/c91dc2c1-cef9-4c2c-a812-1af3e3f35f98/frame-07-at-21s.png",
+          "time": 21,
+          "metadata": {
+            "width": 1080,
+            "height": 1920,
+            "zoomScale": 1,
+            "browserGpuMode": "auto",
+            "warnings": [],
+            "partial": false
+          },
+          "createdAt": 1793993870746,
+          "contentHash": "fa2a2d11f43ccdc0e440604a54d653c5cc06b5c4adf60fb9c25928de1c92a9bd",
+          "revision": "bfa90aec-1334-4435-a064-1063736a5804",
+          "inputFingerprint": "2e493cc74a14e345224b3a5dec62e82b1821b6b637c61cc497cb98501453c234",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        },
+        {
+          "scope": "full",
+          "id": "3ec2eea3-4ef7-4602-a883-9bbd8db4ce10-8",
+          "image": "/home/user/python-core/lego-news-ua-shorts/.hyperframes/artifacts/snapshots/c91dc2c1-cef9-4c2c-a812-1af3e3f35f98/frame-08-at-25.5s.png",
+          "time": 25.5,
+          "metadata": {
+            "width": 1080,
+            "height": 1920,
+            "zoomScale": 1,
+            "browserGpuMode": "auto",
+            "warnings": [],
+            "partial": false
+          },
+          "createdAt": 1793993870746,
+          "contentHash": "a476874b7454985c95927290771ea1b446e1ad1b3087f573495f226e021912b1",
+          "revision": "bfa90aec-1334-4435-a064-1063736a5804",
+          "inputFingerprint": "2e493cc74a14e345224b3a5dec62e82b1821b6b637c61cc497cb98501453c234",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        },
+        {
+          "scope": "full",
+          "id": "3ec2eea3-4ef7-4602-a883-9bbd8db4ce10-9",
+          "image": "/home/user/python-core/lego-news-ua-shorts/.hyperframes/artifacts/snapshots/c91dc2c1-cef9-4c2c-a812-1af3e3f35f98/frame-09-at-31s.png",
+          "time": 31,
+          "metadata": {
+            "width": 1080,
+            "height": 1920,
+            "zoomScale": 1,
+            "browserGpuMode": "auto",
+            "warnings": [],
+            "partial": false
+          },
+          "createdAt": 1793993870746,
+          "contentHash": "ec378ec5919afda696e6055d7594b97c54cd335a4579bc57a0b80d957d4d871e",
+          "revision": "bfa90aec-1334-4435-a064-1063736a5804",
+          "inputFingerprint": "2e493cc74a14e345224b3a5dec62e82b1821b6b637c61cc497cb98501453c234",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        },
+        {
+          "scope": "full",
+          "id": "3ec2eea3-4ef7-4602-a883-9bbd8db4ce10-10",
+          "image": "/home/user/python-core/lego-news-ua-shorts/.hyperframes/artifacts/snapshots/c91dc2c1-cef9-4c2c-a812-1af3e3f35f98/frame-10-at-35s.png",
+          "time": 35,
+          "metadata": {
+            "width": 1080,
+            "height": 1920,
+            "zoomScale": 1,
+            "browserGpuMode": "auto",
+            "warnings": [],
+            "partial": false
+          },
+          "createdAt": 1793993870746,
+          "contentHash": "c457eac4ba5e2f8ceda5bd64377daffa0d5af515e06ff4ff9bcb2c9feca1fc25",
+          "revision": "bfa90aec-1334-4435-a064-1063736a5804",
+          "inputFingerprint": "2e493cc74a14e345224b3a5dec62e82b1821b6b637c61cc497cb98501453c234",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        },
+        {
+          "scope": "full",
+          "id": "3ec2eea3-4ef7-4602-a883-9bbd8db4ce10-11",
+          "image": "/home/user/python-core/lego-news-ua-shorts/.hyperframes/artifacts/snapshots/c91dc2c1-cef9-4c2c-a812-1af3e3f35f98/frame-11-at-38s.png",
+          "time": 38,
+          "metadata": {
+            "width": 1080,
+            "height": 1920,
+            "zoomScale": 1,
+            "browserGpuMode": "auto",
+            "warnings": [],
+            "partial": false
+          },
+          "createdAt": 1793993870746,
+          "contentHash": "5ec0ecd096f58db9f22293bfc20d7b2f8ea5d1cf5b47e1c0e87da00e29f78052",
+          "revision": "bfa90aec-1334-4435-a064-1063736a5804",
+          "inputFingerprint": "2e493cc74a14e345224b3a5dec62e82b1821b6b637c61cc497cb98501453c234",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        },
+        {
+          "scope": "full",
+          "id": "3ec2eea3-4ef7-4602-a883-9bbd8db4ce10-12",
+          "image": "/home/user/python-core/lego-news-ua-shorts/.hyperframes/artifacts/snapshots/c91dc2c1-cef9-4c2c-a812-1af3e3f35f98/frame-12-at-42s.png",
+          "time": 42,
+          "metadata": {
+            "width": 1080,
+            "height": 1920,
+            "zoomScale": 1,
+            "browserGpuMode": "auto",
+            "warnings": [],
+            "partial": false
+          },
+          "createdAt": 1793993870746,
+          "contentHash": "7b6d06540c7c42b20c3cef3f96a2b852829e2370482f3532a589b07d96c8b404",
+          "revision": "bfa90aec-1334-4435-a064-1063736a5804",
+          "inputFingerprint": "2e493cc74a14e345224b3a5dec62e82b1821b6b637c61cc497cb98501453c234",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        },
+        {
+          "scope": "full",
+          "id": "3ec2eea3-4ef7-4602-a883-9bbd8db4ce10-13",
+          "image": "/home/user/python-core/lego-news-ua-shorts/.hyperframes/artifacts/snapshots/c91dc2c1-cef9-4c2c-a812-1af3e3f35f98/frame-13-at-46.5s.png",
+          "time": 46.5,
+          "metadata": {
+            "width": 1080,
+            "height": 1920,
+            "zoomScale": 1,
+            "browserGpuMode": "auto",
+            "warnings": [],
+            "partial": false
+          },
+          "createdAt": 1793993870747,
+          "contentHash": "c74aea4073e24ce2113c416fae8b9cf7153a9bbab355d369e6dab6a210fc93ca",
+          "revision": "bfa90aec-1334-4435-a064-1063736a5804",
+          "inputFingerprint": "2e493cc74a14e345224b3a5dec62e82b1821b6b637c61cc497cb98501453c234",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        },
+        {
+          "scope": "full",
+          "id": "3ec2eea3-4ef7-4602-a883-9bbd8db4ce10-14",
+          "image": "/home/user/python-core/lego-news-ua-shorts/.hyperframes/artifacts/snapshots/c91dc2c1-cef9-4c2c-a812-1af3e3f35f98/frame-14-at-51s.png",
+          "time": 51,
+          "metadata": {
+            "width": 1080,
+            "height": 1920,
+            "zoomScale": 1,
+            "browserGpuMode": "auto",
+            "warnings": [],
+            "partial": false
+          },
+          "createdAt": 1793993870747,
+          "contentHash": "e76154a566ca2ff6b23b7035107a44ddf7b7f39f5723caa6cc5afa2bed1dcabf",
+          "revision": "bfa90aec-1334-4435-a064-1063736a5804",
+          "inputFingerprint": "2e493cc74a14e345224b3a5dec62e82b1821b6b637c61cc497cb98501453c234",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        },
+        {
+          "scope": "full",
+          "id": "3ec2eea3-4ef7-4602-a883-9bbd8db4ce10-15",
+          "image": "/home/user/python-core/lego-news-ua-shorts/.hyperframes/artifacts/snapshots/c91dc2c1-cef9-4c2c-a812-1af3e3f35f98/frame-15-at-56s.png",
+          "time": 56,
+          "metadata": {
+            "width": 1080,
+            "height": 1920,
+            "zoomScale": 1,
+            "browserGpuMode": "auto",
+            "warnings": [],
+            "partial": false
+          },
+          "createdAt": 1793993870747,
+          "contentHash": "b8db07083df33071c3399902ddcae0e7aecdd0f5fce47862074dc3fd54036b4e",
+          "revision": "bfa90aec-1334-4435-a064-1063736a5804",
+          "inputFingerprint": "2e493cc74a14e345224b3a5dec62e82b1821b6b637c61cc497cb98501453c234",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        },
+        {
+          "scope": "full",
+          "id": "3ec2eea3-4ef7-4602-a883-9bbd8db4ce10-16",
+          "image": "/home/user/python-core/lego-news-ua-shorts/.hyperframes/artifacts/snapshots/c91dc2c1-cef9-4c2c-a812-1af3e3f35f98/frame-16-at-62s.png",
+          "time": 62,
+          "metadata": {
+            "width": 1080,
+            "height": 1920,
+            "zoomScale": 1,
+            "browserGpuMode": "auto",
+            "warnings": [],
+            "partial": false
+          },
+          "createdAt": 1793993870747,
+          "contentHash": "a26183c25cbc4d6de04b8de1e0e75902f3cdc922ed60bfdcf55ad9def5e5f213",
+          "revision": "bfa90aec-1334-4435-a064-1063736a5804",
+          "inputFingerprint": "2e493cc74a14e345224b3a5dec62e82b1821b6b637c61cc497cb98501453c234",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        },
+        {
+          "scope": "full",
+          "id": "3ec2eea3-4ef7-4602-a883-9bbd8db4ce10-17",
+          "image": "/home/user/python-core/lego-news-ua-shorts/.hyperframes/artifacts/snapshots/c91dc2c1-cef9-4c2c-a812-1af3e3f35f98/frame-17-at-67s.png",
+          "time": 67,
+          "metadata": {
+            "width": 1080,
+            "height": 1920,
+            "zoomScale": 1,
+            "browserGpuMode": "auto",
+            "warnings": [],
+            "partial": false
+          },
+          "createdAt": 1793993870747,
+          "contentHash": "f94230c8aae456b0daf24feec18f13e08b29fe35a4af25b8866b1c600fa2b5f6",
+          "revision": "bfa90aec-1334-4435-a064-1063736a5804",
+          "inputFingerprint": "2e493cc74a14e345224b3a5dec62e82b1821b6b637c61cc497cb98501453c234",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        },
+        {
+          "scope": "full",
+          "id": "3ec2eea3-4ef7-4602-a883-9bbd8db4ce10-18",
+          "image": "/home/user/python-core/lego-news-ua-shorts/.hyperframes/artifacts/snapshots/c91dc2c1-cef9-4c2c-a812-1af3e3f35f98/frame-18-at-71s.png",
+          "time": 71,
+          "metadata": {
+            "width": 1080,
+            "height": 1920,
+            "zoomScale": 1,
+            "browserGpuMode": "auto",
+            "warnings": [],
+            "partial": false
+          },
+          "createdAt": 1793993870747,
+          "contentHash": "6cc35733348d79ae3dc0cf1f0057eb7c81d47dc79cc0265106d072e09fc9ab67",
+          "revision": "bfa90aec-1334-4435-a064-1063736a5804",
+          "inputFingerprint": "2e493cc74a14e345224b3a5dec62e82b1821b6b637c61cc497cb98501453c234",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        },
+        {
+          "scope": "full",
+          "id": "3ec2eea3-4ef7-4602-a883-9bbd8db4ce10-19",
+          "image": "/home/user/python-core/lego-news-ua-shorts/.hyperframes/artifacts/snapshots/c91dc2c1-cef9-4c2c-a812-1af3e3f35f98/frame-19-at-74s.png",
+          "time": 74,
+          "metadata": {
+            "width": 1080,
+            "height": 1920,
+            "zoomScale": 1,
+            "browserGpuMode": "auto",
+            "warnings": [],
+            "partial": false
+          },
+          "createdAt": 1793993870747,
+          "contentHash": "ce7332004490805d1ff5b1029387561e7c0fe96ff4690754b27556be66427fc5",
+          "revision": "bfa90aec-1334-4435-a064-1063736a5804",
+          "inputFingerprint": "2e493cc74a14e345224b3a5dec62e82b1821b6b637c61cc497cb98501453c234",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        },
+        {
+          "scope": "full",
+          "id": "3ec2eea3-4ef7-4602-a883-9bbd8db4ce10-20",
+          "image": "/home/user/python-core/lego-news-ua-shorts/.hyperframes/artifacts/snapshots/c91dc2c1-cef9-4c2c-a812-1af3e3f35f98/frame-20-at-78s.png",
+          "time": 78,
+          "metadata": {
+            "width": 1080,
+            "height": 1920,
+            "zoomScale": 1,
+            "browserGpuMode": "auto",
+            "warnings": [],
+            "partial": false
+          },
+          "createdAt": 1793993870747,
+          "contentHash": "0a08d4371a22b3ae60087fa4b68696ed79694459941b65bfa95ba84420649618",
+          "revision": "bfa90aec-1334-4435-a064-1063736a5804",
+          "inputFingerprint": "2e493cc74a14e345224b3a5dec62e82b1821b6b637c61cc497cb98501453c234",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        },
+        {
+          "scope": "full",
+          "id": "3ec2eea3-4ef7-4602-a883-9bbd8db4ce10-21",
+          "image": "/home/user/python-core/lego-news-ua-shorts/.hyperframes/artifacts/snapshots/c91dc2c1-cef9-4c2c-a812-1af3e3f35f98/frame-21-at-82s.png",
+          "time": 82,
+          "metadata": {
+            "width": 1080,
+            "height": 1920,
+            "zoomScale": 1,
+            "browserGpuMode": "auto",
+            "warnings": [],
+            "partial": false
+          },
+          "createdAt": 1793993870747,
+          "contentHash": "d3d8bae2562f3091266c55e3770a0202c50b97a1415abb57449955d6b1c17da7",
+          "revision": "bfa90aec-1334-4435-a064-1063736a5804",
+          "inputFingerprint": "2e493cc74a14e345224b3a5dec62e82b1821b6b637c61cc497cb98501453c234",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        },
+        {
+          "scope": "full",
+          "id": "3ec2eea3-4ef7-4602-a883-9bbd8db4ce10-22",
+          "image": "/home/user/python-core/lego-news-ua-shorts/.hyperframes/artifacts/snapshots/c91dc2c1-cef9-4c2c-a812-1af3e3f35f98/frame-22-at-85s.png",
+          "time": 85,
+          "metadata": {
+            "width": 1080,
+            "height": 1920,
+            "zoomScale": 1,
+            "browserGpuMode": "auto",
+            "warnings": [],
+            "partial": false
+          },
+          "createdAt": 1793993870747,
+          "contentHash": "6bf01744befffec64a56aba9355005549ea2574576e5130240dd97678907148a",
+          "revision": "bfa90aec-1334-4435-a064-1063736a5804",
+          "inputFingerprint": "2e493cc74a14e345224b3a5dec62e82b1821b6b637c61cc497cb98501453c234",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        },
+        {
+          "scope": "full",
+          "id": "3ec2eea3-4ef7-4602-a883-9bbd8db4ce10-23",
+          "image": "/home/user/python-core/lego-news-ua-shorts/.hyperframes/artifacts/snapshots/c91dc2c1-cef9-4c2c-a812-1af3e3f35f98/frame-23-at-89s.png",
+          "time": 89,
+          "metadata": {
+            "width": 1080,
+            "height": 1920,
+            "zoomScale": 1,
+            "browserGpuMode": "auto",
+            "warnings": [],
+            "partial": false
+          },
+          "createdAt": 1793993870747,
+          "contentHash": "125baa39ae8b6d08273236c22e07ccaec1b6ef9678d3d6e8f96d4d1de2267bca",
+          "revision": "bfa90aec-1334-4435-a064-1063736a5804",
+          "inputFingerprint": "2e493cc74a14e345224b3a5dec62e82b1821b6b637c61cc497cb98501453c234",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        },
+        {
+          "scope": "full",
+          "id": "3ec2eea3-4ef7-4602-a883-9bbd8db4ce10-24",
+          "image": "/home/user/python-core/lego-news-ua-shorts/.hyperframes/artifacts/snapshots/c91dc2c1-cef9-4c2c-a812-1af3e3f35f98/frame-24-at-89.51s.png",
+          "time": 89.51,
+          "metadata": {
+            "width": 1080,
+            "height": 1920,
+            "zoomScale": 1,
+            "browserGpuMode": "auto",
+            "warnings": [],
+            "partial": false
+          },
+          "createdAt": 1793993870747,
+          "contentHash": "5cca03f0c20eed8729039a9e52ccb99c20232ca248d1bac8daca8b6ae54df1ca",
+          "revision": "bfa90aec-1334-4435-a064-1063736a5804",
+          "inputFingerprint": "2e493cc74a14e345224b3a5dec62e82b1821b6b637c61cc497cb98501453c234",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        }
+      ],
+      "7da9d6a3-4794-4272-939f-9e534a6e36de": [
+        {
+          "scope": "full",
+          "id": "ded01bcb-88ab-4658-bcc3-55faa9330afa-0",
+          "image": "/home/user/python-core/lego-news-ua-shorts/.hyperframes/artifacts/snapshots/16eed36f-0f94-4baa-a511-2ef98b79d382/frame-00-at-1s.png",
+          "time": 1,
+          "metadata": {
+            "width": 1080,
+            "height": 1920,
+            "zoomScale": 1,
+            "browserGpuMode": "auto",
+            "warnings": [],
+            "partial": false
+          },
+          "createdAt": 1793993934310,
+          "contentHash": "75b5ad9e6070e190e5e35b15fe88ea77774890f2dfbe8da49720ff9c495e67a1",
+          "revision": "7da9d6a3-4794-4272-939f-9e534a6e36de",
+          "inputFingerprint": "012953a29b15f49e1e2576fcf442e4adb8dc35399550c3213c3fcd98f12beb8d",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        },
+        {
+          "scope": "full",
+          "id": "ded01bcb-88ab-4658-bcc3-55faa9330afa-1",
+          "image": "/home/user/python-core/lego-news-ua-shorts/.hyperframes/artifacts/snapshots/16eed36f-0f94-4baa-a511-2ef98b79d382/frame-01-at-22s.png",
+          "time": 22,
+          "metadata": {
+            "width": 1080,
+            "height": 1920,
+            "zoomScale": 1,
+            "browserGpuMode": "auto",
+            "warnings": [],
+            "partial": false
+          },
+          "createdAt": 1793993934310,
+          "contentHash": "355cc3378fa2437ac2dfa402aaa497a8e10049b0565f5a6b0aaea1eebdd494b9",
+          "revision": "7da9d6a3-4794-4272-939f-9e534a6e36de",
+          "inputFingerprint": "012953a29b15f49e1e2576fcf442e4adb8dc35399550c3213c3fcd98f12beb8d",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        },
+        {
+          "scope": "full",
+          "id": "ded01bcb-88ab-4658-bcc3-55faa9330afa-2",
+          "image": "/home/user/python-core/lego-news-ua-shorts/.hyperframes/artifacts/snapshots/16eed36f-0f94-4baa-a511-2ef98b79d382/frame-02-at-44s.png",
+          "time": 44,
+          "metadata": {
+            "width": 1080,
+            "height": 1920,
+            "zoomScale": 1,
+            "browserGpuMode": "auto",
+            "warnings": [],
+            "partial": false
+          },
+          "createdAt": 1793993934310,
+          "contentHash": "7511c6fc5f2573f2cde03e4eb7c4364727385055687a183b8b46edecf2410090",
+          "revision": "7da9d6a3-4794-4272-939f-9e534a6e36de",
+          "inputFingerprint": "012953a29b15f49e1e2576fcf442e4adb8dc35399550c3213c3fcd98f12beb8d",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        },
+        {
+          "scope": "full",
+          "id": "ded01bcb-88ab-4658-bcc3-55faa9330afa-3",
+          "image": "/home/user/python-core/lego-news-ua-shorts/.hyperframes/artifacts/snapshots/16eed36f-0f94-4baa-a511-2ef98b79d382/frame-03-at-89.51s.png",
+          "time": 89.51,
+          "metadata": {
+            "width": 1080,
+            "height": 1920,
+            "zoomScale": 1,
+            "browserGpuMode": "auto",
+            "warnings": [],
+            "partial": false
+          },
+          "createdAt": 1793993934311,
+          "contentHash": "5cca03f0c20eed8729039a9e52ccb99c20232ca248d1bac8daca8b6ae54df1ca",
+          "revision": "7da9d6a3-4794-4272-939f-9e534a6e36de",
+          "inputFingerprint": "012953a29b15f49e1e2576fcf442e4adb8dc35399550c3213c3fcd98f12beb8d",
+          "inputScope": "local-project-files",
+          "attribution": "recorded-revision"
+        }
+      ]
+    },
+    "unversioned": []
+  }
+}

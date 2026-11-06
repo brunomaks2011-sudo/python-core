@@ -1,0 +1,100 @@
+<template>
+  <style>
+@font-face{font-family:'LNU Display';font-weight:700;src:url('assets/fonts/montserrat-latin-700-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Display';font-weight:700;src:url('assets/fonts/montserrat-cyrillic-700-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:'LNU Display';font-weight:800;src:url('assets/fonts/montserrat-latin-800-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Display';font-weight:800;src:url('assets/fonts/montserrat-cyrillic-800-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:'LNU Display';font-weight:900;src:url('assets/fonts/montserrat-latin-900-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Display';font-weight:900;src:url('assets/fonts/montserrat-cyrillic-900-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:'LNU Text';font-weight:600;src:url('assets/fonts/inter-latin-600-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Text';font-weight:600;src:url('assets/fonts/inter-cyrillic-600-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:'LNU Text';font-weight:700;src:url('assets/fonts/inter-latin-700-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Text';font-weight:700;src:url('assets/fonts/inter-cyrillic-700-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+:root{--red:#E3000B;--red-deep:#A8000A;--yellow:#FFD500;--white:#fff;--black:#0B0B0D;--official:#15803D;--leak:#C2410C;--rumor:#1D4ED8;}
+
+    #root { position:absolute; inset:0; overflow:hidden; font-family:'LNU Text',sans-serif; color:#fff; }
+    #root .bg { position:absolute; inset:0; background:
+        radial-gradient(900px 900px at 80% 25%, rgba(227,0,11,.55), transparent 62%),
+        radial-gradient(800px 700px at 0% 100%, rgba(255,213,0,.14), transparent 60%),
+        linear-gradient(170deg,#1b1b1f 0%,#0b0b0d 70%); }
+    #root .studs { position:absolute; left:-80px; top:-80px; width:1240px; height:2080px; opacity:.08;
+        background-image:radial-gradient(circle at 40px 40px,#fff 0 17px,transparent 18px); background-size:80px 80px; }
+    #root .badge { position:absolute; right:90px; top:196px; display:flex; align-items:center; gap:12px; padding:10px 22px 10px 18px; border-radius:999px;
+        font:900 32px 'LNU Display'; letter-spacing:.1em; color:#fff; }
+    #root .badge i { width:18px; height:18px; border-radius:50%; background:#fff; display:block; }
+    #root .theme { position:absolute; left:90px; top:272px; font:800 34px 'LNU Display'; letter-spacing:.12em; color:var(--yellow); text-transform:uppercase; }
+    #root .num { position:absolute; left:84px; top:312px; font:900 150px/1 'LNU Display'; color:#fff; letter-spacing:-.03em; text-shadow:0 8px 0 rgba(0,0,0,.35); }
+    #root .name { position:absolute; left:90px; right:90px; top:470px; font:900 52px/1.05 'LNU Display'; color:#fff; white-space:nowrap; }
+    #root .stage { position:absolute; left:60px; top:548px; width:960px; height:520px; border-radius:34px; background:#fff; overflow:hidden;
+        box-shadow:0 0 0 8px var(--yellow), 0 40px 90px rgba(0,0,0,.6); }
+    #root .ph { position:absolute; inset:0; }
+    #root .ph img { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; }
+    #root .src { position:absolute; right:16px; bottom:12px; padding:5px 12px; border-radius:8px; background:rgba(11,11,13,.78); font:600 28px 'LNU Text'; color:#fff; z-index:50; }
+    #root .ghost { position:absolute; left:0; right:0; top:1390px; text-align:center; font:900 330px/1 'LNU Display'; color:rgba(255,255,255,.05); letter-spacing:-.04em; }
+    #root .chips { position:absolute; left:60px; top:1088px; width:880px; height:100px; }
+    #root .chip { position:absolute; top:0; height:100px; border-radius:22px; display:flex; align-items:center; justify-content:center; gap:10px;
+        font:900 46px 'LNU Display'; white-space:nowrap; box-shadow:0 10px 0 rgba(0,0,0,.35); }
+    #root .chip small { font:800 28px 'LNU Display'; opacity:.85; }
+    #root .c-pcs { left:0; width:300px; background:#fff; color:var(--black); }
+    #root .c-pcs::before { content:''; width:34px; height:26px; border-radius:6px; background:var(--red); box-shadow:inset 0 -5px 0 rgba(0,0,0,.2); margin-right:4px; }
+    #root .c-price { left:318px; width:250px; background:var(--yellow); color:var(--black); }
+    #root .c-date { left:586px; width:294px; background:var(--red); color:#fff; font-size:42px; }
+
+    #root .wow { position:absolute; left:60px; top:960px; padding:8px 22px; border-radius:16px; background:var(--red); font:900 56px 'LNU Display'; color:#fff; box-shadow:0 0 0 5px var(--yellow); z-index:60; }
+
+  </style>
+  <div id="root" data-composition-id="tacos" data-width="1080" data-height="1920" data-duration="13.519">
+    <div class="bg"></div>
+    <div id="tacos-studs" class="studs" data-layout-ignore></div>
+    <div id="tacos-ghost" class="ghost" data-layout-ignore>77088</div>
+    <div id="tacos-badge" class="badge" style="background:var(--leak)"><i></i>LEAK</div>
+    <div id="tacos-theme" class="theme">LEGO Fortnite</div>
+    <div id="tacos-num" class="num">77088</div>
+    <div id="tacos-name" class="name">Такос Гуакос</div>
+    <div id="tacos-stage" class="stage" data-layout-allow-overflow>
+      <div id="tacos-p1" class="ph clip" data-start="0" data-duration="2.239" data-track-index="2" style="z-index:1"><img id="tacos-p1-i" src="assets/photos/5932_3.jpg" alt=""></div>
+      <div id="tacos-p2" class="ph clip" data-start="2.189" data-duration="2.783" data-track-index="3" style="z-index:2"><img id="tacos-p2-i" src="assets/photos/5932_1.jpg" alt=""></div>
+      <div id="tacos-p3" class="ph clip" data-start="4.922" data-duration="1.146" data-track-index="2" style="z-index:3"><img id="tacos-p3-i" src="assets/photos/5916_3.jpg" alt=""></div>
+      <div id="tacos-p4" class="ph clip" data-start="6.018" data-duration="1.668" data-track-index="3" style="z-index:4"><img id="tacos-p4-i" src="assets/photos/5916_4.jpg" alt=""></div>
+      <div id="tacos-p5" class="ph clip" data-start="7.636" data-duration="1.678" data-track-index="2" style="z-index:5"><img id="tacos-p5-i" src="assets/photos/5911_2.jpg" alt=""></div>
+      <div id="tacos-p6" class="ph clip" data-start="9.264" data-duration="4.255" data-track-index="3" style="z-index:6"><img id="tacos-p6-i" src="assets/photos/5932_4.jpg" alt=""></div>
+      <div id="tacos-src" class="src">Фото: The Stud Ledger · t.me/thestudledger/5932, 5916, 5911</div>
+    </div>
+    <div id="tacos-chips" class="chips">
+      <div id="tacos-cp" class="chip c-pcs"><span id="tacos-pcs">0</span><small>дет.</small></div>
+      <div id="tacos-cr" class="chip c-price">20 €</div>
+      <div id="tacos-cd" class="chip c-date">01.01.2027</div>
+    </div>
+    <div id="tc-wow" class="wow clip" data-start="7.636" data-duration="1.628" data-track-index="7">ВСЬОГО 20 €!</div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    const fmt = (v) => Math.round(v).toLocaleString('en-US').replace(/,/g, '\u2009');
+    tl.fromTo('#tacos-studs', { y: 0 }, { y: -80, duration: 13.519, ease: 'none' }, 0);
+    tl.fromTo('#tacos-ghost', {y:200, opacity:0}, {y:0, opacity:1, duration:1.2, ease:'expo.out'}, 0.0);
+    tl.fromTo('#tacos-badge', {scale:0, rotation:-10}, {scale:1, rotation:0, duration:0.4, ease:'back.out(2.6)'}, 0.05);
+    tl.fromTo('#tacos-theme', {x:-120, opacity:0}, {x:0, opacity:1, duration:0.35, ease:'expo.out'}, 0.0);
+    tl.fromTo('#tacos-num', {scale:2.4, opacity:0, y:-30}, {scale:1, opacity:1, y:0, duration:0.45, ease:'expo.out'}, 0.1);
+    tl.fromTo('#tacos-name', {x:160, opacity:0}, {x:0, opacity:1, duration:0.45, ease:'expo.out'}, 0.25);
+    tl.fromTo('#tacos-stage', {y:700, rotation:6, scale:0.9}, {y:0, rotation:0, scale:1, duration:0.55, ease:'expo.out'}, 0.05);
+    tl.fromTo('#tacos-p1-i', {scale:1.0, x:-18}, {scale:1.14, x:18, duration:2.239, ease:'sine.inOut'}, 0);
+    tl.fromTo('#tacos-p2', {x:-1100}, {x:0, duration:0.32, ease:'expo.out'}, 2.189);
+    tl.fromTo('#tacos-p2-i', {scale:1.41, x:22}, {scale:1.02, x:-10, duration:2.783, ease:'expo.out'}, 2.189);
+    tl.fromTo('#tacos-p3', {x:1100}, {x:0, duration:0.32, ease:'expo.out'}, 4.922);
+    tl.fromTo('#tacos-p3-i', {scale:1.29, x:0}, {scale:1.2, x:-26, duration:1.146, ease:'expo.out'}, 4.922);
+    tl.fromTo('#tacos-p4', {x:-1100}, {x:0, duration:0.32, ease:'expo.out'}, 6.018);
+    tl.fromTo('#tacos-p4-i', {scale:1.43, x:-24}, {scale:1.04, x:12, duration:1.668, ease:'expo.out'}, 6.018);
+    tl.fromTo('#tacos-p5', {x:1100}, {x:0, duration:0.32, ease:'expo.out'}, 7.636);
+    tl.fromTo('#tacos-p5-i', {scale:1.25, x:-18}, {scale:1.14, x:18, duration:1.678, ease:'expo.out'}, 7.636);
+    tl.fromTo('#tacos-p6', {x:-1100}, {x:0, duration:0.32, ease:'expo.out'}, 9.264);
+    tl.fromTo('#tacos-p6-i', {scale:1.41, x:22}, {scale:1.02, x:-10, duration:4.255, ease:'expo.out'}, 9.264);
+    tl.fromTo('#tacos-stage', {rotation:0}, {rotation:-1.2, duration:13.519, ease:'sine.inOut'}, 0.6);
+    tl.fromTo('#tacos-cp', {y:140, opacity:0}, {y:0, opacity:1, duration:0.35, ease:'back.out(2)'}, 6.068);
+    { const o={v:0}, el=document.querySelector('#tacos-pcs'); tl.fromTo(o, {v:0}, {v:193, duration:1.0, ease:'power3.out', onUpdate:()=>{el.textContent=fmt(o.v);}}, 6.068); }
+    tl.fromTo('#tacos-cr', {scale:0, rotation:-14}, {scale:1, rotation:0, duration:0.45, ease:'back.out(3)'}, 8.213);
+    tl.fromTo('#tacos-cr', {scale:1}, {scale:1.12, duration:0.16, yoyo:true, repeat:1, ease:'power2.out'}, 8.663);
+    tl.fromTo('#tacos-cd', {x:300, opacity:0}, {x:0, opacity:1, duration:0.4, ease:'expo.out'}, 10.56);
+    tl.fromTo('#tc-wow', {scale:0, rotation:-10}, {scale:1, rotation:-3, duration:0.4, ease:'back.out(3)'}, 7.636);
+    window.__timelines["tacos"] = tl;
+  </script>
+</template>

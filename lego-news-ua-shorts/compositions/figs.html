@@ -1,0 +1,115 @@
+<template>
+  <style>
+@font-face{font-family:'LNU Display';font-weight:700;src:url('assets/fonts/montserrat-latin-700-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Display';font-weight:700;src:url('assets/fonts/montserrat-cyrillic-700-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:'LNU Display';font-weight:800;src:url('assets/fonts/montserrat-latin-800-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Display';font-weight:800;src:url('assets/fonts/montserrat-cyrillic-800-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:'LNU Display';font-weight:900;src:url('assets/fonts/montserrat-latin-900-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Display';font-weight:900;src:url('assets/fonts/montserrat-cyrillic-900-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:'LNU Text';font-weight:600;src:url('assets/fonts/inter-latin-600-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Text';font-weight:600;src:url('assets/fonts/inter-cyrillic-600-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:'LNU Text';font-weight:700;src:url('assets/fonts/inter-latin-700-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Text';font-weight:700;src:url('assets/fonts/inter-cyrillic-700-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+:root{--red:#E3000B;--red-deep:#A8000A;--yellow:#FFD500;--white:#fff;--black:#0B0B0D;--official:#15803D;--leak:#C2410C;--rumor:#1D4ED8;}
+
+    #root { position:absolute; inset:0; overflow:hidden; font-family:'LNU Text',sans-serif; color:#fff; }
+    #root .bg { position:absolute; inset:0; background:
+        radial-gradient(900px 900px at 80% 25%, rgba(227,0,11,.55), transparent 62%),
+        radial-gradient(800px 700px at 0% 100%, rgba(255,213,0,.14), transparent 60%),
+        linear-gradient(170deg,#1b1b1f 0%,#0b0b0d 70%); }
+    #root .studs { position:absolute; left:-80px; top:-80px; width:1240px; height:2080px; opacity:.08;
+        background-image:radial-gradient(circle at 40px 40px,#fff 0 17px,transparent 18px); background-size:80px 80px; }
+    #root .badge { position:absolute; right:90px; top:196px; display:flex; align-items:center; gap:12px; padding:10px 22px 10px 18px; border-radius:999px;
+        font:900 32px 'LNU Display'; letter-spacing:.1em; color:#fff; }
+    #root .badge i { width:18px; height:18px; border-radius:50%; background:#fff; display:block; }
+    #root .theme { position:absolute; left:90px; top:272px; font:800 34px 'LNU Display'; letter-spacing:.12em; color:var(--yellow); text-transform:uppercase; }
+    #root .num { position:absolute; left:84px; top:312px; font:900 150px/1 'LNU Display'; color:#fff; letter-spacing:-.03em; text-shadow:0 8px 0 rgba(0,0,0,.35); }
+    #root .name { position:absolute; left:90px; right:90px; top:470px; font:900 52px/1.05 'LNU Display'; color:#fff; white-space:nowrap; }
+    #root .stage { position:absolute; left:60px; top:548px; width:960px; height:520px; border-radius:34px; background:#fff; overflow:hidden;
+        box-shadow:0 0 0 8px var(--yellow), 0 40px 90px rgba(0,0,0,.6); }
+    #root .ph { position:absolute; inset:0; }
+    #root .ph img { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; }
+    #root .src { position:absolute; right:16px; bottom:12px; padding:5px 12px; border-radius:8px; background:rgba(11,11,13,.78); font:600 28px 'LNU Text'; color:#fff; z-index:50; }
+    #root .ghost { position:absolute; left:0; right:0; top:1390px; text-align:center; font:900 330px/1 'LNU Display'; color:rgba(255,255,255,.05); letter-spacing:-.04em; }
+    #root .chips { position:absolute; left:60px; top:1088px; width:880px; height:100px; }
+    #root .chip { position:absolute; top:0; height:100px; border-radius:22px; display:flex; align-items:center; justify-content:center; gap:10px;
+        font:900 46px 'LNU Display'; white-space:nowrap; box-shadow:0 10px 0 rgba(0,0,0,.35); }
+    #root .chip small { font:800 28px 'LNU Display'; opacity:.85; }
+    #root .c-pcs { left:0; width:300px; background:#fff; color:var(--black); }
+    #root .c-pcs::before { content:''; width:34px; height:26px; border-radius:6px; background:var(--red); box-shadow:inset 0 -5px 0 rgba(0,0,0,.2); margin-right:4px; }
+    #root .c-price { left:318px; width:250px; background:var(--yellow); color:var(--black); }
+    #root .c-date { left:586px; width:294px; background:var(--red); color:#fff; font-size:42px; }
+
+    #root .head { position:absolute; left:90px; top:196px; font:900 60px 'LNU Display'; color:#fff; }
+    #root .head b { color:var(--yellow); }
+    #root .strip { position:absolute; left:90px; top:286px; width:900px; height:150px; }
+    #root .strip img { position:absolute; top:0; width:140px; height:150px; object-fit:contain; background:#fff; border-radius:16px; }
+    #root .big { position:absolute; left:210px; top:470px; width:660px; height:700px; border-radius:36px; background:#fff; overflow:hidden; box-shadow:0 0 0 8px var(--yellow), 0 40px 90px rgba(0,0,0,.6); }
+    #root .big img { position:absolute; left:40px; top:40px; width:580px; height:520px; object-fit:contain; }
+    #root .big .nm { position:absolute; left:0; right:0; bottom:0; height:130px; display:flex; align-items:center; justify-content:center; text-align:center; padding:0 20px;
+        background:var(--red); font:900 54px/1.0 'LNU Display'; color:#fff; }
+    #root .big .ix { position:absolute; z-index:5; left:26px; top:18px; font:900 56px 'LNU Display'; color:var(--red); }
+    #root .group { position:absolute; left:60px; top:470px; width:960px; height:600px; border-radius:34px; background:#fff; overflow:hidden; box-shadow:0 0 0 8px var(--yellow), 0 40px 90px rgba(0,0,0,.6); }
+    #root .group img { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; }
+    #root .date2 { position:absolute; left:60px; top:1088px; padding:14px 30px; border-radius:22px; background:var(--red); font:900 56px 'LNU Display'; color:#fff; box-shadow:0 10px 0 rgba(0,0,0,.35); }
+    #root .date2 small { font:800 32px 'LNU Display'; color:var(--yellow); margin-right:14px; }
+    #root .srcf { position:absolute; left:90px; top:440px; font:600 28px 'LNU Text'; color:rgba(255,255,255,.75); }
+
+  </style>
+  <div id="root" data-composition-id="figs" data-width="1080" data-height="1920" data-duration="14.326">
+    <div class="bg"></div>
+    <div id="figs-studs" class="studs" data-layout-ignore></div>
+    <div id="fg-head" class="head">67005 · <b>6 мініфігурок</b></div>
+    <div class="strip">
+      <img id="fg-s0" src="assets/photos/fig1.png" alt="" style="left:0px">
+      <img id="fg-s1" src="assets/photos/fig2.png" alt="" style="left:152px">
+      <img id="fg-s2" src="assets/photos/fig3.png" alt="" style="left:304px">
+      <img id="fg-s3" src="assets/photos/fig4.png" alt="" style="left:456px">
+      <img id="fg-s4" src="assets/photos/fig5.png" alt="" style="left:608px">
+      <img id="fg-s5" src="assets/photos/fig6.png" alt="" style="left:760px">
+    </div>
+    <div id="fg-b0" class="big clip" data-start="0.0" data-duration="2.157" data-track-index="3" style="z-index:10"><div class="ix" data-layout-allow-overlap>1/6</div><img id="fg-b0-i" src="assets/photos/fig1.png" alt=""><div id="fg-b0-n" class="nm">Злий Доктор Стрендж</div></div>
+    <div id="fg-b1" class="big clip" data-start="2.137" data-duration="1.907" data-track-index="4" style="z-index:11"><div class="ix" data-layout-allow-overlap>2/6</div><img id="fg-b1-i" src="assets/photos/fig2.png" alt=""><div id="fg-b1-n" class="nm">Залізна Людина</div></div>
+    <div id="fg-b2" class="big clip" data-start="4.024" data-duration="1.872" data-track-index="3" style="z-index:12"><div class="ix" data-layout-allow-overlap>3/6</div><img id="fg-b2-i" src="assets/photos/fig3.png" alt=""><div id="fg-b2-n" class="nm">Людина-павук</div></div>
+    <div id="fg-b3" class="big clip" data-start="5.876" data-duration="1.64" data-track-index="4" style="z-index:13"><div class="ix" data-layout-allow-overlap>4/6</div><img id="fg-b3-i" src="assets/photos/fig4.png" alt=""><div id="fg-b3-n" class="nm">Зомбі Ванда</div></div>
+    <div id="fg-b4" class="big clip" data-start="7.496" data-duration="1.571" data-track-index="3" style="z-index:14"><div class="ix" data-layout-allow-overlap>5/6</div><img id="fg-b4-i" src="assets/photos/fig5.png" alt=""><div id="fg-b4-n" class="nm">Немор</div></div>
+    <div id="fg-b5" class="big clip" data-start="9.047" data-duration="0.906" data-track-index="4" style="z-index:15"><div class="ix" data-layout-allow-overlap>6/6</div><img id="fg-b5-i" src="assets/photos/fig6.png" alt=""><div id="fg-b5-n" class="nm">Зомбі Тор</div></div>
+    <div id="fg-g" class="group clip" data-start="9.933" data-duration="4.393" data-track-index="5" style="z-index:30"><img id="fg-g-i" src="assets/photos/5897_5.jpg" alt=""></div>
+    <div id="fg-d" class="date2 clip" data-start="11.318" data-duration="3.008" data-track-index="6" style="z-index:31"><small>РЕЛІЗ</small>01.01.2027</div>
+    <div id="fg-src" class="srcf">Фото: The Stud Ledger · t.me/thestudledger/5897</div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    const fmt = (v) => Math.round(v).toLocaleString('en-US').replace(/,/g, '\u2009');
+    tl.fromTo('#figs-studs', { y: 0 }, { y: -80, duration: 14.326, ease: 'none' }, 0);
+    tl.fromTo('#fg-head', {x:-100, opacity:0}, {x:0, opacity:1, duration:0.35, ease:'expo.out'}, 0.0);
+    tl.fromTo('#fg-s0', {scale:0, opacity:0}, {scale:1, opacity:1, duration:0.3, ease:'back.out(2.5)'}, 0.15);
+    tl.fromTo('#fg-s1', {scale:0, opacity:0}, {scale:1, opacity:1, duration:0.3, ease:'back.out(2.5)'}, 2.287);
+    tl.fromTo('#fg-s2', {scale:0, opacity:0}, {scale:1, opacity:1, duration:0.3, ease:'back.out(2.5)'}, 4.174);
+    tl.fromTo('#fg-s3', {scale:0, opacity:0}, {scale:1, opacity:1, duration:0.3, ease:'back.out(2.5)'}, 6.026);
+    tl.fromTo('#fg-s4', {scale:0, opacity:0}, {scale:1, opacity:1, duration:0.3, ease:'back.out(2.5)'}, 7.646);
+    tl.fromTo('#fg-s5', {scale:0, opacity:0}, {scale:1, opacity:1, duration:0.3, ease:'back.out(2.5)'}, 9.197);
+    tl.fromTo('#fg-b0', {rotationY:-90, transformPerspective:1400, scale:0.8}, {rotationY:0, scale:1, duration:0.32, ease:'expo.out'}, 0.0);
+    tl.fromTo('#fg-b0-i', {scale:1.35, y:40}, {scale:1.0, y:0, duration:2.137, ease:'expo.out'}, 0.0);
+    tl.fromTo('#fg-b0-n', {y:140}, {y:0, duration:0.25, ease:'expo.out'}, 0.08);
+    tl.fromTo('#fg-b1', {rotationY:90, transformPerspective:1400, scale:0.8}, {rotationY:0, scale:1, duration:0.32, ease:'expo.out'}, 2.137);
+    tl.fromTo('#fg-b1-i', {scale:1.35, y:40}, {scale:1.0, y:0, duration:1.887, ease:'expo.out'}, 2.137);
+    tl.fromTo('#fg-b1-n', {y:140}, {y:0, duration:0.25, ease:'expo.out'}, 2.217);
+    tl.fromTo('#fg-b2', {rotationY:-90, transformPerspective:1400, scale:0.8}, {rotationY:0, scale:1, duration:0.32, ease:'expo.out'}, 4.024);
+    tl.fromTo('#fg-b2-i', {scale:1.35, y:40}, {scale:1.0, y:0, duration:1.852, ease:'expo.out'}, 4.024);
+    tl.fromTo('#fg-b2-n', {y:140}, {y:0, duration:0.25, ease:'expo.out'}, 4.104);
+    tl.fromTo('#fg-b3', {rotationY:90, transformPerspective:1400, scale:0.8}, {rotationY:0, scale:1, duration:0.32, ease:'expo.out'}, 5.876);
+    tl.fromTo('#fg-b3-i', {scale:1.35, y:40}, {scale:1.0, y:0, duration:1.62, ease:'expo.out'}, 5.876);
+    tl.fromTo('#fg-b3-n', {y:140}, {y:0, duration:0.25, ease:'expo.out'}, 5.956);
+    tl.fromTo('#fg-b4', {rotationY:-90, transformPerspective:1400, scale:0.8}, {rotationY:0, scale:1, duration:0.32, ease:'expo.out'}, 7.496);
+    tl.fromTo('#fg-b4-i', {scale:1.35, y:40}, {scale:1.0, y:0, duration:1.551, ease:'expo.out'}, 7.496);
+    tl.fromTo('#fg-b4-n', {y:140}, {y:0, duration:0.25, ease:'expo.out'}, 7.576);
+    tl.fromTo('#fg-b5', {rotationY:90, transformPerspective:1400, scale:0.8}, {rotationY:0, scale:1, duration:0.32, ease:'expo.out'}, 9.047);
+    tl.fromTo('#fg-b5-i', {scale:1.35, y:40}, {scale:1.0, y:0, duration:0.886, ease:'expo.out'}, 9.047);
+    tl.fromTo('#fg-b5-n', {y:140}, {y:0, duration:0.25, ease:'expo.out'}, 9.127);
+    tl.fromTo('#fg-g', {scale:1.3, opacity:0}, {scale:1, opacity:1, duration:0.4, ease:'expo.out'}, 9.933);
+    tl.fromTo('#fg-g-i', {scale:1.0}, {scale:1.12, duration:4.393, ease:'sine.inOut'}, 9.933);
+    tl.fromTo('#fg-d', {x:-400}, {x:0, duration:0.4, ease:'expo.out'}, 11.318);
+    window.__timelines["figs"] = tl;
+  </script>
+</template>

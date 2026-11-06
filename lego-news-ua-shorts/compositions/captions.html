@@ -1,0 +1,237 @@
+<template>
+  <style>
+@font-face{font-family:'LNU Display';font-weight:700;src:url('assets/fonts/montserrat-latin-700-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Display';font-weight:700;src:url('assets/fonts/montserrat-cyrillic-700-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:'LNU Display';font-weight:800;src:url('assets/fonts/montserrat-latin-800-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Display';font-weight:800;src:url('assets/fonts/montserrat-cyrillic-800-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:'LNU Display';font-weight:900;src:url('assets/fonts/montserrat-latin-900-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Display';font-weight:900;src:url('assets/fonts/montserrat-cyrillic-900-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:'LNU Text';font-weight:600;src:url('assets/fonts/inter-latin-600-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Text';font-weight:600;src:url('assets/fonts/inter-cyrillic-600-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+@font-face{font-family:'LNU Text';font-weight:700;src:url('assets/fonts/inter-latin-700-normal.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF;}
+@font-face{font-family:'LNU Text';font-weight:700;src:url('assets/fonts/inter-cyrillic-700-normal.woff2') format('woff2');unicode-range:U+0301,U+0400-045F,U+0490-0491,U+04B0-04B1,U+2116;}
+:root{--red:#E3000B;--red-deep:#A8000A;--yellow:#FFD500;--white:#fff;--black:#0B0B0D;--official:#15803D;--leak:#C2410C;--rumor:#1D4ED8;}
+
+    #root { position:absolute; inset:0; overflow:hidden; font-family:'LNU Text',sans-serif; color:#fff; }
+    #root .bg { position:absolute; inset:0; background:
+        radial-gradient(900px 900px at 80% 25%, rgba(227,0,11,.55), transparent 62%),
+        radial-gradient(800px 700px at 0% 100%, rgba(255,213,0,.14), transparent 60%),
+        linear-gradient(170deg,#1b1b1f 0%,#0b0b0d 70%); }
+    #root .studs { position:absolute; left:-80px; top:-80px; width:1240px; height:2080px; opacity:.08;
+        background-image:radial-gradient(circle at 40px 40px,#fff 0 17px,transparent 18px); background-size:80px 80px; }
+    #root .badge { position:absolute; right:90px; top:196px; display:flex; align-items:center; gap:12px; padding:10px 22px 10px 18px; border-radius:999px;
+        font:900 32px 'LNU Display'; letter-spacing:.1em; color:#fff; }
+    #root .badge i { width:18px; height:18px; border-radius:50%; background:#fff; display:block; }
+    #root .theme { position:absolute; left:90px; top:272px; font:800 34px 'LNU Display'; letter-spacing:.12em; color:var(--yellow); text-transform:uppercase; }
+    #root .num { position:absolute; left:84px; top:312px; font:900 150px/1 'LNU Display'; color:#fff; letter-spacing:-.03em; text-shadow:0 8px 0 rgba(0,0,0,.35); }
+    #root .name { position:absolute; left:90px; right:90px; top:470px; font:900 52px/1.05 'LNU Display'; color:#fff; white-space:nowrap; }
+    #root .stage { position:absolute; left:60px; top:548px; width:960px; height:520px; border-radius:34px; background:#fff; overflow:hidden;
+        box-shadow:0 0 0 8px var(--yellow), 0 40px 90px rgba(0,0,0,.6); }
+    #root .ph { position:absolute; inset:0; }
+    #root .ph img { position:absolute; inset:0; width:100%; height:100%; object-fit:contain; }
+    #root .src { position:absolute; right:16px; bottom:12px; padding:5px 12px; border-radius:8px; background:rgba(11,11,13,.78); font:600 28px 'LNU Text'; color:#fff; z-index:50; }
+    #root .ghost { position:absolute; left:0; right:0; top:1390px; text-align:center; font:900 330px/1 'LNU Display'; color:rgba(255,255,255,.05); letter-spacing:-.04em; }
+    #root .chips { position:absolute; left:60px; top:1088px; width:880px; height:100px; }
+    #root .chip { position:absolute; top:0; height:100px; border-radius:22px; display:flex; align-items:center; justify-content:center; gap:10px;
+        font:900 46px 'LNU Display'; white-space:nowrap; box-shadow:0 10px 0 rgba(0,0,0,.35); }
+    #root .chip small { font:800 28px 'LNU Display'; opacity:.85; }
+    #root .c-pcs { left:0; width:300px; background:#fff; color:var(--black); }
+    #root .c-pcs::before { content:''; width:34px; height:26px; border-radius:6px; background:var(--red); box-shadow:inset 0 -5px 0 rgba(0,0,0,.2); margin-right:4px; }
+    #root .c-price { left:318px; width:250px; background:var(--yellow); color:var(--black); }
+    #root .c-date { left:586px; width:294px; background:var(--red); color:#fff; font-size:42px; }
+
+    #root { font-family:'LNU Display',sans-serif; }
+    #root .cg { position:absolute; left:40px; width:900px; top:1206px; height:120px; display:flex; align-items:center; justify-content:center; text-align:center; opacity:0; }
+    #root .cg span { font:900 64px/1.02 'LNU Display'; color:#fff; text-transform:uppercase; -webkit-text-stroke:10px #000; paint-order:stroke fill;
+        text-shadow:0 8px 0 rgba(0,0,0,.55); }
+    #root .cg em { font-style:normal; color:var(--yellow); }
+
+  </style>
+  <div id="root" data-composition-id="captions" data-width="1080" data-height="1920" data-duration="89.76">
+    <div id="cap0" class="cg"><span id="cap0-s">ЧОТИРИ НОВІ <em>LEGO-ВИТІКИ</em></span></div>
+    <div id="cap1" class="cg"><span id="cap1-s">НА <em>2027</em> РІК!</span></div>
+    <div id="cap2" class="cg"><span id="cap2-s">І ОДИН ІЗ</span></div>
+    <div id="cap3" class="cg"><span id="cap3-s">НИХ МАЄ ОДРАЗУ</span></div>
+    <div id="cap4" class="cg"><span id="cap4-s"><em>ШІСТЬ</em> <em>МІНІФІГУРОК!</em></span></div>
+    <div id="cap5" class="cg"><span id="cap5-s">А тепер справжня</span></div>
+    <div id="cap6" class="cg"><span id="cap6-s">бомба для фанатів</span></div>
+    <div id="cap7" class="cg"><span id="cap7-s"><em>Marvel!</em></span></div>
+    <div id="cap8" class="cg"><span id="cap8-s"><em>LEGO</em> <em>67005</em></span></div>
+    <div id="cap9" class="cg"><span id="cap9-s">— <em>Дивний</em> <em>Верховний</em></span></div>
+    <div id="cap10" class="cg"><span id="cap10-s"><em>Санктум!</em></span></div>
+    <div id="cap11" class="cg"><span id="cap11-s"><em>814</em> <em>деталей,</em></span></div>
+    <div id="cap12" class="cg"><span id="cap12-s">ціна <em>100</em> <em>євро</em></span></div>
+    <div id="cap13" class="cg"><span id="cap13-s">та одразу <em>ШІСТЬ</em></span></div>
+    <div id="cap14" class="cg"><span id="cap14-s"><em>мініфігурок!</em></span></div>
+    <div id="cap15" class="cg"><span id="cap15-s">Злий Доктор Стрендж,</span></div>
+    <div id="cap16" class="cg"><span id="cap16-s">Залізна Людина,</span></div>
+    <div id="cap17" class="cg"><span id="cap17-s">Людина-павук,</span></div>
+    <div id="cap18" class="cg"><span id="cap18-s">Зомбі Ванда,</span></div>
+    <div id="cap19" class="cg"><span id="cap19-s">Немор і Зомбі</span></div>
+    <div id="cap20" class="cg"><span id="cap20-s">Тор!</span></div>
+    <div id="cap21" class="cg"><span id="cap21-s">Очікуваний реліз</span></div>
+    <div id="cap22" class="cg"><span id="cap22-s">— першого <em>січня</em></span></div>
+    <div id="cap23" class="cg"><span id="cap23-s"><em>2027</em> <em>року!</em></span></div>
+    <div id="cap24" class="cg"><span id="cap24-s">А ось дещо</span></div>
+    <div id="cap25" class="cg"><span id="cap25-s">незвичайне!</span></div>
+    <div id="cap26" class="cg"><span id="cap26-s"><em>LEGO</em> <em>77088</em></span></div>
+    <div id="cap27" class="cg"><span id="cap27-s">— <em>Такос</em> <em>Гуакос!</em></span></div>
+    <div id="cap28" class="cg"><span id="cap28-s"><em>193</em> <em>деталі</em> всього</span></div>
+    <div id="cap29" class="cg"><span id="cap29-s">за <em>20</em> <em>євро!</em></span></div>
+    <div id="cap30" class="cg"><span id="cap30-s">Очікуваний вихід</span></div>
+    <div id="cap31" class="cg"><span id="cap31-s">— першого <em>січня</em></span></div>
+    <div id="cap32" class="cg"><span id="cap32-s"><em>2027</em> <em>року!</em></span></div>
+    <div id="cap33" class="cg"><span id="cap33-s">А тепер <em>LEGO</em></span></div>
+    <div id="cap34" class="cg"><span id="cap34-s"><em>77084</em></span></div>
+    <div id="cap35" class="cg"><span id="cap35-s">— <em>P-1000!</em></span></div>
+    <div id="cap36" class="cg"><span id="cap36-s">Цілих <em>1103</em> <em>деталі</em></span></div>
+    <div id="cap37" class="cg"><span id="cap37-s">за <em>90</em> <em>євро!</em></span></div>
+    <div id="cap38" class="cg"><span id="cap38-s">Очікувана дата виходу</span></div>
+    <div id="cap39" class="cg"><span id="cap39-s">— першого <em>січня</em></span></div>
+    <div id="cap40" class="cg"><span id="cap40-s"><em>2027</em> <em>року!</em></span></div>
+    <div id="cap41" class="cg"><span id="cap41-s">І наостанок</span></div>
+    <div id="cap42" class="cg"><span id="cap42-s">— <em>LEGO</em> <em>40976,</em></span></div>
+    <div id="cap43" class="cg"><span id="cap43-s"><em>Лев</em> <em>процвітання!</em></span></div>
+    <div id="cap44" class="cg"><span id="cap44-s"><em>411</em> <em>деталей,</em></span></div>
+    <div id="cap45" class="cg"><span id="cap45-s">ціна <em>30</em> <em>євро</em></span></div>
+    <div id="cap46" class="cg"><span id="cap46-s">та реліз першого</span></div>
+    <div id="cap47" class="cg"><span id="cap47-s"><em>січня</em> <em>2027</em> <em>року!</em></span></div>
+    <div id="cap48" class="cg"><span id="cap48-s">А що ж</span></div>
+    <div id="cap49" class="cg"><span id="cap49-s">на нас чекає</span></div>
+    <div id="cap50" class="cg"><span id="cap50-s">далі?</span></div>
+    <div id="cap51" class="cg"><span id="cap51-s">Вже офіційно: <em>Ґодзіла</em></span></div>
+    <div id="cap52" class="cg"><span id="cap52-s"><em>LEGO</em> <em>Ideas</em></span></div>
+    <div id="cap53" class="cg"><span id="cap53-s">— <em>5363</em> <em>деталі,</em></span></div>
+    <div id="cap54" class="cg"><span id="cap54-s">вихід <em>27</em> <em>листопада!</em></span></div>
+    <div id="cap55" class="cg"><span id="cap55-s">А який набір</span></div>
+    <div id="cap56" class="cg"><span id="cap56-s">вам сподобався найбільше?</span></div>
+    <div id="cap57" class="cg"><span id="cap57-s">Пишіть у коментарях!</span></div>
+    <div id="cap58" class="cg"><span id="cap58-s">Підписуйтесь на <em>LEGO</em></span></div>
+    <div id="cap59" class="cg"><span id="cap59-s"><em>NEWS</em> <em>UA!</em></span></div>
+  </div>
+  <script>
+    const tl = gsap.timeline({ paused: true });
+    const fmt = (v) => Math.round(v).toLocaleString('en-US').replace(/,/g, '\u2009');
+    tl.fromTo('#cap0', {opacity:0}, {opacity:1, duration:0.05}, 0.14); tl.fromTo('#cap0-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 0.14);
+    tl.to('#cap0', {opacity:0, duration:0.06}, 2.024); tl.set('#cap0', {opacity:0, visibility:'hidden'}, 2.084);
+    tl.fromTo('#cap1', {opacity:0}, {opacity:1, duration:0.05}, 2.064); tl.fromTo('#cap1-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 2.064);
+    tl.to('#cap1', {opacity:0, duration:0.06}, 3.165); tl.set('#cap1', {opacity:0, visibility:'hidden'}, 3.225);
+    tl.fromTo('#cap2', {opacity:0}, {opacity:1, duration:0.05}, 3.435); tl.fromTo('#cap2-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 3.435);
+    tl.to('#cap2', {opacity:0, duration:0.06}, 3.954); tl.set('#cap2', {opacity:0, visibility:'hidden'}, 4.014);
+    tl.fromTo('#cap3', {opacity:0}, {opacity:1, duration:0.05}, 3.994); tl.fromTo('#cap3-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 3.994);
+    tl.to('#cap3', {opacity:0, duration:0.06}, 4.873); tl.set('#cap3', {opacity:0, visibility:'hidden'}, 4.933);
+    tl.fromTo('#cap4', {opacity:0}, {opacity:1, duration:0.05}, 4.913); tl.fromTo('#cap4-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 4.913);
+    tl.to('#cap4', {opacity:0, duration:0.06}, 6.144); tl.set('#cap4', {opacity:0, visibility:'hidden'}, 6.204);
+    tl.fromTo('#cap5', {opacity:0}, {opacity:1, duration:0.05}, 6.484); tl.fromTo('#cap5-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 6.484);
+    tl.to('#cap5', {opacity:0, duration:0.06}, 7.662); tl.set('#cap5', {opacity:0, visibility:'hidden'}, 7.722);
+    tl.fromTo('#cap6', {opacity:0}, {opacity:1, duration:0.05}, 7.702); tl.fromTo('#cap6-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 7.702);
+    tl.to('#cap6', {opacity:0, duration:0.06}, 8.625); tl.set('#cap6', {opacity:0, visibility:'hidden'}, 8.685);
+    tl.fromTo('#cap7', {opacity:0}, {opacity:1, duration:0.05}, 8.665); tl.fromTo('#cap7-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 8.665);
+    tl.to('#cap7', {opacity:0, duration:0.06}, 9.262); tl.set('#cap7', {opacity:0, visibility:'hidden'}, 9.322);
+    tl.fromTo('#cap8', {opacity:0}, {opacity:1, duration:0.05}, 9.532); tl.fromTo('#cap8-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 9.532);
+    tl.to('#cap8', {opacity:0, duration:0.06}, 10.552); tl.set('#cap8', {opacity:0, visibility:'hidden'}, 10.612);
+    tl.fromTo('#cap9', {opacity:0}, {opacity:1, duration:0.05}, 10.592); tl.fromTo('#cap9-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 10.592);
+    tl.to('#cap9', {opacity:0, duration:0.06}, 12.276); tl.set('#cap9', {opacity:0, visibility:'hidden'}, 12.336);
+    tl.fromTo('#cap10', {opacity:0}, {opacity:1, duration:0.05}, 12.316); tl.fromTo('#cap10-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 12.316);
+    tl.to('#cap10', {opacity:0, duration:0.06}, 13.232); tl.set('#cap10', {opacity:0, visibility:'hidden'}, 13.292);
+    tl.fromTo('#cap11', {opacity:0}, {opacity:1, duration:0.05}, 13.452); tl.fromTo('#cap11-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 13.452);
+    tl.to('#cap11', {opacity:0, duration:0.06}, 14.637); tl.set('#cap11', {opacity:0, visibility:'hidden'}, 14.697);
+    tl.fromTo('#cap12', {opacity:0}, {opacity:1, duration:0.05}, 14.677); tl.fromTo('#cap12-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 14.677);
+    tl.to('#cap12', {opacity:0, duration:0.06}, 16.878); tl.set('#cap12', {opacity:0, visibility:'hidden'}, 16.938);
+    tl.fromTo('#cap13', {opacity:0}, {opacity:1, duration:0.05}, 17.018); tl.fromTo('#cap13-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 17.018);
+    tl.to('#cap13', {opacity:0, duration:0.06}, 18.931); tl.set('#cap13', {opacity:0, visibility:'hidden'}, 18.991);
+    tl.fromTo('#cap14', {opacity:0}, {opacity:1, duration:0.05}, 18.971); tl.fromTo('#cap14-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 18.971);
+    tl.to('#cap14', {opacity:0, duration:0.06}, 19.983); tl.set('#cap14', {opacity:0, visibility:'hidden'}, 20.043);
+    tl.fromTo('#cap15', {opacity:0}, {opacity:1, duration:0.05}, 20.273); tl.fromTo('#cap15-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 20.273);
+    tl.to('#cap15', {opacity:0, duration:0.06}, 21.479); tl.set('#cap15', {opacity:0, visibility:'hidden'}, 21.539);
+    tl.fromTo('#cap16', {opacity:0}, {opacity:1, duration:0.05}, 21.519); tl.fromTo('#cap16-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 21.519);
+    tl.to('#cap16', {opacity:0, duration:0.06}, 23.409); tl.set('#cap16', {opacity:0, visibility:'hidden'}, 23.469);
+    tl.fromTo('#cap17', {opacity:0}, {opacity:1, duration:0.05}, 23.449); tl.fromTo('#cap17-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 23.449);
+    tl.to('#cap17', {opacity:0, duration:0.06}, 25.155); tl.set('#cap17', {opacity:0, visibility:'hidden'}, 25.215);
+    tl.fromTo('#cap18', {opacity:0}, {opacity:1, duration:0.05}, 25.195); tl.fromTo('#cap18-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 25.195);
+    tl.to('#cap18', {opacity:0, duration:0.06}, 27.739); tl.set('#cap18', {opacity:0, visibility:'hidden'}, 27.799);
+    tl.fromTo('#cap19', {opacity:0}, {opacity:1, duration:0.05}, 27.779); tl.fromTo('#cap19-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 27.779);
+    tl.to('#cap19', {opacity:0, duration:0.06}, 29.551); tl.set('#cap19', {opacity:0, visibility:'hidden'}, 29.611);
+    tl.fromTo('#cap20', {opacity:0}, {opacity:1, duration:0.05}, 29.591); tl.fromTo('#cap20-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 29.591);
+    tl.to('#cap20', {opacity:0, duration:0.06}, 30.071); tl.set('#cap20', {opacity:0, visibility:'hidden'}, 30.131);
+    tl.fromTo('#cap21', {opacity:0}, {opacity:1, duration:0.05}, 30.276); tl.fromTo('#cap21-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 30.276);
+    tl.to('#cap21', {opacity:0, duration:0.06}, 31.908); tl.set('#cap21', {opacity:0, visibility:'hidden'}, 31.968);
+    tl.fromTo('#cap22', {opacity:0}, {opacity:1, duration:0.05}, 31.948); tl.fromTo('#cap22-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 31.948);
+    tl.to('#cap22', {opacity:0, duration:0.06}, 33.298); tl.set('#cap22', {opacity:0, visibility:'hidden'}, 33.358);
+    tl.fromTo('#cap23', {opacity:0}, {opacity:1, duration:0.05}, 33.338); tl.fromTo('#cap23-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 33.338);
+    tl.to('#cap23', {opacity:0, duration:0.06}, 34.309); tl.set('#cap23', {opacity:0, visibility:'hidden'}, 34.369);
+    tl.fromTo('#cap24', {opacity:0}, {opacity:1, duration:0.05}, 34.649); tl.fromTo('#cap24-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 34.649);
+    tl.to('#cap24', {opacity:0, duration:0.06}, 35.662); tl.set('#cap24', {opacity:0, visibility:'hidden'}, 35.722);
+    tl.fromTo('#cap25', {opacity:0}, {opacity:1, duration:0.05}, 35.702); tl.fromTo('#cap25-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 35.702);
+    tl.to('#cap25', {opacity:0, duration:0.06}, 36.618); tl.set('#cap25', {opacity:0, visibility:'hidden'}, 36.678);
+    tl.fromTo('#cap26', {opacity:0}, {opacity:1, duration:0.05}, 36.838); tl.fromTo('#cap26-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 36.838);
+    tl.to('#cap26', {opacity:0, duration:0.06}, 38.143); tl.set('#cap26', {opacity:0, visibility:'hidden'}, 38.203);
+    tl.fromTo('#cap27', {opacity:0}, {opacity:1, duration:0.05}, 38.183); tl.fromTo('#cap27-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 38.183);
+    tl.to('#cap27', {opacity:0, duration:0.06}, 40.447); tl.set('#cap27', {opacity:0, visibility:'hidden'}, 40.507);
+    tl.fromTo('#cap28', {opacity:0}, {opacity:1, duration:0.05}, 40.667); tl.fromTo('#cap28-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 40.667);
+    tl.to('#cap28', {opacity:0, duration:0.06}, 42.378); tl.set('#cap28', {opacity:0, visibility:'hidden'}, 42.438);
+    tl.fromTo('#cap29', {opacity:0}, {opacity:1, duration:0.05}, 42.418); tl.fromTo('#cap29-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 42.418);
+    tl.to('#cap29', {opacity:0, duration:0.06}, 43.693); tl.set('#cap29', {opacity:0, visibility:'hidden'}, 43.753);
+    tl.fromTo('#cap30', {opacity:0}, {opacity:1, duration:0.05}, 43.913); tl.fromTo('#cap30-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 43.913);
+    tl.to('#cap30', {opacity:0, duration:0.06}, 45.457); tl.set('#cap30', {opacity:0, visibility:'hidden'}, 45.517);
+    tl.fromTo('#cap31', {opacity:0}, {opacity:1, duration:0.05}, 45.497); tl.fromTo('#cap31-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 45.497);
+    tl.to('#cap31', {opacity:0, duration:0.06}, 46.821); tl.set('#cap31', {opacity:0, visibility:'hidden'}, 46.881);
+    tl.fromTo('#cap32', {opacity:0}, {opacity:1, duration:0.05}, 46.861); tl.fromTo('#cap32-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 46.861);
+    tl.to('#cap32', {opacity:0, duration:0.06}, 47.828); tl.set('#cap32', {opacity:0, visibility:'hidden'}, 47.888);
+    tl.fromTo('#cap33', {opacity:0}, {opacity:1, duration:0.05}, 48.168); tl.fromTo('#cap33-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 48.168);
+    tl.to('#cap33', {opacity:0, duration:0.06}, 49.996); tl.set('#cap33', {opacity:0, visibility:'hidden'}, 50.056);
+    tl.fromTo('#cap34', {opacity:0}, {opacity:1, duration:0.05}, 50.036); tl.fromTo('#cap34-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 50.036);
+    tl.to('#cap34', {opacity:0, duration:0.06}, 50.607); tl.set('#cap34', {opacity:0, visibility:'hidden'}, 50.667);
+    tl.fromTo('#cap35', {opacity:0}, {opacity:1, duration:0.05}, 50.647); tl.fromTo('#cap35-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 50.647);
+    tl.to('#cap35', {opacity:0, duration:0.06}, 52.272); tl.set('#cap35', {opacity:0, visibility:'hidden'}, 52.332);
+    tl.fromTo('#cap36', {opacity:0}, {opacity:1, duration:0.05}, 52.492); tl.fromTo('#cap36-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 52.492);
+    tl.to('#cap36', {opacity:0, duration:0.06}, 54.457); tl.set('#cap36', {opacity:0, visibility:'hidden'}, 54.517);
+    tl.fromTo('#cap37', {opacity:0}, {opacity:1, duration:0.05}, 54.497); tl.fromTo('#cap37-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 54.497);
+    tl.to('#cap37', {opacity:0, duration:0.06}, 55.783); tl.set('#cap37', {opacity:0, visibility:'hidden'}, 55.843);
+    tl.fromTo('#cap38', {opacity:0}, {opacity:1, duration:0.05}, 56.003); tl.fromTo('#cap38-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 56.003);
+    tl.to('#cap38', {opacity:0, duration:0.06}, 58.012); tl.set('#cap38', {opacity:0, visibility:'hidden'}, 58.072);
+    tl.fromTo('#cap39', {opacity:0}, {opacity:1, duration:0.05}, 58.052); tl.fromTo('#cap39-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 58.052);
+    tl.to('#cap39', {opacity:0, duration:0.06}, 59.302); tl.set('#cap39', {opacity:0, visibility:'hidden'}, 59.362);
+    tl.fromTo('#cap40', {opacity:0}, {opacity:1, duration:0.05}, 59.342); tl.fromTo('#cap40-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 59.342);
+    tl.to('#cap40', {opacity:0, duration:0.06}, 60.277); tl.set('#cap40', {opacity:0, visibility:'hidden'}, 60.337);
+    tl.fromTo('#cap41', {opacity:0}, {opacity:1, duration:0.05}, 60.617); tl.fromTo('#cap41-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 60.617);
+    tl.to('#cap41', {opacity:0, duration:0.06}, 61.946); tl.set('#cap41', {opacity:0, visibility:'hidden'}, 62.006);
+    tl.fromTo('#cap42', {opacity:0}, {opacity:1, duration:0.05}, 61.986); tl.fromTo('#cap42-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 61.986);
+    tl.to('#cap42', {opacity:0, duration:0.06}, 63.13); tl.set('#cap42', {opacity:0, visibility:'hidden'}, 63.19);
+    tl.fromTo('#cap43', {opacity:0}, {opacity:1, duration:0.05}, 63.17); tl.fromTo('#cap43-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 63.17);
+    tl.to('#cap43', {opacity:0, duration:0.06}, 65.051); tl.set('#cap43', {opacity:0, visibility:'hidden'}, 65.111);
+    tl.fromTo('#cap44', {opacity:0}, {opacity:1, duration:0.05}, 65.271); tl.fromTo('#cap44-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 65.271);
+    tl.to('#cap44', {opacity:0, duration:0.06}, 66.574); tl.set('#cap44', {opacity:0, visibility:'hidden'}, 66.634);
+    tl.fromTo('#cap45', {opacity:0}, {opacity:1, duration:0.05}, 66.614); tl.fromTo('#cap45-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 66.614);
+    tl.to('#cap45', {opacity:0, duration:0.06}, 68.262); tl.set('#cap45', {opacity:0, visibility:'hidden'}, 68.322);
+    tl.fromTo('#cap46', {opacity:0}, {opacity:1, duration:0.05}, 68.302); tl.fromTo('#cap46-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 68.302);
+    tl.to('#cap46', {opacity:0, duration:0.06}, 70.402); tl.set('#cap46', {opacity:0, visibility:'hidden'}, 70.462);
+    tl.fromTo('#cap47', {opacity:0}, {opacity:1, duration:0.05}, 70.442); tl.fromTo('#cap47-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 70.442);
+    tl.to('#cap47', {opacity:0, duration:0.06}, 72.148); tl.set('#cap47', {opacity:0, visibility:'hidden'}, 72.208);
+    tl.fromTo('#cap48', {opacity:0}, {opacity:1, duration:0.05}, 72.488); tl.fromTo('#cap48-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 72.488);
+    tl.to('#cap48', {opacity:0, duration:0.06}, 72.912); tl.set('#cap48', {opacity:0, visibility:'hidden'}, 72.972);
+    tl.fromTo('#cap49', {opacity:0}, {opacity:1, duration:0.05}, 72.952); tl.fromTo('#cap49-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 72.952);
+    tl.to('#cap49', {opacity:0, duration:0.06}, 73.701); tl.set('#cap49', {opacity:0, visibility:'hidden'}, 73.761);
+    tl.fromTo('#cap50', {opacity:0}, {opacity:1, duration:0.05}, 73.741); tl.fromTo('#cap50-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 73.741);
+    tl.to('#cap50', {opacity:0, duration:0.06}, 74.302); tl.set('#cap50', {opacity:0, visibility:'hidden'}, 74.362);
+    tl.fromTo('#cap51', {opacity:0}, {opacity:1, duration:0.05}, 74.572); tl.fromTo('#cap51-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 74.572);
+    tl.to('#cap51', {opacity:0, duration:0.06}, 77.149); tl.set('#cap51', {opacity:0, visibility:'hidden'}, 77.209);
+    tl.fromTo('#cap52', {opacity:0}, {opacity:1, duration:0.05}, 77.189); tl.fromTo('#cap52-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 77.189);
+    tl.to('#cap52', {opacity:0, duration:0.06}, 78.085); tl.set('#cap52', {opacity:0, visibility:'hidden'}, 78.145);
+    tl.fromTo('#cap53', {opacity:0}, {opacity:1, duration:0.05}, 78.125); tl.fromTo('#cap53-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 78.125);
+    tl.to('#cap53', {opacity:0, duration:0.06}, 79.663); tl.set('#cap53', {opacity:0, visibility:'hidden'}, 79.723);
+    tl.fromTo('#cap54', {opacity:0}, {opacity:1, duration:0.05}, 79.703); tl.fromTo('#cap54-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 79.703);
+    tl.to('#cap54', {opacity:0, duration:0.06}, 81.782); tl.set('#cap54', {opacity:0, visibility:'hidden'}, 81.842);
+    tl.fromTo('#cap55', {opacity:0}, {opacity:1, duration:0.05}, 82.122); tl.fromTo('#cap55-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 82.122);
+    tl.to('#cap55', {opacity:0, duration:0.06}, 82.802); tl.set('#cap55', {opacity:0, visibility:'hidden'}, 82.862);
+    tl.fromTo('#cap56', {opacity:0}, {opacity:1, duration:0.05}, 82.842); tl.fromTo('#cap56-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 82.842);
+    tl.to('#cap56', {opacity:0, duration:0.06}, 84.2); tl.set('#cap56', {opacity:0, visibility:'hidden'}, 84.26);
+    tl.fromTo('#cap57', {opacity:0}, {opacity:1, duration:0.05}, 84.24); tl.fromTo('#cap57-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 84.24);
+    tl.to('#cap57', {opacity:0, duration:0.06}, 86.482); tl.set('#cap57', {opacity:0, visibility:'hidden'}, 86.542);
+    tl.fromTo('#cap58', {opacity:0}, {opacity:1, duration:0.05}, 86.702); tl.fromTo('#cap58-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 86.702);
+    tl.to('#cap58', {opacity:0, duration:0.06}, 87.895); tl.set('#cap58', {opacity:0, visibility:'hidden'}, 87.955);
+    tl.fromTo('#cap59', {opacity:0}, {opacity:1, duration:0.05}, 87.935); tl.fromTo('#cap59-s', {scale:0.72, y:14}, {scale:1, y:0, duration:0.18, ease:'back.out(2.4)'}, 87.935);
+    tl.to('#cap59', {opacity:0, duration:0.06}, 88.581); tl.set('#cap59', {opacity:0, visibility:'hidden'}, 88.641);
+    window.__timelines["captions"] = tl;
+  </script>
+</template>
