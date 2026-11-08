@@ -4,7 +4,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.core.validators import validate_email
-from django.db.models import Count, F, Min, Prefetch, Q, Sum, TextField
+from django.db.models import Count, Exists, F, Min, OuterRef, Prefetch, Q, Sum, TextField
 from django.db.models.functions import Cast
 from django.http import Http404, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
@@ -17,10 +17,11 @@ from core.seo import breadcrumbs_jsonld, product_jsonld
 
 from .filters import COLLECTIONS, SORT_OPTIONS, PER_PAGE_OPTIONS, build_listing
 from .forms import ReviewForm
-from .media import image_urls
-from .models import Category, Color, Element, Part, Product, Review, StockNotification, Theme
-from .part_art import render_minifig_svg, render_part_svg, render_set_svg
+from .media import has_photo, image_urls
+from .models import Category, Color, Element, Part, Product, ProductImage, Review, StockNotification, Theme
+from .part_art import render_minifig_svg, render_part_svg
 from .search import catalog_matches, search_products
+from .variants import color_variants, condition_variants
 
 RECENT_KEY = "recent"
 
@@ -191,10 +192,8 @@ def product_detail(request, slug):
     if not product.is_active and not request.user.is_staff:
         raise Http404
     _remember(request, product)
-    siblings = []
-    if product.kind == "part" and product.part_id:
-        siblings = list(Product.objects.active().filter(part_id=product.part_id).select_related(
-            "color", "inventory").order_by("color__sort_order", "condition"))
+    colors = color_variants(product)
+    conditions = condition_variants(product)
     similar = Product.objects.active().in_stock().exclude(pk=product.pk).with_related()
     if product.kind == "part" and product.part_id:
         similar = similar.filter(kind="part", category_id=product.category_id).exclude(part_id=product.part_id)
@@ -225,17 +224,21 @@ def product_detail(request, slug):
     if product.theme_id and product.kind in ("set", "minifig"):
         crumbs.append((product.theme.display_name, product.theme.get_absolute_url()))
     crumbs.append((product.title, None))
-    src, _ = image_urls(product, large=True)
+    photo = None
+    if has_photo(product):
+        src, _ = image_urls(product, large=True)
+        photo = request.build_absolute_uri(src) if src.startswith("/") else src
     seo = {
         "title": seo_title(product),
         "description": (product.description or product.title)[:300],
         "canonical": request.build_absolute_uri(product.get_absolute_url()),
-        "image": request.build_absolute_uri(src) if src.startswith("/") else src,
+        "image": photo,
         "type": "product",
-        "jsonld": [product_jsonld(request, product, src), breadcrumbs_jsonld(request, crumbs)],
+        "jsonld": [product_jsonld(request, product, photo), breadcrumbs_jsonld(request, crumbs)],
     }
     return render(request, "catalog/product.html", {
-        "product": product, "siblings": siblings, "similar": similar, "recent": recently_viewed(request, product.pk),
+        "product": product, "color_variants": colors, "condition_variants": conditions,
+        "similar": similar, "recent": recently_viewed(request, product.pk),
         "reviews": reviews, "my_review": my_review, "review_form": ReviewForm(instance=my_review),
         "element_id": element_id, "crumbs": crumbs, "seo": seo, "contains_figs": contains_figs,
         "is_favorite": product.pk in cart_services.favorite_ids(request),
@@ -282,16 +285,18 @@ def part_finder(request):
     from django.core.paginator import Paginator
 
     page = Paginator(parts, 36).get_page(request.GET.get("page"))
+    page_parts = list(page.object_list)
+    swatches = {}
+    for row in (Product.objects.active().filter(kind="part", part__in=page_parts)
+                .values("part_id", "color__rgb", "color__name", "color__name_uk", "color__is_transparent",
+                        "color__sort_order").distinct().order_by("color__sort_order")):
+        swatches.setdefault(row["part_id"], []).append(row)
     rows = []
-    for part in page.object_list:
-        sample = Product.objects.filter(part=part, is_active=True).select_related("color", "part").order_by(
-            "-inventory__quantity").first()
-        if color:
-            sample = Product.objects.filter(part=part, color=color, is_active=True).select_related(
-                "color", "part").first() or sample
-        rows.append({"part": part, "sample": sample,
-                     "img": reverse("catalog:part_svg", args=[part.design_id, sample.color_id]) +
-                     f"?v={sample.color.rgb}" if sample and sample.color_id else ""})
+    for part in page_parts:
+        sample = _sample_lot(part, color)
+        colors_of_part = swatches.get(part.pk, [])
+        rows.append({"part": part, "sample": sample, "swatches": colors_of_part[:8],
+                     "more_colors": max(0, len(colors_of_part) - 8)})
     colors = Color.objects.filter(products__kind="part", products__is_active=True).annotate(
         n=Count("products", distinct=True)).order_by("sort_order", "name")
     categories = Category.objects.filter(kind="part", parent__isnull=False, is_active=True)
@@ -305,16 +310,28 @@ def part_finder(request):
     })
 
 
+def _sample_lot(part, color=None):
+    """A listing of the part to represent it: one with the owner's photo first, then the best stocked."""
+    qs = (Product.objects.active().filter(part=part)
+          .annotate(has_photo=Exists(ProductImage.objects.filter(product=OuterRef("pk"))))
+          .select_related("color", "part", "inventory").prefetch_related("images"))
+    if color:
+        picked = qs.filter(color=color).order_by("-has_photo", "-inventory__quantity").first()
+        if picked:
+            return picked
+    return qs.order_by("-has_photo", "-inventory__quantity").first()
+
+
 def part_design(request, design_id):
     part = get_object_or_404(Part.objects.select_related("category", "part_category"), design_id=design_id)
-    lots = list(Product.objects.active().filter(part=part).select_related("color", "inventory").order_by(
-        "color__sort_order", "color__name", "condition"))
+    lots = list(Product.objects.active().filter(part=part).select_related("color", "inventory")
+                .prefetch_related("images").order_by("color__sort_order", "color__name", "condition"))
     if not lots:
         raise Http404
     elements = {(e.color_id): e.element_id for e in Element.objects.filter(part=part)}
     for lot in lots:
         lot.el_id = elements.get(lot.color_id, "")
-    main = max(lots, key=lambda p: (p.stock > 0, p.stock))
+    main = max(lots, key=lambda p: (p.main_image is not None, p.stock > 0, p.stock))
     crumbs = [("Каталог", reverse("catalog:index")), ("Деталі LEGO", reverse("catalog:category", args=["detali"]))]
     if part.category_id:
         crumbs.append((part.category.name, part.category.get_absolute_url()))
@@ -323,8 +340,7 @@ def part_design(request, design_id):
         pk=part.pk).distinct()[:12] if part.category_id else []
     related_rows = []
     for rp in related:
-        sample = Product.objects.filter(part=rp, is_active=True).select_related("color").order_by(
-            "-inventory__quantity").first()
+        sample = _sample_lot(rp)
         if sample:
             related_rows.append({"part": rp, "sample": sample})
     return render(request, "catalog/part_design.html", {
@@ -501,12 +517,6 @@ def part_svg(request, design_id, color_id):
     if not part or not color:
         raise Http404
     return _svg(render_part_svg(part.design_id, part.name, color.rgb, color.is_transparent, color.finish))
-
-
-@require_GET
-def set_svg(request, number, accent):
-    accent = "#" + "".join(ch for ch in accent if ch in "0123456789abcdefABCDEF")[:6]
-    return _svg(render_set_svg(number[:30], accent if len(accent) == 7 else "#E3000B"))
 
 
 @require_GET

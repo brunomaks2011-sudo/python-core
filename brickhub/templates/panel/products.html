@@ -12,6 +12,7 @@
   <select name="kind"><option value="">Усі типи</option>{% for v, l in kinds %}<option value="{{ v }}" {% if kind == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
   <select name="category"><option value="">Усі категорії</option>{% for c in categories %}<option value="{{ c.slug }}" {% if category == c.slug %}selected{% endif %}>{{ c }}</option>{% endfor %}</select>
   <select name="stock"><option value="">Будь-який залишок</option><option value="low" {% if stock == 'low' %}selected{% endif %}>Закінчується (1–3)</option><option value="out" {% if stock == 'out' %}selected{% endif %}>Немає в наявності</option></select>
+  <select name="photo"><option value="">З фото і без</option><option value="none" {% if photo == 'none' %}selected{% endif %}>Без фото ({{ no_photo_count }})</option><option value="has" {% if photo == 'has' %}selected{% endif %}>З фото</option></select>
   <select name="status"><option value="">Усі</option><option value="active" {% if status == 'active' %}selected{% endif %}>На сайті</option><option value="hidden" {% if status == 'hidden' %}selected{% endif %}>Приховані</option></select>
   <select name="order">
     <option value="-updated_at" {% if order == '-updated_at' %}selected{% endif %}>Нещодавно змінені</option>
@@ -52,7 +53,8 @@
           <td style="min-width:240px"><a class="link" style="color:var(--ink)" href="{% url 'panel:product_edit' p.pk %}">{{ p.title|truncatechars:60 }}</a><br>
             <span class="muted mono" style="font-size:12px">{{ p.sku }}</span>
             {% if p.color_id %}<span class="swatch-inline muted" style="font-size:12px;margin-left:6px"><span class="swatch" style="--c:{{ p.color.hex }};--s:10px"></span>{{ p.color.display_name }}</span>{% endif %}
-            {% if not p.is_active %}<span class="badge" style="height:20px">прихований</span>{% endif %}</td>
+            {% if not p.is_active %}<span class="badge" style="height:20px">прихований</span>{% endif %}
+            {% if not p.main_image %}<span class="badge badge-orange" style="height:20px">без фото</span>{% endif %}</td>
           <td class="mono">{{ p.official_number|default:"—" }}</td>
           <td><span class="badge {% if p.condition == 'new' %}badge-green{% else %}badge-orange{% endif %}">{{ p.get_condition_display }}</span></td>
           <td><input class="inline" type="text" inputmode="decimal" value="{{ p.price|stringformat:'.2f' }}" data-quick="{% url 'panel:product_quick_update' p.pk %}" data-field="price" aria-label="Ціна {{ p.sku }}"></td>

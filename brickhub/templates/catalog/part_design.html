@@ -22,7 +22,7 @@
     <tbody>
     {% for lot in lots %}
       <tr class="{% if not lot.in_stock %}is-out{% endif %}">
-        <td class="lot-c"><a class="lot-color" href="{{ lot.get_absolute_url }}">{% product_img lot "mini" %}<span><b>{{ lot.color.display_name }}</b><br><span class="muted" style="font-size:12px">{{ lot.color.name }}</span></span></a></td>
+        <td class="lot-c"><a class="lot-color" href="{{ lot.get_absolute_url }}">{% if lot.main_image %}{% product_img lot "mini" %}{% else %}<span class="swatch lot-swatch{% if lot.color.is_transparent %} is-trans{% endif %}" style="--c:{{ lot.color.hex }}"></span>{% endif %}<span><b>{{ lot.color.display_name }}</b><br><span class="muted" style="font-size:12px">{{ lot.color.name }}</span></span></a></td>
         <td class="mono">{{ lot.color.code }}</td>
         <td class="mono">{{ lot.el_id|default:"—" }}</td>
         <td><span class="badge {% if lot.condition == 'new' %}badge-green{% else %}badge-orange{% endif %}">{{ lot.get_condition_display }}</span></td>

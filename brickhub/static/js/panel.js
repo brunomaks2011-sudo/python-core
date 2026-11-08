@@ -77,7 +77,6 @@
         set("#id_year", d.year); set("#id_pieces", d.pieces); set("#id_minifigs_count", d.minifigs); set("#id_age_min", d.age);
         const theme = $("#id_theme", pf);
         if (theme && !theme.value && d.theme_id) theme.value = d.theme_id;
-        if (d.image) { const url = $("#id_external_url", pf); if (url && !url.value) url.value = d.image; }
       } else if (type === "part") {
         out.textContent = `✓ ${d.design_id} — ${d.name}${d.name_uk ? " (" + d.name_uk + ")" : ""}` +
           (d.listings && d.listings.length ? ` · вже є: ${d.listings.length} лот(ів)` : "");
@@ -91,7 +90,6 @@
         if (title && !title.value) title.placeholder = d.name;
         const theme = $("#id_theme", pf);
         if (theme && !theme.value && d.theme_id) theme.value = d.theme_id;
-        if (d.image) { const url = $("#id_external_url", pf); if (url && !url.value) url.value = d.image; }
       }
     };
     $$("[data-lookup-btn]", pf).forEach((b) => b.addEventListener("click", () => lookup(b.dataset.lookupBtn)));

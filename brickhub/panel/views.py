@@ -115,6 +115,11 @@ def product_list(request):
         qs = qs.filter(is_active=False)
     elif status == "active":
         qs = qs.filter(is_active=True)
+    photo = request.GET.get("photo", "")
+    if photo == "none":
+        qs = qs.filter(images__isnull=True)
+    elif photo == "has":
+        qs = qs.filter(images__isnull=False).distinct()
     cat = request.GET.get("category", "")
     if cat:
         c = Category.objects.filter(slug=cat).first()
@@ -128,6 +133,7 @@ def product_list(request):
     page = _page(request, qs, 50)
     return render(request, "panel/products.html", {
         "page": page, "q": q, "kind": kind, "stock": stock, "status": status, "order": order, "category": cat,
+        "photo": photo, "no_photo_count": Product.objects.filter(images__isnull=True).count(),
         "categories": Category.objects.select_related("parent"), "kinds": Product.KINDS, "section": "products",
         "total": page.paginator.count,
     })
@@ -207,6 +213,12 @@ def product_edit(request, pk=None):
     initial = {}
     if not product:
         initial = {"kind": request.GET.get("kind", "set"), "condition": "new", "is_active": True}
+        # "add the same part in another colour" pre-fills the number and category
+        for key in ("design_id", "set_number", "fig_number"):
+            if request.GET.get(key):
+                initial[key] = request.GET[key][:40]
+        if (request.GET.get("category") or "").isdigit():
+            initial["category"] = int(request.GET["category"])
     form = pf.ProductForm(request.POST or None, instance=product, initial=initial)
     form.user = request.user
     images_form = pf.ImagesForm(request.POST or None, request.FILES or None)
@@ -222,10 +234,17 @@ def product_edit(request, pk=None):
         messages.success(request, f"Збережено: {product.title} ({product.sku})")
         if request.POST.get("then") == "new":
             return redirect(reverse("panel:product_new") + f"?kind={product.kind}")
+        if request.POST.get("then") == "other_color" and product.part_id:
+            return redirect(reverse("panel:product_new") + f"?kind=part&design_id={product.part.design_id}"
+                            + (f"&category={product.category_id}" if product.category_id else ""))
         return redirect("panel:product_edit", pk=product.pk)
     movements = product.inventory.movements.select_related("user", "order")[:15] if product else []
+    same_part = []
+    if product and product.kind == "part" and product.part_id:
+        same_part = list(Product.objects.filter(part_id=product.part_id).select_related("color", "inventory")
+                         .prefetch_related("images").order_by("color__sort_order", "condition"))
     return render(request, "panel/product_form.html", {
-        "form": form, "images_form": images_form, "product": product, "movements": movements,
+        "form": form, "images_form": images_form, "product": product, "movements": movements, "same_part": same_part,
         "section": "products", "colors": Color.objects.filter(is_active=True).order_by("sort_order", "name"),
     })
 
@@ -285,7 +304,7 @@ def catalog_lookup(request):
         while root and root.parent_id and not root.is_primary:
             root = root.parent
         return JsonResponse({"found": True, "name": s.name, "year": s.year, "pieces": s.pieces,
-                             "minifigs": s.minifigs_count, "image": s.image_url, "age": s.age_min,
+                             "minifigs": s.minifigs_count, "age": s.age_min,
                              "theme_id": root.pk if root else None,
                              "theme": root.display_name if root else "",
                              "listings": list(Product.objects.filter(lego_set=s).values("pk", "sku", "condition"))})
@@ -306,7 +325,7 @@ def catalog_lookup(request):
         m = Minifigure.objects.filter(Q(fig_number__iexact=q) | Q(bricklink_id__iexact=q)).first()
         if not m:
             return JsonResponse({"found": False, "message": "Мініфігурки немає в каталозі"})
-        return JsonResponse({"found": True, "name": m.name, "year": m.year, "image": m.image_url,
+        return JsonResponse({"found": True, "name": m.name, "year": m.year,
                              "theme_id": m.theme_id, "bricklink_id": m.bricklink_id})
     return JsonResponse({"found": False})
 

@@ -1026,29 +1026,6 @@ def render_part_svg(design_id: str, name: str, hexcolor: str, transparent: bool 
 # ---------------------------------------------------------------------------
 # fallbacks for sets and minifigures without photos
 # ---------------------------------------------------------------------------
-def render_set_svg(number: str, accent: str = "#E3000B", size: int = 480) -> str:
-    """Placeholder 'box art' for a set without a photo: brick stack + set number."""
-    acc = _rgb(accent)
-    bg1, bg2 = _shade(acc, 1.1), _shade(acc, 0.55)
-    brick = render_part_svg("3001", "Brick 2 x 4", accent, False, "solid", 200)
-    plate = render_part_svg("3022", "Plate 2 x 2", "#F2CD37", False, "solid", 140)
-    inner_b = brick.replace("<svg ", '<svg x="140" y="70" ', 1).replace('width="200" height="200"', 'width="200" height="200"')
-    inner_p = plate.replace("<svg ", '<svg x="250" y="40" ', 1)
-    num = number.split("-")[0] if number.endswith("-1") else number
-    return (
-        f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 480 480" width="{size}" height="{size}">'
-        f'<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="{bg1}"/>'
-        f'<stop offset="1" stop-color="{bg2}"/></linearGradient></defs>'
-        f'<rect width="480" height="480" rx="36" fill="url(#bg)"/>'
-        f'<rect x="28" y="28" width="424" height="424" rx="26" fill="#fff" fill-opacity=".14"/>'
-        f'{inner_b}{inner_p}'
-        f'<text x="240" y="370" text-anchor="middle" font-family="Unbounded, Arial, sans-serif" font-size="64" '
-        f'font-weight="700" fill="#fff">{num}</text>'
-        f'<text x="240" y="410" text-anchor="middle" font-family="Inter, Arial, sans-serif" font-size="20" '
-        f'fill="#fff" fill-opacity=".85">Фото набору скоро з\u2019явиться</text></svg>'
-    )
-
-
 def render_minifig_svg(accent: str = "#E3000B", size: int = 360) -> str:
     a = accent
     return (

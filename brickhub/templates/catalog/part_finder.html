@@ -35,6 +35,7 @@
           <div class="dc-img">{% if r.sample %}{% product_img r.sample "thumb" %}{% endif %}</div>
           <span class="dc-id">{{ r.part.design_id }}</span>
           <span class="dc-name">{{ r.part.display_name }}</span>
+          <span class="dc-swatches" aria-label="Кольори">{% for c in r.swatches %}<span class="swatch{% if c.color__is_transparent %} is-trans{% endif %}" style="--c:#{{ c.color__rgb }}" title="{{ c.color__name_uk|default:c.color__name }}"></span>{% endfor %}{% if r.more_colors %}<small>+{{ r.more_colors }}</small>{% endif %}</span>
           <span class="dc-meta"><span>{{ r.part.n_colors }} {{ r.part.n_colors|plural:"колір,кольори,кольорів" }}</span><b style="color:var(--ink)">від {{ r.part.pmin|uah }}</b></span>
         </a>
       {% endfor %}

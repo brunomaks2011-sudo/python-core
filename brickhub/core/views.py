@@ -15,8 +15,9 @@ from .seo import organization_jsonld
 
 def home(request):
     active = Product.objects.active().with_related()
-    hero = list(active.in_stock().filter(kind="set", is_featured=True, images__isnull=False).order_by(
-        "-lego_set__year", "-lego_set__pieces").distinct()[:6])
+    # only products that have the owner's own photo appear in the hero collage
+    hero = list(active.in_stock().filter(images__isnull=False).exclude(kind="part").distinct().order_by(
+        "-is_featured", "-created_at")[:6])
     popular = list(active.filter(is_featured=True).exclude(kind="part").order_by("-views_count", "-sold_count",
                                                                                 "-created_at")[:10])
     new = list(active.filter(is_new=True).order_by("-created_at")[:10])
@@ -25,7 +26,6 @@ def home(request):
     latest = list(active.in_stock().order_by("-created_at")[:10])
     minifigs = list(active.filter(kind="minifig", condition="new").order_by("-is_featured", "-views_count",
                                                                           "-created_at")[:10])
-    popular_parts = list(active.in_stock().filter(kind="part", is_featured=True).order_by("-sold_count")[:12])
     series = list(Theme.objects.filter(is_primary=True).annotate(
         n=Count("products", filter=Q(products__is_active=True))).order_by("sort_order"))
     part_categories = list(Category.objects.filter(kind="part", parent__isnull=False, is_active=True).annotate(
@@ -48,7 +48,7 @@ def home(request):
     }
     return render(request, "core/home.html", {
         "hero": hero, "popular": popular, "new": new, "bestsellers": bestsellers, "latest": latest,
-        "minifigs": minifigs, "popular_parts": popular_parts, "series": series, "part_categories": part_categories,
+        "minifigs": minifigs, "series": series, "part_categories": part_categories,
         "recent": recently_viewed(request), "seo": seo, "stats": stats,
     })
 

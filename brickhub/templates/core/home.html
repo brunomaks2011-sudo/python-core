@@ -29,6 +29,19 @@
             {% product_img p "card" eager=True %}
             <div class="hc-meta"><span>{{ p.title }}</span><span class="badge badge-red">{{ p.price|uah }}</span></div>
           </a>
+        {% empty %}
+          <a class="hero-card" href="{% url 'catalog:category' 'detali' %}" tabindex="-1">
+            <img src="{% part_icon '3001' 4 %}" alt="" width="320" height="320">
+            <div class="hc-meta"><span>Деталі поштучно</span><span class="badge badge-red">від 1 шт.</span></div>
+          </a>
+          <a class="hero-card" href="{% url 'catalog:category' 'minifihurky' %}" tabindex="-1">
+            <img src="{% url 'catalog:fig_svg' '0A63C9' %}" alt="" width="320" height="320">
+            <div class="hc-meta"><span>Мініфігурки</span></div>
+          </a>
+          <a class="hero-card" href="{% url 'catalog:category' 'nabory' %}" tabindex="-1">
+            <img src="{% part_icon '3022' 14 %}" alt="" width="320" height="320">
+            <div class="hc-meta"><span>Набори LEGO</span></div>
+          </a>
         {% endfor %}
       </div>
     </div>
@@ -87,16 +100,16 @@
           <button class="btn btn-lg btn-primary" type="submit"><svg class="ic"><use href="#i-search"/></svg><span class="btn-label">Знайти</span></button>
         </form>
         <div class="pp-examples">Приклади:
-          <a href="{% url 'catalog:part_design' '3001' %}">3001</a>
-          <a href="{% url 'catalog:part_design' '3069b' %}">3069b</a>
-          <a href="{% url 'catalog:part_design' '32524' %}">32524</a>
-          <a href="{% url 'catalog:part_design' '54200' %}">54200</a>
+          <a href="{% url 'catalog:part_finder' %}?q=3001">3001</a>
+          <a href="{% url 'catalog:part_finder' %}?q=3069b">3069b</a>
+          <a href="{% url 'catalog:part_finder' %}?q=32524">32524</a>
+          <a href="{% url 'catalog:part_finder' %}?q=54200">54200</a>
           <a href="{% url 'cart:quick_order' %}">Замовлення списком →</a>
         </div>
       </div>
       <div class="pp-visual">
-        {% for p in popular_parts|slice:":8" %}
-          <a href="{{ p.get_absolute_url }}" title="{{ p.official_number }} {{ p.title }} — {{ p.color.display_name }}">{% product_img p "thumb" %}</a>
+        {% for c in part_categories|slice:":8" %}
+          <a href="{{ c.get_absolute_url }}" title="{{ c.name }}"><img src="{% category_icon c.slug %}" alt="{{ c.name }}" width="96" height="96" loading="lazy"></a>
         {% endfor %}
       </div>
     </div>

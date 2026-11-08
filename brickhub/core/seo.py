@@ -2,14 +2,12 @@
 from django.conf import settings
 
 
-def product_jsonld(request, product, image_url: str) -> dict:
-    image = request.build_absolute_uri(image_url) if image_url.startswith("/") else image_url
+def product_jsonld(request, product, image_url: str | None) -> dict:
     data = {
         "@context": "https://schema.org",
         "@type": "Product",
         "name": product.title,
         "sku": product.sku,
-        "image": [image],
         "description": (product.description or product.title)[:500],
         "brand": {"@type": "Brand", "name": "LEGO"},
         "offers": {
@@ -23,6 +21,8 @@ def product_jsonld(request, product, image_url: str) -> dict:
             "seller": {"@type": "Organization", "name": settings.SHOP["NAME"]},
         },
     }
+    if image_url:
+        data["image"] = [request.build_absolute_uri(image_url) if image_url.startswith("/") else image_url]
     if product.official_number:
         data["mpn"] = product.official_number
     if product.reviews_count:

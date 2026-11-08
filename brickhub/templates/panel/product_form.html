@@ -85,8 +85,25 @@
         </div>
       </section>
 
+      {% if same_part|length > 1 %}
       <section class="pcard">
-        <h2>Фото</h2>
+        <h2>Кольори цієї деталі <span class="muted" style="font-weight:500;font-size:13px">на сайті показуються як вибір кольору</span></h2>
+        <div class="ptable-wrap" style="border:0"><table class="ptable"><tbody>
+          {% for v in same_part %}
+            <tr{% if v.pk == product.pk %} style="background:var(--surface-2)"{% endif %}>
+              <td style="width:44px"><span class="swatch{% if v.color.is_transparent %} is-trans{% endif %}" style="--c:{{ v.color.hex }};--s:28px;border-radius:6px"></span></td>
+              <td>{% if v.pk == product.pk %}<b>{{ v.color.display_name }}</b> (цей товар){% else %}<a class="link" href="{% url 'panel:product_edit' v.pk %}">{{ v.color.display_name }}</a>{% endif %} <span class="muted">· {{ v.get_condition_display }}</span></td>
+              <td class="num">{{ v.price|uah }}</td>
+              <td class="num">{{ v.inventory.quantity }} шт.</td>
+              <td>{% if v.main_image %}<span class="badge badge-green">є фото</span>{% else %}<span class="badge badge-orange">без фото</span>{% endif %}</td>
+            </tr>
+          {% endfor %}
+        </tbody></table></div>
+      </section>
+      {% endif %}
+
+      <section class="pcard">
+        <h2>Фото <span class="muted" style="font-weight:500;font-size:13px">на сайті показуються тільки фото, які ви додали</span></h2>
         {% if product %}
           <div class="img-list" style="margin-bottom:14px">
             {% for im in product.images.all %}
@@ -98,7 +115,7 @@
                 </div>
               </div>
             {% empty %}
-              <p class="muted" style="margin:0">Фото ще немає — на сайті показується згенероване зображення.</p>
+              <p class="muted" style="margin:0">Фото ще немає — на сайті показується заглушка «Фото незабаром».</p>
             {% endfor %}
           </div>
         {% endif %}
@@ -128,6 +145,7 @@
         <div class="stack">
           <button class="btn btn-lg btn-primary btn-block" type="submit">Зберегти</button>
           <button class="btn btn-block" type="submit" name="then" value="new">Зберегти й додати ще</button>
+          <button class="btn btn-block" type="submit" name="then" value="other_color" data-kind-section="part"><svg class="ic"><use href="#i-palette"/></svg>Зберегти й додати цю деталь в іншому кольорі</button>
         </div>
         {% if product %}
           <hr>

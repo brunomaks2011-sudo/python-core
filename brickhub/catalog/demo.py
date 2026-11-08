@@ -75,7 +75,7 @@ def _ensure_reference(seed: dict):
 
 
 @transaction.atomic
-def seed_demo(stdout=None, with_images: bool = True) -> dict:
+def seed_demo(stdout=None, with_images: bool = False) -> dict:
     seed = json.loads(SEED_FILE.read_text(encoding="utf-8"))
     _ensure_reference(seed)
     now = timezone.now()

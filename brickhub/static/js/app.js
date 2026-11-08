@@ -292,13 +292,28 @@
   /* ---------- gallery ---------- */
   $$("[data-gallery]").forEach((g) => {
     const main = g.querySelector("[data-gallery-main]");
-    g.addEventListener("click", (e) => {
-      const t = e.target.closest("[data-src]");
+    const thumbs = () => Array.from(g.querySelectorAll("[data-src]"));
+    const show = (t) => {
       if (!t || !main) return;
-      g.querySelectorAll("[data-src]").forEach((x) => x.classList.toggle("is-active", x === t));
+      thumbs().forEach((x) => x.classList.toggle("is-active", x === t));
       if (t.dataset.fallback) main.dataset.fallback = t.dataset.fallback; else delete main.dataset.fallback;
       main.src = t.dataset.src;
+    };
+    g.addEventListener("click", (e) => {
+      const step = e.target.closest("[data-gallery-step]");
+      if (step) {
+        const list = thumbs();
+        const i = list.findIndex((x) => x.classList.contains("is-active"));
+        show(list[(i + Number(step.dataset.galleryStep) + list.length) % list.length]);
+        return;
+      }
+      show(e.target.closest("[data-src]"));
     });
+  });
+
+  /* ---------- colour / variant picker: each colour is its own listing ---------- */
+  $$("[data-variant-select]").forEach((sel) => {
+    sel.addEventListener("change", () => { if (sel.value) location.href = sel.value; });
   });
 
   /* ---------- rails ---------- */

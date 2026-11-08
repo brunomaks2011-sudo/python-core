@@ -23,6 +23,5 @@ urlpatterns = [
     path("tovar/<int:pk>/vidguk/", views.review_create, name="review_create"),
     path("tovar/<int:pk>/povidomyty/", views.stock_notify, name="stock_notify"),
     path("img/part/<str:design_id>/<int:color_id>.svg", views.part_svg, name="part_svg"),
-    path("img/set/<str:number>/<str:accent>.svg", views.set_svg, name="set_svg"),
     path("img/fig/<str:accent>.svg", views.fig_svg, name="fig_svg"),
 ]

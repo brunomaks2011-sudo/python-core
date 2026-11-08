@@ -92,3 +92,56 @@ class CatalogTests(TestCase):
         r = self.client.post(reverse("catalog:toggle_compare", args=[self.xwing.pk]), HTTP_X_REQUESTED_WITH="fetch")
         self.assertEqual(r.json()["count"], 1)
         self.assertContains(self.client.get(reverse("catalog:compare")), "X-Wing Starfighter")
+
+
+class PhotoAndVariantTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.colors = base_catalog()
+        cls.red = part_product(color=cls.colors["red"])
+        cls.black = part_product(color=cls.colors["black"], qty=0)
+        cls.red_used = part_product(color=cls.colors["red"], condition="used", price="3.00")
+        cls.single = part_product(design="3062b", name="Brick Round 1 x 1 Open Stud", name_uk="Кругла 1 × 1",
+                                  color=cls.colors["clear"])
+        cls.xwing = set_product()
+
+    def test_only_owner_photos_are_shown(self):
+        for product in (self.xwing, self.red):
+            html = self.client.get(product.get_absolute_url()).content.decode()
+            gallery = html.split('class="gallery-main"', 1)[1].split('class="card-badges"', 1)[0]
+            self.assertIn("img/no-photo.svg", gallery)
+            self.assertNotIn("/img/part/", gallery)
+            self.assertNotIn('"image":', html)  # no picture in JSON-LD without a real photo
+        r = self.client.get(reverse("catalog:category", args=["detali"]))
+        cards = r.content.decode().split('class="listing"', 1)[1]
+        self.assertNotIn("/img/part/", cards.split('class="card-media', 1)[1].split("</a>", 1)[0])
+        from catalog.models import ProductImage
+
+        ProductImage.objects.create(product=self.xwing, external_url="https://example.com/my-photo.jpg")
+        r = self.client.get(self.xwing.get_absolute_url())
+        self.assertContains(r, "https://example.com/my-photo.jpg")
+
+    def test_colour_picker(self):
+        r = self.client.get(self.red.get_absolute_url())
+        self.assertContains(r, 'class="variant-picker" id="kolir"')
+        self.assertContains(r, "data-variant-select")
+        self.assertContains(r, self.black.get_absolute_url())
+        self.assertContains(r, "немає в наявності")  # black is out of stock
+        # condition switch: the red part is also sold used
+        self.assertContains(r, self.red_used.get_absolute_url())
+        self.assertContains(r, "Б/у")
+
+    def test_no_picker_for_single_colour(self):
+        r = self.client.get(self.single.get_absolute_url())
+        self.assertNotContains(r, 'id="kolir"')
+
+    def test_clear_auto_images_command(self):
+        from django.core.management import call_command
+
+        from catalog.models import ProductImage
+
+        ProductImage.objects.create(product=self.red, external_url="https://cdn.rebrickable.com/media/x.jpg")
+        ProductImage.objects.create(product=self.red, external_url="https://example.com/mine.jpg")
+        call_command("clear_auto_images", stdout=__import__("io").StringIO())
+        self.assertEqual(list(ProductImage.objects.values_list("external_url", flat=True)),
+                         ["https://example.com/mine.jpg"])

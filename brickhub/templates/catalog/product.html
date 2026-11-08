@@ -18,6 +18,10 @@
         {% with im=images.0 %}
           <img src="{{ im.src }}" alt="{{ im.alt }}" width="720" height="720" fetchpriority="high" data-gallery-main {% if im.fallback %}data-fallback="{{ im.fallback }}"{% endif %}>
         {% endwith %}
+        {% if images|length > 1 %}
+          <button class="gallery-nav prev" type="button" data-gallery-step="-1" aria-label="Попереднє фото"><svg class="ic"><use href="#i-chev-left"/></svg></button>
+          <button class="gallery-nav next" type="button" data-gallery-step="1" aria-label="Наступне фото"><svg class="ic"><use href="#i-chev-right"/></svg></button>
+        {% endif %}
         <div class="card-badges">
           {% if p.discount_percent %}<span class="badge badge-red">−{{ p.discount_percent }}%</span>{% endif %}
           {% if p.is_new %}<span class="badge badge-yellow">Новинка</span>{% endif %}
@@ -44,6 +48,41 @@
       {% if p.reviews_count %}<a class="rating-line" href="#reviews" style="margin:-6px 0 14px;font-size:14px"><span class="stars" style="font-size:16px">{{ p.rating_avg|stars }}</span>{{ p.rating_avg|floatformat:1 }} · {{ p.reviews_count }} {{ p.reviews_count|plural:"відгук,відгуки,відгуків" }}</a>{% endif %}
 
       <div class="buybox">
+        {% if color_variants %}
+          <div class="variant-picker" id="kolir">
+            <div class="vp-head">
+              <span class="vp-label">Колір</span>
+              <a class="vp-all" href="{% url 'catalog:part_design' p.part.design_id %}">{{ color_variants|length }} {{ color_variants|length|plural:"колір,кольори,кольорів" }} · таблиця</a>
+            </div>
+            <div class="vp-select">
+              <span class="swatch{% if p.color.is_transparent %} is-trans{% endif %}" style="--c:{{ p.color.hex }}" aria-hidden="true"></span>
+              <select data-variant-select aria-label="Оберіть колір">
+                {% for v in color_variants %}
+                  <option value="{{ v.url }}" {% if v.current %}selected{% endif %}>{{ v.name }}{% if v.official and v.official != v.name %} ({{ v.official }}){% endif %}{% if not v.in_stock %} — немає в наявності{% endif %}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="vp-swatches" role="list">
+              {% for v in color_variants %}
+                <a role="listitem" href="{{ v.url }}" class="vp-swatch{% if v.trans %} is-trans{% endif %}{% if v.current %} is-active{% endif %}{% if not v.in_stock %} is-out{% endif %}" style="--c:{{ v.hex }}"
+                   title="{{ v.name }} · {{ v.price|uah }}{% if not v.in_stock %} · немає в наявності{% endif %}"
+                   aria-label="{{ v.name }}{% if not v.in_stock %}, немає в наявності{% endif %}"{% if v.current %} aria-current="true"{% endif %}></a>
+              {% endfor %}
+            </div>
+          </div>
+        {% endif %}
+        {% if condition_variants %}
+          <div class="variant-picker">
+            <div class="vp-head"><span class="vp-label">Стан</span></div>
+            <div class="vp-cond">
+              {% for v in condition_variants %}
+                <a href="{{ v.url }}" class="{% if v.current %}is-active{% endif %}{% if not v.in_stock %} is-out{% endif %}"{% if v.current %} aria-current="true"{% endif %}>
+                  <b>{{ v.label }}</b><span>{% if v.in_stock %}{{ v.price|uah }}{% else %}немає{% endif %}</span>
+                </a>
+              {% endfor %}
+            </div>
+          </div>
+        {% endif %}
         <div class="price{% if p.discount_percent %} is-sale{% endif %}">
           {% if p.discount_percent %}<s>{{ p.old_price|uah }}</s>{% endif %}
           <b>{{ p.price|uah }}</b>{% if p.kind == "part" %}<span class="per">ціна за 1 шт.</span>{% endif %}
@@ -55,19 +94,6 @@
           {% else %}<span class="stock out">Немає в наявності</span>{% endif %}
         </div>
         {% if p.completeness %}<div class="alert" style="margin-top:12px"><svg class="ic"><use href="#i-info"/></svg>{{ p.completeness }}</div>{% endif %}
-
-        {% if siblings|length > 1 %}
-          <div class="color-picker">
-            <div class="cp-label">Колір: <b>{{ p.color.display_name }}</b> <span class="muted">({{ p.color.name }})</span> · <a class="link" href="{% url 'catalog:part_design' p.part.design_id %}">усі {{ siblings|length }} варіанти</a></div>
-            <div class="color-swatches">
-              {% for sib in siblings %}
-                <a href="{{ sib.get_absolute_url }}" class="{% if sib.color.is_transparent %}is-trans {% endif %}{% if sib.pk == p.pk %}is-active {% endif %}{% if not sib.in_stock %}is-out{% endif %}" style="--c:{{ sib.color.hex }}" aria-label="{{ sib.color.display_name }}{% if sib.condition == 'used' %}, б/у{% endif %}">
-                  <span class="tip">{{ sib.color.display_name }}{% if sib.condition == "used" %} · б/у{% endif %} · {{ sib.price|uah }}</span>
-                </a>
-              {% endfor %}
-            </div>
-          </div>
-        {% endif %}
 
         {% if p.in_stock %}
           <form method="post" action="{% url 'cart:add' %}" data-add-to-cart class="buy-row">{% csrf_token %}

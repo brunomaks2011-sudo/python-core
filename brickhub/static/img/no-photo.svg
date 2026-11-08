@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 320" width="320" height="320" role="img" aria-label="Фото незабаром">
+  <g fill="none" stroke="#c4c8cf" stroke-width="6" stroke-linejoin="round" stroke-linecap="round">
+    <rect x="96" y="126" width="128" height="72" rx="10"/>
+    <path d="M118 126v-14a8 8 0 0 1 8-8h20a8 8 0 0 1 8 8v14M166 126v-14a8 8 0 0 1 8-8h20a8 8 0 0 1 8 8v14"/>
+    <path d="M136 160h48"/>
+  </g>
+  <text x="160" y="240" text-anchor="middle" font-family="Inter, system-ui, -apple-system, Segoe UI, Arial, sans-serif" font-size="19" font-weight="600" fill="#9aa0a9">Фото незабаром</text>
+</svg>
