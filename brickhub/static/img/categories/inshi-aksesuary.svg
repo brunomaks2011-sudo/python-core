@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="Інші аксесуари">
+  <defs><linearGradient id="st" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffe066"/><stop offset="1" stop-color="#f2b705"/></linearGradient></defs>
+  <path d="M60 12l14 30 32 4-24 22 6 32-28-16-28 16 6-32-24-22 32-4Z" fill="url(#st)" stroke="#a07800" stroke-width="2.4" stroke-linejoin="round"/>
+  <path d="M50 46l8-18" stroke="#fff" stroke-opacity=".5" stroke-width="4" stroke-linecap="round"/>
+</svg>

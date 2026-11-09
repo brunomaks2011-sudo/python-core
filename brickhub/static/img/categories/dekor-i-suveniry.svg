@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="Декор і сувеніри">
+  <defs><linearGradient id="gb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e0352b"/><stop offset="1" stop-color="#b3170d"/></linearGradient></defs>
+  <path d="M60 38c-8-18-30-20-30-8 0 8 14 10 30 8Zm0 0c8-18 30-20 30-8 0 8-14 10-30 8Z" fill="#f2c230" stroke="#9a7400" stroke-width="2" stroke-linejoin="round"/>
+  <rect x="22" y="52" width="76" height="54" rx="4" fill="url(#gb)" stroke="#7d0f08" stroke-width="2.2"/>
+  <rect x="16" y="38" width="88" height="18" rx="4" fill="#d42a20" stroke="#7d0f08" stroke-width="2.2"/>
+  <rect x="53" y="38" width="14" height="68" fill="#f2c230" stroke="#9a7400" stroke-width="2"/>
+</svg>

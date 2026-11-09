@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="Одяг">
+  <defs><linearGradient id="sh" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e0352b"/><stop offset="1" stop-color="#b3170d"/></linearGradient></defs>
+  <path d="M42 16 52 12c2 8 14 8 16 0l10 4 26 18-12 18-10-6v58H38V46l-10 6-12-18Z" fill="url(#sh)" stroke="#7d0f08" stroke-width="2.2" stroke-linejoin="round"/>
+  <path d="M52 12c2 8 14 8 16 0" fill="none" stroke="#7d0f08" stroke-width="2.2"/>
+  <rect x="48" y="48" width="24" height="16" rx="2" fill="#fff"/>
+  <rect x="51" y="43" width="7" height="5" rx="1" fill="#fff"/><rect x="62" y="43" width="7" height="5" rx="1" fill="#fff"/>
+</svg>

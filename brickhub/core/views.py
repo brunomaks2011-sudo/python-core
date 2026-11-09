@@ -13,6 +13,9 @@ from catalog.views import recently_viewed
 from .seo import organization_jsonld
 
 
+HOME_FINDER_CATEGORIES = ["tsehlynky", "skosy", "plastyny", "plytky", "kolesa-ta-shyny", "vikna-ta-dveri",
+                          "shesterni", "elementy-technic"]
+
 def home(request):
     active = Product.objects.active().with_related()
     # only products that have the owner's own photo appear in the hero collage
@@ -30,6 +33,10 @@ def home(request):
         n=Count("products", filter=Q(products__is_active=True))).order_by("sort_order"))
     part_categories = list(Category.objects.filter(kind="part", parent__isnull=False, is_active=True).annotate(
         n=Count("products", filter=Q(products__is_active=True))).order_by("sort_order"))
+    by_slug = {c.slug: c for c in part_categories}
+    # the part-finder promo shows drawings of classic parts; the tiles show the 12 fullest categories
+    finder_categories = [by_slug[s] for s in HOME_FINDER_CATEGORIES if s in by_slug]
+    part_categories = sorted(part_categories, key=lambda c: -c.n)[:12]
     stats = cache.get("home:stats")
     if stats is None:
         stats = {"sets": LegoSet.objects.count(), "parts": Part.objects.count(),
@@ -49,6 +56,7 @@ def home(request):
     return render(request, "core/home.html", {
         "hero": hero, "popular": popular, "new": new, "bestsellers": bestsellers, "latest": latest,
         "minifigs": minifigs, "series": series, "part_categories": part_categories,
+        "finder_categories": finder_categories,
         "recent": recently_viewed(request), "seo": seo, "stats": stats,
     })
 

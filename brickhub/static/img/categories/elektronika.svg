@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="Електроніка та двигуни">
+  <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#868a91"/><stop offset="1" stop-color="#5b5e64"/></linearGradient></defs>
+  <rect x="28" y="22" width="16" height="7" rx="2" fill="#7a7e84" stroke="#3b3d41" stroke-width="1.6" stroke-opacity=".6"/>
+  <rect x="48" y="22" width="16" height="7" rx="2" fill="#7a7e84" stroke="#3b3d41" stroke-width="1.6" stroke-opacity=".6"/>
+  <rect x="68" y="22" width="16" height="7" rx="2" fill="#7a7e84" stroke="#3b3d41" stroke-width="1.6" stroke-opacity=".6"/>
+  <rect x="20" y="28" width="76" height="62" rx="9" fill="url(#g)" stroke="#3b3d41" stroke-width="2.2"/>
+  <rect x="26" y="34" width="64" height="8" rx="4" fill="#fff" fill-opacity=".18"/>
+  <path d="M62 46 50 64h10l-6 18 18-24H61l7-12Z" fill="#ffd43b" stroke="#b88a00" stroke-width="1.8" stroke-linejoin="round"/>
+  <path d="M96 72c14 0 14 22 0 24h-6" fill="none" stroke="#2b2d31" stroke-width="5" stroke-linecap="round"/>
+  <rect x="76" y="90" width="16" height="12" rx="2" fill="#3b3d41"/>
+</svg>

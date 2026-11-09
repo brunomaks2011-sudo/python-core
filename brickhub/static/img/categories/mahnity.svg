@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="Магніти">
+  <defs></defs>
+  <path d="M34 30v32a26 26 0 0 0 52 0V30" fill="none" stroke="#9e1b12" stroke-width="22"/>
+  <path d="M34 30v32a26 26 0 0 0 52 0V30" fill="none" stroke="#e0352b" stroke-width="17"/>
+  <rect x="22" y="16" width="24" height="18" rx="2" fill="#c9cdd2" stroke="#6b7077" stroke-width="2"/>
+  <rect x="74" y="16" width="24" height="18" rx="2" fill="#c9cdd2" stroke="#6b7077" stroke-width="2"/>
+  <path d="M14 8l6 4M106 8l-6 4M60 4v8" stroke="#9aa0a7" stroke-width="3" stroke-linecap="round"/>
+</svg>

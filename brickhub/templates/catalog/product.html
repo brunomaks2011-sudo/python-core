@@ -176,10 +176,10 @@
         {% if p.theme_id and p.kind != "part" %}<tr><th>Серія</th><td>{{ p.theme.display_name }}</td></tr>{% endif %}
         {% if s %}
           {% if s.year %}<tr><th>Рік випуску</th><td>{{ s.year }}</td></tr>{% endif %}
-          {% if s.pieces %}<tr><th>Кількість деталей</th><td>{{ s.pieces|thousands }}</td></tr>{% endif %}
+          {% if s.pieces and p.kind == "set" %}<tr><th>Кількість деталей</th><td>{{ s.pieces|thousands }}</td></tr>{% endif %}
           {% if s.minifigs_count is not None and p.kind == "set" %}<tr><th>Кількість мініфігурок</th><td>{{ s.minifigs_count }}</td></tr>{% endif %}
           {% if s.age_min %}<tr><th>Вікова категорія</th><td>{{ s.age_min }}+</td></tr>{% endif %}
-          {% if s.dimensions %}<tr><th>Розміри зібраної моделі (В × Ш × Г)</th><td>{{ s.dimensions }}</td></tr>{% endif %}
+          {% if s.dimensions %}<tr><th>{% if p.kind == "set" %}Розміри зібраної моделі{% else %}Розміри{% endif %} (В × Ш × Г)</th><td>{{ s.dimensions }}</td></tr>{% endif %}
         {% endif %}
         {% if p.kind == "keychain" or p.kind == "book" %}{% if p.minifigure_id %}
           <tr><th>Мініфігурка в комплекті</th><td>{{ p.minifigure.name }} <span class="muted mono">{{ p.minifigure.display_number }}</span></td></tr>

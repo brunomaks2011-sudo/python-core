@@ -36,7 +36,7 @@
         <span class="swatch-inline"><span class="swatch{% if p.color.is_transparent %} is-trans{% endif %}" style="--c:{{ p.color.hex }}"></span>{{ p.color.display_name }}</span>
         <span class="num mono">{{ p.official_number }}</span>
       {% elif p.kind == "set" %}
-        <span class="num">№ {{ p.official_number }}</span>{% if p.pieces %}<span>{{ p.pieces|thousands }} дет.</span>{% endif %}
+        <span class="num">№ {{ p.official_number }}</span>{% if p.pieces and p.kind == "set" %}<span>{{ p.pieces|thousands }} дет.</span>{% endif %}
       {% elif p.kind == "minifig" %}
         <span class="num mono">{{ p.official_number }}</span>
       {% else %}

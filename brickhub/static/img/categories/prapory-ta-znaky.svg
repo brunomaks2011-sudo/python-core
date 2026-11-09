@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="Прапори та знаки">
+  <defs><linearGradient id="f" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e0352b"/><stop offset="1" stop-color="#b3170d"/></linearGradient></defs>
+  <rect x="26" y="14" width="7" height="94" rx="3" fill="#a0a5a9" stroke="#5b6066" stroke-width="1.6"/>
+  <circle cx="29.5" cy="13" r="6" fill="#f2c230" stroke="#8a6500" stroke-width="1.6"/>
+  <path d="M33 22c20-10 34 8 60 0v42c-26 8-40-10-60 0Z" fill="url(#f)" stroke="#7d0f08" stroke-width="2" stroke-linejoin="round"/>
+  <rect x="51" y="37" width="7" height="5" rx="1" fill="#fff"/><rect x="63" y="37" width="7" height="5" rx="1" fill="#fff"/>
+  <rect x="48" y="41" width="25" height="14" rx="2" fill="#fff"/>
+  <rect x="20" y="104" width="20" height="8" rx="2" fill="#5b6066"/>
+</svg>

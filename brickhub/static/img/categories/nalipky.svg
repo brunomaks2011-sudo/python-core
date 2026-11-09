@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="Наліпки">
+  <defs></defs>
+  <path d="M22 18h76v62L76 102H22Z" fill="#fff" stroke="#9aa0a7" stroke-width="2.2" stroke-linejoin="round"/>
+  <path d="M98 80H82a6 6 0 0 0-6 6v16Z" fill="#e3e6ea" stroke="#9aa0a7" stroke-width="2.2" stroke-linejoin="round"/>
+  <circle cx="42" cy="40" r="11" fill="#e0352b"/>
+  <rect x="60" y="29" width="26" height="22" rx="4" fill="#2f6fcf"/>
+  <path d="M42 62l4 8 9 1-7 6 2 9-8-5-8 5 2-9-7-6 9-1Z" fill="#f2c230"/>
+  <rect x="60" y="60" width="18" height="8" rx="3" fill="#4b9f4a"/>
+</svg>

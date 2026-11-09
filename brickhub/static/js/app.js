@@ -412,6 +412,7 @@ document.addEventListener("submit", (e) => {
       value: o.value,
       label: o.value === "" && /^-+$/.test(o.textContent.trim()) ? "— не вибрано —" : o.textContent.trim(),
       hex: o.dataset.hex || "",
+      kind: o.dataset.kind || "",
       search: norm(`${o.textContent} ${o.dataset.search || ""}`),
     }));
     let shown = [];
@@ -439,10 +440,11 @@ document.addEventListener("submit", (e) => {
     function render(q) {
       const terms = norm(q).split(" ").filter(Boolean);
       shown = opts.filter((o) => terms.every((t) => o.search.includes(t)));
-      if (terms.length) {
-        const starts = (o) => (norm(o.label).startsWith(terms[0]) ? 1 : 0);
-        shown.sort((a, b) => starts(b) - starts(a));
-      }
+      // options for the kind chosen elsewhere in the form (data-prefer-kind) come first; nothing is hidden
+      const prefer = sel.dataset.preferKind || "";
+      const other = (o) => (prefer && o.value !== "" && o.kind && o.kind !== prefer ? 1 : 0);
+      const starts = (o) => (terms.length && norm(o.label).startsWith(terms[0]) ? 0 : 1);
+      if (terms.length || prefer) shown.sort((a, b) => starts(a) - starts(b) || other(a) - other(b));
       shown = shown.slice(0, 250);
       list.replaceChildren();
       if (!shown.length) {

@@ -119,11 +119,14 @@ def get_item(mapping, key):
         return None
 
 
+# category icon = a drawing of a typical part (Design ID, Rebrickable colour id) ...
 CATEGORY_ICONS = {
-    "tsehlynky": ("3001", 4), "plastyny": ("3020", 1), "plytky": ("3068b", 14), "kolesa-ta-shyny": ("55981", 71),
-    "vikna-ta-dveri": ("60592", 15), "kryla": ("43722", 72), "shesterni": ("3648b", 71),
-    "elementy-technic": ("32524", 0), "prozori-detali": ("3062b", 36), "roslyny": ("24866", 10),
-    "aksesuary-dlia-fihurok": ("64567", 71), "inshi-elementy": ("3937", 72), "detali": ("3003", 4),
+    "tsehlynky": ("3001", 4), "skosy": ("3039", 25), "arky-ta-vyhnuti-tsehlynky": ("3659", 19),
+    "plastyny": ("3020", 1), "plytky": ("3068b", 14), "paneli": ("87552", 71), "kolesa-ta-shyny": ("55981", 71),
+    "vikna-ta-dveri": ("60592", 15), "kryla": ("43722", 72), "sharniry-ta-povorotni-platformy": ("3937", 72),
+    "shesterni": ("3648b", 71), "elementy-technic": ("32524", 0), "prozori-detali": ("3062b", 36),
+    "roslyny": ("24866", 10), "aksesuary-dlia-fihurok": ("64567", 71), "ohorozhi-drabyny-ta-opory": ("3633", 70),
+    "duplo": ("3437", 322), "inshi-elementy": ("87087", 72), "detali": ("3003", 4),
 }
 _color_pk_cache: dict[int, tuple[int, str]] = {}
 
@@ -143,7 +146,15 @@ def part_icon(design_id: str, rb_color: int) -> str:
     return reverse("catalog:part_svg", args=[design_id, pk]) + f"?v={rgb}"
 
 
-STATIC_CATEGORY_ICONS = {"tvaryny": "img/categories/tvaryny.svg"}
+# ... or a flat illustration from static/img/categories/<slug>.svg
+STATIC_CATEGORY_ICONS = {slug: f"img/categories/{slug}.svg" for slug in (
+    "tvaryny", "bazovi-plastyny", "dlia-transportu", "elektronika", "chastyny-minifihurok",
+    "volossia-ta-holovni-ubory", "zbroia-ta-instrumenty", "kontejnery-ta-yashchyky", "trubky-shlanhy-ta-nytky",
+    "prapory-ta-znaky", "nalipky",
+    # accessories
+    "zberihannia", "vitryny-ta-pidstavky", "osvitlennia", "separatory-ta-instrumenty", "kantseliariia",
+    "sumky-ta-riukzaky", "odiah", "hodynnyky", "mahnity", "ihry-ta-pazly", "dekor-i-suveniry", "inshi-aksesuary",
+)}
 
 
 @register.simple_tag

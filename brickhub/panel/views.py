@@ -134,9 +134,30 @@ def product_list(request):
     return render(request, "panel/products.html", {
         "page": page, "q": q, "kind": kind, "stock": stock, "status": status, "order": order, "category": cat,
         "photo": photo, "no_photo_count": Product.objects.filter(images__isnull=True).count(),
-        "categories": Category.objects.select_related("parent"), "kinds": Product.KINDS, "section": "products",
+        "category_groups": _category_groups(), "kinds": Product.KINDS, "section": "products",
         "total": page.paginator.count,
     })
+
+
+def _category_groups() -> list[tuple[Category, list[Category]]]:
+    """[(top-level section, [its subcategories at any depth])] in menu order — for grouped <select>s."""
+    cats = list(Category.objects.order_by("sort_order", "name"))
+    by_pk = {c.pk: c for c in cats}
+
+    def top(c):
+        seen = set()
+        while c.parent_id and c.parent_id in by_pk and c.pk not in seen:
+            seen.add(c.pk)
+            c = by_pk[c.parent_id]
+        return c
+
+    groups = {c.pk: (c, []) for c in cats if not c.parent_id}
+    for c in cats:
+        if c.parent_id:
+            root = top(c)
+            if root.pk in groups:
+                groups[root.pk][1].append(c)
+    return list(groups.values())
 
 
 @staff_required
@@ -162,6 +183,18 @@ def product_bulk(request):
             Product.objects.filter(pk__in=used).update(is_active=False)
             messages.warning(request, f"{len(used)} товар(ів) є в замовленнях — їх приховано замість видалення.")
         messages.success(request, f"Видалено: {n}")
+    elif action == "set_category":
+        raw = request.POST.get("category", "")
+        cat = Category.objects.filter(pk=int(raw)).first() if raw.isdigit() else None
+        if cat is None:
+            messages.error(request, "Оберіть категорію, у яку перенести товари")
+        else:
+            n = 0
+            for product in qs.exclude(category=cat).select_related("lego_set", "part", "color", "minifigure", "theme"):
+                product.category = cat
+                product.save()  # also refreshes the search index (it includes the category name)
+                n += 1
+            messages.success(request, f"Перенесено в «{cat}»: {n}")
     elif action in ("set_new", "unset_new", "set_featured", "unset_featured", "set_bestseller", "unset_bestseller"):
         field = {"new": "is_new", "featured": "is_featured", "bestseller": "is_bestseller"}[action.split("_", 1)[1]]
         n = qs.update(**{field: action.startswith("set_")})

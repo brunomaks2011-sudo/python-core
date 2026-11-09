@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="Сепаратори та інструменти">
+  <defs><linearGradient id="o" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ff9a2e"/><stop offset="1" stop-color="#e06e00"/></linearGradient></defs>
+  <rect x="46" y="38" width="16" height="7" rx="2" fill="#f58a1a" stroke="#8a3f00" stroke-width="1.6" stroke-opacity=".6"/>
+  <rect x="64" y="38" width="16" height="7" rx="2" fill="#f58a1a" stroke="#8a3f00" stroke-width="1.6" stroke-opacity=".6"/>
+  <rect x="82" y="38" width="16" height="7" rx="2" fill="#f58a1a" stroke="#8a3f00" stroke-width="1.6" stroke-opacity=".6"/>
+  <path d="M10 84 34 44h70v40Z" fill="url(#o)" stroke="#8a3f00" stroke-width="2.2" stroke-linejoin="round"/>
+  <path d="M22 76 40 50" stroke="#8a3f00" stroke-width="3" stroke-linecap="round" stroke-opacity=".55"/>
+  <rect x="50" y="60" width="44" height="14" rx="4" fill="#8a3f00" fill-opacity=".3"/>
+  <path d="M40 50h58" stroke="#fff" stroke-opacity=".3" stroke-width="4" stroke-linecap="round"/>
+</svg>

@@ -214,10 +214,11 @@ def compute_facets(qs, wanted) -> dict:
             out["theme"] = sorted(themes, key=lambda t: (-t["count"], t["label"]))
     if "category" in wanted:
         rows = qs.order_by().filter(kind="part").exclude(category__isnull=True).values(
-            "category__slug", "category__name").annotate(n=Count("id"))
-        cats = [{"value": r["category__slug"], "label": r["category__name"], "count": r["n"]} for r in rows]
+            "category__slug", "category__name", "category__sort_order").annotate(n=Count("id"))
+        cats = [{"value": r["category__slug"], "label": r["category__name"], "count": r["n"],
+                 "order": r["category__sort_order"]} for r in rows]
         if len(cats) > 1:
-            out["category"] = sorted(cats, key=lambda c: c["label"])
+            out["category"] = sorted(cats, key=lambda c: (c["order"], c["label"]))
     if "color" in wanted:
         rows = qs.order_by().exclude(color__isnull=True).values(
             "color__slug", "color__name", "color__name_uk", "color__rgb", "color__is_transparent",
@@ -234,8 +235,8 @@ def compute_facets(qs, wanted) -> dict:
             out["condition"] = [{"value": "new", "label": "Новий", "count": rows.get("new", 0)},
                                 {"value": "used", "label": "Б/у", "count": rows.get("used", 0)}]
     agg = qs.order_by().aggregate(pmin=Min("price"), pmax=Max("price"), ymin=Min("lego_set__year"),
-                                  ymax=Max("lego_set__year"), nmin=Min("lego_set__pieces"),
-                                  nmax=Max("lego_set__pieces"), in_stock=Count("id", filter=Q(inventory__quantity__gt=0)))
+                                  ymax=Max("lego_set__year"), nmin=Min("lego_set__pieces", filter=Q(kind="set")),
+                                  nmax=Max("lego_set__pieces", filter=Q(kind="set")), in_stock=Count("id", filter=Q(inventory__quantity__gt=0)))
     if "price" in wanted and agg["pmin"] is not None:
         out["price"] = {"min": int(agg["pmin"]), "max": int(agg["pmax"]) + 1}
     if "year" in wanted and agg["ymin"]:

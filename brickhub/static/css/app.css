@@ -244,7 +244,7 @@ img.pimg { height: auto; }
 .nav .container { display: flex; align-items: center; gap: 2px; height: 48px; }
 .nav-item { position: relative; }
 .nav-link {
-  display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 12px; border-radius: 10px;
+  display: inline-flex; align-items: center; gap: 5px; height: 40px; padding: 0 10px; border-radius: 10px;
   font-weight: 600; font-size: 14px; color: var(--ink-2); white-space: nowrap; border: 0; background: none; cursor: pointer;
   transition: background-color 160ms ease, color 160ms ease;
 }
@@ -266,6 +266,11 @@ img.pimg { height: auto; }
 .mega a.mlink .dot { width: 10px; height: 10px; border-radius: 3px; background: var(--c, var(--red)); flex: none; }
 .mega a.mlink img { width: 34px; height: 34px; flex: none; }
 .mega-foot { display: flex; gap: 10px; margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--line-2); }
+.mega-right { left: auto; right: 0; transform-origin: top right; }
+.mega-wide { min-width: 0; width: min(940px, calc(100vw - 48px)); }
+.mega-wide .mega-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 2px 8px; }
+.mega-wide a.mlink { padding: 6px 8px; gap: 8px; font-size: 13.5px; line-height: 1.25; }
+.mega-wide a.mlink img { width: 30px; height: 30px; }
 @media (hover: hover) and (pointer: fine) { .mega a.mlink:hover { background: var(--surface-2); } }
 
 /* ---------- mobile drawer ---------- */
@@ -549,6 +554,7 @@ img.pimg { height: auto; }
 .active-chips a.clear { background: transparent; color: var(--red); }
 .filters-open { display: none; }
 .subnav { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin-bottom: 18px; padding-bottom: 2px; }
+.subnav > .chip, .chip img { flex: none; }
 .subnav::-webkit-scrollbar { display: none; }
 .empty { text-align: center; padding: 60px 20px; background: #fff; border: 1px dashed var(--line); border-radius: var(--radius); }
 .empty svg { width: 64px; height: 64px; margin: 0 auto 14px; color: var(--muted-2); }

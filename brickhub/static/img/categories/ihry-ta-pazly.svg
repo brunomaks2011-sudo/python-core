@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="Ігри та пазли">
+  <defs><linearGradient id="pz" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5bb85a"/><stop offset="1" stop-color="#36873a"/></linearGradient></defs>
+  <path d="M24 38h22c-4-10 0-20 14-20s18 10 14 20h22v22c10-4 20 0 20 14s-10 18-20 14v22H24V82c10 4 18-2 18-10s-8-14-18-10Z" fill="url(#pz)" stroke="#1f5a22" stroke-width="2.4" stroke-linejoin="round"/>
+  <path d="M32 46h14" stroke="#fff" stroke-opacity=".3" stroke-width="4" stroke-linecap="round"/>
+</svg>

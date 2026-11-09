@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="Освітлення">
+  <defs><linearGradient id="y" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff3a6"/><stop offset="1" stop-color="#f2c230"/></linearGradient></defs>
+  <path d="M60 14a30 30 0 0 0-18 54c4 3 6 8 6 12h24c0-4 2-9 6-12a30 30 0 0 0-18-54Z" fill="url(#y)" stroke="#b88a00" stroke-width="2.2" stroke-linejoin="round"/>
+  <path d="M52 66l8-12 8 12" fill="none" stroke="#b88a00" stroke-width="2.4" stroke-linejoin="round"/>
+  <rect x="46" y="80" width="28" height="20" rx="4" fill="#a0a5a9" stroke="#5b6066" stroke-width="2"/>
+  <path d="M46 87h28M46 94h28" stroke="#5b6066" stroke-width="2"/>
+  <path d="M54 100h12l-2 8h-8Z" fill="#5b6066"/>
+  <path d="M14 42h10M96 42h10M24 14l7 7M96 14l-7 7" stroke="#f2c230" stroke-width="4" stroke-linecap="round"/>
+  <ellipse cx="50" cy="34" rx="7" ry="10" fill="#fff" fill-opacity=".55" transform="rotate(25 50 34)"/>
+</svg>

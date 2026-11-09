@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="Канцелярія">
+  <defs></defs>
+  <g transform="rotate(-45 60 60)">
+    <rect x="24" y="50" width="62" height="20" fill="#f2c230" stroke="#9a7400" stroke-width="2"/>
+    <path d="M24 57h62" stroke="#fff" stroke-opacity=".35" stroke-width="3"/>
+    <rect x="86" y="50" width="10" height="20" fill="#a0a5a9" stroke="#5b6066" stroke-width="2"/>
+    <rect x="96" y="50" width="12" height="20" rx="4" fill="#f08aa8" stroke="#a84863" stroke-width="2"/>
+    <path d="M24 50 6 60l18 10Z" fill="#f1d3a4" stroke="#9a7400" stroke-width="2" stroke-linejoin="round"/>
+    <path d="M12 57 6 60l6 3Z" fill="#2b2d31"/>
+  </g>
+</svg>

@@ -42,12 +42,22 @@
   const all = $("[data-check-all]");
   if (all) all.addEventListener("change", () => $$("input[name=ids]").forEach((c) => { c.checked = all.checked; }));
   const bulk = $("[data-bulk]");
-  if (bulk) bulk.addEventListener("submit", (e) => {
-    const action = bulk.querySelector("select[name=action]").value;
-    const n = $$("input[name=ids]:checked").length;
-    if (!action || !n) { e.preventDefault(); window.bhToast && window.bhToast("Оберіть товари та дію", "info"); return; }
-    if (action === "delete" && !confirm(`Видалити ${n} товар(ів)?`)) e.preventDefault();
-  });
+  if (bulk) {
+    const actionSel = bulk.querySelector("select[name=action]");
+    const catSel = bulk.querySelector("[data-bulk-category]");
+    const syncCat = () => { if (catSel) catSel.hidden = actionSel.value !== "set_category"; };
+    actionSel.addEventListener("change", syncCat);
+    syncCat();
+    bulk.addEventListener("submit", (e) => {
+      const action = actionSel.value;
+      const n = $$("input[name=ids]:checked").length;
+      if (!action || !n) { e.preventDefault(); window.bhToast && window.bhToast("Оберіть товари та дію", "info"); return; }
+      if (action === "set_category" && catSel && !catSel.value) {
+        e.preventDefault(); window.bhToast && window.bhToast("Оберіть категорію", "info"); catSel.focus(); return;
+      }
+      if (action === "delete" && !confirm(`Видалити ${n} товар(ів)?`)) e.preventDefault();
+    });
+  }
   const importBtn = $("[data-confirm-import]");
   if (importBtn) importBtn.addEventListener("click", (e) => { if (!confirm("Записати дані у базу? Рекомендуємо спершу зробити перевірку.")) e.preventDefault(); });
 
@@ -55,7 +65,11 @@
   const pf = $("[data-product-form]");
   if (pf) {
     const kind = $("#id_kind", pf);
-    const sync = () => $$("[data-kind-section]", pf).forEach((s) => { s.hidden = !s.dataset.kindSection.split(" ").includes(kind.value); });
+    const category = $("#id_category", pf);
+    const sync = () => {
+      $$("[data-kind-section]", pf).forEach((s) => { s.hidden = !s.dataset.kindSection.split(" ").includes(kind.value); });
+      if (category) category.dataset.preferKind = kind.value;  // categories of this type are listed first
+    };
     kind.addEventListener("change", sync);
     sync();
     const lookup = async (type) => {
@@ -70,11 +84,17 @@
       if (!d.found) { out.textContent = d.message || "Не знайдено в каталозі"; return; }
       const title = $("#id_title", pf);
       if (type === "set") {
-        out.textContent = `✓ ${d.name} · ${d.year || "—"} · ${d.pieces || "?"} дет. · мініфігурок: ${d.minifigs ?? "?"}${d.theme ? " · " + d.theme : ""}` +
+        // pieces and minifigure counts are shown (and filled in) only for sets
+        const isSet = kind.value === "set";
+        const bits = [d.name];
+        if (d.year) bits.push(d.year);
+        if (isSet) bits.push(`${d.pieces || "?"} дет.`, `мініфігурок: ${d.minifigs ?? "?"}`);
+        if (d.theme) bits.push(d.theme);
+        out.textContent = "✓ " + bits.join(" · ") +
           (d.listings && d.listings.length ? ` · вже є лоти: ${d.listings.map((l) => l.sku).join(", ")}` : "");
         if (title && !title.value) title.placeholder = d.name;
         const set = (id, v) => { const el = $(id, pf); if (el && !el.value && v != null) el.value = v; };
-        set("#id_year", d.year); set("#id_pieces", d.pieces); set("#id_minifigs_count", d.minifigs); set("#id_age_min", d.age);
+        if (isSet) { set("#id_year", d.year); set("#id_pieces", d.pieces); set("#id_minifigs_count", d.minifigs); set("#id_age_min", d.age); }
         const theme = $("#id_theme", pf);
         if (theme && !theme.value && d.theme_id) { theme.value = d.theme_id; theme.dispatchEvent(new Event("change")); }
       } else if (type === "part") {

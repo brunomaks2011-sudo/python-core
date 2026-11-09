@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="Частини мініфігурок">
+  <defs><linearGradient id="t" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e0352b"/><stop offset="1" stop-color="#b3170d"/></linearGradient><linearGradient id="l" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3f78cf"/><stop offset="1" stop-color="#2554a3"/></linearGradient></defs>
+  <rect x="52" y="4" width="16" height="6" rx="2" fill="#f7cd2e" stroke="#b58f00" stroke-width="1.4"/>
+  <rect x="44" y="9" width="32" height="24" rx="8" fill="#ffd43b" stroke="#b58f00" stroke-width="1.8"/>
+  <circle cx="54" cy="19" r="2.4" fill="#222"/><circle cx="66" cy="19" r="2.4" fill="#222"/>
+  <path d="M53 25q7 5 14 0" fill="none" stroke="#222" stroke-width="2" stroke-linecap="round"/>
+  <path d="M40 40h40l6 30H34Z" fill="url(#t)" stroke="#7d0f08" stroke-width="1.8" stroke-linejoin="round"/>
+  <rect x="24" y="42" width="11" height="24" rx="5" fill="#d42a20" stroke="#7d0f08" stroke-width="1.6" transform="rotate(12 30 54)"/>
+  <rect x="85" y="42" width="11" height="24" rx="5" fill="#d42a20" stroke="#7d0f08" stroke-width="1.6" transform="rotate(-12 90 54)"/>
+  <circle cx="26" cy="70" r="5" fill="#ffd43b" stroke="#b58f00" stroke-width="1.4"/>
+  <circle cx="94" cy="70" r="5" fill="#ffd43b" stroke="#b58f00" stroke-width="1.4"/>
+  <rect x="36" y="77" width="48" height="8" rx="2" fill="url(#l)" stroke="#173a75" stroke-width="1.6"/>
+  <rect x="36" y="88" width="22" height="28" rx="3" fill="url(#l)" stroke="#173a75" stroke-width="1.6"/>
+  <rect x="62" y="88" width="22" height="28" rx="3" fill="url(#l)" stroke="#173a75" stroke-width="1.6"/>
+</svg>

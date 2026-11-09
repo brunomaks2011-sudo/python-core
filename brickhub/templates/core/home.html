@@ -108,7 +108,7 @@
         </div>
       </div>
       <div class="pp-visual">
-        {% for c in part_categories|slice:":8" %}
+        {% for c in finder_categories %}
           <a href="{{ c.get_absolute_url }}" title="{{ c.name }}"><img src="{% category_icon c.slug %}" alt="{{ c.name }}" width="96" height="96" loading="lazy"></a>
         {% endfor %}
       </div>

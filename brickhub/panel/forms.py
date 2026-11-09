@@ -28,6 +28,7 @@ class SearchableSelect(forms.Select):
             option["attrs"]["data-search"] = f"{obj.name} {obj.title}"
         elif isinstance(obj, Category):
             option["attrs"]["data-search"] = f"{obj.name} {obj.slug}"
+            option["attrs"]["data-kind"] = obj.kind
         return option
 
 
@@ -47,8 +48,7 @@ class ProductForm(forms.ModelForm):
     color = ColorChoiceField(label="Колір", queryset=Color.objects.none(), required=False, widget=SearchableSelect,
                              help_text="Почніть вводити назву українською чи англійською або номер кольору")
     set_number = forms.CharField(label="Номер LEGO", required=False, max_length=40,
-                                 help_text="Напр. 75355 — дані підтягнуться з каталогу. Для брелоків і книг — "
-                                           "необов'язково")
+                                 help_text="Номер з каталогу LEGO. Для аксесуарів, брелоків і книг — необов'язково")
     design_id = forms.CharField(label="Design ID деталі", required=False, max_length=40)
     fig_number = forms.CharField(label="Номер мініфігурки", required=False, max_length=40,
                                  help_text="Номер каталогу (fig-000123) або BrickLink (sw0001). Для брелока чи "

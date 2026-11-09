@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="Зброя та інструменти">
+  <defs><linearGradient id="s" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3f78cf"/><stop offset="1" stop-color="#22509c"/></linearGradient></defs>
+  <path d="M84 16h10v10L54 66l-8-8Z" fill="#c9cdd2" stroke="#6b7077" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M40 54l26 26-6 6-26-26Z" fill="#5b5e64" stroke="#33363a" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M42 72 24 90" stroke="#7a4a24" stroke-width="8" stroke-linecap="round"/>
+  <path d="M58 46c0 0 14-4 26-14 0 0 10 16 10 30 0 24-20 38-36 46-16-8-36-22-36-46 0-14 10-30 10-30 12 10 26 14 26 14Z" fill="url(#s)" stroke="#173a75" stroke-width="2.2" stroke-linejoin="round" transform="translate(4 4) scale(.9)"/>
+  <path d="M57 54v40M41 70h32" stroke="#ffd43b" stroke-width="6" stroke-linecap="round" transform="translate(4 4) scale(.9)"/>
+</svg>

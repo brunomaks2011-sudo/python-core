@@ -108,7 +108,7 @@
       </div>
       <div class="nav-item" data-menu>
         <button class="nav-link" type="button" aria-expanded="false">Деталі <svg class="ic"><use href="#i-chev-down"/></svg></button>
-        <div class="mega" style="min-width:680px">
+        <div class="mega mega-wide">
           <div class="mega-grid">
             {% for c in nav.by_kind.part.children %}
               <a class="mlink" href="{% url 'catalog:category' c.slug %}"><img src="{% category_icon c.slug %}" alt="" width="34" height="34" loading="lazy">{{ c.name }}</a>
@@ -135,7 +135,25 @@
       </div>
       <a class="nav-link" href="{% url 'catalog:category' 'breloky' %}">Брелоки</a>
       <a class="nav-link" href="{% url 'catalog:category' 'knyhy-z-fihurkamy' %}">Книги з фігурками</a>
+      {% if nav.by_kind.accessory.children %}
+      <div class="nav-item" data-menu>
+        <button class="nav-link" type="button" aria-expanded="false">Аксесуари <svg class="ic"><use href="#i-chev-down"/></svg></button>
+        <div class="mega mega-right" style="min-width:600px">
+          <div class="mega-grid" style="grid-template-columns:repeat(2,minmax(0,1fr))">
+            {% for c in nav.by_kind.accessory.children %}
+              <a class="mlink" href="{% url 'catalog:category' c.slug %}"><img src="{% category_icon c.slug %}" alt="" width="34" height="34" loading="lazy">{{ c.name }}</a>
+            {% endfor %}
+          </div>
+          <div class="mega-foot">
+            <a class="btn btn-sm btn-dark" href="{% url 'catalog:category' 'aksesuary' %}">Усі аксесуари</a>
+            <a class="btn btn-sm btn-soft" href="{% url 'catalog:category' 'breloky' %}">Брелоки</a>
+            <a class="btn btn-sm btn-soft" href="{% url 'catalog:category' 'knyhy-z-fihurkamy' %}">Книги з фігурками</a>
+          </div>
+        </div>
+      </div>
+      {% else %}
       <a class="nav-link" href="{% url 'catalog:category' 'aksesuary' %}">Аксесуари</a>
+      {% endif %}
       <a class="nav-link" href="{% url 'catalog:collection' 'novynky' %}">Новинки</a>
       <a class="nav-link is-accent" href="{% url 'catalog:collection' 'rozprodazh' %}">Розпродаж</a>
       <span class="spacer"></span>
@@ -235,7 +253,17 @@
     </details>
     <a href="{% url 'catalog:category' 'breloky' %}">Брелоки <svg class="ic"><use href="#i-chev-right"/></svg></a>
     <a href="{% url 'catalog:category' 'knyhy-z-fihurkamy' %}">Книги з фігурками <svg class="ic"><use href="#i-chev-right"/></svg></a>
+    {% if nav.by_kind.accessory.children %}
+    <details>
+      <summary>Аксесуари <svg class="ic"><use href="#i-chev-down"/></svg></summary>
+      <div class="sub">
+        {% for c in nav.by_kind.accessory.children %}<a href="{% url 'catalog:category' c.slug %}">{{ c.name }}</a>{% endfor %}
+        <a href="{% url 'catalog:category' 'aksesuary' %}"><b>Усі аксесуари</b></a>
+      </div>
+    </details>
+    {% else %}
     <a href="{% url 'catalog:category' 'aksesuary' %}">Аксесуари <svg class="ic"><use href="#i-chev-right"/></svg></a>
+    {% endif %}
     <a href="{% url 'catalog:collection' 'novynky' %}">Новинки <svg class="ic"><use href="#i-chev-right"/></svg></a>
     <a href="{% url 'catalog:collection' 'rozprodazh' %}" style="color:var(--red)">Розпродаж <svg class="ic"><use href="#i-chev-right"/></svg></a>
     <a href="{% url 'catalog:collection' 'vzhyvani-nabory' %}">Набори б/у <svg class="ic"><use href="#i-chev-right"/></svg></a>
