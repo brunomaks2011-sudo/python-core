@@ -145,3 +145,48 @@ class PhotoAndVariantTests(TestCase):
         call_command("clear_auto_images", stdout=__import__("io").StringIO())
         self.assertEqual(list(ProductImage.objects.values_list("external_url", flat=True)),
                          ["https://example.com/mine.jpg"])
+
+
+class AnimalsCategoryTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.colors = base_catalog()
+
+    def test_category_exists_and_is_listed(self):
+        from catalog.models import Category
+
+        animals = Category.objects.get(slug="tvaryny")
+        self.assertEqual(animals.parent.slug, "detali")
+        self.assertEqual(animals.kind, "part")
+        r = self.client.get(reverse("core:home"))
+        self.assertContains(r, reverse("catalog:category", args=["tvaryny"]))
+        self.assertContains(r, "img/categories/tvaryny.svg")
+
+    def test_migration_moves_catalogue_parts_but_not_products(self):
+        import importlib
+
+        from django.apps import apps
+
+        from catalog.models import Category, Part, PartCategory
+
+        migration = importlib.import_module("catalog.migrations.0005_animals_category")
+        other = Category.objects.get(slug="inshi-elementy")
+        animals = Category.objects.get(slug="tvaryny")
+        PartCategory.objects.create(id=28, name="Animals / Creatures")
+        horse = Part.objects.create(design_id="horse-test", name="Animal, Horse", part_category_id=28, category=other)
+        product = Product.objects.create(kind="part", part=horse, color=self.colors["black"], price="99",
+                                         category=other)
+        migration.add_animals(apps, None)
+        horse.refresh_from_db()
+        product.refresh_from_db()
+        self.assertEqual(horse.category, animals)
+        self.assertEqual(product.category, other)  # the owner's listing keeps its category
+
+    def test_part_in_animals_category_is_shown_there(self):
+        from catalog.models import Category
+
+        p = part_product(design="3001", color=self.colors["red"])
+        p.category = Category.objects.get(slug="tvaryny")
+        p.save()
+        r = self.client.get(reverse("catalog:category", args=["tvaryny"]))
+        self.assertContains(r, "Цеглинка 2 × 4")

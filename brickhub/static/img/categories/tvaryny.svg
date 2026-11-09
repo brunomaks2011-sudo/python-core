@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="Тварини">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#a5583a"/>
+      <stop offset="1" stop-color="#82422a"/>
+    </linearGradient>
+  </defs>
+  <g fill="url(#g)" stroke="#5e2f1d" stroke-width="2" stroke-opacity=".5">
+    <path d="M60 58c14 0 30 15 30 29 0 10-8 15-17 15-6 0-9-3-13-3s-7 3-13 3c-9 0-17-5-17-15 0-14 16-29 30-29Z"/>
+    <ellipse cx="33" cy="52" rx="10" ry="13" transform="rotate(-20 33 52)"/>
+    <ellipse cx="50" cy="33" rx="10" ry="14" transform="rotate(-6 50 33)"/>
+    <ellipse cx="70" cy="33" rx="10" ry="14" transform="rotate(6 70 33)"/>
+    <ellipse cx="87" cy="52" rx="10" ry="13" transform="rotate(20 87 52)"/>
+  </g>
+  <g fill="#fff" fill-opacity=".28">
+    <ellipse cx="52" cy="70" rx="9" ry="4" transform="rotate(-18 52 70)"/>
+    <ellipse cx="47" cy="27" rx="3.5" ry="5"/>
+    <ellipse cx="67" cy="27" rx="3.5" ry="5"/>
+  </g>
+</svg>

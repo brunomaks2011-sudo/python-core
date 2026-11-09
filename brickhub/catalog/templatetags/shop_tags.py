@@ -143,8 +143,15 @@ def part_icon(design_id: str, rb_color: int) -> str:
     return reverse("catalog:part_svg", args=[design_id, pk]) + f"?v={rgb}"
 
 
+STATIC_CATEGORY_ICONS = {"tvaryny": "img/categories/tvaryny.svg"}
+
+
 @register.simple_tag
 def category_icon(slug: str) -> str:
+    if slug in STATIC_CATEGORY_ICONS:
+        from django.templatetags.static import static
+
+        return static(STATIC_CATEGORY_ICONS[slug])
     design, color = CATEGORY_ICONS.get(slug, ("3003", 4))
     return part_icon(design, color)
 
