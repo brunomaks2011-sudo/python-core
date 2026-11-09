@@ -76,20 +76,20 @@
         const set = (id, v) => { const el = $(id, pf); if (el && !el.value && v != null) el.value = v; };
         set("#id_year", d.year); set("#id_pieces", d.pieces); set("#id_minifigs_count", d.minifigs); set("#id_age_min", d.age);
         const theme = $("#id_theme", pf);
-        if (theme && !theme.value && d.theme_id) theme.value = d.theme_id;
+        if (theme && !theme.value && d.theme_id) { theme.value = d.theme_id; theme.dispatchEvent(new Event("change")); }
       } else if (type === "part") {
         out.textContent = `✓ ${d.design_id} — ${d.name}${d.name_uk ? " (" + d.name_uk + ")" : ""}` +
           (d.listings && d.listings.length ? ` · вже є: ${d.listings.length} лот(ів)` : "");
         if (title && !title.value) title.placeholder = d.name_uk || d.name;
         if (d.design_id && d.design_id !== q) $("#id_design_id", pf).value = d.design_id;
-        if (d.color_id) $("#id_color", pf).value = d.color_id;
+        if (d.color_id) { const color = $("#id_color", pf); color.value = d.color_id; color.dispatchEvent(new Event("change")); }
         const cat = $("#id_category", pf);
-        if (cat && !cat.value && d.category_id) cat.value = d.category_id;
+        if (cat && !cat.value && d.category_id) { cat.value = d.category_id; cat.dispatchEvent(new Event("change")); }
       } else {
         out.textContent = `✓ ${d.name}${d.year ? " · " + d.year : ""}`;
-        if (title && !title.value) title.placeholder = d.name;
+        if (title && !title.value && kind.value === "minifig") title.placeholder = d.name;
         const theme = $("#id_theme", pf);
-        if (theme && !theme.value && d.theme_id) theme.value = d.theme_id;
+        if (theme && !theme.value && d.theme_id) { theme.value = d.theme_id; theme.dispatchEvent(new Event("change")); }
       }
     };
     $$("[data-lookup-btn]", pf).forEach((b) => b.addEventListener("click", () => lookup(b.dataset.lookupBtn)));

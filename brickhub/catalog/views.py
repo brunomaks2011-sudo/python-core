@@ -58,7 +58,7 @@ def category_detail(request, slug):
     if category.slug == "prozori-detali":
         return collection_detail(request, "prozori-detali", category=category)
     ids = category.descendant_ids()
-    kind_map = {"set": "set", "part": "part", "minifig": "minifig", "accessory": "accessory"}
+    kind_map = {k: k for k in ("set", "part", "minifig", "keychain", "book", "accessory")}
     if category.parent_id is None and category.kind in kind_map:
         base = Product.objects.filter(kind=kind_map[category.kind])
     else:

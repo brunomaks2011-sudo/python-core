@@ -139,6 +139,8 @@ class Category(models.Model):
         ("set", "Набори"),
         ("part", "Деталі"),
         ("minifig", "Мініфігурки"),
+        ("keychain", "Брелоки"),
+        ("book", "Книги з фігурками"),
         ("accessory", "Аксесуари"),
         ("other", "Інше"),
     ]
@@ -330,16 +332,22 @@ class ProductQuerySet(models.QuerySet):
 
 class Product(models.Model):
     KIND_SET, KIND_PART, KIND_MINIFIG, KIND_ACCESSORY, KIND_OTHER = "set", "part", "minifig", "accessory", "other"
+    KIND_KEYCHAIN, KIND_BOOK = "keychain", "book"
     KINDS = [
         (KIND_SET, "Набір"),
         (KIND_PART, "Деталь"),
         (KIND_MINIFIG, "Мініфігурка"),
+        (KIND_KEYCHAIN, "Брелок"),
+        (KIND_BOOK, "Книга з фігуркою"),
         (KIND_ACCESSORY, "Аксесуар"),
         (KIND_OTHER, "Інше"),
     ]
+    # kinds that may include a minifigure (a minifigure keychain, a book with a figure)
+    WITH_FIGURE = {KIND_KEYCHAIN, KIND_BOOK}
     CONDITION_NEW, CONDITION_USED = "new", "used"
     CONDITIONS = [(CONDITION_NEW, "Новий"), (CONDITION_USED, "Б/у")]
-    SKU_PREFIX = {KIND_SET: "S", KIND_PART: "P", KIND_MINIFIG: "M", KIND_ACCESSORY: "A", KIND_OTHER: "X"}
+    SKU_PREFIX = {KIND_SET: "S", KIND_PART: "P", KIND_MINIFIG: "M", KIND_KEYCHAIN: "K", KIND_BOOK: "B",
+                  KIND_ACCESSORY: "A", KIND_OTHER: "X"}
 
     kind = models.CharField("Тип", max_length=12, choices=KINDS, default=KIND_SET, db_index=True)
     sku = models.CharField("Артикул магазину", max_length=60, unique=True, blank=True,

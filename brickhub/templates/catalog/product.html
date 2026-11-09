@@ -181,6 +181,9 @@
           {% if s.age_min %}<tr><th>Вікова категорія</th><td>{{ s.age_min }}+</td></tr>{% endif %}
           {% if s.dimensions %}<tr><th>Розміри зібраної моделі (В × Ш × Г)</th><td>{{ s.dimensions }}</td></tr>{% endif %}
         {% endif %}
+        {% if p.kind == "keychain" or p.kind == "book" %}{% if p.minifigure_id %}
+          <tr><th>Мініфігурка в комплекті</th><td>{{ p.minifigure.name }} <span class="muted mono">{{ p.minifigure.display_number }}</span></td></tr>
+        {% endif %}{% endif %}
         {% if p.kind == "minifig" %}
           <tr><th>Персонаж</th><td>{{ p.minifigure.character|default:p.minifigure.name }}</td></tr>
           {% if p.minifigure.bricklink_id %}<tr><th>Номер BrickLink</th><td class="mono">{{ p.minifigure.bricklink_id }}</td></tr>{% endif %}

@@ -133,11 +133,11 @@
           <div class="mega-foot"><a class="btn btn-sm btn-dark" href="{% url 'catalog:category' 'minifihurky' %}">Усі мініфігурки</a></div>
         </div>
       </div>
+      <a class="nav-link" href="{% url 'catalog:category' 'breloky' %}">Брелоки</a>
+      <a class="nav-link" href="{% url 'catalog:category' 'knyhy-z-fihurkamy' %}">Книги з фігурками</a>
       <a class="nav-link" href="{% url 'catalog:category' 'aksesuary' %}">Аксесуари</a>
       <a class="nav-link" href="{% url 'catalog:collection' 'novynky' %}">Новинки</a>
       <a class="nav-link is-accent" href="{% url 'catalog:collection' 'rozprodazh' %}">Розпродаж</a>
-      <a class="nav-link" href="{% url 'catalog:collection' 'vzhyvani-nabory' %}">Набори б/у</a>
-      <a class="nav-link" href="{% url 'catalog:collection' 'ridkisni' %}">Рідкісні</a>
       <span class="spacer"></span>
       <a class="nav-link" href="{% url 'catalog:part_finder' %}"><svg class="ic" style="width:18px;height:18px"><use href="#i-brick"/></svg> Знайти деталь</a>
     </div>
@@ -173,6 +173,8 @@
         <a href="{% url 'catalog:category' 'nabory' %}">Набори LEGO</a>
         <a href="{% url 'catalog:category' 'detali' %}">Деталі LEGO</a>
         <a href="{% url 'catalog:category' 'minifihurky' %}">Мініфігурки</a>
+        <a href="{% url 'catalog:category' 'breloky' %}">Брелоки</a>
+        <a href="{% url 'catalog:category' 'knyhy-z-fihurkamy' %}">Книги з фігурками</a>
         <a href="{% url 'catalog:category' 'aksesuary' %}">Аксесуари</a>
         <a href="{% url 'catalog:collection' 'novynky' %}">Новинки</a>
         <a href="{% url 'catalog:collection' 'rozprodazh' %}">Розпродаж</a>
@@ -231,6 +233,8 @@
         <a href="{% url 'catalog:category' 'minifihurky' %}">Усі мініфігурки</a>
       </div>
     </details>
+    <a href="{% url 'catalog:category' 'breloky' %}">Брелоки <svg class="ic"><use href="#i-chev-right"/></svg></a>
+    <a href="{% url 'catalog:category' 'knyhy-z-fihurkamy' %}">Книги з фігурками <svg class="ic"><use href="#i-chev-right"/></svg></a>
     <a href="{% url 'catalog:category' 'aksesuary' %}">Аксесуари <svg class="ic"><use href="#i-chev-right"/></svg></a>
     <a href="{% url 'catalog:collection' 'novynky' %}">Новинки <svg class="ic"><use href="#i-chev-right"/></svg></a>
     <a href="{% url 'catalog:collection' 'rozprodazh' %}" style="color:var(--red)">Розпродаж <svg class="ic"><use href="#i-chev-right"/></svg></a>

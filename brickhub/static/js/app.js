@@ -360,3 +360,159 @@ document.addEventListener("submit", (e) => {
   const f = e.target.closest("form[data-confirm]");
   if (f && !window.confirm(f.dataset.confirm)) { e.preventDefault(); e.stopImmediatePropagation(); }
 }, true);
+
+/* Searchable selects: type to filter long lists (colours, series, categories).
+   The native <select> stays in the form and keeps the value. */
+(() => {
+  "use strict";
+  const norm = (s) => (s || "").toLowerCase().replace(/[’'ʼ`]/g, "").replace(/\s+/g, " ").trim();
+  let uid = 0;
+
+  function enhance(sel) {
+    if (sel.dataset.comboReady) return;
+    sel.dataset.comboReady = "1";
+    const id = `combo-${++uid}`;
+    const wrap = document.createElement("div");
+    wrap.className = "combo";
+    const field = document.createElement("div");
+    field.className = "combo-field";
+    const chip = document.createElement("span");
+    chip.className = "combo-chip";
+    chip.hidden = true;
+    const input = document.createElement("input");
+    input.type = "text";
+    input.className = "combo-input";
+    input.autocomplete = "off";
+    input.spellcheck = false;
+    input.placeholder = sel.dataset.placeholder || "Почніть вводити…";
+    input.setAttribute("role", "combobox");
+    input.setAttribute("aria-autocomplete", "list");
+    input.setAttribute("aria-expanded", "false");
+    input.setAttribute("aria-controls", id);
+    if (sel.getAttribute("aria-label")) input.setAttribute("aria-label", sel.getAttribute("aria-label"));
+    const label = sel.id ? document.querySelector(`label[for="${sel.id}"]`) : null;
+    if (label) {
+      label.id = label.id || `${id}-label`;
+      input.setAttribute("aria-labelledby", label.id);
+      label.addEventListener("click", (e) => { e.preventDefault(); input.focus(); });
+    }
+    const list = document.createElement("div");
+    list.className = "combo-list";
+    list.id = id;
+    list.setAttribute("role", "listbox");
+    list.hidden = true;
+    sel.parentNode.insertBefore(wrap, sel);
+    field.append(chip, input);
+    wrap.append(sel, field, list);
+    sel.classList.add("combo-native");
+    sel.tabIndex = -1;
+    sel.setAttribute("aria-hidden", "true");
+
+    const opts = Array.from(sel.options).map((o) => ({
+      value: o.value,
+      label: o.value === "" && /^-+$/.test(o.textContent.trim()) ? "— не вибрано —" : o.textContent.trim(),
+      hex: o.dataset.hex || "",
+      search: norm(`${o.textContent} ${o.dataset.search || ""}`),
+    }));
+    let shown = [];
+    let active = -1;
+
+    const current = () => opts.find((o) => o.value === sel.value);
+    function sync() {
+      const o = current();
+      input.value = o && o.value !== "" ? o.label : "";
+      const hex = o && o.value !== "" ? o.hex : "";
+      chip.hidden = !hex;
+      wrap.classList.toggle("has-chip", Boolean(hex));
+      if (hex) chip.style.setProperty("--c", hex);
+    }
+    function highlight() {
+      Array.from(list.children).forEach((el, i) => el.classList.toggle("is-active", i === active));
+      const el = list.children[active];
+      if (el && el.id) {
+        el.scrollIntoView({ block: "nearest" });
+        input.setAttribute("aria-activedescendant", el.id);
+      } else {
+        input.removeAttribute("aria-activedescendant");
+      }
+    }
+    function render(q) {
+      const terms = norm(q).split(" ").filter(Boolean);
+      shown = opts.filter((o) => terms.every((t) => o.search.includes(t)));
+      if (terms.length) {
+        const starts = (o) => (norm(o.label).startsWith(terms[0]) ? 1 : 0);
+        shown.sort((a, b) => starts(b) - starts(a));
+      }
+      shown = shown.slice(0, 250);
+      list.replaceChildren();
+      if (!shown.length) {
+        const empty = document.createElement("div");
+        empty.className = "combo-empty";
+        empty.textContent = "Нічого не знайдено";
+        list.append(empty);
+      }
+      shown.forEach((o, i) => {
+        const el = document.createElement("div");
+        el.className = "combo-opt";
+        el.id = `${id}-${i}`;
+        el.setAttribute("role", "option");
+        el.setAttribute("aria-selected", String(o.value === sel.value));
+        if (o.hex) {
+          const sw = document.createElement("span");
+          sw.className = "swatch";
+          sw.style.setProperty("--c", o.hex);
+          el.append(sw);
+        }
+        const text = document.createElement("span");
+        text.textContent = o.label;
+        el.append(text);
+        el.addEventListener("mousedown", (e) => { e.preventDefault(); choose(o); });
+        list.append(el);
+      });
+      active = !shown.length ? -1 : terms.length ? 0 : Math.max(0, shown.findIndex((o) => o.value === sel.value));
+      highlight();
+    }
+    function open(q) {
+      render(q);
+      list.hidden = false;
+      input.setAttribute("aria-expanded", "true");
+    }
+    function close() {
+      list.hidden = true;
+      input.setAttribute("aria-expanded", "false");
+      active = -1;
+    }
+    function choose(o) {
+      sel.value = o.value;
+      sel.dispatchEvent(new Event("change", { bubbles: true }));
+      sync();
+      close();
+    }
+
+    list.addEventListener("mousedown", (e) => e.preventDefault());
+    input.addEventListener("focus", () => { input.select(); open(""); });
+    input.addEventListener("click", () => { if (list.hidden) open(""); });
+    input.addEventListener("input", () => open(input.value));
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+        e.preventDefault();
+        if (list.hidden) open("");
+        if (!shown.length) return;
+        active = (active + (e.key === "ArrowDown" ? 1 : -1) + shown.length) % shown.length;
+        highlight();
+      } else if (e.key === "Enter") {
+        if (!list.hidden && shown[active]) { e.preventDefault(); choose(shown[active]); }
+      } else if (e.key === "Escape") {
+        if (!list.hidden) { e.preventDefault(); e.stopPropagation(); close(); sync(); }
+      } else if (e.key === "Tab") {
+        close();
+        sync();
+      }
+    });
+    input.addEventListener("blur", () => setTimeout(() => { if (document.activeElement !== input) { close(); sync(); } }, 120));
+    sel.addEventListener("change", sync);
+    sync();
+  }
+
+  document.querySelectorAll("select[data-searchable]").forEach(enhance);
+})();

@@ -10,14 +10,49 @@ from catalog.models import Category, Color, Element, LegoSet, Minifigure, Part, 
 from orders.models import Order
 
 
+class SearchableSelect(forms.Select):
+    """A normal <select>; app.js turns it into a field where you can type to search."""
+
+    def __init__(self, attrs=None, choices=()):
+        super().__init__({**(attrs or {}), "data-searchable": "1"}, choices)
+
+    def create_option(self, name, value, label, selected, index, subindex=None, attrs=None):
+        option = super().create_option(name, value, label, selected, index, subindex, attrs)
+        obj = getattr(value, "instance", None)
+        if isinstance(obj, Color):
+            option["attrs"]["data-hex"] = obj.hex
+            option["attrs"]["data-search"] = " ".join(
+                str(x) for x in (obj.name, obj.name_uk, obj.lego_name, obj.bricklink_id, obj.rebrickable_id)
+                if x not in (None, ""))
+        elif isinstance(obj, Theme):
+            option["attrs"]["data-search"] = f"{obj.name} {obj.title}"
+        elif isinstance(obj, Category):
+            option["attrs"]["data-search"] = f"{obj.name} {obj.slug}"
+        return option
+
+
+class ColorChoiceField(forms.ModelChoiceField):
+    """Colour choices labelled «Лавандовий (Lavender) · 154» (Ukrainian, official name, BrickLink number)."""
+
+    def label_from_instance(self, obj):
+        label = obj.display_name
+        if obj.name_uk and obj.name_uk != obj.name:
+            label += f" ({obj.name})"
+        return f"{label} · {obj.code}"
+
+
 class ProductForm(forms.ModelForm):
     """Create / edit a listing. LEGO numbers are checked against the catalogue."""
 
-    set_number = forms.CharField(label="Номер набору LEGO", required=False, max_length=40,
-                                 help_text="Напр. 75355 — дані підтягнуться з каталогу")
+    color = ColorChoiceField(label="Колір", queryset=Color.objects.none(), required=False, widget=SearchableSelect,
+                             help_text="Почніть вводити назву українською чи англійською або номер кольору")
+    set_number = forms.CharField(label="Номер LEGO", required=False, max_length=40,
+                                 help_text="Напр. 75355 — дані підтягнуться з каталогу. Для брелоків і книг — "
+                                           "необов'язково")
     design_id = forms.CharField(label="Design ID деталі", required=False, max_length=40)
     fig_number = forms.CharField(label="Номер мініфігурки", required=False, max_length=40,
-                                 help_text="Номер каталогу (fig-000123) або BrickLink (sw0001)")
+                                 help_text="Номер каталогу (fig-000123) або BrickLink (sw0001). Для брелока чи "
+                                           "книги — фігурка в комплекті, необов'язково")
     element_id = forms.CharField(label="Element ID", required=False, max_length=20,
                                  help_text="Необов'язково: офіційний номер елемента LEGO для цього кольору")
     create_catalog = forms.BooleanField(
@@ -46,7 +81,8 @@ class ProductForm(forms.ModelForm):
         fields = ["kind", "condition", "title", "sku", "color", "category", "theme", "price", "old_price",
                   "completeness", "description", "is_active", "is_featured", "is_bestseller", "is_new", "is_rare"]
         widgets = {"description": forms.Textarea(attrs={"rows": 6}), "sku": forms.TextInput(
-            attrs={"placeholder": "згенерується автоматично"})}
+            attrs={"placeholder": "згенерується автоматично"}), "category": SearchableSelect,
+            "theme": SearchableSelect}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -90,7 +126,7 @@ class ProductForm(forms.ModelForm):
         create = data.get("create_catalog")
         official = (data.get("official_name") or "").strip()
         self.lego_set = self.part = self.minifigure = None
-        if kind in ("set", "accessory") and data.get("set_number"):
+        if kind in ("set", "accessory", Product.KIND_KEYCHAIN, Product.KIND_BOOK) and data.get("set_number"):
             num = data["set_number"].strip()
             full = num if "-" in num else f"{num}-1"
             self.lego_set = LegoSet.objects.filter(number__iexact=full).first()
@@ -142,7 +178,15 @@ class ProductForm(forms.ModelForm):
                     else:
                         self.add_error("fig_number", "Такої мініфігурки немає в каталозі. Перевірте номер або "
                                                      "позначте «створити запис вручну».")
-        if kind in ("accessory", "other") and not data.get("title") and not self.lego_set:
+        elif kind in Product.WITH_FIGURE and (data.get("fig_number") or "").strip():
+            num = data["fig_number"].strip()
+            self.minifigure = (Minifigure.objects.filter(fig_number__iexact=num).first()
+                               or Minifigure.objects.filter(bricklink_id__iexact=num).first())
+            if not self.minifigure:
+                self.add_error("fig_number", "Такої мініфігурки немає в каталозі. Перевірте номер або залиште "
+                                             "поле порожнім.")
+        if kind in ("accessory", "other", Product.KIND_KEYCHAIN, Product.KIND_BOOK) and not data.get("title") \
+                and not self.lego_set:
             self.add_error("title", "Вкажіть назву товару")
         return data
 
@@ -166,7 +210,9 @@ class ProductForm(forms.ModelForm):
             el = (data.get("element_id") or "").strip()
             if el and data.get("color"):
                 Element.objects.update_or_create(element_id=el, defaults={"part": self.part, "color": data["color"]})
-        if self.minifigure is not None:
+        if self.minifigure is not None and product.kind in Product.WITH_FIGURE:
+            product.minifigure = self.minifigure  # figure included with a keychain or a book
+        elif self.minifigure is not None:
             m = self.minifigure
             m.bricklink_id = data.get("bricklink_id") or m.bricklink_id
             m.character = data.get("character") or m.character
@@ -188,6 +234,17 @@ class ProductForm(forms.ModelForm):
             product.part = None
         if product.kind == "minifig":
             product.lego_set = None
+        if product.kind in Product.WITH_FIGURE | {Product.KIND_ACCESSORY, Product.KIND_OTHER} and \
+                not (data.get("set_number") or "").strip():
+            product.lego_set = None
+        if product.kind not in Product.WITH_FIGURE | {Product.KIND_MINIFIG} or (
+                product.kind in Product.WITH_FIGURE and not (data.get("fig_number") or "").strip()):
+            product.minifigure = None
+        if not product.category_id:
+            # put the product into its section automatically (a part into its part category)
+            product.category = (product.part.category if product.part_id and product.part.category_id else
+                                Category.objects.filter(parent__isnull=True, kind=product.kind).order_by(
+                                    "sort_order").first())
         if not product.title:
             product.title = product.default_title()
         product.search_text = ""
@@ -277,7 +334,7 @@ class CategoryForm(forms.ModelForm):
         model = Category
         fields = ["name", "slug", "parent", "kind", "icon", "description", "rebrickable_part_categories",
                   "sort_order", "is_active", "seo_title", "seo_description"]
-        widgets = {"description": forms.Textarea(attrs={"rows": 3})}
+        widgets = {"description": forms.Textarea(attrs={"rows": 3}), "parent": SearchableSelect}
 
 
 class ThemeForm(forms.ModelForm):
@@ -285,7 +342,8 @@ class ThemeForm(forms.ModelForm):
         model = Theme
         fields = ["name", "title", "slug", "parent", "is_primary", "show_in_minifigs", "accent", "description",
                   "sort_order"]
-        widgets = {"description": forms.Textarea(attrs={"rows": 3}), "accent": forms.TextInput(attrs={"type": "color"})}
+        widgets = {"description": forms.Textarea(attrs={"rows": 3}), "accent": forms.TextInput(attrs={"type": "color"}),
+                   "parent": SearchableSelect}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -296,7 +354,8 @@ class PartForm(forms.ModelForm):
     class Meta:
         model = Part
         fields = ["design_id", "name", "name_uk", "category", "part_category", "alternate_ids", "description"]
-        widgets = {"description": forms.Textarea(attrs={"rows": 3})}
+        widgets = {"description": forms.Textarea(attrs={"rows": 3}), "category": SearchableSelect,
+                   "part_category": SearchableSelect}
 
 
 class LegoSetForm(forms.ModelForm):
@@ -304,6 +363,7 @@ class LegoSetForm(forms.ModelForm):
         model = LegoSet
         fields = ["number", "name", "theme", "year", "pieces", "minifigs_count", "age_min", "height_cm", "width_cm",
                   "depth_cm", "image_url"]
+        widgets = {"theme": SearchableSelect}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -314,10 +374,12 @@ class MinifigureForm(forms.ModelForm):
     class Meta:
         model = Minifigure
         fields = ["fig_number", "bricklink_id", "name", "character", "theme", "year", "num_parts", "image_url"]
+        widgets = {"theme": SearchableSelect}
 
 
 class ElementForm(forms.ModelForm):
     design_id = forms.CharField(label="Design ID")
+    color = ColorChoiceField(label="Колір", queryset=Color.objects.order_by("name"), widget=SearchableSelect)
 
     class Meta:
         model = Element
@@ -327,7 +389,6 @@ class ElementForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         if self.instance.pk:
             self.fields["design_id"].initial = self.instance.part.design_id
-        self.fields["color"].queryset = Color.objects.order_by("name")
 
     def clean_design_id(self):
         part = Part.objects.filter(design_id__iexact=self.cleaned_data["design_id"].strip()).first()

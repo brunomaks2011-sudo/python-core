@@ -783,6 +783,30 @@ img.pimg { height: auto; }
 .auth-card .fields.two { grid-template-columns: 1fr 1fr; }
 .auth-alt { text-align: center; margin-top: 18px; color: var(--muted); font-size: 14px; }
 
+/* ---------- searchable select (combobox) ---------- */
+.combo { position: relative; }
+.combo-native { position: absolute !important; width: 1px; height: 1px; opacity: 0; pointer-events: none; overflow: hidden; clip: rect(0 0 0 0); }
+.combo-field { position: relative; }
+.combo > .combo-field > input.combo-input {
+  width: 100%; height: 48px; border-radius: 12px; border: 1px solid var(--line); padding: 0 40px 0 14px; font-size: 16px;
+  background: var(--surface-2) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='11' cy='11' r='7'/%3E%3Cpath d='m20 20-3.6-3.6'/%3E%3C/svg%3E") no-repeat right 14px center / 18px;
+  outline: none; text-overflow: ellipsis; transition: border-color 160ms ease, background-color 160ms ease, box-shadow 160ms ease;
+}
+.combo > .combo-field > input.combo-input:focus { border-color: var(--ink); background-color: #fff; box-shadow: 0 0 0 4px rgba(17, 19, 24, .06); }
+.combo.has-chip > .combo-field > input.combo-input { padding-left: 46px; }
+.combo-chip { position: absolute; left: 14px; top: 50%; width: 22px; height: 22px; margin-top: -11px; border-radius: 6px; background: var(--c); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .16); pointer-events: none; z-index: 1; }
+.combo-list {
+  position: absolute; left: 0; right: 0; top: calc(100% + 6px); z-index: 60; max-height: 320px; overflow-y: auto; overscroll-behavior: contain;
+  padding: 6px; background: #fff; border: 1px solid var(--line); border-radius: 12px; box-shadow: var(--shadow-3);
+  transform-origin: top center; transition: opacity 140ms var(--ease-out), transform 140ms var(--ease-out);
+}
+@starting-style { .combo-list { opacity: 0; transform: translateY(-4px) scale(.985); } }
+.combo-opt { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 8px; font-size: 14px; line-height: 1.3; cursor: pointer; }
+.combo-opt .swatch { --s: 18px; border-radius: 5px; }
+.combo-opt.is-active { background: var(--surface-2); }
+.combo-opt[aria-selected="true"] { font-weight: 700; }
+.combo-empty { padding: 12px 10px; color: var(--muted); font-size: 14px; }
+
 /* ---------- account ---------- */
 .account { display: grid; grid-template-columns: 260px minmax(0, 1fr); gap: 24px; align-items: start; padding-bottom: 40px; }
 .acc-nav { background: #fff; border: 1px solid var(--line); border-radius: var(--radius-lg); padding: 10px; position: sticky; top: calc(var(--header-h) + 64px); }

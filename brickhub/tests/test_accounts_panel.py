@@ -131,3 +131,59 @@ class PanelTests(TestCase):
         r = self.client.get(reverse("panel:export_products"))
         body = b"".join(r.streaming_content).decode("utf-8")
         self.assertIn(self.part.sku, body)
+
+
+class KeychainBookAndSearchablePickerTests(TestCase):
+    @classmethod
+    def setUpTestData(cls):
+        cls.colors = base_catalog()
+        from catalog.models import Minifigure
+
+        cls.fig = Minifigure.objects.create(fig_number="fig-000001", name="Toy Store Employee")
+        cls.staff = User.objects.create_user("staff2@example.com", "Correct-horse-1", is_staff=True)
+
+    def setUp(self):
+        self.client.force_login(self.staff)
+
+    def test_new_kinds_and_sections_exist(self):
+        from catalog.models import Category
+
+        self.assertTrue(Category.objects.filter(slug="breloky", kind="keychain", parent=None).exists())
+        self.assertTrue(Category.objects.filter(slug="knyhy-z-fihurkamy", kind="book", parent=None).exists())
+        r = self.client.get(reverse("panel:product_new"))
+        self.assertContains(r, '<option value="keychain">Брелок</option>', html=True)
+        self.assertContains(r, '<option value="book">Книга з фігуркою</option>', html=True)
+
+    def test_keychain_without_number_goes_to_its_section(self):
+        r = self.client.post(reverse("panel:product_new"), {
+            "kind": "keychain", "condition": "new", "title": "Брелок Дарт Вейдер", "price": "349", "quantity": 4,
+            "is_active": "on"})
+        self.assertEqual(r.status_code, 302)
+        p = Product.objects.get(kind="keychain")
+        self.assertEqual(p.category.slug, "breloky")
+        self.assertTrue(p.sku.startswith("BH-K-"))
+        self.assertContains(self.client.get(reverse("catalog:category", args=["breloky"])), "Брелок Дарт Вейдер")
+
+    def test_book_with_included_minifigure(self):
+        r = self.client.post(reverse("panel:product_new"), {
+            "kind": "book", "condition": "new", "title": "Книга LEGO з фігуркою", "fig_number": "fig-000001",
+            "price": "599", "quantity": 2, "is_active": "on"})
+        self.assertEqual(r.status_code, 302)
+        book = Product.objects.get(kind="book")
+        self.assertEqual(book.minifigure, self.fig)
+        self.assertEqual(book.category.slug, "knyhy-z-fihurkamy")
+        page = self.client.get(book.get_absolute_url())
+        self.assertContains(page, "Мініфігурка в комплекті")
+        self.assertContains(page, "Toy Store Employee")
+        # an unknown figure number is refused, a missing one is fine
+        r = self.client.post(reverse("panel:product_new"), {
+            "kind": "book", "condition": "new", "title": "Інша книга", "fig_number": "nope-404", "price": "1",
+            "quantity": 1})
+        self.assertContains(r, "Такої мініфігурки немає в каталозі")
+
+    def test_colour_picker_is_searchable(self):
+        r = self.client.get(reverse("panel:product_new") + "?kind=part")
+        html = r.content.decode()
+        self.assertIn('data-searchable="1"', html)
+        self.assertIn('data-hex="#C91A09"', html)
+        self.assertIn("Червоний (Red) · 5", html)

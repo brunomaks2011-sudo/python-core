@@ -16,10 +16,11 @@
           {% include "partials/field.html" with field=form.kind %}
           {% include "partials/field.html" with field=form.condition %}
         </div>
-        <div class="fields" style="margin-top:14px" data-kind-section="set accessory">
+        <div class="fields" style="margin-top:14px" data-kind-section="set accessory keychain book">
           <div class="field{% if form.set_number.errors %} has-error{% endif %}">
             <label for="id_set_number">{{ form.set_number.label }}</label>
             <div class="row" style="flex-wrap:nowrap">{{ form.set_number }}<button class="btn" type="button" data-lookup-btn="set">Знайти в каталозі</button></div>
+            <p class="help">{{ form.set_number.help_text }}</p>
             {% for e in form.set_number.errors %}<p class="error">{{ e }}</p>{% endfor %}
             <div class="lookup-result" data-lookup-out="set"></div>
           </div>
@@ -34,14 +35,15 @@
           {% include "partials/field.html" with field=form.color %}
           {% include "partials/field.html" with field=form.element_id %}
         </div>
-        <div class="fields" style="margin-top:14px" data-kind-section="minifig">
+        <div class="fields" style="margin-top:14px" data-kind-section="minifig keychain book">
           <div class="field{% if form.fig_number.errors %} has-error{% endif %}">
             <label for="id_fig_number">{{ form.fig_number.label }}</label>
             <div class="row" style="flex-wrap:nowrap">{{ form.fig_number }}<button class="btn" type="button" data-lookup-btn="minifig">Знайти</button></div>
+            <p class="help">{{ form.fig_number.help_text }}</p>
             {% for e in form.fig_number.errors %}<p class="error">{{ e }}</p>{% endfor %}
             <div class="lookup-result" data-lookup-out="minifig"></div>
           </div>
-          {% include "partials/field.html" with field=form.bricklink_id %}
+          <div data-kind-section="minifig">{% include "partials/field.html" with field=form.bricklink_id %}</div>
         </div>
         <details style="margin-top:14px" {% if form.create_catalog.value %}open{% endif %}>
           <summary class="muted" style="cursor:pointer;font-size:14px">Номера немає в каталозі?</summary>

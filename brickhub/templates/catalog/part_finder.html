@@ -9,9 +9,9 @@
   <section class="finder">
     <form method="get">
       <input class="q" type="search" name="q" value="{{ q }}" placeholder="Напр. 3001, 3069b, «пластина 2 x 4», tile" enterkeyhint="search" aria-label="Номер або назва деталі" autofocus>
-      <select name="color" aria-label="Колір">
+      <select name="color" aria-label="Колір" data-searchable data-placeholder="Колір: почніть вводити">
         <option value="">Усі кольори</option>
-        {% for c in colors %}<option value="{{ c.slug }}" {% if color and color.pk == c.pk %}selected{% endif %}>{{ c.display_name }} ({{ c.code }}) — {{ c.n }}</option>{% endfor %}
+        {% for c in colors %}<option value="{{ c.slug }}" data-hex="{{ c.hex }}" data-search="{{ c.name }} {{ c.name_uk }} {{ c.bricklink_id|default_if_none:'' }}" {% if color and color.pk == c.pk %}selected{% endif %}>{{ c.display_name }} ({{ c.code }}) — {{ c.n }}</option>{% endfor %}
       </select>
       <select name="category" aria-label="Категорія">
         <option value="">Усі категорії</option>

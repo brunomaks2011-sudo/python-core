@@ -43,7 +43,7 @@ def color_variants(product) -> list[dict]:
 
 def condition_variants(product) -> list[dict]:
     """New / used listings of the same item; empty when only one condition is on sale."""
-    qs = Product.objects.active().select_related("inventory")
+    qs = Product.objects.active().filter(kind=product.kind).select_related("inventory")
     if product.kind == Product.KIND_PART and product.part_id:
         qs = qs.filter(kind=Product.KIND_PART, part_id=product.part_id, color_id=product.color_id)
     elif product.minifigure_id:
