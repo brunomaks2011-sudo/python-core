@@ -111,21 +111,45 @@ def _rb_to_shop_category() -> dict[int, int]:
     return mapping
 
 
+def _shop_category_resolver():
+    """(Rebrickable category id, official part name) -> shop category pk or None.
+
+    Most part types map to one shop category; a few are split by the part name (e.g. «Hair…» and
+    «Helmet…» go to their own subcategories of «Волосся та головні убори»).
+    """
+    from .structure import name_rules
+
+    shop_cat = _rb_to_shop_category()
+    by_slug = dict(Category.objects.filter(kind="part").values_list("slug", "pk"))
+    rules = {rid: [(prefixes, by_slug[slug]) for prefixes, slug in items if slug in by_slug]
+             for rid, items in name_rules().items()}
+
+    def resolve(cat, name):
+        low = (name or "").lower()
+        for prefixes, pk in rules.get(cat, ()):
+            if low.startswith(prefixes):
+                return pk
+        return shop_cat.get(cat)
+
+    return resolve
+
+
 def import_parts(rows) -> int:
     """rows: (part_num, name, part_cat_id)"""
-    shop_cat = _rb_to_shop_category()
+    resolve = _shop_category_resolver()
     valid_cats = set(PartCategory.objects.values_list("id", flat=True))
     objs = [
         Part(design_id=num[:40], name=name[:255], part_category_id=cat if cat in valid_cats else None,
-             category_id=shop_cat.get(cat))
+             category_id=resolve(cat, name))
         for num, name, cat in rows
     ]
     _upsert(Part, objs, ["design_id"], ["name", "part_category"])
     # assign shop categories only where none was chosen manually
     by_cat = defaultdict(list)
-    for num, _name, cat in rows:
-        if cat in shop_cat:
-            by_cat[shop_cat[cat]].append(num)
+    for num, name, cat in rows:
+        cat_id = resolve(cat, name)
+        if cat_id:
+            by_cat[cat_id].append(num)
     for cat_id, nums in by_cat.items():
         for i in range(0, len(nums), 900):
             Part.objects.filter(design_id__in=nums[i:i + 900], category__isnull=True).update(category_id=cat_id)

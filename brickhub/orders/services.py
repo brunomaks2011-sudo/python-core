@@ -83,7 +83,8 @@ def place_order(request, cart, data: dict, user=None) -> Order:
             p = item.product
             items.append(OrderItem(order=order, product=p, sku=p.sku, title=p.title, kind=p.kind,
                                    number=p.official_number, color_name=p.color.display_name if p.color_id else "",
-                                   condition=p.condition, unit_price=p.price, quantity=item.quantity))
+                                   condition=p.condition, unit_price=p.price, quantity=item.quantity,
+                                   owner_id=p.owner_id))
             inv = locked[p.pk]
             inv.quantity -= item.quantity
             inv.save(update_fields=["quantity", "updated_at"])

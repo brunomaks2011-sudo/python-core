@@ -2,12 +2,14 @@ from __future__ import annotations
 
 from django import forms
 from django.contrib.auth import get_user_model
-from django.db.models import Q
+from django.db.models import Case, Q, When
 
 from cart.models import PromoCode
 from catalog.images import validate_image_file
-from catalog.models import Category, Color, Element, LegoSet, Minifigure, Part, Product, Theme
+from catalog.models import Category, category_tree, Color, Element, LegoSet, Minifigure, Part, Product, Theme
 from orders.models import Order
+
+from .owners import owner_name
 
 
 class SearchableSelect(forms.Select):
@@ -79,7 +81,8 @@ class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
         fields = ["kind", "condition", "title", "sku", "color", "category", "theme", "price", "old_price",
-                  "completeness", "description", "is_active", "is_featured", "is_bestseller", "is_new", "is_rare"]
+                  "completeness", "description", "owner", "is_active", "is_featured", "is_bestseller", "is_new",
+                  "is_rare"]
         widgets = {"description": forms.Textarea(attrs={"rows": 6}), "sku": forms.TextInput(
             attrs={"placeholder": "згенерується автоматично"}), "category": SearchableSelect,
             "theme": SearchableSelect}
@@ -89,8 +92,17 @@ class ProductForm(forms.ModelForm):
         self.fields["title"].required = False
         self.fields["sku"].required = False
         self.fields["color"].queryset = Color.objects.filter(is_active=True).order_by("sort_order", "name")
-        self.fields["category"].queryset = Category.objects.select_related("parent").order_by("parent__sort_order",
-                                                                                               "sort_order")
+        tree = category_tree()
+        paths = {c.pk: path for c, _depth, path in tree}
+        self.fields["category"].queryset = Category.objects.order_by(
+            Case(*[When(pk=c.pk, then=i) for i, (c, _d, _p) in enumerate(tree)], default=len(tree)), "name")
+        self.fields["category"].label_from_instance = lambda obj: paths.get(obj.pk, obj.name)
+        owner = self.fields["owner"]
+        owner.queryset = get_user_model().objects.filter(
+            Q(is_staff=True) | Q(pk=self.instance.owner_id or 0)).order_by("-is_superuser", "pk")
+        owner.label_from_instance = lambda u: f"{owner_name(u)} ({'власник магазину' if u.is_superuser else u.email})"
+        owner.empty_label = "— не вказано —"
+        owner.help_text = "Для статистики: хто скільки продав"
         self.fields["theme"].queryset = Theme.objects.filter(
             Q(parent__isnull=True) | Q(products__isnull=False)).distinct().order_by("-is_primary", "sort_order", "name")
         p = self.instance
@@ -269,7 +281,8 @@ class MultipleFileInput(forms.ClearableFileInput):
 
 
 class MultipleImageField(forms.FileField):
-    widget = MultipleFileInput
+    # listing the formats makes iPhones send JPEG instead of HEIC
+    widget = MultipleFileInput(attrs={"accept": "image/jpeg,image/png,image/webp,image/gif"})
 
     def clean(self, data, initial=None):
         files = data if isinstance(data, (list, tuple)) else ([data] if data else [])

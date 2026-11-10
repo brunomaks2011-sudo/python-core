@@ -1,4 +1,4 @@
-{% extends "panel/base.html" %}{% load shop_tags %}
+{% extends "panel/base.html" %}{% load shop_tags panel_tags %}
 {% block title %}Статистика{% endblock %}
 {% block heading %}Статистика продажів{% endblock %}
 {% block actions %}<a class="btn btn-primary" href="{% url 'panel:product_new' %}"><svg class="ic"><use href="#i-plus"/></svg>Додати товар</a>{% endblock %}
@@ -9,6 +9,32 @@
   <div class="stat"><span>Сьогодні (24 год)</span><b>{{ w1.total|uah }}</b><small>{{ w1.n }} {{ w1.n|plural:"замовлення,замовлення,замовлень" }}</small></div>
   <div class="stat"><span>Середній чек (30 днів)</span><b>{{ w30.avg|uah }}</b><small>без скасованих</small></div>
 </div>
+
+<section class="pcard" style="margin-top:16px">
+  <h2>Продажі за власниками товарів <span class="muted" style="font-weight:500;font-size:13px">чиї товари продано і на яку суму</span></h2>
+  <div class="ptable-wrap" style="border:0">
+    <table class="ptable owner-table">
+      <thead><tr><th>Чий товар</th><th class="num">Сьогодні</th><th class="num">7 днів</th><th class="num">30 днів</th><th class="num">Шт. за 30 днів</th><th class="num">Усього</th><th class="num">На складі</th></tr></thead>
+      <tbody>
+      {% for r in owner_rows.rows %}
+        <tr>
+          <td>{% owner_badge r.owner_id %}{% if r.person %} <span class="muted" style="font-size:12px">{{ r.person.role }}</span>{% endif %}</td>
+          <td class="num">{{ r.d1.amount|uah }}</td>
+          <td class="num">{{ r.d7.amount|uah }}</td>
+          <td class="num"><b>{{ r.d30.amount|uah }}</b><br><span class="muted" style="font-size:12px">{{ r.d30.orders }} {{ r.d30.orders|plural:"замовлення,замовлення,замовлень" }}</span></td>
+          <td class="num">{{ r.d30.qty }}</td>
+          <td class="num">{{ r.all.amount|uah }}</td>
+          <td class="num"><a class="link" href="{% url 'panel:products' %}?owner={% if r.owner_id %}{{ r.owner_id }}{% else %}none{% endif %}">{{ r.products }} {{ r.products|plural:"товар,товари,товарів" }}</a><br><span class="muted" style="font-size:12px">{{ r.stock_value|uah }}</span></td>
+        </tr>
+      {% endfor %}
+      </tbody>
+      {% if owner_rows.rows|length > 1 %}
+      <tfoot><tr><td>Разом</td><td class="num">{{ owner_rows.totals.d1|uah }}</td><td class="num">{{ owner_rows.totals.d7|uah }}</td><td class="num">{{ owner_rows.totals.d30|uah }}</td><td class="num">{{ owner_rows.totals.qty30 }}</td><td class="num">{{ owner_rows.totals.all|uah }}</td><td class="num">{{ owner_rows.totals.stock_value|uah }}</td></tr></tfoot>
+      {% endif %}
+    </table>
+  </div>
+  <p class="muted" style="font-size:13px;margin:10px 0 0">Сума товарів без доставки й без скасованих замовлень; знижку за промокодом поділено між власниками пропорційно до суми їхніх товарів у замовленні. Хто чий товар, видно й змінюється у списку товарів.</p>
+</section>
 
 <div class="pgrid c21" style="margin-top:16px">
   <section class="pcard">

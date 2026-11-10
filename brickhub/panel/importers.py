@@ -312,6 +312,11 @@ class _Unique:
         return value
 
 
+def _owner(user):
+    """Listings created by an import belong to the staff member who imported them."""
+    return user if user is not None and getattr(user, "is_staff", False) else None
+
+
 def _import_parts(rows, report, user=None, allow_new_catalog=False):
     colors = ColorResolver()
     design_ids = {str(r.get("design_id", "")).strip() for r in rows if r.get("design_id")}
@@ -420,6 +425,7 @@ def _import_parts(rows, report, user=None, allow_new_catalog=False):
                 if price is None:
                     raise ValueError("для нового товару потрібна ціна")
                 prod = Product(kind="part", part=part, color=color, condition=cond, price=price, old_price=old_price,
+                               owner=_owner(user),
                                category=category or part.category or fallback_cat, created_at=now,
                                is_active=_bool(row["active"]) if row.get("active", "") != "" else True)
                 prod.title = (row.get("title") or part.display_name)[:255]
@@ -537,7 +543,7 @@ def _import_sets(rows, report, user=None, allow_new_catalog=False):
             prod = Product.objects.filter(kind="set", lego_set=lego_set, condition=cond).order_by("pk").first()
             is_new = prod is None
             if is_new:
-                prod = Product(kind="set", lego_set=lego_set, condition=cond, category=cat)
+                prod = Product(kind="set", lego_set=lego_set, condition=cond, category=cat, owner=_owner(user))
             _apply_common(prod, row, is_new_product=is_new)
             prod.save()
             if row.get("image_url") and not prod.images.exists():
@@ -569,7 +575,7 @@ def _import_minifigs(rows, report, user=None, allow_new_catalog=False):
             prod = Product.objects.filter(kind="minifig", minifigure=fig, condition=cond).order_by("pk").first()
             is_new = prod is None
             if is_new:
-                prod = Product(kind="minifig", minifigure=fig, condition=cond, category=cat)
+                prod = Product(kind="minifig", minifigure=fig, condition=cond, category=cat, owner=_owner(user))
             _apply_common(prod, row, is_new_product=is_new)
             prod.save()
             if row.get("image_url") and not prod.images.exists():
@@ -656,12 +662,13 @@ def template_xlsx(kind: str) -> bytes:
 
 
 EXPORT_HEADERS = ["sku", "kind", "design_id", "color_id", "color", "set_number", "fig_number", "condition",
-                  "quantity", "price", "old_price", "location", "title", "active"]
+                  "quantity", "price", "old_price", "location", "title", "active", "owner"]
 
 
 def export_rows(qs):
     yield EXPORT_HEADERS
-    for p in qs.select_related("part", "color", "lego_set", "minifigure", "inventory").iterator(chunk_size=1000):
+    for p in qs.select_related("part", "color", "lego_set", "minifigure", "inventory", "owner").iterator(
+            chunk_size=1000):
         inv = getattr(p, "inventory", None)
         yield [
             p.sku, p.kind, p.part.design_id if p.part_id else "",
@@ -669,5 +676,5 @@ def export_rows(qs):
             p.color.name if p.color_id else "", p.lego_set.number if p.lego_set_id else "",
             p.minifigure.fig_number if p.minifigure_id else "", p.condition, inv.quantity if inv else 0,
             f"{p.price:.2f}", f"{p.old_price:.2f}" if p.old_price else "", inv.location if inv else "", p.title,
-            "yes" if p.is_active else "no",
+            "yes" if p.is_active else "no", p.owner.email if p.owner_id else "",
         ]

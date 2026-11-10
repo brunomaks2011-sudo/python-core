@@ -10,7 +10,7 @@
 
   {% if children %}
     <div class="subnav" aria-label="Підкатегорії">
-      {% for c in children %}<a class="chip" href="{{ c.get_absolute_url }}"><img src="{% category_icon c.slug %}" alt="" width="24" height="24" loading="lazy">{{ c.name }}</a>{% endfor %}
+      {% for c in children %}<a class="chip{% if c.pk == category.pk %} is-active{% endif %}" href="{{ c.get_absolute_url }}"{% if c.pk == category.pk %} aria-current="page"{% endif %}><img src="{% category_icon c.slug %}" alt="" width="24" height="24" loading="lazy">{{ c.name }}</a>{% endfor %}
       {% if category.kind == "part" %}<a class="chip" href="{% url 'catalog:part_finder' %}" style="border-color:var(--red);color:var(--red)"><svg class="ic" style="width:16px;height:16px"><use href="#i-search"/></svg>Пошук за номером</a>{% endif %}
     </div>
   {% endif %}

@@ -127,6 +127,17 @@ CATEGORY_ICONS = {
     "shesterni": ("3648b", 71), "elementy-technic": ("32524", 0), "prozori-detali": ("3062b", 36),
     "roslyny": ("24866", 10), "aksesuary-dlia-fihurok": ("64567", 71), "ohorozhi-drabyny-ta-opory": ("3633", 70),
     "duplo": ("3437", 322), "inshi-elementy": ("87087", 72), "detali": ("3003", 4),
+    # third level
+    "zvychaini-tsehlynky": ("3001", 4), "modyfikovani-tsehlynky": ("11211", 15),
+    "kruhli-tsehlynky-ta-konusy": ("3941", 2), "zvychaini-plastyny": ("3020", 1),
+    "modyfikovani-plastyny": ("99780", 71), "kruhli-plastyny-ta-tarilky": ("4032a", 15),
+    "zvychaini-plytky": ("3069b", 4), "modyfikovani-plytky": ("2412b", 72), "kruhli-ta-vyhnuti-plytky": ("14769", 25),
+    "ramy-vikna-ta-dveri": ("60592", 15), "lobove-sklo-ta-fiuzeliazh": ("60601", 47),
+    "klynopodibni-plastyny": ("43722", 72), "balky-technic": ("32524", 0), "osi-technic": ("3705", 0),
+    "shtyfty-technic": ("2780", 0), "vtulky-technic": ("3713", 71), "zjednuvachi-technic": ("6536", 71),
+    "tsehlynky-technic": ("3700", 72), "mekhanika": ("3743", 72), "spetsialni-elementy-technic": ("64179", 72),
+    "predmety-ta-obladnannia": ("3899", 4), "zbroia": ("21459", 71), "instrumenty": ("4006", 72),
+    "ohorozhi-ta-drabyny": ("3633", 70),
 }
 _color_pk_cache: dict[int, tuple[int, str]] = {}
 
@@ -150,15 +161,34 @@ def part_icon(design_id: str, rb_color: int) -> str:
 STATIC_CATEGORY_ICONS = {slug: f"img/categories/{slug}.svg" for slug in (
     "tvaryny", "bazovi-plastyny", "dlia-transportu", "elektronika", "chastyny-minifihurok",
     "volossia-ta-holovni-ubory", "zbroia-ta-instrumenty", "kontejnery-ta-yashchyky", "trubky-shlanhy-ta-nytky",
-    "prapory-ta-znaky", "nalipky",
+    "prapory-ta-znaky", "nalipky", "chastyny-minilialok", "bionicle",
+    "holovy", "torsy", "nohy", "sholomy", "kapeliukhy-ta-masky", "nakydky-ta-obladunky", "shchyty",
     # accessories
     "zberihannia", "vitryny-ta-pidstavky", "osvitlennia", "separatory-ta-instrumenty", "kantseliariia",
     "sumky-ta-riukzaky", "odiah", "hodynnyky", "mahnity", "ihry-ta-pazly", "dekor-i-suveniry", "inshi-aksesuary",
 )}
+STATIC_CATEGORY_ICONS.update({"volossia": "img/categories/volossia-ta-holovni-ubory.svg",
+                              "mahnity-ta-trymachi": "img/categories/mahnity.svg"})
+_PARENTS: dict[str, str] | None = None
+
+
+def _icon_slug(slug: str) -> str:
+    """The slug whose picture to use: a subcategory without its own icon borrows its parent's."""
+    global _PARENTS
+    if _PARENTS is None:
+        from catalog.structure import subcategory_parents
+
+        _PARENTS = subcategory_parents()
+    seen = set()
+    while slug not in STATIC_CATEGORY_ICONS and slug not in CATEGORY_ICONS and slug in _PARENTS and slug not in seen:
+        seen.add(slug)
+        slug = _PARENTS[slug]
+    return slug
 
 
 @register.simple_tag
 def category_icon(slug: str) -> str:
+    slug = _icon_slug(slug)
     if slug in STATIC_CATEGORY_ICONS:
         from django.templatetags.static import static
 

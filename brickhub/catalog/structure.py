@@ -11,50 +11,174 @@ from .models import Category, Color, Theme
 
 # slug, name, icon, description, Rebrickable part category ids (subcategories of «Деталі LEGO»)
 PART_CATEGORIES = [
-    ("tsehlynky", "Цеглинки", "brick", "Класичні, круглі, клиноподібні та модифіковані цеглинки.", "11,5,20,6"),
+    ("tsehlynky", "Цеглинки", "brick", "Класичні, круглі, клиноподібні та модифіковані цеглинки.", ""),
     ("skosy", "Скоси", "slope", "Скоси 18°–75°, подвійні та обернені — для дахів, капотів і крил.", "3"),
     ("arky-ta-vyhnuti-tsehlynky", "Арки та вигнуті цеглинки", "arch",
      "Арки, вигнуті скоси та цеглинки з плавними формами.", "37"),
-    ("plastyny", "Пластини", "plate", "Пластини, кронштейни та круглі пластини для будь-яких конструкцій.", "14,9,21"),
+    ("plastyny", "Пластини", "plate", "Пластини, кронштейни та круглі пластини для будь-яких конструкцій.", ""),
     ("bazovi-plastyny", "Базові пластини", "baseplate", "Великі базові пластини — основа для міст, будинків і діорам.",
      "1"),
-    ("plytky", "Плитки", "tile", "Гладкі плитки без шипів — для фінішного вигляду моделей.", "19,15,67"),
+    ("plytky", "Плитки", "tile", "Гладкі плитки без шипів — для фінішного вигляду моделей.", ""),
     ("paneli", "Панелі", "panel", "Панелі-стінки, кутові та вигнуті панелі.", "23"),
     ("kolesa-ta-shyny", "Колеса та шини", "wheel", "Колеса, диски та шини для машин і техніки.", "29"),
     ("dlia-transportu", "Деталі для транспорту", "vehicle",
      "Рами, кузови, бампери, щитки коліс та інші деталі для машин і поїздів.", "36"),
-    ("vikna-ta-dveri", "Вікна та двері", "window", "Рами, скло, двері та лобове скло.", "16,47"),
-    ("kryla", "Крила", "wing", "Крила-пластини та клиноподібні пластини для літаків і кораблів.", "49,35"),
+    ("vikna-ta-dveri", "Вікна та двері", "window", "Рами, скло, двері та лобове скло.", ""),
+    ("kryla", "Крила", "wing", "Крила-пластини та клиноподібні пластини для літаків і кораблів.", ""),
     ("sharniry-ta-povorotni-platformy", "Шарніри та поворотні платформи", "hinge",
      "Шарніри, маніпулятори та поворотні платформи для рухомих конструкцій.", "18"),
     ("shesterni", "Шестерні", "gear", "Шестерні Technic, зубчасті рейки та передачі.", "52"),
     ("elementy-technic", "Елементи Technic", "technic", "Балки, осі, штифти, втулки та з'єднувачі Technic.",
-     "51,55,53,46,54,12,8,40,26,25,22,44"),
+     ""),
     ("elektronika", "Електроніка та двигуни", "electronics",
      "Двигуни, хаби, батарейні блоки, датчики, світло та кабелі Powered Up, Power Functions і Mindstorms.", "45"),
     ("prozori-detali", "Прозорі деталі", "trans", "Усі деталі прозорих кольорів: скло, вогні, кристали.", ""),
     ("roslyny", "Рослини", "plant", "Квіти, листя, дерева та інша зелень.", "76"),
     ("tvaryny", "Тварини", "animal", "Тварини, птахи, риби та фантастичні істоти, їхні частини тіла й аксесуари.",
-     "28,74,75"),
+     ""),
     ("chastyny-minifihurok", "Частини мініфігурок", "minifig",
-     "Голови, торси та ноги — для збирання власних мініфігурок і ремонту.", "59,60,61,13"),
+     "Голови, торси та ноги — для збирання власних мініфігурок і ремонту.", ""),
     ("volossia-ta-holovni-ubory", "Волосся та головні убори", "hair",
-     "Зачіски, шоломи, капелюхи, кепки та прикраси до них.", "65,72"),
+     "Зачіски, шоломи, капелюхи, кепки та прикраси до них.", ""),
+    ("chastyny-minilialok", "Частини мініляльок", "minidoll",
+     "Голови, торси та ноги мініляльок LEGO Friends, Disney та інших серій.", ""),
     ("aksesuary-dlia-fihurok", "Аксесуари для фігурок", "accessory",
-     "Посуд, їжа, накидки, обладунки та інші дрібниці для мініфігурок.", "27,71,70"),
+     "Посуд, їжа, накидки, обладунки та інші дрібниці для мініфігурок.", ""),
     ("zbroia-ta-instrumenty", "Зброя та інструменти", "weapon",
-     "Мечі, бластери, щити, чарівні палички та інструменти для мініфігурок.", "73"),
+     "Мечі, бластери, щити, чарівні палички та інструменти для мініфігурок.", ""),
     ("ohorozhi-drabyny-ta-opory", "Огорожі, драбини та опори", "fence",
-     "Огорожі, перила, драбини, стрижні, опори та стріли кранів.", "32,34"),
+     "Огорожі, перила, драбини, стрижні, опори та стріли кранів.", ""),
     ("kontejnery-ta-yashchyky", "Контейнери та ящики", "container", "Скрині, ящики, бочки, шафи та інші ємності.", "7"),
     ("trubky-shlanhy-ta-nytky", "Трубки, шланги та нитки", "hose", "Гнучкі трубки, шланги, нитки, гумки та котушки.",
-     "30,31"),
+     ""),
     ("prapory-ta-znaky", "Прапори та знаки", "flag", "Прапори, банери, дорожні знаки та вивіски.", "38"),
     ("nalipky", "Наліпки", "sticker", "Оригінальні аркуші наліпок до наборів LEGO.", "58"),
     ("duplo", "Деталі DUPLO", "duplo", "Великі цеглинки та елементи DUPLO для наймолодших будівельників.", "4"),
+    ("bionicle", "Bionicle та великі фігури", "bionicle",
+     "Деталі збірних фігур Bionicle, Hero Factory, Star Wars та інших великих фігур.", "41"),
     ("inshi-elementy", "Інші елементи", "other",
-     "Каміння, магніти, снаряди, енергетичні ефекти та інші спеціальні деталі.", "24,33,39,68,69"),
+     "Каміння, магніти, снаряди, енергетичні ефекти та інші спеціальні деталі.", ""),
 ]
+
+# The third level follows the official part types (Rebrickable part categories).
+# parent slug: [(slug, name, icon, description, Rebrickable ids, name prefixes)]
+# A subcategory with name prefixes gets the parts of its types whose official (English) name starts with one of
+# them; the subcategory of the same types without prefixes gets the rest.
+PART_SUBCATEGORIES = {
+    "tsehlynky": [
+        ("zvychaini-tsehlynky", "Звичайні цеглинки", "brick", "Класичні прямокутні цеглинки від 1 × 1 до 2 × 16.",
+         "11", ()),
+        ("modyfikovani-tsehlynky", "Модифіковані цеглинки", "brick",
+         "Цеглинки з шипами збоку, отворами, вирізами, фарами, кліпсами та іншими елементами.", "5", ()),
+        ("kruhli-tsehlynky-ta-konusy", "Круглі цеглинки та конуси", "round",
+         "Круглі цеглинки, циліндри, конуси та куполи.", "20", ()),
+        ("klynopodibni-tsehlynky", "Клиноподібні цеглинки", "wedge", "Цеглинки-клини для носів кораблів і літаків.",
+         "6", ()),
+    ],
+    "plastyny": [
+        ("zvychaini-plastyny", "Звичайні пластини", "plate", "Прямокутні пластини будь-якого розміру.", "14", ()),
+        ("modyfikovani-plastyny", "Модифіковані пластини", "plate",
+         "Пластини з кронштейнами, кліпсами, ручками, рейками, шипами збоку та отворами.", "9", ()),
+        ("kruhli-plastyny-ta-tarilky", "Круглі пластини та тарілки", "round",
+         "Круглі й вигнуті пластини, тарілки та антени-«тарілки».", "21", ()),
+    ],
+    "plytky": [
+        ("zvychaini-plytky", "Звичайні плитки", "tile", "Гладкі прямокутні плитки.", "19", ()),
+        ("modyfikovani-plytky", "Модифіковані плитки", "tile",
+         "Плитки з решітками, кліпсами, ручками, рейками та іншими елементами.", "15", ()),
+        ("kruhli-ta-vyhnuti-plytky", "Круглі та вигнуті плитки", "round",
+         "Круглі, вигнуті та чвертькруглі плитки.", "67", ()),
+    ],
+    "vikna-ta-dveri": [
+        ("ramy-vikna-ta-dveri", "Рами, вікна та двері", "window", "Віконні рами, скло, віконниці, двері та ворота.",
+         "16", ()),
+        ("lobove-sklo-ta-fiuzeliazh", "Лобове скло та фюзеляж", "windscreen",
+         "Лобове скло, кабіни та скляні частини фюзеляжу.", "47", ()),
+    ],
+    "kryla": [
+        ("klynopodibni-plastyny", "Клиноподібні пластини", "wing", "Крила-пластини лівого й правого боку.", "49", ()),
+        ("korpusy-chovniv-i-litakiv", "Корпуси човнів і літаків", "boat",
+         "Корпуси та палуби човнів, частини літаків, хвости й пропелери.", "35", ()),
+    ],
+    "elementy-technic": [
+        ("balky-technic", "Балки", "beam", "Прямі, кутові та спеціальні балки Technic.", "51,55", ()),
+        ("osi-technic", "Осі", "axle", "Осі Technic будь-якої довжини, зі стопорами та без.", "46", ()),
+        ("shtyfty-technic", "Штифти", "pin", "Штифти Technic з тертям і без, з віссю, довгі та напівштифти.", "53", ()),
+        ("vtulky-technic", "Втулки", "bush", "Втулки та напіввтулки для осей Technic.", "54", ()),
+        ("zjednuvachi-technic", "З'єднувачі", "connector", "Кутові, поперечні та інші з'єднувачі осей і штифтів.",
+         "12", ()),
+        ("tsehlynky-technic", "Цеглинки Technic", "brick", "Цеглинки з отворами для штифтів та осей.", "8", ()),
+        ("paneli-technic", "Панелі Technic", "panel", "Панелі та обтічники кузовів Technic.", "40", ()),
+        ("kermo-pidviska-ta-dvyhun", "Кермо, підвіска та двигун", "steering",
+         "Кермові механізми, амортизатори, циліндри та поршні двигунів.", "25", ()),
+        ("pnevmatyka", "Пневматика", "pneumatic", "Пневмоциліндри, насоси, клапани та трубки.", "22", ()),
+        ("mekhanika", "Механіка", "mechanic", "Рейки, редуктори, диференціали та інші механізми.", "44", ()),
+        ("spetsialni-elementy-technic", "Спеціальні елементи Technic", "technic",
+         "Рами, гусениці, ланцюги та інші особливі елементи Technic.", "26", ()),
+    ],
+    "tvaryny": [
+        ("tvaryny-ta-istoty", "Тварини та істоти", "animal", "Цілі фігурки тварин, птахів, риб і фантастичних істот.",
+         "28", ()),
+        ("chastyny-tila-tvaryn", "Частини тіла тварин", "animal", "Голови, тулуби, хвости, крила та лапи тварин.", "75",
+         ()),
+        ("aksesuary-dlia-tvaryn", "Аксесуари для тварин", "animal", "Сідла, упряж, нашийники та інші аксесуари.", "74",
+         ()),
+    ],
+    "chastyny-minifihurok": [
+        ("holovy", "Голови", "head", "Голови мініфігурок з різними обличчями та виразами.", "59", ()),
+        ("torsy", "Торси", "torso", "Торси з руками та кистями, з принтами та без.", "60", ()),
+        ("nohy", "Ноги", "legs", "Ноги, стегна, короткі ніжки та спідниці-ноги.", "61", ()),
+        ("inshi-chastyny-ta-mikrofihurky", "Інші частини та мікрофігурки", "minifig",
+         "Мікрофігурки, тіла дитячих фігурок, роботів і дроїдів.", "13", ()),
+    ],
+    "volossia-ta-holovni-ubory": [
+        ("volossia", "Волосся", "hair", "Зачіски для мініфігурок: короткі, довгі, хвости та коси.", "65", ("Hair",)),
+        ("sholomy", "Шоломи", "helmet", "Шоломи лицарів, пілотів, космонавтів, пожежників і поліції.", "65",
+         ("Helmet",)),
+        ("kapeliukhy-ta-masky", "Капелюхи, маски та інші головні убори", "hat",
+         "Капелюхи, кепки, шапки, капюшони, маски та костюми-головні убори.", "65", ()),
+        ("prykrasy-do-holovnykh-uboriv", "Прикраси до головних уборів", "hair",
+         "Візори, плюмажі, пір'я та інші прикраси для шоломів і капелюхів.", "72", ()),
+    ],
+    "chastyny-minilialok": [
+        ("holovy-minilialok", "Голови мініляльок", "minidoll", "Голови мініляльок, часто з волоссям.", "62", ()),
+        ("torsy-minilialok", "Торси мініляльок", "minidoll", "Торси мініляльок з руками.", "63", ()),
+        ("nohy-minilialok", "Ноги мініляльок", "minidoll", "Ноги, спідниці та штани мініляльок.", "64", ()),
+    ],
+    "aksesuary-dlia-fihurok": [
+        ("predmety-ta-obladnannia", "Предмети та обладнання", "cup",
+         "Посуд, їжа, книги, спорядження, спортивний інвентар, музичні інструменти та інші предмети.", "27", ()),
+        ("nakydky-ta-obladunky", "Накидки, обладунки та шарфи", "cape",
+         "Плащі, накидки, обладунки, жилети, шарфи та інші речі на шию.", "71", ()),
+        ("spidnytsi-ta-poiasy", "Спідниці та пояси", "skirt", "Спідниці, пояси, сумки на пояс та інші речі на стегна.",
+         "70", ()),
+    ],
+    "zbroia-ta-instrumenty": [
+        ("zbroia", "Зброя", "sword", "Мечі, списи, луки, бластери та інша зброя мініфігурок.", "73", ()),
+        ("shchyty", "Щити", "shield", "Круглі, трикутні та фантазійні щити.", "73", ("Shield",)),
+        ("instrumenty", "Інструменти", "tool", "Ключі, молотки, пилки, лопати та інші інструменти.", "73", ("Tool",)),
+    ],
+    "ohorozhi-drabyny-ta-opory": [
+        ("ohorozhi-ta-drabyny", "Огорожі, драбини та стрижні", "fence", "Огорожі, перила, драбини, решітки та стрижні.",
+         "32", ()),
+        ("opory-balky-ta-krany", "Опори, балки та крани", "support", "Опори, балки-ферми, стріли та гаки кранів.", "34",
+         ()),
+    ],
+    "trubky-shlanhy-ta-nytky": [
+        ("trubky-ta-shlanhy", "Трубки та шланги", "hose", "Гнучкі й жорсткі трубки та шланги.", "30", ()),
+        ("nytky-humky-ta-kotushky", "Нитки, гумки та котушки", "hose", "Нитки, ланцюжки, гумки та котушки.", "31", ()),
+    ],
+    "inshi-elementy": [
+        ("kaminnia-ta-skeli", "Каміння та скелі", "rock", "Каміння, скелі та уламки породи.", "33", ()),
+        ("mahnity-ta-trymachi", "Магніти та тримачі", "magnet", "Магніти й тримачі для них.", "39", ()),
+        ("snariady-ta-puskovi-mekhanizmy", "Снаряди та пускові механізми", "launcher",
+         "Снаряди, ракети, диски та пускові механізми.", "68", ()),
+        ("enerhetychni-efekty", "Енергетичні ефекти", "effect", "Полум'я, вибухи, хвилі, блискавки та інші ефекти.",
+         "69", ()),
+        ("inshi-spetsialni-detali", "Інші спеціальні деталі", "other", "Деталі, що не ввійшли до інших розділів.", "24",
+         ()),
+    ],
+}
 
 # slug, name, icon, description (subcategories of «Аксесуари»)
 ACCESSORY_CATEGORIES = [
@@ -183,6 +307,14 @@ def apply_structure() -> dict:
             slug=slug, defaults={"name": name, "kind": "part", "icon": icon, "description": desc,
                                  "rebrickable_part_categories": rb, "sort_order": order * 10, "parent": detali})
         stats["categories"] += 1
+    for parent_slug, children in PART_SUBCATEGORIES.items():
+        parent = Category.objects.get(slug=parent_slug)
+        for order, (slug, name, icon, desc, rb, prefixes) in enumerate(children):
+            Category.objects.update_or_create(
+                slug=slug, defaults={"name": name, "kind": "part", "icon": icon, "description": desc,
+                                     "rebrickable_part_categories": "" if prefixes else rb,
+                                     "sort_order": order * 10, "parent": parent})
+            stats["categories"] += 1
     aksesuary = Category.objects.get(slug="aksesuary")
     for order, (slug, name, icon, desc) in enumerate(ACCESSORY_CATEGORIES):
         Category.objects.update_or_create(
@@ -230,6 +362,22 @@ def apply_structure() -> dict:
             stats["colors"] += 1
     cache.delete("nav:v1")
     return stats
+
+
+def subcategory_parents() -> dict[str, str]:
+    """{third-level slug: its part category slug}"""
+    return {child[0]: parent for parent, children in PART_SUBCATEGORIES.items() for child in children}
+
+
+def name_rules() -> dict[int, list[tuple[tuple[str, ...], str]]]:
+    """{Rebrickable part category id: [(lower-case name prefixes, shop category slug)]}"""
+    rules: dict[int, list[tuple[tuple[str, ...], str]]] = {}
+    for children in PART_SUBCATEGORIES.values():
+        for slug, _name, _icon, _desc, rb, prefixes in children:
+            if prefixes:
+                for rid in (int(x) for x in rb.split(",") if x.strip().isdigit()):
+                    rules.setdefault(rid, []).append((tuple(x.lower() for x in prefixes), slug))
+    return rules
 
 
 PART_CATEGORY_UK = {

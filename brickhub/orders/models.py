@@ -197,6 +197,9 @@ class OrderItem(models.Model):
     condition = models.CharField("Стан", max_length=8, default="new")
     unit_price = models.DecimalField("Ціна", max_digits=10, decimal_places=2)
     quantity = models.PositiveIntegerField("Кількість")
+    # whose goods were sold (the product's owner at the time of the order)
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
+                              related_name="+", verbose_name="Чий товар")
 
     class Meta:
         verbose_name = "позиція замовлення"

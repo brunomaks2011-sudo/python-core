@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="Накидки, обладунки та шарфи">
+  <defs><linearGradient id="k" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e0352b"/><stop offset="1" stop-color="#9e1b12"/></linearGradient></defs>
+  <path d="M40 18h40l18 84c-8 6-14-4-20 2s-12-4-18 2-12-4-18 2-12-6-20-2Z" fill="url(#k)" stroke="#6b0d07" stroke-width="2.2" stroke-linejoin="round"/>
+  <ellipse cx="60" cy="20" rx="16" ry="6" fill="#6b0d07"/>
+  <circle cx="46" cy="26" r="4" fill="#f2c230" stroke="#8a6500" stroke-width="1.4"/>
+  <circle cx="74" cy="26" r="4" fill="#f2c230" stroke="#8a6500" stroke-width="1.4"/>
+  <path d="M50 34c-2 20-4 40-8 60" fill="none" stroke="#fff" stroke-opacity=".18" stroke-width="6" stroke-linecap="round"/>
+</svg>

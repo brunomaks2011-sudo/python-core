@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="Капелюхи, маски та інші головні убори">
+  <defs><linearGradient id="c" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9b5a33"/><stop offset="1" stop-color="#6e3a1c"/></linearGradient></defs>
+  <ellipse cx="60" cy="78" rx="52" ry="14" fill="#84482a" stroke="#43220e" stroke-width="2.2"/>
+  <path d="M32 78c0-30 6-48 28-48s28 18 28 48Z" fill="url(#c)" stroke="#43220e" stroke-width="2.2" stroke-linejoin="round"/>
+  <path d="M33 66h54v8H33Z" fill="#2b2d31"/>
+  <path d="M42 42c4-6 10-8 16-8" fill="none" stroke="#fff" stroke-opacity=".3" stroke-width="4" stroke-linecap="round"/>
+</svg>

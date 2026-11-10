@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="Ноги">
+  <defs><linearGradient id="l" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3f78cf"/><stop offset="1" stop-color="#2554a3"/></linearGradient></defs>
+  <rect x="26" y="14" width="68" height="18" rx="3" fill="url(#l)" stroke="#173a75" stroke-width="2.2"/>
+  <rect x="26" y="32" width="32" height="70" rx="4" fill="url(#l)" stroke="#173a75" stroke-width="2.2"/>
+  <rect x="62" y="32" width="32" height="70" rx="4" fill="url(#l)" stroke="#173a75" stroke-width="2.2"/>
+  <rect x="22" y="100" width="38" height="10" rx="3" fill="#2554a3" stroke="#173a75" stroke-width="2"/>
+  <rect x="60" y="100" width="38" height="10" rx="3" fill="#2554a3" stroke="#173a75" stroke-width="2"/>
+  <rect x="31" y="38" width="7" height="56" rx="3.5" fill="#fff" fill-opacity=".22"/>
+</svg>

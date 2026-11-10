@@ -179,12 +179,44 @@ class Category(models.Model):
     def descendant_ids(self) -> list[int]:
         ids, frontier = [self.pk], [self.pk]
         while frontier:
-            frontier = list(Category.objects.filter(parent_id__in=frontier).values_list("pk", flat=True))
+            frontier = list(Category.objects.filter(parent_id__in=frontier).exclude(pk__in=ids)
+                            .values_list("pk", flat=True))
             ids.extend(frontier)
         return ids
 
+    def ancestors(self) -> list["Category"]:
+        """Parent categories from the top-level section down to the direct parent."""
+        chain, seen, node = [], {self.pk}, self.parent
+        while node is not None and node.pk not in seen:
+            chain.append(node)
+            seen.add(node.pk)
+            node = node.parent
+        return chain[::-1]
+
     def rb_category_ids(self) -> list[int]:
         return [int(x) for x in self.rebrickable_part_categories.replace(" ", "").split(",") if x.isdigit()]
+
+
+def category_tree(categories=None) -> list[tuple["Category", int, str]]:
+    """[(category, depth, "Деталі LEGO › Цеглинки › Звичайні цеглинки")] depth-first, in menu order."""
+    cats = list(Category.objects.all() if categories is None else categories)
+    known = {c.pk for c in cats}
+    children: dict = {}
+    for c in sorted(cats, key=lambda c: (c.sort_order, c.name)):
+        children.setdefault(c.parent_id if c.parent_id in known else None, []).append(c)
+    out, seen = [], set()
+
+    def walk(parent_id, depth, prefix):
+        for c in children.get(parent_id, []):
+            if c.pk in seen:
+                continue
+            seen.add(c.pk)
+            path = f"{prefix} › {c.name}" if prefix else c.name
+            out.append((c, depth, path))
+            walk(c.pk, depth + 1, path)
+
+    walk(None, 0, "")
+    return out
 
 
 class PartCategory(models.Model):
@@ -378,6 +410,10 @@ class Product(models.Model):
     is_bestseller = models.BooleanField("Хіт продажів", default=False)
     is_new = models.BooleanField("Новинка", default=False)
     is_rare = models.BooleanField("Рідкісний / колекційний", default=False)
+    # whose goods these are (the shop owner or a partner selling through the shop); used in sales statistics
+    owner = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
+                              related_name="owned_products", verbose_name="Чий товар",
+                              limit_choices_to={"is_staff": True})
     views_count = models.PositiveIntegerField("Перегляди", default=0)
     sold_count = models.PositiveIntegerField("Продано", default=0)
     rating_avg = models.DecimalField("Рейтинг", max_digits=3, decimal_places=2, default=0)
@@ -578,10 +614,31 @@ def product_image_path(instance, filename):
     return f"products/{timezone.now():%Y/%m}/{instance.product.sku.lower()}-{timezone.now():%H%M%S%f}.{ext}"
 
 
+def product_original_path(instance, filename):
+    ext = (filename.rsplit(".", 1)[-1] if "." in filename else "jpg").lower()
+    return f"products/originals/{timezone.now():%Y/%m}/{instance.product.sku.lower()}-{timezone.now():%H%M%S%f}.{ext}"
+
+
 class ProductImage(models.Model):
+    BG_REMOVED = "removed"
+    BG_KEPT = "kept"
+    BG_SKIPPED = "skipped"
+    BG_TRANSPARENT = "transparent"
+    BACKGROUNDS = [
+        ("", "Не оброблено"),
+        (BG_REMOVED, "Фон прибрано"),
+        (BG_KEPT, "З фоном (повернуто вручну)"),
+        (BG_SKIPPED, "Фон не прибрано"),
+        (BG_TRANSPARENT, "Фон уже прозорий"),
+    ]
+
     product = models.ForeignKey(Product, related_name="images", on_delete=models.CASCADE)
     image = models.ImageField("Фото", upload_to=product_image_path, blank=True)
     thumbnail = models.ImageField(upload_to="products/thumbs/", blank=True, editable=False)
+    # the photo as uploaded (downscaled), with its background — to bring the background back or process again
+    original = models.ImageField("Фото з фоном", upload_to=product_original_path, blank=True, editable=False)
+    background = models.CharField("Фон", max_length=12, choices=BACKGROUNDS, blank=True, default="")
+    background_note = models.CharField("Примітка до фону", max_length=160, blank=True)
     external_url = models.URLField("Посилання на зображення", blank=True, max_length=500)
     alt = models.CharField("Підпис (alt)", max_length=255, blank=True)
     sort_order = models.PositiveIntegerField("Порядок", default=0)
@@ -607,6 +664,11 @@ class ProductImage(models.Model):
             return self.thumbnail.url
         return self.url
 
+    @property
+    def share_url(self) -> str:
+        """For social networks and search engines: the photo with its background (no transparency)."""
+        return self.original.url if self.original else self.url
+
     def save(self, *args, **kwargs):
         new_file = bool(self.image) and not self.thumbnail
         super().save(*args, **kwargs)
@@ -614,7 +676,12 @@ class ProductImage(models.Model):
             from .images import process_upload
 
             if process_upload(self):
-                super().save(update_fields=["image", "thumbnail"])
+                super().save(update_fields=["image", "thumbnail", "original", "background", "background_note"])
+
+    def delete_files(self):
+        for field in (self.image, self.thumbnail, self.original):
+            if field:
+                field.delete(save=False)
 
 
 class Inventory(models.Model):

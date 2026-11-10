@@ -18,7 +18,9 @@ from core.seo import breadcrumbs_jsonld, product_jsonld
 from .filters import COLLECTIONS, SORT_OPTIONS, PER_PAGE_OPTIONS, build_listing
 from .forms import ReviewForm
 from .media import has_photo, image_urls
-from .models import Category, Color, Element, Part, Product, ProductImage, Review, StockNotification, Theme
+from .models import (
+    Category, Color, Element, Part, Product, ProductImage, Review, StockNotification, Theme, category_tree,
+)
 from .part_art import render_minifig_svg, render_part_svg
 from .search import catalog_matches, search_products
 from .variants import color_variants, condition_variants
@@ -64,11 +66,14 @@ def category_detail(request, slug):
     else:
         base = Product.objects.filter(category_id__in=ids)
     listing = build_listing(request, base, default_sort="popular" if category.kind != "part" else "popular")
+    ancestors = category.ancestors()
     crumbs = [("Каталог", reverse("catalog:index"))]
-    if category.parent_id:
-        crumbs.append((category.parent.name, category.parent.get_absolute_url()))
+    crumbs += [(a.name, a.get_absolute_url()) for a in ancestors]
     crumbs.append((category.name, None))
     children = list(category.children.filter(is_active=True))
+    if not children and len(ancestors) >= 2:
+        # third level: the neighbouring subcategories, this one highlighted
+        children = list(category.parent.children.filter(is_active=True))
     nav_series = None
     if category.kind == "set" and category.parent_id is None:
         nav_series = Theme.objects.filter(is_primary=True)
@@ -218,15 +223,14 @@ def product_detail(request, slug):
     element_id = product.element_id
     crumbs = [("Каталог", reverse("catalog:index"))]
     if product.category_id:
-        if product.category.parent_id:
-            crumbs.append((product.category.parent.name, product.category.parent.get_absolute_url()))
+        crumbs += [(a.name, a.get_absolute_url()) for a in product.category.ancestors()]
         crumbs.append((product.category.name, product.category.get_absolute_url()))
     if product.theme_id and product.kind in ("set", "minifig"):
         crumbs.append((product.theme.display_name, product.theme.get_absolute_url()))
     crumbs.append((product.title, None))
     photo = None
     if has_photo(product):
-        src, _ = image_urls(product, large=True)
+        src = product.main_image.share_url
         photo = request.build_absolute_uri(src) if src.startswith("/") else src
     seo = {
         "title": seo_title(product),
@@ -276,7 +280,7 @@ def part_finder(request):
     if color:
         parts = parts.filter(products__color=color)
     if category:
-        parts = parts.filter(category=category)
+        parts = parts.filter(category_id__in=category.descendant_ids())
     parts = parts.annotate(
         n_colors=Count("products__color", distinct=True, filter=Q(products__is_active=True)),
         pmin=Min("products__price", filter=Q(products__is_active=True)),
@@ -299,7 +303,9 @@ def part_finder(request):
                      "more_colors": max(0, len(colors_of_part) - 8)})
     colors = Color.objects.filter(products__kind="part", products__is_active=True).annotate(
         n=Count("products", distinct=True)).order_by("sort_order", "name")
-    categories = Category.objects.filter(kind="part", parent__isnull=False, is_active=True)
+    categories = [{"slug": c.slug, "pk": c.pk, "name": c.name if depth == 1 else f"— {c.name}"}
+                  for c, depth, _path in category_tree(Category.objects.filter(kind="part", is_active=True))
+                  if depth >= 1]
     crumbs = [("Каталог", reverse("catalog:index")), ("Пошук деталей", None)]
     return render(request, "catalog/part_finder.html", {
         "rows": rows, "page": page, "q": q, "color": color, "category": category, "colors": colors,
@@ -334,6 +340,7 @@ def part_design(request, design_id):
     main = max(lots, key=lambda p: (p.main_image is not None, p.stock > 0, p.stock))
     crumbs = [("Каталог", reverse("catalog:index")), ("Деталі LEGO", reverse("catalog:category", args=["detali"]))]
     if part.category_id:
+        crumbs += [(a.name, a.get_absolute_url()) for a in part.category.ancestors() if a.slug != "detali"]
         crumbs.append((part.category.name, part.category.get_absolute_url()))
     crumbs.append((f"{part.design_id} {part.display_name}", None))
     related = Part.objects.filter(category_id=part.category_id, products__is_active=True).exclude(

@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" role="img" aria-label="Частини мініляльок">
+  <defs><linearGradient id="hair" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a4fd1"/><stop offset="1" stop-color="#5b2a9e"/></linearGradient></defs>
+  <path d="M24 70c-6-36 12-58 36-58s42 22 36 58c-2 14-6 30-4 40H28c2-10-2-26-4-40Z" fill="url(#hair)" stroke="#3b1a6b" stroke-width="2.2" stroke-linejoin="round"/>
+  <ellipse cx="60" cy="62" rx="26" ry="30" fill="#f6d7b3" stroke="#b98c5a" stroke-width="2"/>
+  <path d="M34 52c10-16 34-22 52-6-12-2-30-2-52 6Z" fill="#6c37b5"/>
+  <ellipse cx="50" cy="64" rx="4" ry="5.5" fill="#3a2a1a"/><ellipse cx="70" cy="64" rx="4" ry="5.5" fill="#3a2a1a"/>
+  <path d="M52 78q8 6 16 0" fill="none" stroke="#c2185b" stroke-width="3" stroke-linecap="round"/>
+</svg>

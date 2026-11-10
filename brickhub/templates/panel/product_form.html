@@ -108,17 +108,22 @@
       {% endif %}
 
       <section class="pcard">
-        <h2>Фото <span class="muted" style="font-weight:500;font-size:13px">на сайті показуються тільки фото, які ви додали</span></h2>
+        <h2>Фото <span class="muted" style="font-weight:500;font-size:13px">на сайті показуються тільки фото, які ви додали; однотонний фон прибирається автоматично</span></h2>
         {% if product %}
           <div class="img-list" style="margin-bottom:14px">
             {% for im in product.images.all %}
               <div class="img-item">
                 <img src="{{ im.thumb_url }}" alt="" loading="lazy" data-photo-check>
                 <p class="img-broken" hidden>Фото не відкривається{% if im.external_url and not im.image %}: посилання не веде на картинку{% endif %}</p>
+                {% if im.image %}<p class="img-bg bg-{{ im.background|default:'none' }}" title="{{ im.background_note }}">{% if im.background == "removed" %}Без фону{% elif im.background == "kept" %}З фоном{% elif im.background == "transparent" %}Прозорий фон{% elif im.background == "skipped" %}{{ im.background_note|default:"Фон не прибрано" }}{% else %}Фон не оброблено{% endif %}</p>{% endif %}
                 <div class="row">
                   {% if not forloop.first %}<button class="btn btn-sm btn-soft" type="submit" form="img-{{ im.pk }}-main">Головне</button>{% else %}<span class="badge badge-green">Головне</span>{% endif %}
                   <button class="btn btn-sm btn-ghost" type="submit" form="img-{{ im.pk }}-del" aria-label="Видалити фото"><svg class="ic"><use href="#i-trash"/></svg></button>
                 </div>
+                {% if im.image %}
+                  {% if im.background == "removed" %}<button class="btn btn-sm btn-ghost img-bg-btn" type="submit" form="img-{{ im.pk }}-restore">Повернути фон</button>
+                  {% elif im.background != "transparent" %}<button class="btn btn-sm btn-ghost img-bg-btn" type="submit" form="img-{{ im.pk }}-remove">Прибрати фон</button>{% endif %}
+                {% endif %}
               </div>
             {% empty %}
               <p class="muted" style="margin:0">Фото ще немає — на сайті показується заглушка «Фото незабаром».</p>
@@ -144,6 +149,7 @@
           {% include "partials/field.html" with field=form.quantity %}
           {% include "partials/field.html" with field=form.location %}
           {% include "partials/field.html" with field=form.sku full=True %}
+          {% include "partials/field.html" with field=form.owner full=True %}
         </div>
         <div class="checks" style="margin:16px 0">
           {% for f in form %}{% if f.name in "is_active is_featured is_bestseller is_new is_rare" %}<label class="check">{{ f }}<span>{{ f.label }}</span></label>{% endif %}{% endfor %}
@@ -178,6 +184,8 @@
   {% for im in product.images.all %}
     <form id="img-{{ im.pk }}-main" method="post" action="{% url 'panel:image_action' im.pk %}">{% csrf_token %}<input type="hidden" name="action" value="main"></form>
     <form id="img-{{ im.pk }}-del" method="post" action="{% url 'panel:image_action' im.pk %}" data-confirm="Видалити фото?">{% csrf_token %}<input type="hidden" name="action" value="delete"></form>
+    <form id="img-{{ im.pk }}-remove" method="post" action="{% url 'panel:image_action' im.pk %}">{% csrf_token %}<input type="hidden" name="action" value="remove_bg"></form>
+    <form id="img-{{ im.pk }}-restore" method="post" action="{% url 'panel:image_action' im.pk %}">{% csrf_token %}<input type="hidden" name="action" value="restore_bg"></form>
   {% endfor %}
 {% endif %}
 {% endblock %}

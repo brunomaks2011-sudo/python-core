@@ -237,6 +237,8 @@ SHOP = {
     "FREE_DELIVERY_FROM": int(env("SHOP_FREE_DELIVERY_FROM", "2500")),
     "ORDER_NOTIFY_EMAILS": env_list("SHOP_ORDER_NOTIFY_EMAILS"),
     "LOW_STOCK_THRESHOLD": int(env("SHOP_LOW_STOCK_THRESHOLD", "3")),
+    # uploaded product photos lose a plain background automatically (the photo with it is kept)
+    "REMOVE_PHOTO_BACKGROUND": env_bool("SHOP_REMOVE_PHOTO_BACKGROUND", True),
 }
 
 # Integrations. Each one is switched on only when its credentials are present;

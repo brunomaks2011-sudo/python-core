@@ -13,6 +13,7 @@ urlpatterns = [
     path("tovary/<int:pk>/shvydko/", views.product_quick_update, name="product_quick_update"),
     path("tovary/<int:pk>/vydalyty/", views.product_delete, name="product_delete"),
     path("foto/<int:pk>/", views.image_action, name="image_action"),
+    path("foto/prybraty-fon/", views.photos_remove_backgrounds, name="photos_remove_backgrounds"),
     path("api/katalog/", views.catalog_lookup, name="catalog_lookup"),
     path("zamovlennia/", views.order_list, name="orders"),
     path("zamovlennia/<int:pk>/", views.order_detail, name="order_detail"),

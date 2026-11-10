@@ -11,7 +11,7 @@ from django.views.decorators.cache import cache_page
 
 from django.core.cache import cache
 
-from catalog.models import Category, Color, LegoSet, Part, Product, Theme
+from catalog.models import Category, Color, LegoSet, Part, Product, Theme, category_tree
 from catalog.views import recently_viewed
 
 from .seo import organization_jsonld
@@ -35,8 +35,17 @@ def home(request):
                                                                           "-created_at")[:10])
     series = list(Theme.objects.filter(is_primary=True).annotate(
         n=Count("products", filter=Q(products__is_active=True))).order_by("sort_order"))
-    part_categories = list(Category.objects.filter(kind="part", parent__isnull=False, is_active=True).annotate(
-        n=Count("products", filter=Q(products__is_active=True))).order_by("sort_order"))
+    # part categories of the second level; a category counts the products of its subcategories too
+    counts = dict(Product.objects.active().exclude(category__isnull=True).order_by()
+                  .values_list("category_id").annotate(n=Count("id")))
+    part_categories, top = [], None
+    for cat, depth, _path in category_tree(Category.objects.filter(kind="part", is_active=True)):
+        if depth == 1:
+            top = cat
+            top.n = 0
+            part_categories.append(top)
+        if depth >= 1 and top is not None:
+            top.n += counts.get(cat.pk, 0)
     by_slug = {c.slug: c for c in part_categories}
     # the part-finder promo shows drawings of classic parts; the tiles show the 12 fullest categories
     finder_categories = [by_slug[s] for s in HOME_FINDER_CATEGORIES if s in by_slug]

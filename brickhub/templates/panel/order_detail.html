@@ -1,4 +1,4 @@
-{% extends "panel/base.html" %}{% load shop_tags %}
+{% extends "panel/base.html" %}{% load shop_tags panel_tags %}
 {% block title %}{{ order.number }}{% endblock %}
 {% block heading %}Замовлення {{ order.number }} <span class="status s-{{ order.status }}" style="vertical-align:middle;margin-left:8px">{{ order.get_status_display }}</span>{% endblock %}
 {% block actions %}<a class="btn" href="{% url 'panel:order_packing' order.pk %}" target="_blank"><svg class="ic"><use href="#i-printer"/></svg>Пакувальний лист</a><a class="btn btn-ghost" href="{% url 'panel:orders' %}">До списку</a>{% endblock %}
@@ -12,7 +12,7 @@
         <tbody>
         {% for i in order.items.all %}
           <tr>
-            <td>{% if i.product %}<a class="link" style="color:var(--ink)" href="{% url 'panel:product_edit' i.product_id %}">{{ i.title }}</a>{% else %}{{ i.title }}{% endif %}<br><span class="muted mono" style="font-size:12px">{{ i.sku }}</span>{% if i.color_name %} <span class="muted" style="font-size:12px">· {{ i.color_name }}</span>{% endif %} <span class="badge" style="height:20px">{{ i.condition_label }}</span></td>
+            <td>{% if i.product %}<a class="link" style="color:var(--ink)" href="{% url 'panel:product_edit' i.product_id %}">{{ i.title }}</a>{% else %}{{ i.title }}{% endif %}<br><span class="muted mono" style="font-size:12px">{{ i.sku }}</span>{% if i.color_name %} <span class="muted" style="font-size:12px">· {{ i.color_name }}</span>{% endif %} <span class="badge" style="height:20px">{{ i.condition_label }}</span> {% if i.owner_id %}{% owner_badge i.owner_id %}{% else %}{% owner_badge i.product.owner_id %}{% endif %}</td>
             <td class="mono">{{ i.number|default:"—" }}</td>
             <td class="muted">{{ i.product.inventory.location|default:"—" }}</td>
             <td class="num">{{ i.unit_price|uah }}</td>
@@ -28,6 +28,13 @@
         <dt>Доставка</dt><dd class="num">{% if order.delivery_cost is None %}за тарифами{% else %}{{ order.delivery_cost|uah }}{% endif %}</dd>
         <dt><b>До сплати</b></dt><dd class="num"><b>{{ order.total|uah }}</b></dd>
       </dl>
+      {% if owner_totals %}
+        <div class="owner-split">
+          <h3>Чиї товари в замовленні</h3>
+          {% for t in owner_totals %}<div class="row" style="justify-content:space-between">{% owner_badge t.owner_id %}<span class="num">{{ t.qty }} шт. · <b>{{ t.amount|uah }}</b></span></div>{% endfor %}
+          {% if order.discount_total %}<p class="muted" style="font-size:12px;margin:6px 0 0">Знижку поділено пропорційно до суми товарів.</p>{% endif %}
+        </div>
+      {% endif %}
     </section>
     <section class="pcard">
       <h2>Історія</h2>

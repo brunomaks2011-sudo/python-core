@@ -1,16 +1,18 @@
-{% extends "panel/base.html" %}{% load shop_tags %}
+{% extends "panel/base.html" %}{% load shop_tags panel_tags %}
 {% block title %}Товари{% endblock %}
 {% block heading %}Товари і склад <span class="muted" style="font-size:15px;font-family:var(--font);font-weight:500">{{ total|thousands }}</span>{% endblock %}
 {% block actions %}
   <a class="btn" href="{% url 'panel:export_products' %}{% if kind %}?kind={{ kind }}{% endif %}"><svg class="ic"><use href="#i-download"/></svg>Експорт CSV</a>
   <a class="btn" href="{% url 'panel:import' %}"><svg class="ic"><use href="#i-upload"/></svg>Імпорт</a>
+  {% if photos_waiting %}<form method="post" action="{% url 'panel:photos_remove_backgrounds' %}" style="display:inline">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button class="btn" type="submit" title="Фото, додані раніше: прибрати однотонний фон"><svg class="ic"><use href="#i-spark"/></svg>Прибрати фон зі старих фото ({{ photos_waiting }})</button></form>{% endif %}
   <a class="btn btn-primary" href="{% url 'panel:product_new' %}{% if kind %}?kind={{ kind }}{% endif %}"><svg class="ic"><use href="#i-plus"/></svg>Додати товар</a>
 {% endblock %}
 {% block content %}
 <form class="pfilters" method="get">
   <input type="search" name="q" value="{{ q }}" placeholder="Пошук: артикул, номер LEGO, Design ID, Element ID, назва, колір">
   <select name="kind"><option value="">Усі типи</option>{% for v, l in kinds %}<option value="{{ v }}" {% if kind == v %}selected{% endif %}>{{ l }}</option>{% endfor %}</select>
-  <select name="category"><option value="">Усі категорії</option>{% for root, subs in category_groups %}<optgroup label="{{ root.name }}"><option value="{{ root.slug }}" {% if category == root.slug %}selected{% endif %}>{{ root.name }} — усі</option>{% for c in subs %}<option value="{{ c.slug }}" {% if category == c.slug %}selected{% endif %}>{{ c.name }}</option>{% endfor %}</optgroup>{% endfor %}</select>
+  <select name="category"><option value="">Усі категорії</option>{% for root, subs in category_groups %}<optgroup label="{{ root.name }}"><option value="{{ root.slug }}" {% if category == root.slug %}selected{% endif %}>{{ root.name }} — усі</option>{% for c, label in subs %}<option value="{{ c.slug }}" {% if category == c.slug %}selected{% endif %}>{{ label }}</option>{% endfor %}</optgroup>{% endfor %}</select>
+  <select name="owner" aria-label="Чий товар"><option value="">Усі власники</option>{% for o in owners %}<option value="{{ o.pk }}" {% if owner == o.pk|stringformat:"d" %}selected{% endif %}>{{ o.name }}</option>{% endfor %}<option value="none" {% if owner == 'none' %}selected{% endif %}>Не вказано ({{ no_owner_count }})</option></select>
   <select name="stock"><option value="">Будь-який залишок</option><option value="low" {% if stock == 'low' %}selected{% endif %}>Закінчується (1–3)</option><option value="out" {% if stock == 'out' %}selected{% endif %}>Немає в наявності</option></select>
   <select name="photo"><option value="">З фото і без</option><option value="none" {% if photo == 'none' %}selected{% endif %}>Без фото ({{ no_photo_count }})</option><option value="has" {% if photo == 'has' %}selected{% endif %}>З фото</option></select>
   <select name="status"><option value="">Усі</option><option value="active" {% if status == 'active' %}selected{% endif %}>На сайті</option><option value="hidden" {% if status == 'hidden' %}selected{% endif %}>Приховані</option></select>
@@ -38,12 +40,19 @@
       <option value="set_new">Позначити «Новинка»</option><option value="unset_new">Зняти «Новинка»</option>
       <option value="set_featured">Позначити «Популярний»</option><option value="unset_featured">Зняти «Популярний»</option>
       <option value="set_bestseller">Позначити «Хіт»</option><option value="unset_bestseller">Зняти «Хіт»</option>
+      <option value="set_owner">Позначити, чий товар…</option>
       <option value="set_category">Перенести в категорію…</option>
+      <option value="category_from_catalog">Деталі: розкласти за категоріями каталогу</option>
       <option value="delete">Видалити</option>
     </select>
-    <select name="category" class="select" style="height:36px;max-width:260px" aria-label="Нова категорія" data-bulk-category hidden>
+    <select name="owner" class="select" style="height:36px;max-width:220px" aria-label="Чий товар" data-bulk-extra="set_owner" hidden>
+      <option value="">Чий товар?</option>
+      {% for o in owners %}{% if o.is_staff %}<option value="{{ o.pk }}">{{ o.name }}</option>{% endif %}{% endfor %}
+      <option value="none">— не вказано —</option>
+    </select>
+    <select name="category" class="select" style="height:36px;max-width:260px" aria-label="Нова категорія" data-bulk-extra="set_category" hidden>
       <option value="">Оберіть категорію…</option>
-      {% for root, subs in category_groups %}<optgroup label="{{ root.name }}"><option value="{{ root.pk }}">{{ root.name }}</option>{% for c in subs %}<option value="{{ c.pk }}">{{ c.name }}</option>{% endfor %}</optgroup>{% endfor %}
+      {% for root, subs in category_groups %}<optgroup label="{{ root.name }}"><option value="{{ root.pk }}">{{ root.name }}</option>{% for c, label in subs %}<option value="{{ c.pk }}">{{ label }}</option>{% endfor %}</optgroup>{% endfor %}
     </select>
     <button class="btn btn-sm" type="submit" data-confirm-bulk>Застосувати</button>
   </div>
@@ -56,7 +65,7 @@
           <td><input type="checkbox" name="ids" value="{{ p.pk }}" aria-label="Обрати {{ p.sku }}"></td>
           <td>{% product_img p "mini" cls="thumb" %}</td>
           <td style="min-width:240px"><a class="link" style="color:var(--ink)" href="{% url 'panel:product_edit' p.pk %}">{{ p.title|truncatechars:60 }}</a><br>
-            <span class="muted mono" style="font-size:12px">{{ p.sku }}</span>
+            <span class="muted mono" style="font-size:12px">{{ p.sku }}</span> {% owner_badge p.owner_id %}
             {% if p.color_id %}<span class="swatch-inline muted" style="font-size:12px;margin-left:6px"><span class="swatch" style="--c:{{ p.color.hex }};--s:10px"></span>{{ p.color.display_name }}</span>{% endif %}
             {% if not p.is_active %}<span class="badge" style="height:20px">прихований</span>{% endif %}
             {% if not p.main_image %}<span class="badge badge-orange" style="height:20px">без фото</span>{% endif %}</td>

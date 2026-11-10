@@ -1,4 +1,4 @@
-{% extends "panel/base.html" %}{% load shop_tags %}
+{% extends "panel/base.html" %}{% load shop_tags panel_tags %}
 {% block title %}Користувачі{% endblock %}
 {% block heading %}Користувачі{% endblock %}
 {% block content %}
@@ -11,7 +11,7 @@
   <thead><tr><th>Користувач</th><th>Телефон</th><th>Реєстрація</th><th>Замовлень</th><th>Сума покупок</th><th>Роль</th></tr></thead>
   <tbody>{% for u in page.object_list %}
     <tr><td><a class="link" href="{% url 'panel:user_detail' u.pk %}">{{ u.email }}</a><br><span class="muted" style="font-size:12px">{{ u.get_full_name }}</span></td><td>{{ u.phone|default:"—" }}</td><td class="muted">{{ u.date_joined|date:"j.m.Y" }}</td><td class="num">{{ u.n_orders }}</td><td class="num">{{ u.spent|default:0|uah }}</td>
-      <td>{% if u.is_superuser %}<span class="badge badge-dark">Власник</span>{% elif u.is_staff %}<span class="badge badge-blue">Персонал</span>{% elif not u.is_active %}<span class="badge badge-red">Заблокований</span>{% else %}<span class="badge">Покупець</span>{% endif %}</td></tr>
+      <td>{% if u.pk in owner_colors %}{% owner_badge u.pk %} {% endif %}{% if u.is_superuser %}<span class="badge badge-dark">Власник</span>{% elif u.is_staff %}<span class="badge badge-blue">Персонал</span>{% elif not u.is_active %}<span class="badge badge-red">Заблокований</span>{% else %}<span class="badge">Покупець</span>{% endif %}</td></tr>
   {% empty %}<tr><td colspan="6" class="muted" style="padding:28px">Нікого не знайдено.</td></tr>{% endfor %}</tbody>
 </table></div>
 {% include "partials/pagination.html" %}

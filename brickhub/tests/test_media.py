@@ -48,7 +48,8 @@ class ProductPhotoServingTests(TestCase):
 
         page = self.client.get(self.xwing.get_absolute_url()).content.decode()
         self.assertIn(photo.url, page)
-        for url, ctype in ((photo.url, "image/png"), (photo.thumb_url, "image/webp")):
+        # the shown photo and its thumbnail are WebP, the photo with its background is kept as JPEG
+        for url, ctype in ((photo.url, "image/webp"), (photo.thumb_url, "image/webp"), (photo.share_url, "image/jpeg")):
             r = self.client.get(url)  # tests run with DEBUG off, like the live site
             self.assertEqual(r.status_code, 200, url)
             self.assertEqual(r["Content-Type"], ctype)

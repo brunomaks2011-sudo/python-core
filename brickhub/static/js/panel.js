@@ -44,16 +44,17 @@
   const bulk = $("[data-bulk]");
   if (bulk) {
     const actionSel = bulk.querySelector("select[name=action]");
-    const catSel = bulk.querySelector("[data-bulk-category]");
-    const syncCat = () => { if (catSel) catSel.hidden = actionSel.value !== "set_category"; };
-    actionSel.addEventListener("change", syncCat);
-    syncCat();
+    const extras = $$("[data-bulk-extra]", bulk);  // a second select for actions that need a value
+    const syncExtra = () => extras.forEach((el) => { el.hidden = el.dataset.bulkExtra !== actionSel.value; });
+    actionSel.addEventListener("change", syncExtra);
+    syncExtra();
     bulk.addEventListener("submit", (e) => {
       const action = actionSel.value;
       const n = $$("input[name=ids]:checked").length;
       if (!action || !n) { e.preventDefault(); window.bhToast && window.bhToast("Оберіть товари та дію", "info"); return; }
-      if (action === "set_category" && catSel && !catSel.value) {
-        e.preventDefault(); window.bhToast && window.bhToast("Оберіть категорію", "info"); catSel.focus(); return;
+      const extra = extras.find((el) => el.dataset.bulkExtra === action);
+      if (extra && !extra.value) {
+        e.preventDefault(); window.bhToast && window.bhToast(extra.getAttribute("aria-label") + ": оберіть значення", "info"); extra.focus(); return;
       }
       if (action === "delete" && !confirm(`Видалити ${n} товар(ів)?`)) e.preventDefault();
     });

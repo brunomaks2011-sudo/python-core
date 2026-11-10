@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import csv
+import time
 from datetime import timedelta
 from decimal import Decimal
 
@@ -19,14 +20,16 @@ from django.views.decorators.http import require_POST
 
 from cart.models import PromoCode
 from catalog.models import (
-    Category, Color, Element, Inventory, InventoryMovement, LegoSet, Minifigure, Part, Product, ProductImage,
+    Category, category_tree, Color, Element, Inventory, InventoryMovement, LegoSet, Minifigure, Part, Product, ProductImage,
     Review, StockNotification, Theme,
 )
+from catalog.images import photos_to_process, remove_photo_background, restore_photo_background
 from catalog.notifications import notify_back_in_stock
 from orders.models import Order, OrderItem
 from orders.services import change_status
 
 from . import forms as pf
+from .owners import owner_people, sales_by_owner, split_order
 from .importers import ImportFileError, TEMPLATES, export_rows, read_table, run_import, template_xlsx
 
 staff_required = user_passes_test(lambda u: u.is_active and u.is_staff, login_url="accounts:login")
@@ -78,6 +81,7 @@ def dashboard(request):
     stock_value = Product.objects.active().aggregate(v=Sum(F("price") * F("inventory__quantity")))["v"] or 0
     User = get_user_model()
     ctx = {
+        "owner_rows": _owner_rows(now),
         "w1": window(1), "w7": window(7), "w30": window(30), "days": days, "statuses": statuses, "top": top,
         "low_stock": low_stock, "kinds": kinds, "stock_value": stock_value,
         "recent_orders": Order.objects.order_by("-created_at")[:8],
@@ -89,6 +93,33 @@ def dashboard(request):
         "section": "dashboard",
     }
     return render(request, "panel/dashboard.html", ctx)
+
+
+def _owner_rows(now) -> dict:
+    """Sales and stock per owner of the goods for the dashboard."""
+    periods = {"d1": sales_by_owner(now - timedelta(days=1)), "d7": sales_by_owner(now - timedelta(days=7)),
+               "d30": sales_by_owner(now - timedelta(days=30)), "all": sales_by_owner()}
+    stock = {row["owner_id"]: row for row in Product.objects.active().order_by().values("owner_id").annotate(
+        value=Sum(F("price") * F("inventory__quantity")), n=Count("id"))}
+    zero = {"amount": Decimal("0"), "qty": 0, "orders": 0}
+    people = owner_people()
+    keys = [p["pk"] for p in people]
+    if any(None in d for d in periods.values()) or None in stock:
+        keys.append(None)
+    rows = []
+    for key in keys:
+        person = next((p for p in people if p["pk"] == key), None)
+        row = {"owner_id": key, "person": person,
+               **{name: data.get(key, zero) for name, data in periods.items()},
+               "stock_value": (stock.get(key) or {}).get("value") or 0, "products": (stock.get(key) or {}).get("n", 0)}
+        if person and not person["is_staff"] and not row["all"]["amount"] and not row["products"]:
+            continue
+        rows.append(row)
+    totals = {name: sum((r[name]["amount"] for r in rows), Decimal("0")) for name in periods}
+    totals["qty30"] = sum(r["d30"]["qty"] for r in rows)
+    totals["stock_value"] = sum((r["stock_value"] for r in rows), 0)
+    totals["products"] = sum(r["products"] for r in rows)
+    return {"rows": rows, "totals": totals}
 
 
 # ---------------------------------------------------------------------------
@@ -125,6 +156,11 @@ def product_list(request):
         c = Category.objects.filter(slug=cat).first()
         if c:
             qs = qs.filter(category_id__in=c.descendant_ids())
+    owner = request.GET.get("owner", "")
+    if owner == "none":
+        qs = qs.filter(owner__isnull=True)
+    elif owner.isdigit():
+        qs = qs.filter(owner_id=int(owner))
     order = request.GET.get("order", "-updated_at")
     if order not in ("-updated_at", "price", "-price", "title", "inventory__quantity", "-inventory__quantity",
                      "-sold_count", "sku"):
@@ -135,29 +171,21 @@ def product_list(request):
         "page": page, "q": q, "kind": kind, "stock": stock, "status": status, "order": order, "category": cat,
         "photo": photo, "no_photo_count": Product.objects.filter(images__isnull=True).count(),
         "category_groups": _category_groups(), "kinds": Product.KINDS, "section": "products",
+        "owner": owner, "owners": owner_people(), "no_owner_count": Product.objects.filter(owner__isnull=True).count(),
+        "photos_waiting": photos_to_process().count(),
         "total": page.paginator.count,
     })
 
 
-def _category_groups() -> list[tuple[Category, list[Category]]]:
-    """[(top-level section, [its subcategories at any depth])] in menu order — for grouped <select>s."""
-    cats = list(Category.objects.order_by("sort_order", "name"))
-    by_pk = {c.pk: c for c in cats}
-
-    def top(c):
-        seen = set()
-        while c.parent_id and c.parent_id in by_pk and c.pk not in seen:
-            seen.add(c.pk)
-            c = by_pk[c.parent_id]
-        return c
-
-    groups = {c.pk: (c, []) for c in cats if not c.parent_id}
-    for c in cats:
-        if c.parent_id:
-            root = top(c)
-            if root.pk in groups:
-                groups[root.pk][1].append(c)
-    return list(groups.values())
+def _category_groups() -> list[tuple[Category, list[tuple[Category, str]]]]:
+    """[(top-level section, [(subcategory at any depth, "Цеглинки › Звичайні цеглинки")])] in menu order."""
+    groups = []
+    for cat, depth, path in category_tree():
+        if depth == 0:
+            groups.append((cat, []))
+        elif groups:
+            groups[-1][1].append((cat, path.split(" › ", 1)[1]))
+    return groups
 
 
 @staff_required
@@ -195,6 +223,32 @@ def product_bulk(request):
                 product.save()  # also refreshes the search index (it includes the category name)
                 n += 1
             messages.success(request, f"Перенесено в «{cat}»: {n}")
+    elif action == "set_owner":
+        raw = request.POST.get("owner", "")
+        if raw == "none":
+            n = qs.update(owner=None)
+            messages.success(request, f"Власника знято: {n}")
+        else:
+            person = get_user_model().objects.filter(pk=int(raw), is_staff=True).first() if raw.isdigit() else None
+            if person is None:
+                messages.error(request, "Оберіть, чий це товар")
+            else:
+                n = qs.update(owner=person)
+                messages.success(request, f"Позначено як товар «{person.first_name or person.email}»: {n}")
+    elif action == "category_from_catalog":
+        # each selected part goes to the category of its Design ID in the parts catalogue
+        n = skipped = 0
+        for product in qs.select_related("part", "lego_set", "color", "minifigure", "theme"):
+            target = product.part.category_id if product.kind == "part" and product.part_id else None
+            if not target:
+                skipped += 1
+            elif product.category_id != target:
+                product.category_id = target
+                product.save()
+                n += 1
+        messages.success(request, f"Розкладено за категоріями каталогу: {n}")
+        if skipped:
+            messages.info(request, f"Без змін: {skipped} (не деталі або деталі без категорії в каталозі)")
     elif action in ("set_new", "unset_new", "set_featured", "unset_featured", "set_bestseller", "unset_bestseller"):
         field = {"new": "is_new", "featured": "is_featured", "bestseller": "is_bestseller"}[action.split("_", 1)[1]]
         n = qs.update(**{field: action.startswith("set_")})
@@ -245,7 +299,8 @@ def product_edit(request, pk=None):
                                 pk=pk) if pk else None
     initial = {}
     if not product:
-        initial = {"kind": request.GET.get("kind", "set"), "condition": "new", "is_active": True}
+        initial = {"kind": request.GET.get("kind", "set"), "condition": "new", "is_active": True,
+                   "owner": request.user.pk}
         # "add the same part in another colour" pre-fills the number and category
         for key in ("design_id", "set_number", "fig_number"):
             if request.GET.get(key):
@@ -304,12 +359,15 @@ def image_action(request, pk):
     product = image.product
     action = request.POST.get("action")
     if action == "delete":
-        if image.image:
-            image.image.delete(save=False)
-        if image.thumbnail:
-            image.thumbnail.delete(save=False)
+        image.delete_files()
         image.delete()
         messages.success(request, "Фото видалено")
+    elif action == "remove_bg":
+        note = remove_photo_background(image)
+        level = messages.success if image.background == ProductImage.BG_REMOVED else messages.info
+        level(request, note)
+    elif action == "restore_bg":
+        messages.success(request, restore_photo_background(image))
     elif action == "main":
         others = list(product.images.exclude(pk=image.pk))
         image.sort_order = 0
@@ -320,6 +378,24 @@ def image_action(request, pk):
                 other.save(update_fields=["sort_order"])
         messages.success(request, "Головне фото змінено")
     return redirect("panel:product_edit", pk=product.pk)
+
+
+@staff_required
+@require_POST
+def photos_remove_backgrounds(request):
+    """Process the photos added before backgrounds were removed automatically, a batch per click."""
+    started = time.monotonic()
+    done = removed = 0
+    for photo in photos_to_process().order_by("pk"):
+        if time.monotonic() - started > 20:
+            break
+        remove_photo_background(photo)
+        done += 1
+        removed += photo.background == ProductImage.BG_REMOVED
+    left = photos_to_process().count()
+    messages.success(request, f"Оброблено фото: {done}, фон прибрано на {removed}."
+                              + (f" Залишилося {left} — натисніть ще раз." if left else ""))
+    return redirect(request.POST.get("next") or "panel:products")
 
 
 @staff_required
@@ -396,6 +472,8 @@ def order_detail(request, pk):
     order = get_object_or_404(Order.objects.prefetch_related("items__product__inventory", "events__created_by",
                                                              "payments"), pk=pk)
     status_form = pf.OrderStatusForm(initial={"status": order.status})
+    people = {p["pk"]: p for p in owner_people()}
+    owner_totals = [{"person": people.get(key), "owner_id": key, **data} for key, data in split_order(order).items()]
     meta_form = pf.OrderMetaForm(instance=order)
     if request.method == "POST":
         if request.POST.get("form") == "status":
@@ -419,6 +497,7 @@ def order_detail(request, pk):
                 return redirect("panel:order_detail", pk=order.pk)
     return render(request, "panel/order_detail.html", {
         "order": order, "status_form": status_form, "meta_form": meta_form, "section": "orders",
+        "owner_totals": owner_totals,
     })
 
 
@@ -447,7 +526,8 @@ def user_list(request):
     elif role == "blocked":
         qs = qs.filter(is_active=False)
     return render(request, "panel/users.html", {"page": _page(request, qs, 50), "q": q, "role": role,
-                                                "section": "users"})
+                                                "section": "users",
+                                                "owner_colors": {p["pk"]: p["color"] for p in owner_people()}})
 
 
 @staff_required

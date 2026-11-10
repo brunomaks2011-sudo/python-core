@@ -16,6 +16,7 @@ from catalog.templatetags.shop_tags import STATIC_CATEGORY_ICONS
 from .factories import base_catalog, part_product
 
 migration = importlib.import_module("catalog.migrations.0006_more_categories")
+migration7 = importlib.import_module("catalog.migrations.0007_part_subcategories")
 
 # sort orders of the part categories on installs made before migration 0006
 OLD_SORT_ORDERS = {"tsehlynky": 0, "plastyny": 10, "plytky": 20, "kolesa-ta-shyny": 30, "vikna-ta-dveri": 40,
@@ -78,6 +79,7 @@ class MoreCategoriesTests(TestCase):
     def test_migrated_and_fresh_installs_list_part_categories_in_the_same_order(self):
         orders = dict(OLD_SORT_ORDERS)
         orders.update({slug: order for slug, _name, _icon, order, *_ in migration.PART_CATEGORIES})
+        orders.update({slug: order for slug, _name, _icon, order, *_ in migration7.NEW_PART_CATEGORIES})
         self.assertEqual(sorted(orders, key=orders.get), [slug for slug, *_ in PART_CATEGORIES])
 
     def test_migration_moves_catalogue_parts_but_not_products(self):
