@@ -1,6 +1,10 @@
+import posixpath
+
 from django.conf import settings
 from django.db.models import Count, Q
-from django.http import HttpResponse
+from django.http import Http404, HttpResponse
+from django.views.decorators.http import require_safe
+from django.views.static import serve
 from django.shortcuts import render
 from django.urls import reverse
 from django.views.decorators.cache import cache_page
@@ -104,3 +108,14 @@ def error_500(request):
     from django.template import loader
 
     return HttpResponse(loader.get_template("500.html").render(), status=500)
+
+
+@require_safe
+def media_file(request, path):
+    """An uploaded product photo, for servers that do not serve /media/ themselves (settings.SERVE_MEDIA)."""
+    if posixpath.normpath(path) != path or not path.startswith("products/"):
+        raise Http404  # no "..", "//" or anything outside the product photos folder
+    response = serve(request, path, document_root=settings.MEDIA_ROOT)
+    # every upload gets a new file name, so browsers may keep photos for a long time
+    response["Cache-Control"] = "public, max-age=2592000"
+    return response

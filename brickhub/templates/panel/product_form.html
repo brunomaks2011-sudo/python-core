@@ -113,7 +113,8 @@
           <div class="img-list" style="margin-bottom:14px">
             {% for im in product.images.all %}
               <div class="img-item">
-                <img src="{{ im.thumb_url }}" alt="" loading="lazy">
+                <img src="{{ im.thumb_url }}" alt="" loading="lazy" data-photo-check>
+                <p class="img-broken" hidden>Фото не відкривається{% if im.external_url and not im.image %}: посилання не веде на картинку{% endif %}</p>
                 <div class="row">
                   {% if not forloop.first %}<button class="btn btn-sm btn-soft" type="submit" form="img-{{ im.pk }}-main">Головне</button>{% else %}<span class="badge badge-green">Головне</span>{% endif %}
                   <button class="btn btn-sm btn-ghost" type="submit" form="img-{{ im.pk }}-del" aria-label="Видалити фото"><svg class="ic"><use href="#i-trash"/></svg></button>

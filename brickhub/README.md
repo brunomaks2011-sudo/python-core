@@ -166,7 +166,9 @@ docker compose exec web python manage.py createsuperuser
 
 **Render, Railway и похожие PaaS:** есть `Procfile` (`migrate` при релизе, сайт через gunicorn). Задайте переменные из `.env.example`, обязательно `DJANGO_SECRET_KEY`, `DJANGO_DEBUG=0`, `DJANGO_ALLOWED_HOSTS`, `DJANGO_CSRF_TRUSTED_ORIGINS`, `DATABASE_URL`. Статика отдаётся через WhiteNoise. Для загружаемых фото подключите постоянный диск (`DJANGO_MEDIA_ROOT`) или S3-хранилище: на многих PaaS файловая система временная.
 
-**VPS:** gunicorn за nginx (nginx отдаёт `/media/`), HTTPS через Let's Encrypt. После проверки HTTPS включите `DJANGO_HSTS_SECONDS=31536000`.
+**VPS:** gunicorn за nginx (nginx отдаёт `/media/`, тогда задайте `DJANGO_SERVE_MEDIA=0`), HTTPS через Let's Encrypt. После проверки HTTPS включите `DJANGO_HSTS_SECONDS=31536000`.
+
+**Фото товаров** (`/media/products/…`) сайт по умолчанию отдаёт сам, даже при `DJANGO_DEBUG=0`, поэтому они видны и без отдельной настройки веб-сервера (например, на PythonAnywhere без строки `/media/` в «Static files»). Если `/media/` раздаёт веб-сервер, это быстрее — тогда можно выключить `DJANGO_SERVE_MEDIA=0`.
 
 Проверка настроек для прода:
 

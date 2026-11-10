@@ -119,6 +119,17 @@
     });
   }
 
+  // photos that cannot be opened are flagged in the product form
+  $$("img[data-photo-check]").forEach((img) => {
+    const flag = () => {
+      img.classList.add("is-broken");
+      const note = img.nextElementSibling;
+      if (note && note.classList.contains("img-broken")) note.hidden = false;
+    };
+    if (img.complete && img.naturalWidth === 0 && img.getAttribute("src")) flag();
+    img.addEventListener("error", flag);
+  });
+
   // drag & drop zones
   $$("[data-dropzone]").forEach((z) => {
     const input = z.querySelector("input[type=file]");

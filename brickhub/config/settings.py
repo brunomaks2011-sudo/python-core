@@ -151,6 +151,9 @@ STATIC_ROOT = BASE_DIR / "staticfiles"
 STATICFILES_DIRS = [BASE_DIR / "static"]
 MEDIA_URL = "/media/"
 MEDIA_ROOT = Path(env("DJANGO_MEDIA_ROOT", str(BASE_DIR / "media")))
+# Product photos are served by Django too, so they show up even when the web server has no /media/ mapping
+# (e.g. PythonAnywhere without a "Static files" row). Set 0 when nginx & co. serve /media/ themselves.
+SERVE_MEDIA = env_bool("DJANGO_SERVE_MEDIA", True)
 STORAGES = {
     "default": {"BACKEND": "django.core.files.storage.FileSystemStorage"},
     "staticfiles": {
