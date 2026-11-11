@@ -115,6 +115,7 @@
             {% endfor %}
           </div>
           <div class="mega-foot">
+            <a class="btn btn-sm btn-dark" href="{% url 'catalog:category' 'detali' %}">Усі деталі</a>
             <a class="btn btn-sm btn-primary" href="{% url 'catalog:part_finder' %}"><svg class="ic"><use href="#i-search"/></svg>Знайти деталь за номером</a>
             <a class="btn btn-sm btn-soft" href="{% url 'cart:quick_order' %}">Замовлення списком</a>
             <a class="btn btn-sm btn-soft" href="{% url 'catalog:colors' %}">Кольори LEGO</a>
@@ -240,6 +241,7 @@
       <summary>Деталі <svg class="ic"><use href="#i-chev-down"/></svg></summary>
       <div class="sub">
         {% for c in nav.by_kind.part.children %}<a href="{% url 'catalog:category' c.slug %}">{{ c.name }}</a>{% endfor %}
+        <a href="{% url 'catalog:category' 'detali' %}"><b>Усі деталі</b></a>
         <a href="{% url 'catalog:part_finder' %}"><b>Пошук за номером</b></a>
         <a href="{% url 'cart:quick_order' %}">Замовлення списком</a>
       </div>
