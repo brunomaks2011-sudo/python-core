@@ -80,12 +80,12 @@ class ProductForm(forms.ModelForm):
 
     class Meta:
         model = Product
-        fields = ["kind", "condition", "title", "sku", "color", "category", "theme", "price", "old_price",
+        fields = ["kind", "condition", "title", "sku", "color", "category", "theme", "theme2", "price", "old_price",
                   "completeness", "description", "owner", "is_active", "is_featured", "is_bestseller", "is_new",
                   "is_rare"]
         widgets = {"description": forms.Textarea(attrs={"rows": 6}), "sku": forms.TextInput(
             attrs={"placeholder": "згенерується автоматично"}), "category": SearchableSelect,
-            "theme": SearchableSelect}
+            "theme": SearchableSelect, "theme2": SearchableSelect}
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -103,8 +103,12 @@ class ProductForm(forms.ModelForm):
         owner.label_from_instance = lambda u: f"{owner_name(u)} ({'власник магазину' if u.is_superuser else u.email})"
         owner.empty_label = "— не вказано —"
         owner.help_text = "Для статистики: хто скільки продав"
-        self.fields["theme"].queryset = Theme.objects.filter(
-            Q(parent__isnull=True) | Q(products__isnull=False)).distinct().order_by("-is_primary", "sort_order", "name")
+        themes = Theme.objects.filter(Q(parent__isnull=True) | Q(products__isnull=False) |
+                                      Q(products_second__isnull=False)).distinct().order_by("-is_primary", "sort_order",
+                                                                                          "name")
+        self.fields["theme"].queryset = themes
+        self.fields["theme2"].queryset = themes
+        self.fields["theme2"].help_text = "Необов'язково: товар буде й у цій серії"
         p = self.instance
         if p.pk:
             self.fields["quantity"].initial = p.stock
@@ -197,6 +201,8 @@ class ProductForm(forms.ModelForm):
             if not self.minifigure:
                 self.add_error("fig_number", "Такої мініфігурки немає в каталозі. Перевірте номер або залиште "
                                              "поле порожнім.")
+        if data.get("theme2") and data.get("theme2") == data.get("theme"):
+            data["theme2"] = None  # the same series twice
         if kind in ("accessory", "other", Product.KIND_KEYCHAIN, Product.KIND_BOOK) and not data.get("title") \
                 and not self.lego_set:
             self.add_error("title", "Вкажіть назву товару")

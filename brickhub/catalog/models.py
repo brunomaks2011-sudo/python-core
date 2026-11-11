@@ -358,7 +358,7 @@ class ProductQuerySet(models.QuerySet):
 
     def with_related(self):
         return self.select_related(
-            "lego_set", "part", "color", "minifigure", "theme", "category", "inventory"
+            "lego_set", "part", "color", "minifigure", "theme", "theme2", "category", "inventory"
         ).prefetch_related("images")
 
 
@@ -398,6 +398,9 @@ class Product(models.Model):
                                  related_name="products", verbose_name="Категорія")
     theme = models.ForeignKey(Theme, null=True, blank=True, on_delete=models.SET_NULL, related_name="products",
                               verbose_name="Серія")
+    # a listing can belong to a second series too (e.g. LEGO Icons and LEGO Star Wars); shown and found in both
+    theme2 = models.ForeignKey(Theme, null=True, blank=True, on_delete=models.SET_NULL, related_name="products_second",
+                               verbose_name="Друга серія")
     condition = models.CharField("Стан", max_length=8, choices=CONDITIONS, default=CONDITION_NEW, db_index=True)
     completeness = models.CharField("Комплектація / примітка до стану", max_length=255, blank=True)
     price = models.DecimalField("Ціна, ₴", max_digits=10, decimal_places=2,
@@ -519,6 +522,16 @@ class Product(models.Model):
         return reverse("catalog:product", args=[self.slug])
 
     # ----- saving -------------------------------------------------------
+    @property
+    def themes(self) -> list:
+        """The series of the listing: the main one and the second one, if any."""
+        return [t for t in (self.theme, self.theme2) if t is not None]
+
+    @staticmethod
+    def in_themes_q(ids):
+        """Listings whose main or second series is one of ``ids``."""
+        return Q(theme_id__in=ids) | Q(theme2_id__in=ids)
+
     def default_title(self) -> str:
         if self.kind == self.KIND_PART and self.part_id:
             return self.part.display_name
@@ -579,8 +592,9 @@ class Product(models.Model):
         if self.minifigure_id:
             m = self.minifigure
             bits += [m.fig_number, m.bricklink_id, m.name, m.character]
-        if self.theme_id:
-            bits += [self.theme.name, self.theme.title]
+        for theme in (self.theme, self.theme2):
+            if theme is not None:
+                bits += [theme.name, theme.title]
         if self.category_id:
             bits += [self.category.name]
         return " ".join(str(b) for b in bits if b).lower()

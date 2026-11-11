@@ -134,7 +134,7 @@ def build_listing(request, base_qs, *, default_sort="popular", facets=("kind", "
         for t in themes:
             ids += t.descendant_ids()
             chip(t.display_name, theme=[x for x in params["theme"] if x != t.slug])
-        qs = qs.filter(theme_id__in=ids)
+        qs = qs.filter(Product.in_themes_q(ids))
     if params["category"]:
         cats = list(Category.objects.filter(slug__in=params["category"]))
         ids = []
@@ -206,10 +206,17 @@ def compute_facets(qs, wanted) -> dict:
         if len(kinds) > 1:
             out["kind"] = sorted(kinds, key=lambda k: list(labels).index(k["value"]))
     if "theme" in wanted:
-        rows = qs.order_by().exclude(theme__isnull=True).values("theme__slug", "theme__title", "theme__name",
-                                                               "theme__accent").annotate(n=Count("id"))
-        themes = [{"value": r["theme__slug"], "label": r["theme__title"] or r["theme__name"], "count": r["n"],
-                   "accent": r["theme__accent"]} for r in rows]
+        # a listing counts in its main and in its second series
+        merged: dict = {}
+        for field in ("theme", "theme2"):
+            rows = qs.order_by().exclude(**{f"{field}__isnull": True}).values(
+                f"{field}__slug", f"{field}__title", f"{field}__name", f"{field}__accent").annotate(n=Count("id"))
+            for r in rows:
+                slot = merged.setdefault(r[f"{field}__slug"], {
+                    "value": r[f"{field}__slug"], "label": r[f"{field}__title"] or r[f"{field}__name"], "count": 0,
+                    "accent": r[f"{field}__accent"]})
+                slot["count"] += r["n"]
+        themes = list(merged.values())
         if len(themes) > 1:
             out["theme"] = sorted(themes, key=lambda t: (-t["count"], t["label"]))
     if "category" in wanted:

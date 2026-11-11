@@ -91,7 +91,7 @@ def theme_detail(request, slug):
     theme = get_object_or_404(Theme, slug=slug)
     ids = theme.descendant_ids()
     kind = request.GET.get("kind")
-    base = Product.objects.filter(theme_id__in=ids)
+    base = Product.objects.filter(Product.in_themes_q(ids))
     counts = dict(base.active().order_by().values_list("kind").annotate(n=Count("id")))
     listing = build_listing(request, base, facets=("kind", "category", "condition", "price", "year", "pieces"))
     crumbs = [("Каталог", reverse("catalog:index")), ("Набори LEGO", reverse("catalog:category", args=["nabory"])),
@@ -206,7 +206,8 @@ def product_detail(request, slug):
         same_color = list(similar.filter(color_id=product.color_id)[:8]) if product.color_id else []
         similar = same_color or list(similar[:8])
     elif product.theme_id:
-        similar = list(similar.filter(theme_id=product.theme_id, kind=product.kind).order_by("-is_featured",
+        similar = list(similar.filter(Product.in_themes_q([t.pk for t in product.themes]), kind=product.kind)
+                       .order_by("-is_featured",
                                                                                             "-sold_count")[:8])
     else:
         similar = list(similar.filter(kind=product.kind).order_by("-sold_count")[:8])
@@ -444,7 +445,7 @@ def compare_rows(products):
         return {
             "kind": p.get_kind_display(),
             "number": p.official_number,
-            "theme": p.theme.display_name if p.theme_id else "—",
+            "theme": ", ".join(t.display_name for t in p.themes) or "—",
             "condition": p.get_condition_display(),
             "year": p.year or "—",
             "pieces": (s.pieces if s and s.pieces else "—"),

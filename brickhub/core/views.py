@@ -34,7 +34,10 @@ def home(request):
     minifigs = list(active.filter(kind="minifig", condition="new").order_by("-is_featured", "-views_count",
                                                                           "-created_at")[:10])
     series = list(Theme.objects.filter(is_primary=True).annotate(
-        n=Count("products", filter=Q(products__is_active=True))).order_by("sort_order"))
+        n1=Count("products", filter=Q(products__is_active=True), distinct=True),
+        n2=Count("products_second", filter=Q(products_second__is_active=True), distinct=True)).order_by("sort_order"))
+    for s in series:
+        s.n = s.n1 + s.n2
     # part categories of the second level; a category counts the products of its subcategories too
     counts = dict(Product.objects.active().exclude(category__isnull=True).order_by()
                   .values_list("category_id").annotate(n=Count("id")))
