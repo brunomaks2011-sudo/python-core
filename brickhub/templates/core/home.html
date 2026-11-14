@@ -49,7 +49,7 @@
 
   <section class="section" aria-labelledby="series-title">
     <div class="section-head">
-      <div><span class="eyebrow">Серії</span><h2 id="series-title">Популярні серії LEGO</h2></div>
+      <div><h2 id="series-title">Популярні серії LEGO</h2></div>
       <a class="link" href="{% url 'catalog:category' 'nabory' %}">Усі набори <svg class="ic" style="width:16px;height:16px"><use href="#i-arrow-right"/></svg></a>
     </div>
     <div class="series-strip">
@@ -62,7 +62,7 @@
   {% if popular %}
   <section class="section" aria-labelledby="popular-title">
     <div class="section-head">
-      <div><span class="eyebrow">Обирають найчастіше</span><h2 id="popular-title">Популярні товари</h2></div>
+      <div><h2 id="popular-title">Популярні товари</h2></div>
       <a class="link" href="{% url 'catalog:collection' 'populiarni' %}">Дивитися всі <svg class="ic" style="width:16px;height:16px"><use href="#i-arrow-right"/></svg></a>
     </div>
     {% include "catalog/_rail.html" with items=popular %}
@@ -72,7 +72,7 @@
   {% if new %}
   <section class="section" aria-labelledby="new-title">
     <div class="section-head">
-      <div><span class="eyebrow">Свіжий реліз</span><h2 id="new-title">Новинки</h2><p>Набори 2025–2026 років, що щойно з'явилися у продажу.</p></div>
+      <div><h2 id="new-title">Новинки</h2><p>Набори 2025–2026 років, що щойно з'явилися у продажу.</p></div>
       <a class="link" href="{% url 'catalog:collection' 'novynky' %}">Усі новинки <svg class="ic" style="width:16px;height:16px"><use href="#i-arrow-right"/></svg></a>
     </div>
     {% include "catalog/_rail.html" with items=new %}
@@ -82,7 +82,7 @@
   {% if bestsellers %}
   <section class="section" aria-labelledby="hits-title">
     <div class="section-head">
-      <div><span class="eyebrow">Хіти</span><h2 id="hits-title">Хіти продажів</h2></div>
+      <div><h2 id="hits-title">Хіти продажів</h2></div>
       <a class="link" href="{% url 'catalog:collection' 'khity-prodazhu' %}">Усі хіти <svg class="ic" style="width:16px;height:16px"><use href="#i-arrow-right"/></svg></a>
     </div>
     {% include "catalog/_rail.html" with items=bestsellers %}
@@ -92,7 +92,6 @@
   <section class="section">
     <div class="parts-promo">
       <div>
-        <span class="eyebrow">Деталі поштучно</span>
         <h2>Потрібна конкретна деталь? Знайдіть її за номером</h2>
         <p class="muted">Шукайте за Design ID, Element ID або назвою, обирайте колір за номером BrickLink і купуйте рівно стільки, скільки потрібно — від однієї штуки.</p>
         <form class="pp-form" action="{% url 'catalog:part_finder' %}" method="get">
@@ -118,7 +117,7 @@
   {% if latest %}
   <section class="section" aria-labelledby="latest-title">
     <div class="section-head">
-      <div><span class="eyebrow">Склад</span><h2 id="latest-title">Останні надходження</h2></div>
+      <div><h2 id="latest-title">Останні надходження</h2></div>
       <a class="link" href="{% url 'catalog:collection' 'ostanni-nadkhodzhennia' %}?sort=new">Усі надходження <svg class="ic" style="width:16px;height:16px"><use href="#i-arrow-right"/></svg></a>
     </div>
     {% include "catalog/_rail.html" with items=latest %}
@@ -128,7 +127,7 @@
   {% if minifigs %}
   <section class="section" aria-labelledby="figs-title">
     <div class="section-head">
-      <div><span class="eyebrow">Колекціонерам</span><h2 id="figs-title">Популярні мініфігурки</h2></div>
+      <div><h2 id="figs-title">Популярні мініфігурки</h2></div>
       <a class="link" href="{% url 'catalog:category' 'minifihurky' %}">Усі мініфігурки <svg class="ic" style="width:16px;height:16px"><use href="#i-arrow-right"/></svg></a>
     </div>
     {% include "catalog/_rail.html" with items=minifigs %}
@@ -137,7 +136,7 @@
 
   <section class="section" aria-labelledby="cats-title">
     <div class="section-head">
-      <div><span class="eyebrow">Категорії</span><h2 id="cats-title">Популярні категорії деталей</h2></div>
+      <div><h2 id="cats-title">Популярні категорії деталей</h2></div>
       <a class="link" href="{% url 'catalog:category' 'detali' %}">Усі деталі <svg class="ic" style="width:16px;height:16px"><use href="#i-arrow-right"/></svg></a>
     </div>
     <div class="cat-tiles">
@@ -148,7 +147,7 @@
   </section>
 
   <section class="section" aria-labelledby="adv-title">
-    <div class="section-head"><div><span class="eyebrow">Чому BRICK HUB</span><h2 id="adv-title">Переваги магазину</h2></div></div>
+    <div class="section-head"><div><h2 id="adv-title">Переваги магазину</h2></div></div>
     <div class="adv">
       <div class="adv-item"><div class="adv-ico"><svg class="ic"><use href="#i-shield"/></svg></div><div><b>Лише оригінал LEGO</b><p>Жодних аналогів і копій — тільки оригінальні набори, деталі та фігурки.</p></div></div>
       <div class="adv-item"><div class="adv-ico"><svg class="ic"><use href="#i-brick"/></svg></div><div><b>Деталі поштучно</b><p>Будь-яка кількість за номером і кольором — як на BrickLink, але в гривнях.</p></div></div>
@@ -160,7 +159,7 @@
   </section>
 
   <section class="section" aria-labelledby="delivery-title">
-    <div class="section-head"><div><span class="eyebrow">Доставка по Україні</span><h2 id="delivery-title">Як ми доставляємо</h2></div>
+    <div class="section-head"><div><h2 id="delivery-title">Як ми доставляємо</h2></div>
       <a class="link" href="{% url 'core:delivery' %}">Детальніше <svg class="ic" style="width:16px;height:16px"><use href="#i-arrow-right"/></svg></a></div>
     <div class="delivery">
       <div class="dcard is-dark">
