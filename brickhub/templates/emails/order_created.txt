@@ -1,4 +1,4 @@
-Дякуємо за замовлення {{ order.number }}!
+Дякуємо за замовлення {{ order.number }}.
 
 Доставка: {{ order.get_delivery_method_display }} — {{ order.delivery_summary }}
 Оплата: {{ order.get_payment_method_display }}

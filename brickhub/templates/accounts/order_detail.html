@@ -10,7 +10,7 @@
   <table class="specs">
     <tr><th>Отримувач</th><td>{{ order.full_name }}, {{ order.phone }}</td></tr>
     <tr><th>Доставка</th><td>{{ order.get_delivery_method_display }} — {{ order.delivery_summary }}</td></tr>
-    <tr><th>Оплата</th><td>{{ order.get_payment_method_display }} · {{ order.get_payment_status_display }}</td></tr>
+    <tr><th>Оплата</th><td>{{ order.get_payment_method_display }}<br><span class="muted">{{ order.get_payment_status_display }}</span></td></tr>
     {% if order.tracking_number %}<tr><th>ТТН / трек-номер</th><td><a class="link" href="{{ order.tracking_url }}" target="_blank" rel="noopener">{{ order.tracking_number }}</a> — відстежити на сайті перевізника</td></tr>{% endif %}
   </table>
   <div class="row" style="margin-top:16px">

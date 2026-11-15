@@ -14,7 +14,7 @@
       <div class="stack">
         {% for c in catalog %}
           <div class="row" style="justify-content:space-between;border-top:1px solid var(--line-2);padding-top:12px">
-            <span><span class="badge">{% if c.kind == 'set' %}Набір{% elif c.kind == 'part' %}Деталь{% else %}Мініфігурка{% endif %}</span> <b class="mono">{{ c.number }}</b> {{ c.name }}{% if c.year %} · {{ c.year }}{% endif %}{% if c.extra %} · {{ c.extra }}{% endif %}</span>
+            <span><span class="badge">{% if c.kind == 'set' %}Набір{% elif c.kind == 'part' %}Деталь{% else %}Мініфігурка{% endif %}</span> <b class="mono">{{ c.number }}</b> {{ c.name }}{% if c.year %}, {{ c.year }}{% endif %}{% if c.extra %}, {{ c.extra }}{% endif %}</span>
             <a class="btn btn-sm" href="{% url 'core:contacts' %}">Запитати</a>
           </div>
         {% endfor %}

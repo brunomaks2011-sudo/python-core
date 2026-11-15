@@ -147,6 +147,7 @@ img.pimg { height: auto; }
 .btn-ghost { --btn-bg: transparent; --btn-hover: var(--surface-2); }
 .btn-line { --btn-bg: #fff; --btn-bd: var(--line); --btn-hover: var(--surface-3); }
 .btn-sm { height: 36px; padding: 0 14px; font-size: 14px; }
+.btn-count { display: inline-grid; place-items: center; min-width: 20px; height: 20px; padding: 0 6px; border-radius: 999px; background: var(--ink); color: #fff; font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .btn-lg { height: 52px; padding: 0 28px; font-size: 16px; }
 .btn-block { width: 100%; white-space: normal; height: auto; min-height: 44px; padding-block: 10px; line-height: 1.25; text-align: center; }
 .btn-lg.btn-block { min-height: 52px; }
@@ -1058,6 +1059,13 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; a
   body { font-size: 15px; }
   .topbar .tb-links { display: none; }
   .topbar .container { justify-content: center; height: 32px; font-size: 12.5px; }
+  /* one line of crumbs that ends at the parent: the heading below already names the page;
+     a browser without :has() keeps the page name and shortens it instead */
+  .crumbs { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; white-space: nowrap; padding: 14px 0 6px; }
+  .crumbs::-webkit-scrollbar { display: none; }
+  .crumbs > * { flex: none; }
+  .crumbs > [aria-current="page"] { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+  .crumbs:has(> [aria-current]) > [aria-current], .crumbs > .sep:has(+ [aria-current]) { display: none; }
   .nav { display: none; }
   .burger { display: inline-flex; }
   .header-main { gap: 4px; }

@@ -95,7 +95,7 @@
         {% for item in summary.items %}{% if item.product.is_active and item.product.in_stock %}
           <div class="mc-item" style="display:grid;grid-template-columns:52px 1fr auto;gap:10px;align-items:center">
             {% product_img item.product "mini" cls="ci-mini" %}
-            <span style="font-size:13px;line-height:1.3"><b style="font-weight:600">{{ item.product.title|truncatechars:48 }}</b><br><span class="muted">{% if item.product.color_id %}{{ item.product.color.display_name }} · {% endif %}{{ item.quantity }} шт.</span></span>
+            <span style="font-size:13px;line-height:1.3"><b style="font-weight:600">{{ item.product.title|truncatechars:48 }}</b><br><span class="muted">{% if item.product.color_id %}{{ item.product.color.display_name }}, {% endif %}{{ item.quantity }} шт.</span></span>
             <b style="font-size:14px;white-space:nowrap">{{ item.line_total|uah }}</b>
           </div>
         {% endif %}{% endfor %}

@@ -31,7 +31,7 @@
     {% include "catalog/_filters.html" %}
     <section aria-label="Товари">
       <div class="toolbar">
-        <button class="btn btn-sm filters-open" type="button" data-open-filters><svg class="ic"><use href="#i-filter"/></svg>Фільтри{% if listing.active %} · {{ listing.active|length }}{% endif %}</button>
+        <button class="btn btn-sm filters-open" type="button" data-open-filters><svg class="ic"><use href="#i-filter"/></svg>Фільтри{% if listing.active %} <span class="btn-count">{{ listing.active|length }}</span>{% endif %}</button>
         <span class="count">Знайдено <b>{{ listing.total|thousands }}</b> {{ listing.total|plural:"товар,товари,товарів" }}</span>
         <span class="spacer"></span>
         <form method="get" data-sort-form>

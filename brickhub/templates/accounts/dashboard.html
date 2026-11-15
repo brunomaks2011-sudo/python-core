@@ -10,7 +10,7 @@
 {% include "accounts/_orders_table.html" %}
 <div class="panel-card" style="margin-top:16px">
   <h2 style="font-size:18px">Дані для доставки</h2>
-  <p class="muted" style="margin:0">{{ user.get_full_name|default:"Ім'я не вказано" }} · {{ user.phone|default:"телефон не вказано" }}<br>{% if user.city %}{{ user.city }}{% if user.np_warehouse %}, {{ user.np_warehouse }}{% endif %}{% else %}Адресу ще не збережено — вона підставиться після першого замовлення.{% endif %}</p>
+  <p class="muted" style="margin:0">{{ user.get_full_name|default:"Ім'я не вказано" }}, {{ user.phone|default:"телефон не вказано" }}<br>{% if user.city %}{{ user.city }}{% if user.np_warehouse %}, {{ user.np_warehouse }}{% endif %}{% else %}Адресу ще не збережено — вона підставиться після першого замовлення.{% endif %}</p>
   <a class="btn btn-sm" style="margin-top:12px" href="{% url 'accounts:profile' %}">Змінити</a>
 </div>
 {% endblock %}

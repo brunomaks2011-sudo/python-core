@@ -52,7 +52,7 @@
         {% if p.official_number %}<span class="pdx-number">#{{ p.official_number }}</span>{% endif %}
       </div>
       <h1 class="pdx-title">{{ p.title }}</h1>
-      {% if p.reviews_count %}<a class="rating-line pdx-rating" href="#reviews"><span class="stars">{{ p.rating_avg|stars }}</span>{{ p.rating_avg|floatformat:1 }} · {{ p.reviews_count }} {{ p.reviews_count|plural:"відгук,відгуки,відгуків" }}</a>{% endif %}
+      {% if p.reviews_count %}<a class="rating-line pdx-rating" href="#reviews"><span class="stars">{{ p.rating_avg|stars }}</span>{{ p.rating_avg|floatformat:1 }} ({{ p.reviews_count }} {{ p.reviews_count|plural:"відгук,відгуки,відгуків" }})</a>{% endif %}
 
       {% if p.kind == "part" %}
         <div class="pd-ids">
@@ -66,7 +66,7 @@
         <div class="variant-picker" id="kolir">
           <div class="vp-head">
             <span class="vp-label">Колір</span>
-            <a class="vp-all" href="{% url 'catalog:part_design' p.part.design_id %}">{{ color_variants|length }} {{ color_variants|length|plural:"колір,кольори,кольорів" }} · таблиця</a>
+            <a class="vp-all" href="{% url 'catalog:part_design' p.part.design_id %}">{{ color_variants|length }} {{ color_variants|length|plural:"колір,кольори,кольорів" }} у таблиці</a>
           </div>
           <div class="vp-select">
             <span class="swatch{% if p.color.is_transparent %} is-trans{% endif %}" style="--c:{{ p.color.hex }}" aria-hidden="true"></span>
@@ -79,7 +79,7 @@
           <div class="vp-swatches" role="list">
             {% for v in color_variants %}
               <a role="listitem" href="{{ v.url }}" class="vp-swatch{% if v.trans %} is-trans{% endif %}{% if v.current %} is-active{% endif %}{% if not v.in_stock %} is-out{% endif %}" style="--c:{{ v.hex }}"
-                 title="{{ v.name }} · {{ v.price|uah }}{% if not v.in_stock %} · немає в наявності{% endif %}"
+                 title="{{ v.name }}: {{ v.price|uah }}{% if not v.in_stock %}, немає в наявності{% endif %}"
                  aria-label="{{ v.name }}{% if not v.in_stock %}, немає в наявності{% endif %}"{% if v.current %} aria-current="true"{% endif %}></a>
             {% endfor %}
           </div>

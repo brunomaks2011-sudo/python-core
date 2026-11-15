@@ -6,7 +6,7 @@
         <a href="{{ item.product.get_absolute_url }}">{% product_img item.product "thumb" %}</a>
         <div>
           <a class="mc-title" href="{{ item.product.get_absolute_url }}">{{ item.product.title }}</a>
-          <div class="mc-meta">{% if item.product.color_id %}{{ item.product.color.display_name }} · {% endif %}{{ item.quantity }} × {{ item.product.price|uah }}</div>
+          <div class="mc-meta">{% if item.product.color_id %}{{ item.product.color.display_name }}, {% endif %}{{ item.quantity }} × {{ item.product.price|uah }}</div>
         </div>
       </div>
     {% endfor %}
