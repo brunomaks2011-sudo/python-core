@@ -60,7 +60,7 @@
   </div>
   <div class="ptable-wrap">
     <table class="ptable">
-      <thead><tr><th></th><th></th><th>Товар</th><th>Номер LEGO</th><th>Стан</th><th>Ціна, ₴</th><th>Залишок</th><th>Місце</th><th>Продано</th><th></th></tr></thead>
+      <thead><tr><th></th><th></th><th>Товар</th><th>Номер LEGO · BrickLink</th><th>Стан</th><th>Ціна, ₴</th><th>Залишок</th><th>Місце</th><th>Продано</th><th></th></tr></thead>
       <tbody>
       {% for p in page.object_list %}
         <tr class="{% if not p.is_active %}is-hidden{% endif %}">
@@ -71,7 +71,7 @@
             {% if p.color_id %}<span class="swatch-inline muted" style="font-size:12px;margin-left:6px"><span class="swatch" style="--c:{{ p.color.hex }};--s:10px"></span>{{ p.color.display_name }}</span>{% endif %}
             {% if not p.is_active %}<span class="badge" style="height:20px">прихований</span>{% endif %}
             {% photo_badge p small=True %}</td>
-          <td class="mono">{{ p.official_number|default:"—" }}</td>
+          <td class="mono">{{ p.official_number|default:"—" }}{% if p.kind == "part" and p.lego_design_id and p.bricklink_number and p.bricklink_number != p.lego_design_id %}<br><span class="muted" style="font-size:12px">BL {{ p.bricklink_number }}</span>{% endif %}</td>
           <td><span class="badge {% if p.condition == 'new' %}badge-green{% else %}badge-orange{% endif %}">{{ p.get_condition_display }}</span></td>
           <td><input class="inline" type="text" inputmode="decimal" value="{{ p.price|stringformat:'.2f' }}" data-quick="{% url 'panel:product_quick_update' p.pk %}" data-field="price" aria-label="Ціна {{ p.sku }}"></td>
           <td><input class="inline" type="number" min="0" inputmode="numeric" value="{{ p.inventory.quantity }}" data-quick="{% url 'panel:product_quick_update' p.pk %}" data-field="quantity" aria-label="Залишок {{ p.sku }}"></td>

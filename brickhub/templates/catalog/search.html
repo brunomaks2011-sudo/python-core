@@ -3,7 +3,7 @@
   {% if design %}
     <a class="parts-promo" href="{% url 'catalog:part_design' design.part.design_id %}" style="grid-template-columns:auto 1fr auto;padding:16px 20px;margin-bottom:18px;gap:18px;align-items:center">
       <span class="ph-img" style="width:72px;height:72px;display:grid;place-items:center;background:var(--surface-2);border-radius:14px"><img src="{% part_icon design.part.design_id 4 %}" alt="" width="56" height="56"></span>
-      <span><span class="eyebrow" style="margin:0">Деталь {{ design.part.design_id }}</span><b style="display:block;font-size:17px">{{ design.part.display_name }}</b><span class="muted">{{ design.colors }} {{ design.colors|plural:"колір,кольори,кольорів" }} · від {{ design.pmin|uah }} · {{ design.stock|default:0|thousands }} шт. на складі</span></span>
+      <span><span class="eyebrow" style="margin:0">Деталь {{ design.part.shown_number }}</span><b style="display:block;font-size:17px">{{ design.part.display_name }}</b><span class="muted">{{ design.colors }} {{ design.colors|plural:"колір,кольори,кольорів" }} · від {{ design.pmin|uah }} · {{ design.stock|default:0|thousands }} шт. на складі</span></span>
       <span class="btn btn-dark">Усі кольори <svg class="ic"><use href="#i-arrow-right"/></svg></span>
     </a>
   {% endif %}

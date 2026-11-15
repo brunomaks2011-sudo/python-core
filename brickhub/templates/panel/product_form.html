@@ -35,9 +35,9 @@
             {% for e in form.design_id.errors %}<p class="error">{{ e }}</p>{% endfor %}
             <div class="lookup-result" data-lookup-out="part"></div>
           </div>
+          {% include "partials/field.html" with field=form.element_id %}
           {% include "partials/field.html" with field=form.color %}
           {% include "partials/field.html" with field=form.bricklink_no %}
-          {% include "partials/field.html" with field=form.element_id %}
           <div class="bl-preview full" data-bl-preview hidden>
             <img alt="" width="96" height="96" data-bl-img>
             <div><b>Картинка на сайті</b><p class="muted" data-bl-note></p><a class="link" href="#" target="_blank" rel="noopener" data-bl-link>Відкрити на BrickLink</a></div>

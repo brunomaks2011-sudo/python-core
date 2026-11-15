@@ -55,15 +55,17 @@ class ProductForm(forms.ModelForm):
                              help_text="Почніть вводити назву українською чи англійською або номер кольору")
     set_number = forms.CharField(label="Номер LEGO", required=False, max_length=40,
                                  help_text="Номер з каталогу LEGO. Для аксесуарів, брелоків і книг — необов'язково")
-    design_id = forms.CharField(label="Design ID деталі", required=False, max_length=40,
-                                help_text="Design ID, номер BrickLink або Element ID — решта підтягнеться з каталогу")
+    design_id = forms.CharField(label="Design ID (LEGO)", required=False, max_length=40,
+                                help_text="Номер з сайту LEGO (Pick a Brick). Можна й номер BrickLink — "
+                                          "решта підтягнеться з каталогу")
     fig_number = forms.CharField(label="Номер мініфігурки", required=False, max_length=40,
                                  help_text="Номер каталогу (fig-000123) або BrickLink (sw0001). Для брелока чи "
                                            "книги — фігурка в комплекті, необов'язково")
-    bricklink_no = forms.CharField(label="Номер BrickLink (якщо інший)", required=False, max_length=60,
-                                   help_text="Заповніть, лише якщо на BrickLink у деталі інший номер, ніж Design ID")
-    element_id = forms.CharField(label="Element ID", required=False, max_length=20,
-                                 help_text="Необов'язково: офіційний номер елемента LEGO для цього кольору")
+    bricklink_no = forms.CharField(label="Номер BrickLink", required=False, max_length=60,
+                                   help_text="На BrickLink номер часто інший, ніж на LEGO. Підставляється сам, "
+                                             "якщо відомий; перевірте для деталей з принтом")
+    element_id = forms.CharField(label="Element ID (LEGO)", required=False, max_length=20,
+                                 help_text="Номер елемента з сайту LEGO для цього кольору — за ним підтягнеться все")
     create_catalog = forms.BooleanField(
         label="Номера немає в каталозі — створити запис вручну", required=False,
         help_text="Нову деталь чи мініфігурку сайт додасть сам: назву й розділ візьме з BrickLink. Тут можна "
@@ -127,8 +129,8 @@ class ProductForm(forms.ModelForm):
                 for f in ("year", "pieces", "minifigs_count", "age_min", "height_cm", "width_cm", "depth_cm"):
                     self.fields[f].initial = getattr(s, f)
             if p.part_id:
-                self.fields["design_id"].initial = p.part.design_id
-                self.fields["bricklink_no"].initial = p.part.bricklink_no
+                self.fields["design_id"].initial = p.lego_design_id or p.part.design_id
+                self.fields["bricklink_no"].initial = p.part.bricklink_shown
                 self.fields["element_id"].initial = p.element_id
             if p.minifigure_id:
                 m = p.minifigure
@@ -166,15 +168,24 @@ class ProductForm(forms.ModelForm):
         if kind == "part":
             design = (data.get("design_id") or "").strip()
             typed_el = (data.get("element_id") or "").strip()
-            self.part = known_part(design) if design else None
-            by_element = design if design and not self.part else ("" if design else typed_el)
-            known_el = Element.objects.filter(element_id=by_element).select_related("part", "color").first() \
-                if by_element else None
+            self.part, known_el = None, None
+            own = self.instance.part if self.instance.pk and self.instance.part_id else None
+            if own and design.lower() in {n.lower() for n in (own.design_id, own.lego_no, own.bricklink_no,
+                                                              self.instance.lego_design_id) if n}:
+                self.part = own  # the product's own numbers: keep its part
+            elif typed_el or design:
+                # the Element ID from lego.com is the most precise: it gives the part and the colour
+                known_el = Element.objects.filter(element_id=typed_el).select_related("part", "color").first() \
+                    if typed_el else None
+                if known_el is None and design:
+                    self.part = known_part(design)
+                    if self.part is None:  # an Element ID typed into the Design ID field
+                        known_el = Element.objects.filter(element_id=design).select_related("part", "color").first()
+                        if known_el and not typed_el:
+                            data["element_id"] = known_el.element_id
             if known_el:
-                # an Element ID (in its own field or typed as the Design ID) gives the part and the colour
-                self.part, design = known_el.part, known_el.part.design_id
-                data["design_id"] = design
-                data["element_id"] = typed_el or known_el.element_id
+                self.part = known_el.part
+                design = design or known_el.lego_design_id or known_el.part.design_id
                 if not data.get("color"):
                     data["color"] = known_el.color
             if not design:
@@ -184,7 +195,7 @@ class ProductForm(forms.ModelForm):
                     # a number the catalogue does not know yet: name and section from BrickLink or its base part
                     info = new_part_info(design)
                     self.part = Part(design_id=design, name=(official if create and official else info["name"]),
-                                     category=info["category"])
+                                     category=info["category"], lego_no=design if design.isdigit() else "")
             if not data.get("color"):
                 self.add_error("color", "Для деталі обов'язково вкажіть колір")
             el = (data.get("element_id") or "").strip()
@@ -244,6 +255,8 @@ class ProductForm(forms.ModelForm):
             bl_no = (data.get("bricklink_no") or "").strip()
             if bl_no == self.part.design_id:
                 bl_no = ""
+            elif not bl_no:
+                bl_no = self.part.bricklink_no  # left empty: keep the known BrickLink number
             if not self.part.pk:
                 self.part.category = data.get("category") or self.part.category
                 self.part.bricklink_no = bl_no
@@ -254,7 +267,10 @@ class ProductForm(forms.ModelForm):
             product.part = self.part
             el = (data.get("element_id") or "").strip()
             if el and data.get("color") and el != element_for(self.part, data["color"].pk):
-                Element.objects.update_or_create(element_id=el, defaults={"part": self.part, "color": data["color"]})
+                typed = (data.get("design_id") or "").strip()
+                lego = typed if typed.isdigit() and typed not in (self.part.design_id, bl_no) else self.part.lego_no
+                Element.objects.update_or_create(element_id=el, defaults={"part": self.part, "color": data["color"],
+                                                                          "lego_design_id": lego})
         if self.minifigure is not None and product.kind in Product.WITH_FIGURE:
             product.minifigure = self.minifigure  # figure included with a keychain or a book
         elif self.minifigure is not None:

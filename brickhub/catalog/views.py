@@ -125,7 +125,9 @@ def search(request):
     catalog = []
     if parsed and parsed.numbers:
         for num in parsed.numbers:
-            part = Part.objects.filter(Q(design_id__iexact=num) | Q(elements__element_id=num)).distinct().first()
+            part = (Part.objects.filter(Q(design_id__iexact=num) | Q(lego_no__iexact=num) | Q(bricklink_no__iexact=num)
+                                        | Q(elements__element_id=num) | Q(elements__lego_design_id=num))
+                    .distinct().first())
             if part and part.products.filter(is_active=True).exists():
                 agg = part.products.filter(is_active=True).aggregate(colors=Count("color", distinct=True),
                                                                      pmin=Min("price"),
@@ -281,7 +283,7 @@ def part_finder(request):
         for tok in q.lower().split():
             parts = parts.filter(Q(design_id__iexact=tok) | Q(name__icontains=tok) | Q(name_uk__icontains=tok) |
                                  Q(alternate_ids__icontains=tok) | Q(elements__element_id=tok) |
-                                 Q(bricklink_no__iexact=tok) |
+                                 Q(bricklink_no__iexact=tok) | Q(lego_no__iexact=tok) |
                                  Q(design_id__istartswith=tok))
     if color:
         parts = parts.filter(products__color=color)

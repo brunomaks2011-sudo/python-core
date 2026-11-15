@@ -303,6 +303,22 @@ def _rows(folder: Path, name: str):
         return list(csv.DictReader(fh))
 
 
+def fill_lego_numbers() -> int:
+    """Give each part without one its LEGO design number: the one most of its elements carry."""
+    from django.db.models import Count
+
+    counts = defaultdict(list)
+    for part_id, design, n in (Element.objects.exclude(lego_design_id="").order_by()
+                               .values_list("part_id", "lego_design_id").annotate(n=Count("id"))):
+        counts[part_id].append((n, design))
+    todo = [part for part in Part.objects.filter(lego_no="").only("pk").iterator(chunk_size=5000)
+            if part.pk in counts]
+    for part in todo:
+        part.lego_no = max(counts[part.pk])[1]
+    Part.objects.bulk_update(todo, ["lego_no"], batch_size=BATCH)
+    return len(todo)
+
+
 def add_missing(folder: Path | str = UPDATE_DIR, dry_run: bool = False) -> dict:
     """Add the parts, minifigures and Element IDs the shop does not know yet.
 
@@ -368,6 +384,7 @@ def add_missing(folder: Path | str = UPDATE_DIR, dry_run: bool = False) -> dict:
                 for i in range(0, len(els), 900):
                     Element.objects.filter(element_id__in=els[i:i + 900], lego_design_id="").update(
                         lego_design_id=design)
+            stats["parts_lego"] = fill_lego_numbers()
             stats["elements"] = (len(new), len(rows) - len(new) - unknown)
             stats["elements_skipped"] = unknown
         if dry_run:

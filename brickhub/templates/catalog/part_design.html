@@ -8,7 +8,8 @@
       <h1>{{ part.display_name }}</h1>
       <p class="muted" style="margin:0 0 14px">{{ part.name }}</p>
       <div class="pd-ids">
-        <span class="idpill"><span>Design ID</span><b>{{ part.design_id }}</b><button type="button" data-copy="{{ part.design_id }}" aria-label="Копіювати"><svg class="ic"><use href="#i-copy"/></svg></button></span>
+        {% if part.lego_no %}<span class="idpill"><span>Design ID (LEGO)</span><b>{{ part.lego_no }}</b><button type="button" data-copy="{{ part.lego_no }}" aria-label="Копіювати номер LEGO"><svg class="ic"><use href="#i-copy"/></svg></button></span>{% endif %}
+        {% if part.bricklink_shown %}<span class="idpill"><span>BrickLink</span><b>{{ part.bricklink_shown }}</b><button type="button" data-copy="{{ part.bricklink_shown }}" aria-label="Копіювати номер BrickLink"><svg class="ic"><use href="#i-copy"/></svg></button></span>{% endif %}
         <span class="idpill"><span>Варіантів</span><b>{{ lots|length }}</b></span>
         <span class="idpill"><span>Кольорів</span><b>{{ colors_count }}</b></span>
         {% if part.part_category %}<span class="idpill"><span>Тип</span><b style="font-family:var(--font)">{{ part.part_category.display_name }}</b></span>{% endif %}
@@ -51,7 +52,7 @@
       {% for r in related %}
         <a class="design-card" href="{% url 'catalog:part_design' r.part.design_id %}">
           <div class="dc-img">{% product_img r.sample "thumb" %}</div>
-          <span class="dc-id">{{ r.part.design_id }}</span><span class="dc-name">{{ r.part.display_name }}</span>
+          <span class="dc-id">{{ r.part.shown_number }}</span><span class="dc-name">{{ r.part.display_name }}</span>
         </a>
       {% endfor %}
     </div>

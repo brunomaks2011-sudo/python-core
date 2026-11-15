@@ -25,6 +25,8 @@ class Command(BaseCommand):
             if key in stats:
                 added, had = stats[key]
                 self.stdout.write(f"  {label}: додано {added}, вже були {had}")
+        if stats.get("parts_lego"):
+            self.stdout.write(f"  Деталям додано номер з сайту LEGO: {stats['parts_lego']}")
         if stats.get("elements_skipped"):
             self.stdout.write(f"  Element ID пропущено (деталі або кольору немає в довіднику): "
                               f"{stats['elements_skipped']}")

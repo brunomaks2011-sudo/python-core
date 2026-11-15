@@ -102,10 +102,20 @@
         const theme = $("#id_theme", pf);
         if (theme && !theme.value && d.theme_id) { theme.value = d.theme_id; theme.dispatchEvent(new Event("change")); }
       } else if (type === "part") {
-        out.textContent = `✓ ${d.design_id} — ${d.name}${d.name_uk ? " (" + d.name_uk + ")" : ""}${d.note ? " · " + d.note : ""}` +
+        // both numberings: LEGO (Pick a Brick) first, then BrickLink
+        const nums = [d.lego_design_id ? "LEGO " + d.lego_design_id : "", d.bricklink_no ? "BrickLink " + d.bricklink_no : "BrickLink: впишіть номер"]
+          .filter(Boolean).join(" · ") || d.design_id;
+        out.textContent = `✓ ${nums} — ${d.name}${d.name_uk ? " (" + d.name_uk + ")" : ""}${d.note ? " · " + d.note : ""}` +
           (d.listings && d.listings.length ? ` · вже є: ${d.listings.length} лот(ів)` : "");
         if (title && !title.value) title.placeholder = d.name_uk || d.name;
-        if (d.design_id && d.design_id !== input.value.trim()) input.value = d.design_id;
+        const shown = d.lego_design_id || d.design_id;
+        if (shown && (typed || !input.value.trim() || d.element_id === input.value.trim())) input.value = shown;
+        else if (d.lego_design_id && input.value.trim() !== d.lego_design_id) input.value = d.lego_design_id;
+        const blInput = $("#id_bricklink_no", pf);
+        if (blInput && (!blInput.value || blInput.dataset.auto)) {
+          blInput.value = d.bricklink_no || ""; blInput.dataset.auto = "1"; blInput.dispatchEvent(new Event("change"));
+          blInput.placeholder = d.bricklink_no ? "" : "невідомий — впишіть номер з BrickLink";
+        }
         // the Element ID of this part in the chosen colour comes from the catalogue
         if (elInput && d.element_id && (!elInput.value || elInput.dataset.auto)) {
           elInput.value = d.element_id; elInput.dataset.auto = "1"; elInput.dispatchEvent(new Event("change"));
@@ -130,6 +140,8 @@
       const el = $(sel, pf);
       el && el.addEventListener("change", () => lookup(["set", "part", "minifig"][i]));
     });
+    const blField = $("#id_bricklink_no", pf);
+    if (blField) blField.addEventListener("input", () => { delete blField.dataset.auto; });
     if (elInput) {
       // an Element ID typed by hand fills the Design ID, colour, name and section
       elInput.addEventListener("input", () => { delete elInput.dataset.auto; });

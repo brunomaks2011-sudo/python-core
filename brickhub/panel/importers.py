@@ -675,7 +675,8 @@ def template_xlsx(kind: str) -> bytes:
 
 
 EXPORT_HEADERS = ["sku", "kind", "design_id", "color_id", "color", "set_number", "fig_number", "condition",
-                  "quantity", "price", "old_price", "location", "title", "active", "owner"]
+                  "quantity", "price", "old_price", "location", "title", "active", "owner",
+                  "lego_design_id", "element_id", "bricklink_no"]
 
 
 def export_rows(qs):
@@ -690,4 +691,5 @@ def export_rows(qs):
             p.minifigure.fig_number if p.minifigure_id else "", p.condition, inv.quantity if inv else 0,
             f"{p.price:.2f}", f"{p.old_price:.2f}" if p.old_price else "", inv.location if inv else "", p.title,
             "yes" if p.is_active else "no", p.owner.email if p.owner_id else "",
+            p.lego_design_id, p.element_id, p.bricklink_number,
         ]

@@ -9,6 +9,8 @@ Two layers, as on BrickLink:
 """
 from __future__ import annotations
 
+import re
+
 from decimal import Decimal
 
 from django.conf import settings
@@ -263,12 +265,35 @@ class Part(models.Model):
                                      help_text="Через кому, напр. 3068, 3068a")
     bricklink_no = models.CharField("Номер BrickLink", max_length=60, blank=True, db_index=True,
                                     help_text="Лише якщо на BrickLink деталь має інший номер, ніж Design ID")
+    # LEGO (Pick a Brick) and BrickLink number parts differently: 35382 on lego.com is 3005 on BrickLink
+    lego_no = models.CharField("Design ID на сайті LEGO", max_length=20, blank=True, db_index=True,
+                               help_text="Номер дизайну, як на lego.com (Pick a Brick)")
     description = models.TextField("Опис", blank=True)
 
     class Meta:
         ordering = ["design_id"]
         verbose_name = "деталь (каталог)"
         verbose_name_plural = "деталі (каталог)"
+
+    @property
+    def bricklink_number(self) -> str:
+        """The number BrickLink uses: its own when it differs, otherwise the catalogue number."""
+        return (self.bricklink_no or "").strip() or self.design_id
+
+    @property
+    def bricklink_known(self) -> bool:
+        """BrickLink numbers prints its own way (973pb…, not the catalogue's 973pr…): unknown until typed in."""
+        return bool((self.bricklink_no or "").strip()) or not re.search(r"pr\d", self.design_id, re.I)
+
+    @property
+    def bricklink_shown(self) -> str:
+        """The BrickLink number when it is known, else ''."""
+        return self.bricklink_number if self.bricklink_known else ""
+
+    @property
+    def shown_number(self) -> str:
+        """The number shown to buyers: LEGO's first, BrickLink's when LEGO's is not known."""
+        return self.lego_no or self.bricklink_number
 
     def __str__(self):
         return f"{self.design_id} {self.display_name}"
@@ -374,9 +399,11 @@ class ProductQuerySet(models.QuerySet):
     def with_related(self):
         # the Element ID comes along in the same query (cards show the LEGO element photo as a fallback)
         element = Element.objects.filter(part_id=models.OuterRef("part_id"), color_id=models.OuterRef("color_id"))
+        newest = element.order_by("-element_id")
         return self.select_related(
             "lego_set", "part", "color", "minifigure", "theme", "theme2", "category", "inventory"
-        ).prefetch_related("images").annotate(element_ref=models.Subquery(element.order_by("-element_id").values("element_id")[:1]))
+        ).prefetch_related("images").annotate(element_ref=models.Subquery(newest.values("element_id")[:1]),
+                                              lego_design_ref=models.Subquery(newest.values("lego_design_id")[:1]))
 
 
 class Product(models.Model):
@@ -477,7 +504,7 @@ class Product(models.Model):
     @property
     def official_number(self) -> str:
         if self.kind == self.KIND_PART and self.part_id:
-            return self.part.design_id
+            return self.lego_design_id or self.part.bricklink_number  # the LEGO number first
         if self.kind == self.KIND_MINIFIG and self.minifigure_id:
             return self.minifigure.display_number
         if self.lego_set_id:
@@ -486,24 +513,51 @@ class Product(models.Model):
 
     @property
     def number_label(self) -> str:
+        if self.kind == self.KIND_PART:
+            if self.lego_design_id:
+                return "Design ID (LEGO)"
+            return "Номер BrickLink" if self.part_id and self.part.bricklink_known else "Номер деталі"
         return {
-            self.KIND_PART: "Design ID",
             self.KIND_MINIFIG: "Номер фігурки",
             self.KIND_SET: "Номер набору",
         }.get(self.kind, "Номер LEGO")
 
+    def _element_numbers(self) -> tuple[str, str]:
+        """(Element ID, LEGO design number) of this part in this colour, newest element first."""
+        cached = getattr(self, "_element_cache", None)
+        if cached is not None:
+            return cached
+        if self.kind != self.KIND_PART or not (self.part_id and self.color_id):
+            cached = ("", "")
+        elif hasattr(self, "element_ref"):
+            cached = (self.element_ref or "", getattr(self, "lego_design_ref", "") or "")
+        else:
+            row = Element.objects.filter(part_id=self.part_id, color_id=self.color_id).order_by(
+                "-element_id").values_list("element_id", "lego_design_id").first()
+            cached = (row[0], row[1] or "") if row else ("", "")
+        self._element_cache = cached
+        return cached
+
     @property
     def element_id(self) -> str:
-        if self.kind != self.KIND_PART or not (self.part_id and self.color_id):
+        return self._element_numbers()[0]
+
+    @property
+    def lego_design_id(self) -> str:
+        """The number lego.com (Pick a Brick) uses for this part: of its element in this colour, else of the part."""
+        if self.kind != self.KIND_PART or not self.part_id:
             return ""
-        el = getattr(self, "_element_cache", None)
-        if el is None and hasattr(self, "element_ref"):
-            el = self._element_cache = self.element_ref or ""
-        if el is None:
-            el = Element.objects.filter(part_id=self.part_id, color_id=self.color_id).order_by(
-                "-element_id").values_list("element_id", flat=True).first() or ""
-            self._element_cache = el
-        return el
+        return self._element_numbers()[1] or self.part.lego_no
+
+    @property
+    def bricklink_number(self) -> str:
+        if self.kind == self.KIND_PART and self.part_id:
+            return self.part.bricklink_shown
+        if self.minifigure_id:
+            return self.minifigure.bricklink_id
+        if self.lego_set_id:
+            return self.lego_set.number
+        return ""
 
     @property
     def stock(self) -> int:
@@ -613,9 +667,11 @@ class Product(models.Model):
             bits += [s.number, s.base_number, s.name]
         if self.part_id:
             p = self.part
-            bits += [p.design_id, p.bricklink_no, p.name, p.name_uk, p.alternate_ids.replace(",", " ")]
+            bits += [p.design_id, p.bricklink_no, p.lego_no, p.name, p.name_uk, p.alternate_ids.replace(",", " ")]
             if self.color_id:
-                bits += list(Element.objects.filter(part=p, color_id=self.color_id).values_list("element_id", flat=True))
+                for el, design in Element.objects.filter(part=p, color_id=self.color_id).values_list(
+                        "element_id", "lego_design_id"):
+                    bits += [el, design]
         if self.color_id:
             c = self.color
             bits += [c.name, c.name_uk, c.lego_name]

@@ -113,6 +113,9 @@ def known_part(number: str) -> Part | None:
             or Part.objects.filter(bricklink_no__iexact=number).select_related("category").first())
     if part:
         return part
+    same_lego = list(Part.objects.filter(lego_no__iexact=number).select_related("category")[:2])
+    if len(same_lego) == 1:  # many printed torsos share LEGO's 76382: that number alone does not name one
+        return same_lego[0]
     # one LEGO design number can cover several catalogue parts (moulds, prints); the part with clearly the most
     # elements is the plain one (48183 -> 48183, not 4859); a generic torso design matches none
     counts = list(Element.objects.filter(lego_design_id=number).order_by().values("part_id")
@@ -124,10 +127,18 @@ def known_part(number: str) -> Part | None:
 
 def element_for(part: Part, color_id) -> str:
     """The newest Element ID of a part in a colour, or ''."""
-    if not part or not part.pk or not color_id:
-        return ""
-    return (Element.objects.filter(part=part, color_id=color_id).order_by("-element_id")
-            .values_list("element_id", flat=True).first() or "")
+    return lego_numbers(part, color_id)[0]
+
+
+def lego_numbers(part: Part, color_id=None) -> tuple[str, str]:
+    """(Element ID, LEGO design number) of a part in a colour as lego.com has them; ('', part's LEGO number)."""
+    if not part or not part.pk:
+        return "", ""
+    row = None
+    if color_id:
+        row = (Element.objects.filter(part=part, color_id=color_id).order_by("-element_id")
+               .values_list("element_id", "lego_design_id").first())
+    return (row[0] if row else ""), ((row[1] if row else "") or part.lego_no)
 
 
 def base_part(number: str) -> Part | None:

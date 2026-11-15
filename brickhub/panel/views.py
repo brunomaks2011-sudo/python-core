@@ -26,7 +26,7 @@ from catalog.models import (
 )
 from catalog import bricklink as bl
 from catalog.media import catalogue_pictures
-from catalog.item_info import element_for, known_part, new_minifig_info, new_part_info
+from catalog.item_info import element_for, known_part, lego_numbers, new_minifig_info, new_part_info
 from catalog.images import photos_to_process, remove_photo_background, restore_photo_background
 from catalog.notifications import notify_back_in_stock
 from orders.models import Order, OrderItem
@@ -545,6 +545,8 @@ def catalog_lookup(request):
                 return JsonResponse({"found": True, "design_id": el.part.design_id, "name": el.part.name,
                                      "name_uk": el.part.name_uk, "color_id": el.color_id,
                                      "element_id": el.element_id, "category_id": el.part.category_id,
+                                     "lego_design_id": el.lego_design_id or el.part.lego_no,
+                                     "bricklink_no": el.part.bricklink_shown,
                                      "separate": el.part.category_id in separate_part_category_ids()})
             info = new_part_info(q)
             note = {"bricklink": "нова деталь, назва й розділ з BrickLink",
@@ -552,11 +554,14 @@ def catalog_lookup(request):
                     "design": "нова деталь, розділ за номером дизайну LEGO",
                     "none": "нова деталь — вкажіть назву й розділ"}[info["source"]]
             return JsonResponse({"found": True, "new": True, "design_id": q, "name": info["name"], "name_uk": "",
+                                 "lego_design_id": q if q.isdigit() else "", "bricklink_no": "" if q.isdigit() else q,
                                  "category_id": info["category"].pk if info["category"] else None, "note": note,
                                  "separate": bool(info["category"] and info["category"].pk in separate_part_category_ids())})
         return JsonResponse({"found": True, "design_id": p.design_id, "name": p.name, "name_uk": p.name_uk,
                              "category_id": p.category_id,
                              "element_id": element_for(p, color_id) if str(color_id or "").isdigit() else "",
+                             "lego_design_id": lego_numbers(p, color_id if str(color_id or "").isdigit() else None)[1],
+                             "bricklink_no": p.bricklink_shown,
                              "separate": p.category_id in separate_part_category_ids(),
                              "listings": list(Product.objects.filter(part=p).values("pk", "sku", "color__name",
                                                                                     "condition"))})
