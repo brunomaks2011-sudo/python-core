@@ -370,9 +370,11 @@ class ProductQuerySet(models.QuerySet):
         return self.filter(inventory__quantity__gt=0)
 
     def with_related(self):
+        # the Element ID comes along in the same query (cards show the LEGO element photo as a fallback)
+        element = Element.objects.filter(part_id=models.OuterRef("part_id"), color_id=models.OuterRef("color_id"))
         return self.select_related(
             "lego_set", "part", "color", "minifigure", "theme", "theme2", "category", "inventory"
-        ).prefetch_related("images")
+        ).prefetch_related("images").annotate(element_ref=models.Subquery(element.order_by("-element_id").values("element_id")[:1]))
 
 
 class Product(models.Model):
@@ -487,9 +489,11 @@ class Product(models.Model):
         if self.kind != self.KIND_PART or not (self.part_id and self.color_id):
             return ""
         el = getattr(self, "_element_cache", None)
+        if el is None and hasattr(self, "element_ref"):
+            el = self._element_cache = self.element_ref or ""
         if el is None:
-            el = Element.objects.filter(part_id=self.part_id, color_id=self.color_id).values_list(
-                "element_id", flat=True).first() or ""
+            el = Element.objects.filter(part_id=self.part_id, color_id=self.color_id).order_by(
+                "-element_id").values_list("element_id", flat=True).first() or ""
             self._element_cache = el
         return el
 

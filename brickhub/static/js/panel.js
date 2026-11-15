@@ -199,31 +199,51 @@
     refresh();
   }
 
-  // BrickLink picture of the part in the chosen colour: shows at once whether the number and colour exist there
+  // the picture the shop will show for a part without its own photo: BrickLink (number + colour), then the
+  // LEGO photo of the element, so a picture appears as soon as an Element ID is typed
   const blBox = $("[data-bl-preview]");
   if (blBox) {
     const form = blBox.closest("form");
     const img = $("[data-bl-img]", blBox), note = $("[data-bl-note]", blBox), link = $("[data-bl-link]", blBox);
-    const normal = note.textContent;
+    let queue = [];
+    const show = () => {
+      const next = queue.shift();
+      if (!next) {
+        blBox.classList.add("is-missing");
+        note.textContent = "Ні BrickLink, ні LEGO не мають картинки для цього номера, кольору та Element ID. Перевірте їх.";
+        return;
+      }
+      note.textContent = next.note;
+      img.src = next.src;
+    };
+    img.addEventListener("error", show);
     const update = () => {
       const kindSel = $("#id_kind", form);
       const number = ($("#id_bricklink_no", form).value || $("#id_design_id", form).value || "").trim();
       const opt = $("#id_color", form).selectedOptions[0];
       const color = opt ? opt.dataset.bl : "";
-      if (kindSel.value !== "part" || !number || !color) { blBox.hidden = true; return; }
+      const element = ($("#id_element_id", form).value || "").trim();
+      queue = [];
+      if (number && color) {
+        queue.push({ src: "https://img.bricklink.com/ItemImage/PN/" + color + "/" + encodeURIComponent(number) + ".png",
+                     note: "Картинка BrickLink — так деталь виглядатиме на сайті, якщо не додати своє фото." });
+        link.href = "https://www.bricklink.com/v2/catalog/catalogitem.page?P=" + encodeURIComponent(number) + "&idColor=" + color;
+        link.hidden = false;
+      } else {
+        link.hidden = true;
+      }
+      if (element) {
+        queue.push({ src: "https://www.lego.com/cdn/product-assets/element.img.lod5photo.192_192/" + encodeURIComponent(element) + ".jpg",
+                     note: "Фото елемента " + element + " з сайту LEGO — так деталь виглядатиме на сайті." });
+      }
+      if (kindSel.value !== "part" || !queue.length) { blBox.hidden = true; return; }
       blBox.hidden = false;
       blBox.classList.remove("is-missing");
-      note.textContent = normal;
-      img.src = `https://img.bricklink.com/ItemImage/PN/${color}/${encodeURIComponent(number)}.png`;
-      link.href = `https://www.bricklink.com/v2/catalog/catalogitem.page?P=${encodeURIComponent(number)}&idColor=${color}`;
+      show();
     };
-    img.addEventListener("error", () => {
-      blBox.classList.add("is-missing");
-      note.textContent = "BrickLink не має картинки для цього номера в цьому кольорі. Перевірте Design ID (або номер BrickLink) і колір.";
-    });
-    ["#id_design_id", "#id_bricklink_no", "#id_color", "#id_kind"].forEach((sel) => {
+    ["#id_design_id", "#id_bricklink_no", "#id_color", "#id_kind", "#id_element_id"].forEach((sel) => {
       const el = $(sel, form);
-      el && el.addEventListener("change", update);
+      if (el) el.addEventListener("change", update);
     });
     update();
   }

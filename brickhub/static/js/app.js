@@ -7,16 +7,21 @@
   const compact = window.matchMedia("(max-width: 1080px)");
 
   /* ---------- broken external photos → generated illustration ---------- */
+  // data-fallback holds one or more pictures (space-separated) to try in turn when one does not load
+  const nextPicture = (img) => {
+    const list = (img.dataset.fallback || "").split(" ").filter(Boolean);
+    const next = list.shift();
+    if (!next || img.src === new URL(next, location.href).href) return;
+    if (list.length) img.dataset.fallback = list.join(" "); else delete img.dataset.fallback;
+    img.removeAttribute("srcset");
+    img.src = next;
+  };
   document.addEventListener("error", (e) => {
-    const img = e.target;
-    if (img.tagName === "IMG" && img.dataset.fallback && img.src !== new URL(img.dataset.fallback, location.href).href) {
-      img.src = img.dataset.fallback;
-      img.removeAttribute("srcset");
-    }
+    if (e.target.tagName === "IMG" && e.target.dataset.fallback) nextPicture(e.target);
   }, true);
   // images that failed before JS loaded
   $$("img[data-fallback]").forEach((img) => {
-    if (img.complete && img.naturalWidth === 0) img.src = img.dataset.fallback;
+    if (img.complete && img.naturalWidth === 0) nextPicture(img);
   });
 
   /* ---------- toasts ---------- */

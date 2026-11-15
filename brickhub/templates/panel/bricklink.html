@@ -17,7 +17,7 @@
   <tbody>
   {% for p in rows %}
     <tr data-bl-row data-save="{% url 'panel:bricklink_fix' p.pk %}" data-kind="{{ p.kind }}" data-color="{% if p.color_id and p.color.bricklink_id is not None %}{{ p.color.bricklink_id }}{% endif %}">
-      <td style="min-width:220px"><a class="link" style="color:var(--ink)" href="{% url 'panel:product_edit' p.pk %}">{{ p.title|truncatechars:60 }}</a><br><span class="muted mono" style="font-size:12px">{{ p.sku }}{% if p.part_id %} · Design ID {{ p.part.design_id }}{% endif %}</span></td>
+      <td style="min-width:220px"><a class="link" style="color:var(--ink)" href="{% url 'panel:product_edit' p.pk %}">{{ p.title|truncatechars:60 }}</a><br><span class="muted mono" style="font-size:12px">{{ p.sku }}{% if p.part_id %} · Design ID {{ p.part.design_id }}{% endif %}</span>{% if p.part_id %}<br><a class="link" style="font-size:12px" href="https://www.bricklink.com/v2/search.page?q={{ p.part.name|urlencode }}" target="_blank" rel="noopener">Знайти на BrickLink за назвою</a>{% endif %}</td>
       <td><a href="{{ p.bl_url|default:'#' }}" target="_blank" rel="noopener" data-bl-link>{% if p.bl_image %}<img class="bl-img" src="{{ p.bl_image }}" alt="" width="64" height="64" loading="lazy" data-bl-img>{% else %}<span class="bl-img is-empty" data-bl-img-empty></span>{% endif %}</a></td>
       {% if tab == "parts" %}
         <td><input class="inline mono" name="bricklink_no" value="{{ p.bl_number }}" aria-label="Номер BrickLink {{ p.sku }}"></td>
