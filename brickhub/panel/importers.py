@@ -20,7 +20,7 @@ from catalog.models import (
     Category, Color, Element, Inventory, InventoryMovement, LegoSet, Minifigure, Part, Product, ProductImage,
     StockNotification, Theme,
 )
-from catalog.item_info import LookupBudget, new_minifig_info, new_part_info
+from catalog.item_info import LookupBudget, known_part, new_minifig_info, new_part_info
 from core.utils import make_slug
 
 # header aliases (lower-case) -> canonical field
@@ -327,6 +327,11 @@ def _import_parts(rows, report, user=None, allow_new_catalog=False):
     for i in range(0, len(ids), 900):
         for p in Part.objects.filter(design_id__in=ids[i:i + 900]).select_related("category"):
             parts[p.design_id.lower()] = p
+    for design in ids:  # a BrickLink number or LEGO's own design number instead of the catalogue number
+        if design.lower() not in parts:
+            found = known_part(design)
+            if found:
+                parts[design.lower()] = found
     elements = {}
     el_ids = list(element_ids)
     for i in range(0, len(el_ids), 900):

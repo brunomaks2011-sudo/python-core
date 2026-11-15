@@ -284,6 +284,8 @@ class Element(models.Model):
     element_id = models.CharField("Element ID", max_length=20, unique=True)
     part = models.ForeignKey(Part, related_name="elements", on_delete=models.CASCADE, verbose_name="Деталь")
     color = models.ForeignKey(Color, related_name="elements", on_delete=models.CASCADE, verbose_name="Колір")
+    lego_design_id = models.CharField("LEGO Design ID", max_length=20, blank=True, db_index=True,
+                                      help_text="Номер дизайну LEGO (буває іншим, ніж номер деталі в каталозі)")
 
     class Meta:
         ordering = ["element_id"]

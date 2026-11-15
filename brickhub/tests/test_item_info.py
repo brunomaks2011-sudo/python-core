@@ -97,3 +97,57 @@ class ItemInfoTests(TestCase):
         part = Part.objects.get(design_id="973pb2345c01")
         self.assertEqual(part.category.slug, "torsy")
         self.assertTrue(Product.objects.filter(part=part).exists())
+
+
+class CatalogueNumbersTests(TestCase):
+    """Any number the owner knows finds the part: catalogue number, LEGO design number or Element ID."""
+
+    @classmethod
+    def setUpTestData(cls):
+        cls.colors = base_catalog()
+        torsy = Category.objects.get(slug="torsy")
+        for num in ("973c01h01", "973pr0001c01", "973c02h02", "973pr0002c01"):
+            Part.objects.create(design_id=num, name=f"Torso {num}", category=torsy)
+        cls.brick = Part.objects.create(design_id="3005", name="Brick 1 x 1",
+                                        category=Category.objects.get(slug="zvychaini-tsehlynky"))
+        from catalog.models import Element
+
+        Element.objects.create(element_id="300521", part=cls.brick, color=cls.colors["red"], lego_design_id="35382")
+        Element.objects.create(element_id="300526", part=cls.brick, color=cls.colors["black"], lego_design_id="35382")
+        Element.objects.create(element_id="6000001", part=Part.objects.get(design_id="973pr0001c01"),
+                               color=cls.colors["red"], lego_design_id="76382")
+        Element.objects.create(element_id="6000002", part=Part.objects.get(design_id="973pr0002c01"),
+                               color=cls.colors["red"], lego_design_id="76382")
+        cls.staff = User.objects.create_user("numbers@example.com", "Correct-horse-1", is_staff=True)
+
+    def setUp(self):
+        cache.clear()
+        cache.set(item_info.OFFLINE_KEY, True)  # BrickLink is out of reach in these tests
+
+    def test_lego_design_number_finds_the_part(self):
+        self.assertEqual(item_info.known_part("35382"), self.brick)
+        self.assertIsNone(item_info.known_part("76382"))  # one torso design, many printed torsos
+        info = item_info.new_part_info("76382")
+        self.assertEqual((info["source"], info["category"].slug), ("design", "torsy"))
+
+    def test_section_from_numbers_that_start_the_same_way(self):
+        info = item_info.new_part_info("973pb2345c01")  # no plain 973 in this catalogue
+        self.assertEqual((info["source"], info["category"].slug), ("base", "torsy"))
+        self.assertIsNone(item_info.new_part_info("76399")["category"])  # a plain number is not 763 + something
+
+    def test_lookup_fills_the_element_id_for_the_colour(self):
+        self.client.force_login(self.staff)
+        url = reverse("panel:catalog_lookup")
+        d = self.client.get(url, {"kind": "part", "q": "35382", "color": self.colors["black"].pk}).json()
+        self.assertEqual((d["design_id"], d["element_id"]), ("3005", "300526"))
+        d = self.client.get(url, {"kind": "part", "q": "300521", "by": "element"}).json()
+        self.assertEqual((d["design_id"], d["color_id"], d["element_id"]), ("3005", self.colors["red"].pk, "300521"))
+
+    def test_product_from_an_element_id_alone(self):
+        self.client.force_login(self.staff)
+        r = self.client.post(reverse("panel:product_new"), {
+            "kind": "part", "condition": "new", "design_id": "", "element_id": "300526", "price": "3",
+            "quantity": 10, "is_active": "on"})
+        self.assertEqual(r.status_code, 302)
+        product = Product.objects.get(part=self.brick)
+        self.assertEqual((product.color, product.element_id), (self.colors["black"], "300526"))

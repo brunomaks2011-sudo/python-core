@@ -24,7 +24,7 @@ from catalog.models import (
     Review, StockNotification, Theme,
 )
 from catalog import bricklink as bl
-from catalog.item_info import new_minifig_info, new_part_info
+from catalog.item_info import element_for, known_part, new_minifig_info, new_part_info
 from catalog.images import photos_to_process, remove_photo_background, restore_photo_background
 from catalog.notifications import notify_back_in_stock
 from orders.models import Order, OrderItem
@@ -486,23 +486,29 @@ def catalog_lookup(request):
                              "theme": root.display_name if root else "",
                              "listings": list(Product.objects.filter(lego_set=s).values("pk", "sku", "condition"))})
     if kind == "part":
-        p = (Part.objects.filter(design_id__iexact=q).select_related("category").first()
-             or Part.objects.filter(bricklink_no__iexact=q).select_related("category").first())
+        color_id = request.GET.get("color") or None
+        # typed into the Element ID field: an element first; typed as a Design ID: a part first
+        el = Element.objects.filter(element_id=q).select_related("part", "color").first() \
+            if request.GET.get("by") == "element" else None
+        p = None if el else known_part(q)
         if not p:
-            el = Element.objects.filter(element_id=q).select_related("part", "color").first()
+            el = el or Element.objects.filter(element_id=q).select_related("part", "color").first()
             if el:
                 return JsonResponse({"found": True, "design_id": el.part.design_id, "name": el.part.name,
                                      "name_uk": el.part.name_uk, "color_id": el.color_id,
-                                     "category_id": el.part.category_id})
+                                     "element_id": el.element_id, "category_id": el.part.category_id,
+                                     "separate": el.part.category_id in separate_part_category_ids()})
             info = new_part_info(q)
             note = {"bricklink": "нова деталь, назва й розділ з BrickLink",
                     "base": f"нова деталь, розділ за основною деталлю {info.get('base', '')}",
+                    "design": "нова деталь, розділ за номером дизайну LEGO",
                     "none": "нова деталь — вкажіть назву й розділ"}[info["source"]]
             return JsonResponse({"found": True, "new": True, "design_id": q, "name": info["name"], "name_uk": "",
                                  "category_id": info["category"].pk if info["category"] else None, "note": note,
                                  "separate": bool(info["category"] and info["category"].pk in separate_part_category_ids())})
         return JsonResponse({"found": True, "design_id": p.design_id, "name": p.name, "name_uk": p.name_uk,
                              "category_id": p.category_id,
+                             "element_id": element_for(p, color_id) if str(color_id or "").isdigit() else "",
                              "separate": p.category_id in separate_part_category_ids(),
                              "listings": list(Product.objects.filter(part=p).values("pk", "sku", "color__name",
                                                                                     "condition"))})

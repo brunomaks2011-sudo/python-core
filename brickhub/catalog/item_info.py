@@ -15,10 +15,12 @@ import re
 import urllib.error
 import urllib.parse
 import urllib.request
+from collections import Counter
 
 from django.core.cache import cache
+from django.db.models import Count
 
-from .models import Category, Part, Theme
+from .models import Category, Element, Part, Theme
 
 logger = logging.getLogger("brickhub")
 
@@ -101,9 +103,37 @@ def bricklink_title(kind: str, number: str) -> dict | None:
     return info
 
 
+def known_part(number: str) -> Part | None:
+    """The catalogue part for a number as the owner types it: the shop's Design ID, the BrickLink number or
+    LEGO's own design number (when it points to one part only)."""
+    number = (number or "").strip()
+    if not number:
+        return None
+    part = (Part.objects.filter(design_id__iexact=number).select_related("category").first()
+            or Part.objects.filter(bricklink_no__iexact=number).select_related("category").first())
+    if part:
+        return part
+    # one LEGO design number can cover several catalogue parts (moulds, prints); the part with clearly the most
+    # elements is the plain one (48183 -> 48183, not 4859); a generic torso design matches none
+    counts = list(Element.objects.filter(lego_design_id=number).order_by().values("part_id")
+                  .annotate(n=Count("id")).order_by("-n")[:2])
+    if counts and (len(counts) == 1 or counts[0]["n"] >= 2 * counts[1]["n"]):
+        return Part.objects.select_related("category").get(pk=counts[0]["part_id"])
+    return None
+
+
+def element_for(part: Part, color_id) -> str:
+    """The newest Element ID of a part in a colour, or ''."""
+    if not part or not part.pk or not color_id:
+        return ""
+    return (Element.objects.filter(part=part, color_id=color_id).order_by("-element_id")
+            .values_list("element_id", flat=True).first() or "")
+
+
 def base_part(number: str) -> Part | None:
     """The plain mould of a printed / assembled number from the local catalogue: 973pb1234c01 → 973."""
-    candidates = [number[:i] for i in range(len(number) - 1, 2, -1)]
+    # only where letters follow (973pb..., 3626bpr...): a plain number such as 76382 is not 763 + something
+    candidates = [number[:i] for i in range(len(number) - 1, 2, -1) if number[i].isalpha()]
     found = {p.design_id.lower(): p for p in Part.objects.filter(design_id__in=candidates).select_related("category")}
     for candidate in candidates:
         if candidate.lower() in found:
@@ -122,15 +152,41 @@ class LookupBudget:
         return self.left >= 0
 
 
+def family_section(number: str) -> tuple[Category, str] | tuple[None, None]:
+    """The section shared by catalogue parts whose number starts the same way: 973pb1234c01 -> 973... -> torsos.
+
+    The longest such start wins, and only when nearly all those parts (80%+) are in one section."""
+    for i in range(len(number) - 1, 2, -1):
+        if not number[i].isalpha():
+            continue
+        prefix = number[:i]
+        rows = list(Part.objects.filter(design_id__istartswith=prefix).exclude(category=None).order_by()
+                    .values("category").annotate(n=Count("id")).order_by("-n")[:5])
+        total = sum(r["n"] for r in rows)
+        if total >= 3 and rows[0]["n"] >= 0.8 * total:
+            return Category.objects.get(pk=rows[0]["category"]), prefix
+    return None, None
+
+
 def new_part_info(number: str, online: bool = True) -> dict:
     """{"name", "category", "source"} for a part number that is not in the local catalogue."""
     online = bricklink_title("P", number) if online else cache.get(f"bricklink:title:P:{number.lower()}")
     base = base_part(number)
     if online and online.get("name"):
-        category = _section(online.get("category", ""), online["name"]) or (base.category if base else None)
+        category = (_section(online.get("category", ""), online["name"]) or (base.category if base else None)
+                    or family_section(number)[0])
         return {"name": online["name"], "category": category, "source": "bricklink"}
     if base is not None:
         return {"name": f"{base.name} ({number})", "category": base.category, "source": "base", "base": base.design_id}
+    category, prefix = family_section(number)
+    if category is not None:
+        return {"name": f"{category.name} ({number})", "category": category, "source": "base", "base": f"{prefix}…"}
+    # a LEGO design number shared by many catalogue parts (a printed torso design): their common section
+    cats = Counter(Part.objects.filter(elements__lego_design_id=number).exclude(category=None)
+                   .values_list("category", flat=True))
+    if cats:
+        category = Category.objects.get(pk=cats.most_common(1)[0][0])
+        return {"name": f"{category.name} ({number})", "category": category, "source": "design"}
     return {"name": number, "category": None, "source": "none"}
 
 

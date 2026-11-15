@@ -128,7 +128,7 @@ img.pimg { height: auto; }
 .btn-outline-light { --btn-bg: rgba(255,255,255,.08); --btn-fg: #fff; --btn-bd: rgba(255,255,255,.35); }
 .btn-sm { height: 36px; padding: 0 12px; font-size: 14px; border-radius: 10px; }
 .btn-lg { height: 54px; padding: 0 26px; font-size: 16px; border-radius: 14px; }
-.btn-block { width: 100%; }
+.btn-block { width: 100%; white-space: normal; height: auto; min-height: 44px; padding-block: 10px; line-height: 1.25; text-align: center; }
 .btn-icon { width: 44px; padding: 0; }
 .btn[disabled], .btn.is-disabled { opacity: .5; pointer-events: none; }
 .btn.is-loading { pointer-events: none; }

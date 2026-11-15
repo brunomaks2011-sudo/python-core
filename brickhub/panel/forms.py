@@ -9,7 +9,7 @@ from catalog.images import validate_image_file
 from catalog.models import Category, category_tree, Color, Element, LegoSet, Minifigure, Part, Product, Theme
 from orders.models import Order
 
-from catalog.item_info import new_minifig_info, new_part_info
+from catalog.item_info import element_for, known_part, new_minifig_info, new_part_info
 
 from .owners import owner_name
 
@@ -55,7 +55,8 @@ class ProductForm(forms.ModelForm):
                              help_text="Почніть вводити назву українською чи англійською або номер кольору")
     set_number = forms.CharField(label="Номер LEGO", required=False, max_length=40,
                                  help_text="Номер з каталогу LEGO. Для аксесуарів, брелоків і книг — необов'язково")
-    design_id = forms.CharField(label="Design ID деталі", required=False, max_length=40)
+    design_id = forms.CharField(label="Design ID деталі", required=False, max_length=40,
+                                help_text="Design ID, номер BrickLink або Element ID — решта підтягнеться з каталогу")
     fig_number = forms.CharField(label="Номер мініфігурки", required=False, max_length=40,
                                  help_text="Номер каталогу (fig-000123) або BrickLink (sw0001). Для брелока чи "
                                            "книги — фігурка в комплекті, необов'язково")
@@ -164,11 +165,21 @@ class ProductForm(forms.ModelForm):
             self.add_error("set_number", "Вкажіть номер набору")
         if kind == "part":
             design = (data.get("design_id") or "").strip()
+            typed_el = (data.get("element_id") or "").strip()
+            self.part = known_part(design) if design else None
+            by_element = design if design and not self.part else ("" if design else typed_el)
+            known_el = Element.objects.filter(element_id=by_element).select_related("part", "color").first() \
+                if by_element else None
+            if known_el:
+                # an Element ID (in its own field or typed as the Design ID) gives the part and the colour
+                self.part, design = known_el.part, known_el.part.design_id
+                data["design_id"] = design
+                data["element_id"] = typed_el or known_el.element_id
+                if not data.get("color"):
+                    data["color"] = known_el.color
             if not design:
-                self.add_error("design_id", "Вкажіть Design ID")
+                self.add_error("design_id", "Вкажіть Design ID або Element ID")
             else:
-                self.part = (Part.objects.filter(design_id__iexact=design).first()
-                             or Part.objects.filter(bricklink_no__iexact=design).first())
                 if not self.part:
                     # a number the catalogue does not know yet: name and section from BrickLink or its base part
                     info = new_part_info(design)
@@ -241,7 +252,7 @@ class ProductForm(forms.ModelForm):
                 self.part.save(update_fields=["bricklink_no"])
             product.part = self.part
             el = (data.get("element_id") or "").strip()
-            if el and data.get("color"):
+            if el and data.get("color") and el != element_for(self.part, data["color"].pk):
                 Element.objects.update_or_create(element_id=el, defaults={"part": self.part, "color": data["color"]})
         if self.minifigure is not None and product.kind in Product.WITH_FIGURE:
             product.minifigure = self.minifigure  # figure included with a keychain or a book

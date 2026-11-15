@@ -73,13 +73,16 @@
     };
     kind.addEventListener("change", sync);
     sync();
-    const lookup = async (type) => {
+    const elInput = $("#id_element_id", pf), colorInput = $("#id_color", pf);
+    const lookup = async (type, typed) => {
       const input = type === "set" ? $("#id_set_number", pf) : type === "part" ? $("#id_design_id", pf) : $("#id_fig_number", pf);
       const out = $(`[data-lookup-out="${type}"]`, pf);
-      const q = input.value.trim();
+      const q = (typed || input.value).trim();
       if (!q) return;
       const k = type === "set" && kind.value === "accessory" ? "accessory" : type;
-      const r = await fetch(`${pf.dataset.lookup}?kind=${k}&q=${encodeURIComponent(q)}`);
+      let extra = type === "part" && colorInput && colorInput.value ? `&color=${encodeURIComponent(colorInput.value)}` : "";
+      if (typed) extra += "&by=element";
+      const r = await fetch(`${pf.dataset.lookup}?kind=${k}&q=${encodeURIComponent(q)}${extra}`);
       const d = await r.json();
       out.className = "lookup-result " + (d.found ? "is-ok" : "is-bad");
       if (!d.found) { out.textContent = d.message || "Не знайдено в каталозі"; return; }
@@ -102,8 +105,14 @@
         out.textContent = `✓ ${d.design_id} — ${d.name}${d.name_uk ? " (" + d.name_uk + ")" : ""}${d.note ? " · " + d.note : ""}` +
           (d.listings && d.listings.length ? ` · вже є: ${d.listings.length} лот(ів)` : "");
         if (title && !title.value) title.placeholder = d.name_uk || d.name;
-        if (d.design_id && d.design_id !== q) $("#id_design_id", pf).value = d.design_id;
-        if (d.color_id) { const color = $("#id_color", pf); color.value = d.color_id; color.dispatchEvent(new Event("change")); }
+        if (d.design_id && d.design_id !== input.value.trim()) input.value = d.design_id;
+        // the Element ID of this part in the chosen colour comes from the catalogue
+        if (elInput && d.element_id && (!elInput.value || elInput.dataset.auto)) {
+          elInput.value = d.element_id; elInput.dataset.auto = "1"; elInput.dispatchEvent(new Event("change"));
+        }
+        if (d.color_id && colorInput && String(colorInput.value) !== String(d.color_id)) {
+          colorInput.value = d.color_id; colorInput.dispatchEvent(new Event("change"));
+        }
         const cat = $("#id_category", pf);
         if (cat && !cat.value && d.category_id) { cat.value = d.category_id; cat.dispatchEvent(new Event("change")); }
         // printed minifigure parts (torsos, heads ...) are separate items by default when adding a new one
@@ -121,6 +130,22 @@
       const el = $(sel, pf);
       el && el.addEventListener("change", () => lookup(["set", "part", "minifig"][i]));
     });
+    if (elInput) {
+      // an Element ID typed by hand fills the Design ID, colour, name and section
+      elInput.addEventListener("input", () => { delete elInput.dataset.auto; });
+      elInput.addEventListener("change", () => {
+        if (!elInput.dataset.auto && elInput.value.trim()) lookup("part", elInput.value);
+      });
+    }
+    if (colorInput) {
+      // another colour: its own Element ID, unless one was typed by hand
+      colorInput.addEventListener("change", () => {
+        const design = $("#id_design_id", pf);
+        if (!design || !design.value.trim() || (elInput && elInput.value && !elInput.dataset.auto)) return;
+        if (elInput && elInput.dataset.auto) { elInput.value = ""; }
+        lookup("part");
+      });
+    }
   }
 
   // BrickLink check page: every row is judged by whether BrickLink has a picture for it
