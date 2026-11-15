@@ -230,6 +230,7 @@ class ProductForm(forms.ModelForm):
     def save(self, commit=True):
         product = super().save(commit=False)
         data = self.cleaned_data
+        product.catalog_picture = ""  # number, colour or Element ID may have changed: the panel checks the picture again
         if self.lego_set is not None:
             s = self.lego_set
             for f in ("year", "pieces", "minifigs_count", "age_min", "height_cm", "width_cm", "depth_cm"):

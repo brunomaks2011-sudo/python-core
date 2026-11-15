@@ -434,6 +434,12 @@ class Product(models.Model):
     standalone = models.BooleanField(
         "Окремий товар, не варіант кольору", default=False,
         help_text="Для деталей з принтом (торси, голови, ноги): не показувати разом з іншими кольорами цієї деталі")
+    # for a product without its own photo: which catalogue picture the site shows. The panel finds out in the
+    # owner's browser (BrickLink and LEGO pictures load there) and stores it, so "без фото" means nothing is shown
+    PICTURE_STATES = [("", "не перевірено"), ("bricklink", "фото з BrickLink"), ("lego", "фото з LEGO"),
+                      ("none", "без фото")]
+    catalog_picture = models.CharField("Картинка з каталогу", max_length=10, blank=True, default="",
+                                       choices=PICTURE_STATES, editable=False)
     # whose goods these are (the shop owner or a partner selling through the shop); used in sales statistics
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
                               related_name="owned_products", verbose_name="Чий товар",

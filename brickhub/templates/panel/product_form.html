@@ -1,4 +1,4 @@
-{% extends "panel/base.html" %}{% load shop_tags %}
+{% extends "panel/base.html" %}{% load shop_tags panel_tags %}
 {% block title %}{% if product %}{{ product.sku }}{% else %}Новий товар{% endif %}{% endblock %}
 {% block heading %}{% if product %}{{ product.title|truncatechars:60 }}{% else %}Новий товар{% endif %}{% endblock %}
 {% block actions %}
@@ -107,7 +107,7 @@
               <td>{% if v.pk == product.pk %}<b>{{ v.color.display_name }}</b> (цей товар){% else %}<a class="link" href="{% url 'panel:product_edit' v.pk %}">{{ v.color.display_name }}</a>{% endif %} <span class="muted">· {{ v.get_condition_display }}</span></td>
               <td class="num">{{ v.price|uah }}</td>
               <td class="num">{{ v.inventory.quantity }} шт.</td>
-              <td>{% if v.main_image %}<span class="badge badge-green">є фото</span>{% else %}<span class="badge badge-orange">без фото</span>{% endif %}</td>
+              <td>{% photo_badge v %}</td>
             </tr>
           {% endfor %}
         </tbody></table></div>

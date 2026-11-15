@@ -57,6 +57,7 @@
     <div class="toast {{ message.tags }}" data-autohide><svg class="ic"><use href="#{% if message.tags == 'error' or message.tags == 'warning' %}i-alert{% else %}i-check{% endif %}"/></svg><span>{{ message }}</span><button class="toast-close" type="button" aria-label="Закрити">×</button></div>
   {% endfor %}
 </div>
+<div hidden data-photo-report="{% url 'panel:picture_report' %}">{% csrf_token %}</div>
 <script src="{% static 'js/app.js' %}" defer></script>
 <script src="{% static 'js/panel.js' %}" defer></script>
 </body>

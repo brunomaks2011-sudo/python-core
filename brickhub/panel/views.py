@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import csv
+import json
 import time
 from datetime import timedelta
 from decimal import Decimal
@@ -24,6 +25,7 @@ from catalog.models import (
     Review, StockNotification, Theme,
 )
 from catalog import bricklink as bl
+from catalog.media import catalogue_pictures
 from catalog.item_info import element_for, known_part, new_minifig_info, new_part_info
 from catalog.images import photos_to_process, remove_photo_background, restore_photo_background
 from catalog.notifications import notify_back_in_stock
@@ -149,10 +151,12 @@ def product_list(request):
     elif status == "active":
         qs = qs.filter(is_active=True)
     photo = request.GET.get("photo", "")
-    if photo == "none":
-        qs = qs.filter(images__isnull=True)
+    if photo == "none":  # nothing is shown on the site: no own photo and no BrickLink / LEGO picture
+        qs = qs.filter(images__isnull=True, catalog_picture="none")
     elif photo == "has":
-        qs = qs.filter(images__isnull=False).distinct()
+        qs = qs.filter(Q(images__isnull=False) | Q(catalog_picture__in=["bricklink", "lego"])).distinct()
+    elif photo == "unchecked":
+        qs = qs.filter(images__isnull=True, catalog_picture="")
     cat = request.GET.get("category", "")
     if cat:
         c = Category.objects.filter(slug=cat).first()
@@ -171,7 +175,8 @@ def product_list(request):
     page = _page(request, qs, 50)
     return render(request, "panel/products.html", {
         "page": page, "q": q, "kind": kind, "stock": stock, "status": status, "order": order, "category": cat,
-        "photo": photo, "no_photo_count": Product.objects.filter(images__isnull=True).count(),
+        "photo": photo, "no_photo_count": Product.objects.filter(images__isnull=True, catalog_picture="none").count(),
+        "unchecked_count": Product.objects.filter(images__isnull=True, catalog_picture="").count(),
         "category_groups": _category_groups(), "kinds": Product.KINDS, "section": "products",
         "owner": owner, "owners": owner_people(), "no_owner_count": Product.objects.filter(owner__isnull=True).count(),
         "photos_waiting": photos_to_process().count(),
@@ -463,7 +468,50 @@ def bricklink_fix(request, pk):
         return JsonResponse({"ok": False, "error": "Для цього товару номер BrickLink береться з каталогу наборів"},
                             status=400)
     product.refresh_from_db()
+    Product.objects.filter(pk=product.pk).update(catalog_picture="")  # the number changed: check the picture again
     return JsonResponse({"ok": True, "image": bl.item_image(product), "url": bl.catalog_url(product)})
+
+
+PICTURE_STATES = {"bricklink", "lego", "none"}
+
+
+@staff_required
+def picture_queue(request):
+    """Products without their own photo whose BrickLink / LEGO picture has not been checked yet.
+
+    The panel checks them in the owner's browser (the server may not reach BrickLink) and reports back."""
+    qs = Product.objects.with_related().filter(images__isnull=True, catalog_picture="").order_by("pk")[:200]
+    items = [{"id": p.pk, "pictures": catalogue_pictures(p)} for p in qs]
+    return JsonResponse({"items": items,
+                         "left": Product.objects.filter(images__isnull=True, catalog_picture="").count()})
+
+
+@staff_required
+@require_POST
+def picture_report(request):
+    """Store which catalogue picture loads for each product: {"results": {"<id>": "bricklink" | "lego" | "none"}}."""
+    try:
+        results = json.loads(request.body or b"{}").get("results") or {}
+    except (ValueError, AttributeError):
+        return JsonResponse({"ok": False}, status=400)
+    by_state = {}
+    for pk, state in list(results.items())[:2000]:
+        if str(pk).isdigit() and state in PICTURE_STATES:
+            by_state.setdefault(state, []).append(int(pk))
+    for state, pks in by_state.items():
+        Product.objects.filter(pk__in=pks).update(catalog_picture=state)
+    return JsonResponse({"ok": True,
+                         "none": Product.objects.filter(images__isnull=True, catalog_picture="none").count(),
+                         "left": Product.objects.filter(images__isnull=True, catalog_picture="").count()})
+
+
+@staff_required
+@require_POST
+def picture_recheck(request):
+    """Check again the products marked "без фото" (e.g. BrickLink did not load that time)."""
+    n = Product.objects.filter(images__isnull=True, catalog_picture="none").update(catalog_picture="")
+    messages.success(request, f"Фото перевіряться ще раз: {n}")
+    return redirect(reverse("panel:products"))
 
 
 @staff_required

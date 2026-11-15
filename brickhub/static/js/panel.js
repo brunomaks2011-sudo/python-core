@@ -148,6 +148,82 @@
     }
   }
 
+  // product pictures: without the owner's own photo the site shows the BrickLink picture (or the LEGO photo of the
+  // element). Only the browser can tell whether one loads, so the panel checks here and the shop remembers it:
+  // "без фото" then means that nothing at all is shown and a photo has to be added.
+  const reportBox = $("[data-photo-report]");
+  if (reportBox) {
+    const reportUrl = reportBox.dataset.photoReport;
+    const LABELS = { bricklink: ["фото з BrickLink", "badge-green"], lego: ["фото з LEGO", "badge-green"],
+                     none: ["без фото — додайте", "badge-orange"] };
+    const firstLoading = (urls) => new Promise((resolve) => {
+      const list = (urls || []).filter(Boolean);
+      const step = () => {
+        const url = list.shift();
+        if (!url) { resolve("none"); return; }
+        const im = new Image();
+        im.onload = () => (im.naturalWidth > 1 ? resolve(url.includes("bricklink.com") ? "bricklink" : "lego") : step());
+        im.onerror = step;
+        im.src = url;
+      };
+      step();
+    });
+    let pending = {}, timer = null;
+    const flush = async () => {
+      clearTimeout(timer); timer = null;
+      const results = pending; pending = {};
+      if (!Object.keys(results).length) return null;
+      try {
+        const r = await fetch(reportUrl, { method: "POST", body: JSON.stringify({ results }),
+          headers: { "Content-Type": "application/json", "X-CSRFToken": $("input[name=csrfmiddlewaretoken]", reportBox).value } });
+        return r.ok ? r.json() : null;
+      } catch (e) { return null; }
+    };
+    const report = (id, state) => { pending[id] = state; if (!timer) timer = setTimeout(flush, 800); };
+    const pool = async (items, size, work) => {
+      let next = 0;
+      await Promise.all(Array.from({ length: size }, async () => {
+        while (next < items.length) await work(items[next++]);
+      }));
+    };
+    // badges on this page
+    pool($$("[data-photo-check]"), 6, async (badge) => {
+      const state = await firstLoading((badge.dataset.pictures || "").split(" "));
+      const [text, cls] = LABELS[state];
+      badge.textContent = text;
+      badge.classList.add(cls);
+      report(badge.dataset.photoCheck, state);
+    });
+    // every other product not checked yet, in the background while the products page is open
+    const scan = $("[data-photo-scan]");
+    if (scan) (async () => {
+      const text = $("[data-photo-scan-text]", scan);
+      let done = 0, total = Number(scan.dataset.total) || 0, last = null;
+      for (let round = 0; round < 500; round++) {
+        let d;
+        try { const r = await fetch(scan.dataset.photoScan); d = r.ok ? await r.json() : null; } catch (e) { d = null; }
+        if (!d || !d.items.length) break;
+        total = Math.max(total, done + d.left);
+        await pool(d.items, 6, async (item) => {
+          report(item.id, await firstLoading(item.pictures));
+          done += 1;
+          text.textContent = "Перевіряю, чи є фото на BrickLink: " + done + " з " + total + "…";
+        });
+        last = await flush();
+        if (!last) break;  // could not save: it continues the next time the page is opened
+      }
+      scan.classList.add("is-done");
+      if (last) {
+        text.innerHTML = last.none
+          ? 'Фото перевірено. Без жодного фото: <a class="link" href="?photo=none">' + last.none +
+            " — додайте їм фото</a>. Решта показують фото з BrickLink або LEGO."
+          : "Фото перевірено: у всіх товарів є фото з BrickLink, LEGO або ваше.";
+      } else if (done) {
+        text.textContent = "Перевірку перервано — продовжиться, коли відкриєте сторінку знову.";
+      }
+    })();
+  }
+
   // BrickLink check page: every row is judged by whether BrickLink has a picture for it
   const blTable = $("[data-bl-check]");
   if (blTable) {
