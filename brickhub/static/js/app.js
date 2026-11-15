@@ -137,16 +137,16 @@
     } else {
       let html = "";
       if (data.design) {
-        html += `<a class="sp-design" href="${data.design.url}"><svg class="ic"><use href="#i-brick"/></svg>Деталь ${esc(data.design.id)} — ${esc(data.design.name)} · ${data.design.colors} кол.</a>`;
+        html += `<a class="sp-design" href="${data.design.url}"><svg class="ic"><use href="#i-brick"/></svg>Деталь ${esc(data.design.id)}: ${esc(data.design.name)}, ${data.design.colors} кол.</a>`;
       }
       html += data.items.map((it) => `
         <a class="sp-item" href="${it.url}" role="option">
           <img src="${esc(it.img)}" alt="" ${it.fallback ? `data-fallback="${esc(it.fallback)}"` : ""} loading="lazy">
           <span><span class="t">${esc(it.title)}</span>
-            <span class="m">${esc(it.kind)}${it.number ? ` · <b class="mono">${esc(it.number)}</b>` : ""}${it.color ? ` · <span class="swatch" style="--c:${esc(it.hex)}"></span>${esc(it.color)}` : ""}${it.stock > 0 ? "" : " · немає"}</span></span>
+            <span class="m"><span>${esc(it.kind)}</span>${it.number ? `<b class="mono">${esc(it.number)}</b>` : ""}${it.color ? `<span class="swatch-inline"><span class="swatch" style="--c:${esc(it.hex)}"></span>${esc(it.color)}</span>` : ""}${it.stock > 0 ? "" : "<span>немає в наявності</span>"}</span></span>
           <span class="p">${fmt(it.price)}</span>
         </a>`).join("");
-      if (data.total > data.items.length) html += `<a class="sp-all" href="${data.all_url}">Усі результати (${data.total}) →</a>`;
+      if (data.total > data.items.length) html += `<a class="sp-all" href="${data.all_url}">Усі результати: ${data.total}</a>`;
       panel.innerHTML = html;
     }
     panel.classList.add("is-open");
@@ -307,6 +307,12 @@
       list.forEach((x) => x.classList.toggle("is-active", x === t));
       if (index) index.textContent = String(list.indexOf(t) + 1);
       if (t.dataset.fallback) main.dataset.fallback = t.dataset.fallback; else delete main.dataset.fallback;
+      if (main.getAttribute("src") === t.dataset.src) return;
+      main.classList.add("is-swapping");
+      const done = () => main.classList.remove("is-swapping");
+      main.addEventListener("load", done, { once: true });
+      main.addEventListener("error", done, { once: true });
+      setTimeout(done, 600);  // never leave a photo dimmed
       main.src = t.dataset.src;
     };
     const step = (by) => {
@@ -337,6 +343,26 @@
       }, { passive: true });
     }
   });
+
+  /* ---------- product page: buy bar on phones ---------- */
+  const stickyBuy = $("[data-sticky-buy]");
+  const mainBuy = $(".pdx-actions");
+  if (stickyBuy && mainBuy) {
+    let shown = false, queued = false;
+    const update = () => {
+      queued = false;
+      // only once the main button has gone up past the top, not before the reader has reached it
+      const next = mainBuy.getBoundingClientRect().bottom < 0;
+      if (next === shown) return;
+      shown = next;
+      stickyBuy.classList.toggle("is-shown", shown);
+      stickyBuy.inert = !shown;  // hidden off screen: no focus, no clicks
+    };
+    const onScroll = () => { if (!queued) { queued = true; requestAnimationFrame(update); } };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll, { passive: true });
+    update();
+  }
 
   /* ---------- colour / variant picker: each colour is its own listing ---------- */
   $$("[data-variant-select]").forEach((sel) => {

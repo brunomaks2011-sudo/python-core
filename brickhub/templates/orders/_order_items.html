@@ -13,6 +13,6 @@
 <div class="summary" style="position:static;margin-top:14px">
   <div class="sum-row"><span>Товари</span><b>{{ order.subtotal|uah }}</b></div>
   {% if order.discount_total %}<div class="sum-row"><span>Знижка{% if order.promo_code %} ({{ order.promo_code }}){% endif %}</span><span class="disc">−{{ order.discount_total|uah }}</span></div>{% endif %}
-  <div class="sum-row"><span>Доставка</span><span>{% if order.delivery_cost is None %}за тарифами перевізника{% elif order.delivery_cost == 0 %}<b style="color:var(--green)">Безкоштовно</b>{% else %}{{ order.delivery_cost|uah }}{% endif %}</span></div>
+  <div class="sum-row"><span>Доставка</span><span>{% if order.delivery_cost is None %}за тарифами перевізника{% elif order.delivery_cost == 0 %}<b class="sum-free">Безкоштовно</b>{% else %}{{ order.delivery_cost|uah }}{% endif %}</span></div>
   <div class="sum-row total"><span>До сплати</span><span>{{ order.total|uah }}</span></div>
 </div>

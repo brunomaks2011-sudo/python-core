@@ -2,7 +2,7 @@
 {% block content %}
 <div class="container order-box">
   <div class="success-hero">
-    <div class="ok" style="background:var(--blue-50);color:var(--blue)"><svg class="ic"><use href="#i-card"/></svg></div>
+    <div class="ok is-quiet"><svg class="ic"><use href="#i-card"/></svg></div>
     <h1>Оплата замовлення {{ order.number }}</h1>
     <p class="muted">Сума до сплати: <b>{{ order.total|uah }}</b>. Ви перейдете на захищену сторінку {{ provider.title }}.</p>
   </div>

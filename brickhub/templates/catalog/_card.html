@@ -5,8 +5,8 @@
     <div class="card-badges">
       {% if p.discount_percent %}<span class="badge badge-red">−{{ p.discount_percent }}%</span>{% endif %}
       {% if p.is_new %}<span class="badge badge-yellow">Новинка</span>{% endif %}
-      {% if p.condition == "used" %}<span class="badge badge-dark">Б/у</span>{% endif %}
       {% if p.is_rare %}<span class="badge badge-blue">Рідкісний</span>{% endif %}
+      {% if p.condition == "used" %}<span class="badge badge-dark">Б/у</span>{% endif %}
       {% if p.is_bestseller and not p.is_new and not p.discount_percent %}<span class="badge badge-outline">Хіт</span>{% endif %}
     </div>
   </a>
@@ -27,7 +27,7 @@
   <div class="card-body">
     <div class="card-kicker">
       {% if p.kind == "part" %}{{ p.category.name|default:"Деталь" }}
-      {% elif p.theme_id %}<span class="dot" style="--c:{{ p.theme.accent }}"></span>{{ p.theme.short_name }}{% if p.year %} · {{ p.year }}{% endif %}
+      {% elif p.theme_id %}{{ p.theme.short_name }}
       {% else %}{{ p.get_kind_display }}{% endif %}
     </div>
     <a class="card-title" href="{{ p.get_absolute_url }}">{{ p.title }}</a>
@@ -36,7 +36,7 @@
         <span class="swatch-inline"><span class="swatch{% if p.color.is_transparent %} is-trans{% endif %}" style="--c:{{ p.color.hex }}"></span>{{ p.color.display_name }}</span>
         <span class="num mono">{{ p.official_number }}</span>
       {% elif p.kind == "set" %}
-        <span class="num">№ {{ p.official_number }}</span>{% if p.pieces and p.kind == "set" %}<span>{{ p.pieces|thousands }} дет.</span>{% endif %}
+        <span class="num">№ {{ p.official_number }}</span>{% if p.pieces %}<span>{{ p.pieces|thousands }} дет.</span>{% endif %}
       {% elif p.kind == "minifig" %}
         <span class="num mono">{{ p.official_number }}</span>
       {% else %}
@@ -44,21 +44,19 @@
       {% endif %}
     </div>
     {% if p.reviews_count %}<div class="rating-line"><span class="stars">{{ p.rating_avg|stars }}</span>{{ p.reviews_count }}</div>{% endif %}
+    <span class="stock {{ p.availability_state }}">{{ p.availability_label }}</span>
     <div class="card-foot">
-      <div>
-        <div class="price{% if p.discount_percent %} is-sale{% endif %}">
-          {% if p.old_price and p.discount_percent %}<s>{{ p.old_price|uah }}</s>{% endif %}
-          <b>{{ p.price|uah }}</b>{% if p.kind == "part" %}<span class="per">за шт.</span>{% endif %}
-        </div>
-        <span class="stock {{ p.availability_state }}">{{ p.availability_label }}</span>
+      <div class="price{% if p.discount_percent %} is-sale{% endif %}">
+        {% if p.old_price and p.discount_percent %}<s>{{ p.old_price|uah }}</s>{% endif %}
+        <b>{{ p.price|uah }}</b>{% if p.kind == "part" %}<span class="per">за шт.</span>{% endif %}
       </div>
       {% if p.in_stock %}
         <form method="post" action="{% url 'cart:add' %}" data-add-to-cart>{% csrf_token %}
           <input type="hidden" name="product" value="{{ p.pk }}"><input type="hidden" name="quantity" value="1">
-          <button class="add-btn" type="submit" aria-label="Додати в кошик: {{ p.title }}"><svg class="ic"><use href="#i-cart"/></svg></button>
+          <button class="add-btn" type="submit" aria-label="Додати в кошик: {{ p.title }}"><svg class="ic"><use href="#i-shopbag"/></svg></button>
         </form>
       {% else %}
-        <a class="add-btn" style="background:var(--surface-2);color:var(--ink-2)" href="{{ p.get_absolute_url }}#notify" aria-label="Повідомити про надходження"><svg class="ic"><use href="#i-bell"/></svg></a>
+        <a class="add-btn is-notify" href="{{ p.get_absolute_url }}#notify" aria-label="Повідомити про надходження: {{ p.title }}"><svg class="ic"><use href="#i-bell"/></svg></a>
       {% endif %}
     </div>
   </div>

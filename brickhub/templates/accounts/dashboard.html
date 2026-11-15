@@ -1,5 +1,5 @@
 {% extends "accounts/_layout.html" %}
-{% block acc_title %}Вітаємо, {{ user.first_name|default:user.email }}!{% endblock %}
+{% block acc_title %}Особистий кабінет{% endblock %}
 {% block acc_content %}
 <div class="kpis">
   <div class="kpi"><span>Усього замовлень</span><b>{{ orders_count }}</b></div>

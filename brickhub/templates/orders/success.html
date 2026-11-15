@@ -3,7 +3,7 @@
 <div class="container order-box">
   <div class="success-hero">
     <div class="ok"><svg class="ic"><use href="#i-check"/></svg></div>
-    <h1>Дякуємо! Замовлення {{ order.number }} прийнято</h1>
+    <h1>Замовлення {{ order.number }} прийнято</h1>
     <p class="muted">Ми надіслали підтвердження на <b>{{ order.email }}</b>. Менеджер зв'яжеться з вами для підтвердження{% if order.payment_method == "cod" %}, оплата — при отриманні{% endif %}.</p>
   </div>
   {% if order.payment_method == "card" and order.payment_status != "paid" %}
@@ -31,7 +31,7 @@
   {% include "orders/_order_items.html" %}
   <div class="row" style="margin-top:18px;justify-content:center">
     {% if user.is_authenticated %}<a class="btn btn-dark" href="{% url 'accounts:order_detail' order.number %}">Відкрити в кабінеті</a>{% endif %}
-    <a class="btn" href="{% url 'catalog:index' %}">Продовжити покупки</a>
+    <a class="btn btn-line" href="{% url 'catalog:index' %}">Продовжити покупки</a>
   </div>
 </div>
 {% endblock %}

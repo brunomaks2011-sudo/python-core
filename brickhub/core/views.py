@@ -30,7 +30,7 @@ def home(request):
     new = list(active.filter(is_new=True).order_by("-created_at")[:10])
     bestsellers = list(active.filter(Q(is_bestseller=True) | Q(sold_count__gt=0)).order_by(
         "-sold_count", "-is_featured", "-created_at")[:10])
-    latest = list(active.in_stock().order_by("-created_at")[:10])
+    rare = list(active.filter(is_rare=True).order_by("-is_featured", "-views_count", "-created_at")[:10])
     minifigs = list(active.filter(kind="minifig", condition="new").order_by("-is_featured", "-views_count",
                                                                           "-created_at")[:10])
     series = list(Theme.objects.filter(is_primary=True).annotate(
@@ -70,7 +70,7 @@ def home(request):
                                 "query-input": "required name=query"}}],
     }
     return render(request, "core/home.html", {
-        "hero": hero, "popular": popular, "new": new, "bestsellers": bestsellers, "latest": latest,
+        "hero": hero, "popular": popular, "new": new, "bestsellers": bestsellers, "rare": rare,
         "minifigs": minifigs, "series": series, "part_categories": part_categories,
         "finder_categories": finder_categories,
         "recent": recently_viewed(request), "seo": seo, "stats": stats,

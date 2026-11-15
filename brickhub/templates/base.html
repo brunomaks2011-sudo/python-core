@@ -18,7 +18,6 @@
   {% if seo.image %}<meta property="og:image" content="{{ seo.image }}">{% endif %}
   <link rel="icon" href="{% static 'img/favicon.svg' %}" type="image/svg+xml">
   <link rel="preload" href="{% static 'fonts/manrope-cyrillic-wght-normal.woff2' %}" as="font" type="font/woff2" crossorigin>
-  <link rel="preload" href="{% static 'fonts/unbounded-cyrillic-wght-normal.woff2' %}" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
   {% for item in seo.jsonld %}<script type="application/ld+json">{{ item|jsonld }}</script>{% endfor %}
   {% block head %}{% endblock %}
@@ -30,8 +29,7 @@
 <div class="topbar">
   <div class="container">
     <div class="tb-note">
-      <svg class="ic" style="width:16px;height:16px"><use href="#i-truck"/></svg>
-      {% if SHOP.FREE_DELIVERY_FROM %}Безкоштовна доставка від <b>{{ SHOP.FREE_DELIVERY_FROM|uah }}</b> · {% endif %}Нова пошта та Укрпошта по всій Україні
+      {% if SHOP.FREE_DELIVERY_FROM %}Безкоштовна доставка від <b>{{ SHOP.FREE_DELIVERY_FROM|uah }}</b> по всій Україні{% else %}Доставка Новою поштою та Укрпоштою по всій Україні{% endif %}
     </div>
     <nav class="tb-links" aria-label="Інформація">
       <a href="{% url 'core:delivery' %}">Доставка і оплата</a>
@@ -49,54 +47,52 @@
     </button>
     <a class="logo" href="{% url 'core:home' %}" aria-label="{{ SHOP.NAME }} — на головну">
       {% include "partials/logo_mark.html" %}
-      <span>BRICK<b>HUB</b><small>Набори · деталі · мініфігурки</small></span>
-    </a>
-    <a class="btn btn-dark catalog-btn" href="{% url 'catalog:index' %}" aria-label="Каталог">
-      <svg class="ic"><use href="#i-grid4"/></svg><span class="btn-label">Каталог</span>
+      <span>BRICKHUB</span>
     </a>
     <div class="search" data-search>
       <form action="{% url 'catalog:search' %}" method="get" role="search">
         <svg class="search-icon ic"><use href="#i-search"/></svg>
-        <input type="search" name="q" value="{{ request.GET.q|default:'' }}" placeholder="Назва, номер набору, Design ID, Element ID, sw0001…"
-               autocomplete="off" enterkeyhint="search" aria-label="Пошук по каталогу" data-search-input>
-        <button class="btn btn-primary search-submit" type="submit">Знайти</button>
+        <input type="search" name="q" value="{{ request.GET.q|default:'' }}" placeholder="Назва або номер LEGO"
+               autocomplete="off" enterkeyhint="search" aria-label="Пошук: назва, номер набору, Design ID, Element ID" data-search-input>
+        <button class="search-submit" type="submit">Знайти</button>
       </form>
       <div class="search-panel" data-search-panel role="listbox" aria-label="Підказки пошуку"></div>
     </div>
     <div class="header-actions">
-      <a class="hicon hide-sm" href="{% url 'catalog:compare' %}" aria-label="Порівняння">
+      <a class="hicon hide-sm" href="{% url 'catalog:compare' %}" aria-label="Порівняння" title="Порівняння">
         <svg class="ic"><use href="#i-compare"/></svg><span class="lbl">Порівняти</span>
         <span class="count" data-compare-count data-count="{{ compare_ids|length }}">{{ compare_ids|length }}</span>
       </a>
-      <a class="hicon hide-sm" href="{% url 'catalog:favorites' %}" aria-label="Обране">
+      <a class="hicon hide-sm" href="{% url 'catalog:favorites' %}" aria-label="Обране" title="Обране">
         <svg class="ic"><use href="#i-heart"/></svg><span class="lbl">Обране</span>
         <span class="count" data-fav-count data-count="{{ favorite_ids|length }}">{{ favorite_ids|length }}</span>
       </a>
       {% if user.is_authenticated %}
-        <a class="hicon" href="{% if user.is_staff %}{% url 'panel:dashboard' %}{% else %}{% url 'accounts:dashboard' %}{% endif %}" aria-label="Особистий кабінет">
+        <a class="hicon" href="{% if user.is_staff %}{% url 'panel:dashboard' %}{% else %}{% url 'accounts:dashboard' %}{% endif %}" aria-label="Особистий кабінет" title="{% if user.is_staff %}Адмінка{% else %}Особистий кабінет{% endif %}">
           <svg class="ic"><use href="#i-user"/></svg><span class="lbl">{% if user.is_staff %}Адмінка{% else %}{{ user.first_name|default:"Кабінет"|truncatechars:10 }}{% endif %}</span>
         </a>
       {% else %}
-        <a class="hicon" href="{% url 'accounts:login' %}?next={{ request.get_full_path|urlencode }}" aria-label="Увійти">
+        <a class="hicon" href="{% url 'accounts:login' %}?next={{ request.get_full_path|urlencode }}" aria-label="Увійти" title="Увійти">
           <svg class="ic"><use href="#i-user"/></svg><span class="lbl">Увійти</span>
         </a>
       {% endif %}
-      <a class="hicon" href="{% url 'cart:detail' %}" aria-label="Кошик" data-open-cart>
-        <svg class="ic"><use href="#i-cart"/></svg><span class="lbl">Кошик</span>
+      <a class="hicon is-cart" href="{% url 'cart:detail' %}" aria-label="Кошик" data-open-cart>
+        <svg class="ic"><use href="#i-shopbag"/></svg><span class="lbl">Кошик</span>
         <span class="count" data-cart-count data-count="{{ cart_count }}">{{ cart_count }}</span>
       </a>
     </div>
   </div>
   <nav class="nav" aria-label="Головне меню">
     <div class="container">
+      <a class="nav-link" href="{% url 'catalog:index' %}">Каталог</a>
       <div class="nav-item" data-menu>
         <button class="nav-link" type="button" aria-expanded="false">Набори LEGO <svg class="ic"><use href="#i-chev-down"/></svg></button>
         <div class="mega">
           <div class="mega-grid">
             {% for s in nav.sets_series %}
-              <a class="mlink" href="{% url 'catalog:theme' s.slug %}"><span class="dot" style="--c:{{ s.accent }}"></span>{{ s.name }}</a>
+              <a class="mlink" href="{% url 'catalog:theme' s.slug %}">{{ s.name }}</a>
             {% endfor %}
-            <a class="mlink" href="{% url 'catalog:collection' 'inshi-serii' %}"><span class="dot" style="--c:#9aa0a9"></span>Інші серії LEGO</a>
+            <a class="mlink" href="{% url 'catalog:collection' 'inshi-serii' %}">Інші серії LEGO</a>
           </div>
           <div class="mega-foot">
             <a class="btn btn-sm btn-dark" href="{% url 'catalog:category' 'nabory' %}">Усі набори</a>
@@ -116,7 +112,7 @@
           </div>
           <div class="mega-foot">
             <a class="btn btn-sm btn-dark" href="{% url 'catalog:category' 'detali' %}">Усі деталі</a>
-            <a class="btn btn-sm btn-primary" href="{% url 'catalog:part_finder' %}"><svg class="ic"><use href="#i-search"/></svg>Знайти деталь за номером</a>
+            <a class="btn btn-sm btn-soft" href="{% url 'catalog:part_finder' %}"><svg class="ic"><use href="#i-search"/></svg>Знайти деталь за номером</a>
             <a class="btn btn-sm btn-soft" href="{% url 'cart:quick_order' %}">Замовлення списком</a>
             <a class="btn btn-sm btn-soft" href="{% url 'catalog:colors' %}">Кольори LEGO</a>
           </div>
@@ -127,9 +123,9 @@
         <div class="mega" style="min-width:460px">
           <div class="mega-grid" style="grid-template-columns:repeat(2,minmax(0,1fr))">
             {% for s in nav.fig_series %}
-              <a class="mlink" href="{% url 'catalog:category' 'minifihurky' %}?theme={{ s.slug }}"><span class="dot" style="--c:{{ s.accent }}"></span>{{ s.short }}</a>
+              <a class="mlink" href="{% url 'catalog:category' 'minifihurky' %}?theme={{ s.slug }}">{{ s.short }}</a>
             {% endfor %}
-            <a class="mlink" href="{% url 'catalog:collection' 'inshi-personazhi' %}"><span class="dot" style="--c:#9aa0a9"></span>Інші персонажі</a>
+            <a class="mlink" href="{% url 'catalog:collection' 'inshi-personazhi' %}">Інші персонажі</a>
           </div>
           <div class="mega-foot"><a class="btn btn-sm btn-dark" href="{% url 'catalog:category' 'minifihurky' %}">Усі мініфігурки</a></div>
         </div>
@@ -158,7 +154,7 @@
       <a class="nav-link" href="{% url 'catalog:collection' 'novynky' %}">Новинки</a>
       <a class="nav-link is-accent" href="{% url 'catalog:collection' 'rozprodazh' %}">Розпродаж</a>
       <span class="spacer"></span>
-      <a class="nav-link" href="{% url 'catalog:part_finder' %}"><svg class="ic" style="width:18px;height:18px"><use href="#i-brick"/></svg> Знайти деталь</a>
+      <a class="nav-link" href="{% url 'catalog:part_finder' %}"><svg class="ic" style="width:16px;height:16px;color:currentColor"><use href="#i-brick"/></svg>Знайти деталь</a>
     </div>
   </nav>
 </header>
@@ -181,11 +177,11 @@
   <div class="container">
     <div class="footer-grid">
       <div>
-        <a class="logo" href="{% url 'core:home' %}">{% include "partials/logo_mark.html" %}<span>BRICK<b>HUB</b><small>{{ SHOP.TAGLINE }}</small></span></a>
-        <p>Інтернет-магазин оригінальної продукції LEGO в Україні: набори, окремі деталі за номером і мініфігурки.</p>
+        <a class="logo" href="{% url 'core:home' %}">{% include "partials/logo_mark.html" %}<span>BRICKHUB</span></a>
+        <p>Оригінальні набори LEGO, окремі деталі за номером і мініфігурки з доставкою по Україні.</p>
         {% if SHOP.PHONE %}<a href="tel:{{ SHOP.PHONE|cut:' ' }}">{{ SHOP.PHONE }}</a>{% endif %}
         {% if SHOP.EMAIL %}<a href="mailto:{{ SHOP.EMAIL }}">{{ SHOP.EMAIL }}</a>{% endif %}
-        <p class="muted" style="color:#8e939c;margin-top:8px">{{ SHOP.WORK_HOURS }}</p>
+        {% if SHOP.WORK_HOURS %}<p class="muted" style="margin-top:8px">{{ SHOP.WORK_HOURS }}</p>{% endif %}
       </div>
       <div>
         <h4>Каталог</h4>
@@ -213,12 +209,12 @@
         <a href="{% url 'orders:track' %}">Відстеження замовлення</a>
         <a href="{% url 'core:about' %}">Про магазин</a>
         <a href="{% url 'core:contacts' %}">Контакти</a>
-        <div class="pay-icons"><span>VISA</span><span>Mastercard</span><span>Нова пошта</span><span>Укрпошта</span></div>
+        <div class="pay-icons"><span>Visa</span><span>Mastercard</span><span>Нова пошта</span><span>Укрпошта</span></div>
       </div>
     </div>
     <div class="footer-bottom">
       <span>© {% now "Y" %} {{ SHOP.NAME }}. LEGO® є торговою маркою LEGO Group, яка не спонсорує, не авторизує й не схвалює цей сайт.</span>
-      <span><a href="{% url 'core:terms' %}" style="display:inline">Умови</a> · <a href="{% url 'core:privacy' %}" style="display:inline">Конфіденційність</a> · Каталожні дані: Rebrickable</span>
+      <span><a href="{% url 'core:terms' %}">Умови</a>, <a href="{% url 'core:privacy' %}">конфіденційність</a>. Каталожні дані: Rebrickable</span>
     </div>
   </div>
 </footer>
@@ -226,15 +222,16 @@
 <div class="drawer-backdrop" data-backdrop></div>
 <aside class="drawer drawer-left" id="nav-drawer" aria-label="Меню" aria-hidden="true">
   <div class="drawer-head">
-    <a class="logo" href="{% url 'core:home' %}">{% include "partials/logo_mark.html" %}<span>BRICK<b>HUB</b></span></a>
+    <a class="logo" href="{% url 'core:home' %}">{% include "partials/logo_mark.html" %}<span>BRICKHUB</span></a>
     <button class="btn btn-icon btn-ghost" type="button" data-close-drawer aria-label="Закрити"><svg class="ic"><use href="#i-x"/></svg></button>
   </div>
   <div class="drawer-body mnav">
+    <a href="{% url 'catalog:index' %}">Каталог <svg class="ic"><use href="#i-chev-right"/></svg></a>
     <details open>
       <summary>Набори LEGO <svg class="ic"><use href="#i-chev-down"/></svg></summary>
       <div class="sub">
-        {% for s in nav.sets_series %}<a href="{% url 'catalog:theme' s.slug %}"><span class="dot" style="--c:{{ s.accent }}"></span>{{ s.short }}</a>{% endfor %}
-        <a href="{% url 'catalog:category' 'nabory' %}"><span class="dot" style="--c:#9aa0a9"></span>Усі набори</a>
+        {% for s in nav.sets_series %}<a href="{% url 'catalog:theme' s.slug %}">{{ s.short }}</a>{% endfor %}
+        <a href="{% url 'catalog:category' 'nabory' %}"><b>Усі набори</b></a>
       </div>
     </details>
     <details>
@@ -249,8 +246,8 @@
     <details>
       <summary>Мініфігурки <svg class="ic"><use href="#i-chev-down"/></svg></summary>
       <div class="sub">
-        {% for s in nav.fig_series %}<a href="{% url 'catalog:category' 'minifihurky' %}?theme={{ s.slug }}"><span class="dot" style="--c:{{ s.accent }}"></span>{{ s.short }}</a>{% endfor %}
-        <a href="{% url 'catalog:category' 'minifihurky' %}">Усі мініфігурки</a>
+        {% for s in nav.fig_series %}<a href="{% url 'catalog:category' 'minifihurky' %}?theme={{ s.slug }}">{{ s.short }}</a>{% endfor %}
+        <a href="{% url 'catalog:category' 'minifihurky' %}"><b>Усі мініфігурки</b></a>
       </div>
     </details>
     <a href="{% url 'catalog:category' 'breloky' %}">Брелоки <svg class="ic"><use href="#i-chev-right"/></svg></a>
@@ -267,7 +264,7 @@
     <a href="{% url 'catalog:category' 'aksesuary' %}">Аксесуари <svg class="ic"><use href="#i-chev-right"/></svg></a>
     {% endif %}
     <a href="{% url 'catalog:collection' 'novynky' %}">Новинки <svg class="ic"><use href="#i-chev-right"/></svg></a>
-    <a href="{% url 'catalog:collection' 'rozprodazh' %}" style="color:var(--red)">Розпродаж <svg class="ic"><use href="#i-chev-right"/></svg></a>
+    <a href="{% url 'catalog:collection' 'rozprodazh' %}">Розпродаж <svg class="ic"><use href="#i-chev-right"/></svg></a>
     <a href="{% url 'catalog:collection' 'vzhyvani-nabory' %}">Набори б/у <svg class="ic"><use href="#i-chev-right"/></svg></a>
     <a href="{% url 'catalog:collection' 'ridkisni' %}">Рідкісні та колекційні <svg class="ic"><use href="#i-chev-right"/></svg></a>
     <a href="{% url 'catalog:favorites' %}">Обране <svg class="ic"><use href="#i-chev-right"/></svg></a>
@@ -277,9 +274,9 @@
   </div>
   <div class="drawer-foot">
     {% if user.is_authenticated %}
-      <a class="btn btn-dark btn-block" href="{% url 'accounts:dashboard' %}">Особистий кабінет</a>
+      <a class="btn btn-primary btn-block" href="{% url 'accounts:dashboard' %}">Особистий кабінет</a>
     {% else %}
-      <div class="row"><a class="btn btn-dark" style="flex:1" href="{% url 'accounts:login' %}">Увійти</a><a class="btn" style="flex:1" href="{% url 'accounts:register' %}">Реєстрація</a></div>
+      <div class="row"><a class="btn btn-primary" style="flex:1" href="{% url 'accounts:login' %}">Увійти</a><a class="btn" style="flex:1" href="{% url 'accounts:register' %}">Реєстрація</a></div>
     {% endif %}
   </div>
 </aside>

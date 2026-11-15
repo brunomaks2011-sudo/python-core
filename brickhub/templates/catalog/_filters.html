@@ -28,7 +28,7 @@
       <summary>Серія LEGO <svg class="ic"><use href="#i-chev-down"/></svg></summary>
       <div class="fbody">
         {% for o in f.theme %}
-          <label class="fopt{% if o.value|in_list:prm.theme %} is-active{% endif %}"><input type="checkbox" name="theme" value="{{ o.value }}" {% if o.value|in_list:prm.theme %}checked{% endif %} data-autosubmit><span class="swatch" style="--c:{{ o.accent }};--s:10px;border-radius:3px"></span>{{ o.label }}<span class="n">{{ o.count }}</span></label>
+          <label class="fopt{% if o.value|in_list:prm.theme %} is-active{% endif %}"><input type="checkbox" name="theme" value="{{ o.value }}" {% if o.value|in_list:prm.theme %}checked{% endif %} data-autosubmit>{{ o.label }}<span class="n">{{ o.count }}</span></label>
         {% endfor %}
       </div>
     </details>
@@ -100,7 +100,7 @@
     </div>
     {% endif %}
     <div class="filters-actions">
-      <button class="btn btn-dark" style="flex:1" type="submit">Показати</button>
+      <button class="btn btn-primary" style="flex:1" type="submit">Показати</button>
       <a class="btn" href="{{ request.path }}{% if prm.q %}?q={{ prm.q|urlencode }}{% endif %}">Скинути</a>
     </div>
   </form>

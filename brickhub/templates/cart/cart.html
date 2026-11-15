@@ -55,7 +55,7 @@
           <button class="btn" type="submit">Застосувати</button>
         </form>
       {% endif %}
-      <div class="sum-row"><span>Доставка</span><span>{% if summary.free_delivery %}<b style="color:var(--green)">Безкоштовно</b>{% else %}за тарифами перевізника{% endif %}</span></div>
+      <div class="sum-row"><span>Доставка</span><span>{% if summary.free_delivery %}<b class="sum-free">Безкоштовно</b>{% else %}за тарифами перевізника{% endif %}</span></div>
       {% if summary.free_delivery_from and not summary.free_delivery %}
         <div style="font-size:13px" class="muted">Ще {{ summary.free_delivery_left|uah }} — і доставка безкоштовна</div>
         <div class="progress"><span style="width:{{ summary.free_delivery_progress }}%"></span></div>
@@ -69,7 +69,7 @@
     <section class="section"><div class="section-head"><h2>Вам може сподобатися</h2></div>{% include "catalog/_rail.html" with items=suggestions %}</section>
   {% endif %}
   {% else %}
-    <div class="empty" style="margin-bottom:40px"><svg class="ic"><use href="#i-cart"/></svg><h3>Кошик порожній</h3><p class="muted">Додайте набори, деталі чи мініфігурки з каталогу.</p><div class="row" style="justify-content:center"><a class="btn btn-dark" href="{% url 'catalog:index' %}">До каталогу</a><a class="btn" href="{% url 'cart:quick_order' %}">Замовлення деталей списком</a></div></div>
+    <div class="empty" style="margin-bottom:40px"><svg class="ic"><use href="#i-cart"/></svg><h3>Кошик порожній</h3><p class="muted">Додайте набори, деталі чи мініфігурки з каталогу.</p><div class="row" style="justify-content:center"><a class="btn btn-primary" href="{% url 'catalog:index' %}">До каталогу</a><a class="btn" href="{% url 'cart:quick_order' %}">Замовлення деталей списком</a></div></div>
   {% endif %}
 </div>
 {% endblock %}

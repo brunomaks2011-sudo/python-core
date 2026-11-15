@@ -2,7 +2,7 @@
 {% block content %}
 <div class="container">
   <header class="page-head">
-    {% if theme %}<span class="eyebrow" style="color:{{ theme.accent }}">Серія LEGO</span>{% elif color %}<span class="eyebrow">Колір {{ color.code }}</span>{% endif %}
+    {% if color %}<span class="eyebrow">Колір {{ color.code }}</span>{% endif %}
     <h1>{% if color %}<span class="swatch{% if color.is_transparent %} is-trans{% endif %}" style="--c:{{ color.hex }};--s:28px;display:inline-block;vertical-align:-4px;margin-right:10px;border-radius:8px"></span>{% endif %}{{ heading }}</h1>
     {% if lead %}<p class="lead">{{ lead }}</p>{% endif %}
   </header>
@@ -11,12 +11,12 @@
   {% if children %}
     <div class="subnav" aria-label="Підкатегорії">
       {% for c in children %}<a class="chip{% if c.pk == category.pk %} is-active{% endif %}" href="{{ c.get_absolute_url }}"{% if c.pk == category.pk %} aria-current="page"{% endif %}><img src="{% category_icon c.slug %}" alt="" width="24" height="24" loading="lazy">{{ c.name }}</a>{% endfor %}
-      {% if category.kind == "part" %}<a class="chip" href="{% url 'catalog:part_finder' %}" style="border-color:var(--red);color:var(--red)"><svg class="ic" style="width:16px;height:16px"><use href="#i-search"/></svg>Пошук за номером</a>{% endif %}
+      {% if category.kind == "part" %}<a class="chip" href="{% url 'catalog:part_finder' %}"><svg class="ic" style="width:16px;height:16px"><use href="#i-search"/></svg>Пошук за номером</a>{% endif %}
     </div>
   {% endif %}
   {% if nav_series %}
     <div class="subnav" aria-label="Серії">
-      {% for t in nav_series %}<a class="chip{% if t.slug|in_list:listing.params.theme %} is-active{% endif %}" href="{% if category.kind == 'minifig' %}{% toggle_param 'theme' t.slug %}{% else %}{{ t.get_absolute_url }}{% endif %}"><span class="dot" style="--c:{{ t.accent }}"></span>{{ t.short_name }}</a>{% endfor %}
+      {% for t in nav_series %}<a class="chip{% if t.slug|in_list:listing.params.theme %} is-active{% endif %}" href="{% if category.kind == 'minifig' %}{% toggle_param 'theme' t.slug %}{% else %}{{ t.get_absolute_url }}{% endif %}">{{ t.short_name }}</a>{% endfor %}
     </div>
   {% endif %}
   {% if theme and kind_counts %}
@@ -65,7 +65,7 @@
           <svg class="ic"><use href="#i-search"/></svg>
           <h3>Нічого не знайдено</h3>
           <p class="muted">Спробуйте змінити фільтри або пошукати за номером LEGO.</p>
-          <a class="btn btn-dark" href="{{ request.path }}">Скинути фільтри</a>
+          <a class="btn btn-primary" href="{{ request.path }}">Скинути фільтри</a>
         </div>
       {% endif %}
     </section>

@@ -2,7 +2,6 @@
 {% block content %}
 <div class="container">
   <header class="page-head">
-    <span class="eyebrow">Як на BrickLink — тільки в гривнях</span>
     <h1>Пошук деталей LEGO</h1>
     <p class="lead">Введіть номер деталі (Design ID), Element ID або назву українською чи англійською. Оберіть колір, щоб побачити лише доступні варіанти.</p>
   </header>
@@ -27,7 +26,7 @@
     </div>
   </section>
 
-  <div class="toolbar"><span class="count">Знайдено <b>{{ page.paginator.count }}</b> {{ page.paginator.count|plural:"деталь,деталі,деталей" }}{% if color %} у кольорі «{{ color.display_name }}»{% endif %}</span><span class="spacer"></span><a class="link" href="{% url 'cart:quick_order' %}">Є список деталей? Замовлення списком →</a></div>
+  <div class="toolbar"><span class="count">Знайдено <b>{{ page.paginator.count }}</b> {{ page.paginator.count|plural:"деталь,деталі,деталей" }}{% if color %} у кольорі «{{ color.display_name }}»{% endif %}</span><span class="spacer"></span><a class="link" href="{% url 'cart:quick_order' %}">Замовлення деталей списком</a></div>
   {% if rows %}
     <div class="design-grid">
       {% for r in rows %}
@@ -36,13 +35,13 @@
           <span class="dc-id">{{ r.part.shown_number }}</span>
           <span class="dc-name">{{ r.part.display_name }}</span>
           <span class="dc-swatches" aria-label="Кольори">{% for c in r.swatches %}<span class="swatch{% if c.color__is_transparent %} is-trans{% endif %}" style="--c:#{{ c.color__rgb }}" title="{{ c.color__name_uk|default:c.color__name }}"></span>{% endfor %}{% if r.more_colors %}<small>+{{ r.more_colors }}</small>{% endif %}</span>
-          <span class="dc-meta"><span>{{ r.part.n_colors }} {{ r.part.n_colors|plural:"колір,кольори,кольорів" }}</span><b style="color:var(--ink)">від {{ r.part.pmin|uah }}</b></span>
+          <span class="dc-meta"><span>{{ r.part.n_colors }} {{ r.part.n_colors|plural:"колір,кольори,кольорів" }}</span><b>від {{ r.part.pmin|uah }}</b></span>
         </a>
       {% endfor %}
     </div>
     {% include "partials/pagination.html" %}
   {% else %}
-    <div class="empty"><svg class="ic"><use href="#i-brick"/></svg><h3>Деталь не знайдено</h3><p class="muted">Перевірте номер або спробуйте назву. Номер деталі зазвичай вибитий на самій деталі або вказаний в інструкції.</p><a class="btn btn-dark" href="{% url 'core:guide' %}">Як знайти номер деталі</a></div>
+    <div class="empty"><svg class="ic"><use href="#i-brick"/></svg><h3>Деталь не знайдено</h3><p class="muted">Перевірте номер або спробуйте назву. Номер деталі зазвичай вибитий на самій деталі або вказаний в інструкції.</p><a class="btn btn-primary" href="{% url 'core:guide' %}">Як знайти номер деталі</a></div>
   {% endif %}
 </div>
 {% endblock %}

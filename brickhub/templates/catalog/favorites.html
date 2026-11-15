@@ -5,7 +5,7 @@
   {% if products %}
     <div class="grid grid-4" style="padding-bottom:40px">{% for product in products %}{% include "catalog/_card.html" %}{% endfor %}</div>
   {% else %}
-    <div class="empty"><svg class="ic"><use href="#i-heart"/></svg><h3>Тут поки порожньо</h3><p class="muted">Натискайте на серце на картці товару, щоб зберегти його тут.</p><a class="btn btn-dark" href="{% url 'catalog:index' %}">До каталогу</a></div>
+    <div class="empty"><svg class="ic"><use href="#i-heart"/></svg><h3>Тут поки порожньо</h3><p class="muted">Натискайте на серце на картці товару, щоб зберегти його тут.</p><a class="btn btn-primary" href="{% url 'catalog:index' %}">До каталогу</a></div>
   {% endif %}
 </div>
 {% endblock %}

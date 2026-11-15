@@ -102,7 +102,7 @@
       </div>
       <div class="sum-row"><span>Товари</span><b>{{ summary.subtotal|uah }}</b></div>
       {% if summary.discount %}<div class="sum-row"><span>Знижка ({{ summary.promo.code }})</span><span class="disc">−{{ summary.discount|uah }}</span></div>{% endif %}
-      <div class="sum-row"><span>Доставка</span><span>{% if free_delivery %}<b style="color:var(--green)">Безкоштовно</b>{% else %}за тарифами перевізника{% endif %}</span></div>
+      <div class="sum-row"><span>Доставка</span><span>{% if free_delivery %}<b class="sum-free">Безкоштовно</b>{% else %}за тарифами перевізника{% endif %}</span></div>
       <div class="sum-row total"><span>До сплати</span><span>{{ summary.total|uah }}</span></div>
       <button class="btn btn-lg btn-primary btn-block" type="submit" style="margin-top:14px"><span class="btn-label">Підтвердити замовлення</span></button>
       <p class="muted" style="font-size:12px;margin:12px 0 0">Натискаючи кнопку, ви оформлюєте замовлення. Менеджер зв'яжеться з вами для підтвердження. Вартість доставки сплачується перевізнику при отриманні{% if SHOP.FREE_DELIVERY_FROM %}, якщо сума менша за {{ SHOP.FREE_DELIVERY_FROM|uah }}{% endif %}.</p>

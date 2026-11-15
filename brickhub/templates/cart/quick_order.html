@@ -2,7 +2,6 @@
 {% block content %}
 <div class="container" style="padding-bottom:40px">
   <header class="page-head">
-    <span class="eyebrow">Для тих, хто будує власні моделі</span>
     <h1>Швидке замовлення деталей списком</h1>
     <p class="lead">Вставте список у форматі <span class="kbd">номер колір кількість</span> — по одному рядку. Колір можна вказати номером BrickLink (5 = Red) або назвою українською чи англійською. Для наборів і мініфігурок достатньо номера.</p>
   </header>
@@ -11,8 +10,8 @@
       <label class="sr-only" for="lines">Список деталей</label>
       <textarea id="lines" name="lines" spellcheck="false" placeholder="3001 5 10&#10;3023 Black 24&#10;3069b прозорий 6&#10;75355 1">{{ text }}</textarea>
       <div class="row" style="margin-top:12px">
-        <button class="btn btn-dark" type="submit" name="action" value="check">Перевірити наявність</button>
-        {% if ok_count %}<button class="btn btn-primary" type="submit" name="action" value="add"><svg class="ic"><use href="#i-cart"/></svg>Додати в кошик ({{ ok_count }})</button>{% endif %}
+        <button class="btn{% if not ok_count %} btn-primary{% endif %}" type="submit" name="action" value="check">Перевірити наявність</button>
+        {% if ok_count %}<button class="btn btn-primary" type="submit" name="action" value="add"><svg class="ic"><use href="#i-shopbag"/></svg>Додати в кошик ({{ ok_count }})</button>{% endif %}
       </div>
     </form>
     <aside class="summary">

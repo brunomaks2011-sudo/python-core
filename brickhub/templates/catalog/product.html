@@ -39,8 +39,8 @@
           {% if p.discount_percent %}<span class="pdx-flag is-sale">−{{ p.discount_percent }}%</span>{% endif %}
           {% if p.condition == "used" %}<span class="pdx-flag is-used">Б/у</span>{% endif %}
           {% if p.is_new %}<span class="pdx-flag">Новинка</span>{% endif %}
-          {% if p.is_bestseller %}<span class="pdx-flag">Хіт продажів</span>{% endif %}
-          {% if p.is_rare %}<span class="pdx-flag">Рідкісний</span>{% endif %}
+          {% if p.is_bestseller %}<span class="pdx-flag is-hit">Хіт продажів</span>{% endif %}
+          {% if p.is_rare %}<span class="pdx-flag is-rare">Рідкісний</span>{% endif %}
         </div>
       {% endif %}
       <div class="pdx-meta">
@@ -132,16 +132,17 @@
       </div>
 
       {% if p.kind != "part" %}{% with brand=p.theme.brand %}
-        {% if brand or s.age_min or s.pieces or p.minifigure.num_parts %}
+        {% if brand or s.age_min or s.pieces or p.minifigure.num_parts or p.official_number %}
           <div class="pdx-facts">
             {% if brand %}
               <a class="pdx-fact pdx-brand" href="{{ brand.get_absolute_url }}" aria-label="Серія {{ brand.display_name }}">
-                {% if brand.logo %}<img src="{{ brand.logo.url }}" alt="{{ brand.display_name }}" loading="lazy">{% else %}<span class="pdx-brand-name" style="--c:{{ brand.accent }}">{{ brand.short_name }}</span>{% endif %}
+                {% if brand.logo %}<img src="{{ brand.logo.url }}" alt="{{ brand.display_name }}" loading="lazy">{% else %}<b class="pdx-brand-name">{{ brand.short_name }}</b><span>Серія</span>{% endif %}
               </a>
             {% endif %}
             {% if s.age_min %}<div class="pdx-fact"><b>{{ s.age_min }}+</b><span>Вік</span></div>{% endif %}
             {% if s.pieces and p.kind == "set" %}<div class="pdx-fact"><b>{{ s.pieces|thousands }}</b><span>Деталей</span></div>
             {% elif p.kind == "minifig" and p.minifigure.num_parts %}<div class="pdx-fact"><b>{{ p.minifigure.num_parts }}</b><span>Деталей</span></div>{% endif %}
+            {% if p.official_number %}<div class="pdx-fact"><b class="mono">{{ p.official_number }}</b><span>Артикул LEGO</span></div>{% endif %}
           </div>
         {% endif %}
       {% endwith %}{% endif %}
@@ -161,6 +162,13 @@
       </div>
     </div>
   </div>
+
+  {% if p.in_stock %}
+    <div class="pdx-sticky" data-sticky-buy inert>
+      <b>{{ p.price|uah }}</b>
+      <button class="pdx-cart" type="submit" form="buy-form"><svg class="ic"><use href="#i-shopbag"/></svg><span class="btn-label">Додати в кошик</span></button>
+    </div>
+  {% endif %}
 
   <div class="pd-sections">
     <div class="stack">
