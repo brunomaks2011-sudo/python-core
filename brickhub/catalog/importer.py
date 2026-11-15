@@ -287,3 +287,77 @@ def import_rebrickable_csv(folder: Path | str) -> dict:
             stats["elements"] = import_elements(
                 [(r["element_id"], r["part_num"], _int(r["color_id"])) for r in csv.DictReader(fh)])
     return stats
+
+
+# ---------------------------------------------------------------------------
+# Additive update from Rebrickable CSV files (manage.py update_catalog)
+# ---------------------------------------------------------------------------
+UPDATE_DIR = Path(settings.BASE_DIR) / "data" / "rebrickable"
+
+
+def _rows(folder: Path, name: str):
+    fh = _open_csv(folder, name)
+    if fh is None:
+        return None
+    with fh:
+        return list(csv.DictReader(fh))
+
+
+def add_missing(folder: Path | str = UPDATE_DIR, dry_run: bool = False) -> dict:
+    """Add the parts, minifigures and Element IDs the shop does not know yet.
+
+    Only new rows are created: names, sections and numbers already in the shop (including everything the owner
+    typed or corrected in the panel) are never changed, and products are not touched at all.
+    """
+    folder = Path(folder)
+    stats = {}
+    with transaction.atomic():
+        rows = _rows(folder, "parts")
+        if rows is not None:
+            known = {d.lower() for d in Part.objects.values_list("design_id", flat=True)}
+            resolve = _shop_category_resolver()
+            valid_cats = set(PartCategory.objects.values_list("id", flat=True))
+            new = []
+            for r in rows:
+                num, name, cat = r["part_num"][:40], r["name"][:255], _int(r.get("part_cat_id"))
+                if num.lower() in known:
+                    continue
+                known.add(num.lower())
+                new.append(Part(design_id=num, name=name, part_category_id=cat if cat in valid_cats else None,
+                                category_id=resolve(cat, name)))
+            Part.objects.bulk_create(new, batch_size=BATCH, ignore_conflicts=True)
+            stats["parts"] = (len(new), len(rows) - len(new))
+        rows = _rows(folder, "minifigs")
+        if rows is not None:
+            known = {f.lower() for f in Minifigure.objects.values_list("fig_number", flat=True)}
+            new = []
+            for r in rows:
+                num = r["fig_num"][:40]
+                if num.lower() in known:
+                    continue
+                known.add(num.lower())
+                new.append(Minifigure(fig_number=num, name=r["name"][:255], num_parts=_int(r.get("num_parts"))))
+            Minifigure.objects.bulk_create(new, batch_size=BATCH, ignore_conflicts=True)
+            stats["minifigs"] = (len(new), len(rows) - len(new))
+        rows = _rows(folder, "elements")
+        if rows is not None:
+            parts = {d.lower(): pk for d, pk in Part.objects.values_list("design_id", "pk")}
+            colors = dict(Color.objects.filter(rebrickable_id__isnull=False).values_list("rebrickable_id", "pk"))
+            known = set(Element.objects.values_list("element_id", flat=True))
+            new, unknown = [], 0
+            for r in rows:
+                el = (r.get("element_id") or "").strip()[:20]
+                part, color = parts.get((r.get("part_num") or "").lower()), colors.get(_int(r.get("color_id")))
+                if not el or el in known:
+                    continue
+                if part is None or color is None:
+                    unknown += 1
+                    continue
+                known.add(el)
+                new.append(Element(element_id=el, part_id=part, color_id=color))
+            Element.objects.bulk_create(new, batch_size=BATCH, ignore_conflicts=True)
+            stats["elements"] = (len(new), len(rows) - len(new) - unknown)
+            stats["elements_skipped"] = unknown
+        if dry_run:
+            transaction.set_rollback(True)
+    return stats
