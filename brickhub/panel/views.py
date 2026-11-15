@@ -13,7 +13,7 @@ from django.contrib.auth.decorators import user_passes_test
 from django.core.paginator import Paginator
 from django.db.models import Count, F, Q, Sum
 from django.db.models.functions import TruncDate
-from django.http import Http404, HttpResponse, JsonResponse, StreamingHttpResponse
+from django.http import Http404, HttpResponse, JsonResponse, QueryDict, StreamingHttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
 from django.utils import timezone
@@ -129,44 +129,53 @@ def _owner_rows(now) -> dict:
 # ---------------------------------------------------------------------------
 # Products
 # ---------------------------------------------------------------------------
-@staff_required
-def product_list(request):
-    qs = Product.objects.select_related("inventory", "color", "part", "lego_set", "minifigure", "category",
-                                        "theme").prefetch_related("images")
-    q = request.GET.get("q", "").strip()
+def _filter_products(qs, params):
+    """The product list's filters. The bulk actions reuse them for «усі знайдені за фільтром»."""
+    q = params.get("q", "").strip()
     if q:
         for tok in q.lower().split():
             qs = qs.filter(search_text__icontains=tok)
-    kind = request.GET.get("kind", "")
+    kind = params.get("kind", "")
     if kind:
         qs = qs.filter(kind=kind)
-    stock = request.GET.get("stock", "")
+    stock = params.get("stock", "")
     if stock == "out":
         qs = qs.filter(inventory__quantity=0)
     elif stock == "low":
         qs = qs.filter(inventory__quantity__gt=0, inventory__quantity__lte=3)
-    status = request.GET.get("status", "")
+    status = params.get("status", "")
     if status == "hidden":
         qs = qs.filter(is_active=False)
     elif status == "active":
         qs = qs.filter(is_active=True)
-    photo = request.GET.get("photo", "")
+    photo = params.get("photo", "")
     if photo == "none":  # nothing is shown on the site: no own photo and no BrickLink / LEGO picture
         qs = qs.filter(images__isnull=True, catalog_picture="none")
     elif photo == "has":
         qs = qs.filter(Q(images__isnull=False) | Q(catalog_picture__in=["bricklink", "lego"])).distinct()
     elif photo == "unchecked":
         qs = qs.filter(images__isnull=True, catalog_picture="")
-    cat = request.GET.get("category", "")
+    cat = params.get("category", "")
     if cat:
         c = Category.objects.filter(slug=cat).first()
         if c:
             qs = qs.filter(category_id__in=c.descendant_ids())
-    owner = request.GET.get("owner", "")
+    owner = params.get("owner", "")
     if owner == "none":
         qs = qs.filter(owner__isnull=True)
     elif owner.isdigit():
         qs = qs.filter(owner_id=int(owner))
+    return qs, {"q": q, "kind": kind, "stock": stock, "status": status, "photo": photo, "category": cat,
+                "owner": owner}
+
+
+@staff_required
+def product_list(request):
+    qs = Product.objects.select_related("inventory", "color", "part", "lego_set", "minifigure", "category",
+                                        "theme").prefetch_related("images")
+    qs, f = _filter_products(qs, request.GET)
+    q, kind, stock, status, photo, cat, owner = (
+        f[k] for k in ("q", "kind", "stock", "status", "photo", "category", "owner"))
     order = request.GET.get("order", "-updated_at")
     if order not in ("-updated_at", "price", "-price", "title", "inventory__quantity", "-inventory__quantity",
                      "-sold_count", "sku"):
@@ -201,6 +210,14 @@ def product_bulk(request):
     ids = [int(i) for i in request.POST.getlist("ids") if i.isdigit()]
     action = request.POST.get("action")
     qs = Product.objects.filter(pk__in=ids)
+    if request.POST.get("scope") == "all":
+        # every product the list's filter finds, on all pages (a subquery, not a long list of ids)
+        found, _ = _filter_products(Product.objects.all(), QueryDict(request.POST.get("filters", "")))
+        qs = Product.objects.filter(pk__in=found.values("pk"))
+        ids = [0] if qs.exists() else []
+        if action == "delete":
+            messages.error(request, "Видаляти можна лише позначені товари")
+            return redirect(request.POST.get("next") or "panel:products")
     if not ids:
         messages.error(request, "Оберіть товари")
     elif action == "activate":
@@ -259,6 +276,10 @@ def product_bulk(request):
     elif action in ("available", "running_low"):
         n = qs.update(availability=Product.AVAILABILITY_LOW if action == "running_low" else Product.AVAILABILITY_IN)
         messages.success(request, f"Оновлено наявність: {n}")
+    elif action in ("show_stock", "hide_stock"):
+        n = qs.update(show_stock=action == "show_stock")
+        shown = "показується" if action == "show_stock" else "не показується"
+        messages.success(request, f"Кількість на сайті {shown}: {n}")
     elif action in ("set_new", "unset_new", "set_featured", "unset_featured", "set_bestseller", "unset_bestseller"):
         field = {"new": "is_new", "featured": "is_featured", "bestseller": "is_bestseller"}[action.split("_", 1)[1]]
         n = qs.update(**{field: action.startswith("set_")})

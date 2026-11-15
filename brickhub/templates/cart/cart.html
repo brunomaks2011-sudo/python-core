@@ -23,7 +23,7 @@
             <div class="ci-side">
               {% if p.is_active and p.in_stock %}
                 <form method="post" action="{% url 'cart:update' item.pk %}" data-auto-update>{% csrf_token %}
-                  <div class="stepper sm" data-stepper><button type="button" data-step="-1" aria-label="Менше">−</button><input type="number" name="quantity" value="{{ item.quantity }}" min="1" max="{{ p.stock }}" inputmode="numeric" aria-label="Кількість"><button type="button" data-step="1" aria-label="Більше">+</button></div>
+                  <div class="stepper sm" data-stepper><button type="button" data-step="-1" aria-label="Менше">−</button><input type="number" name="quantity" value="{{ item.quantity }}" min="1" max="{{ p.stock }}" data-limit="{{ p.limit_note }}" inputmode="numeric" aria-label="Кількість"><button type="button" data-step="1" aria-label="Більше">+</button></div>
                   <noscript><button class="btn btn-sm" type="submit">Оновити</button></noscript>
                 </form>
                 <span class="ci-total">{{ item.line_total|uah }}</span>

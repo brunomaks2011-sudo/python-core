@@ -143,7 +143,7 @@
         <a class="sp-item" href="${it.url}" role="option">
           <img src="${esc(it.img)}" alt="" ${it.fallback ? `data-fallback="${esc(it.fallback)}"` : ""} loading="lazy">
           <span><span class="t">${esc(it.title)}</span>
-            <span class="m"><span>${esc(it.kind)}</span>${it.number ? `<b class="mono">${esc(it.number)}</b>` : ""}${it.color ? `<span class="swatch-inline"><span class="swatch" style="--c:${esc(it.hex)}"></span>${esc(it.color)}</span>` : ""}${it.stock > 0 ? "" : "<span>немає в наявності</span>"}</span></span>
+            <span class="m"><span>${esc(it.kind)}</span>${it.number ? `<b class="mono">${esc(it.number)}</b>` : ""}${it.color ? `<span class="swatch-inline"><span class="swatch" style="--c:${esc(it.hex)}"></span>${esc(it.color)}</span>` : ""}${it.in_stock ? "" : "<span>немає в наявності</span>"}</span></span>
           <span class="p">${fmt(it.price)}</span>
         </a>`).join("");
       if (data.total > data.items.length) html += `<a class="sp-all" href="${data.all_url}">Усі результати: ${data.total}</a>`;
@@ -211,6 +211,8 @@
         const { ok, data } = await post(form);
         if (data.count !== undefined) setCount("[data-cart-count]", data.count);
         if (ok) {
+          $$(".hicon.is-cart svg").forEach((bag) => play(bag, [{ transform: "translateY(0)" }, { transform: "translateY(-5px)" },
+            { transform: "translateY(0)" }], { duration: 420, easing: "cubic-bezier(.23, 1, .32, 1)" }));
           if (btn) {
             btn.classList.add("is-done");
             const use = btn.querySelector("use");
@@ -246,6 +248,10 @@
         const id = btn.dataset.fav || btn.dataset.compare;
         $$(`[data-${kind === "fav" ? "fav" : "compare"}="${id}"]`).forEach((b) => { b.classList.toggle("is-active", data.active); b.setAttribute("aria-pressed", String(data.active)); });
         setCount(kind === "fav" ? "[data-fav-count]" : "[data-compare-count]", data.count);
+        if (kind === "fav" && data.active) {
+          play(btn.querySelector("svg"), [{ transform: "scale(.7)" }, { transform: "scale(1)" }],
+               { duration: 420, easing: "cubic-bezier(.34, 1.56, .64, 1)" });
+        }
         if (data.message) toast(data.message, "info");
         else if (kind === "compare" && data.active) toast("Додано до порівняння");
       } catch (_) { form.submit(); }
@@ -259,24 +265,56 @@
     }
   });
 
-  /* ---------- quantity steppers ---------- */
+  /* ---------- motion ---------- */
+  const calm = window.matchMedia("(prefers-reduced-motion: reduce)");
+  const play = (el, frames, opts) => { if (el && el.animate && !calm.matches) el.animate(frames, opts); };
+  // home sections arrive once, as they are scrolled to; only what is still below the fold waits
+  const reveals = $$("[data-reveal]");
+  if (reveals.length && "IntersectionObserver" in window && !calm.matches) {
+    const seen = new IntersectionObserver((entries) => entries.forEach((en) => {
+      if (!en.isIntersecting) return;
+      en.target.dataset.reveal = "in";
+      seen.unobserve(en.target);
+    }), { rootMargin: "0px 0px -8% 0px" });
+    reveals.forEach((el) => {
+      if (el.getBoundingClientRect().top > window.innerHeight) { el.dataset.reveal = "wait"; seen.observe(el); }
+    });
+  }
+
+  /* ---------- quantity steppers: never more than the stock ---------- */
+  const bounds = (inp) => ({ min: Number(inp.min || 1), max: Number(inp.max || 999999) });
+  const limitNote = (inp) => inp.dataset.limit || "Більше немає в наявності";
+  // the buttons look spent at the ends; "+" stays clickable there, so a press can say why nothing happens
+  const syncStepper = (box) => {
+    const inp = box.querySelector("input");
+    if (!inp) return;
+    const { min, max } = bounds(inp), v = Number(inp.value) || min;
+    const less = box.querySelector('[data-step="-1"]'), more = box.querySelector('[data-step="1"]');
+    if (less) less.setAttribute("aria-disabled", String(v <= min));
+    if (more) more.setAttribute("aria-disabled", String(v >= max));
+  };
+  $$("[data-stepper]").forEach(syncStepper);
   document.addEventListener("click", (e) => {
     const b = e.target.closest("[data-step]");
     if (!b) return;
     const box = b.closest("[data-stepper]");
     const inp = box && box.querySelector("input");
     if (!inp) return;
-    const min = Number(inp.min || 1), max = Number(inp.max || 999999);
-    const big = e.shiftKey ? 10 : 1;
-    inp.value = Math.min(max, Math.max(min, (Number(inp.value) || min) + Number(b.dataset.step) * big));
+    const { min, max } = bounds(inp);
+    const step = Number(b.dataset.step) * (e.shiftKey ? 10 : 1);
+    const now = Number(inp.value) || min;
+    if (step > 0 && now >= max) { toast(limitNote(inp), "info"); syncStepper(box); return; }
+    if (step > 0 && now + step > max) toast(limitNote(inp), "info");
+    inp.value = Math.min(max, Math.max(min, now + step));
     inp.dispatchEvent(new Event("change", { bubbles: true }));
   });
   document.addEventListener("change", (e) => {
     const inp = e.target;
     if (inp.matches("[data-stepper] input")) {
-      const min = Number(inp.min || 1), max = Number(inp.max || 999999);
-      if (Number(inp.value) > max) { inp.value = max; toast("Більше немає в наявності", "info"); }
+      const { min, max } = bounds(inp);
+      if (Number(inp.value) > max) { inp.value = max; toast(limitNote(inp), "info"); }
       if (Number(inp.value) < min || !inp.value) inp.value = min;
+      syncStepper(inp.closest("[data-stepper]"));
       const auto = inp.closest("[data-auto-update]");
       if (auto) { clearTimeout(auto._t); auto._t = setTimeout(() => auto.requestSubmit(), 450); }
     }

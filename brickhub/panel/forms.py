@@ -92,7 +92,7 @@ class ProductForm(forms.ModelForm):
         model = Product
         fields = ["kind", "condition", "title", "sku", "color", "category", "theme", "theme2", "price", "old_price",
                   "completeness", "description", "owner", "is_active", "is_featured", "is_bestseller", "is_new",
-                  "is_rare", "standalone", "availability"]
+                  "is_rare", "standalone", "availability", "show_stock"]
         widgets = {"description": forms.Textarea(attrs={"rows": 6}), "sku": forms.TextInput(
             attrs={"placeholder": "згенерується автоматично"}), "category": SearchableSelect,
             "theme": SearchableSelect, "theme2": SearchableSelect}

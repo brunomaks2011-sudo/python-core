@@ -63,7 +63,7 @@ def add(request):
         return redirect(request.POST.get("next") or product.get_absolute_url())
     msg = f"Додано в кошик: {product.title}" + (f" — {added} шт." if added > 1 else "")
     if added < qty:
-        msg += " (більше немає в наявності)"
+        msg += f" (у наявності лише {product.stock} шт.)" if product.show_stock else " (більше немає в наявності)"
     if _wants_json(request):
         return _cart_payload(request, msg)
     messages.success(request, msg)

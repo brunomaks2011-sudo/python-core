@@ -109,7 +109,7 @@
           <input type="hidden" name="product" value="{{ p.pk }}">
           <div class="pdx-qty" data-stepper>
             <button type="button" data-step="-1" aria-label="Менше"><svg class="ic"><use href="#i-minus"/></svg></button>
-            <input type="number" name="quantity" value="1" min="1" inputmode="numeric" aria-label="Кількість">
+            <input type="number" name="quantity" value="1" min="1" max="{{ p.stock }}" data-limit="{{ p.limit_note }}" inputmode="numeric" aria-label="Кількість">
             <button type="button" data-step="1" aria-label="Більше"><svg class="ic"><use href="#i-plus"/></svg></button>
           </div>
         </form>

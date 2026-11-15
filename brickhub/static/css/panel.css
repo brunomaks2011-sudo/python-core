@@ -20,9 +20,9 @@
 .panel-body .badge-red { background: var(--red); color: #fff; box-shadow: none; }
 .pl { display: grid; grid-template-columns: 260px minmax(0, 1fr); min-height: 100dvh; }
 .pl-side { position: sticky; top: 0; height: 100dvh; overflow-y: auto; overscroll-behavior: contain; background: #111318; color: #c9ccd3; padding: 18px 12px; display: flex; flex-direction: column; gap: 10px; }
-.pl-logo { --logo-stud: rgba(0, 0, 0, .22); display: flex; align-items: center; gap: 10px; padding: 4px 8px 14px; color: #fff; font-family: var(--font-brand); font-weight: 700; font-size: 18px; letter-spacing: -0.03em; }
+.pl-logo { display: flex; align-items: center; gap: 10px; padding: 4px 8px 14px; color: #fff; font-family: var(--font-brand); font-weight: 800; font-size: 18px; letter-spacing: -0.03em; }
 .pl-logo small { display: block; font-family: var(--font); font-size: 11px; color: #8e939c; font-weight: 500; }
-.pl-logo b { font-weight: inherit; color: inherit; }
+.pl-logo b { font-weight: inherit; color: var(--brand-red); }
 .pl-nav { display: flex; flex-direction: column; gap: 2px; }
 .pl-group { font-size: 11px; text-transform: uppercase; letter-spacing: .08em; color: #6f747d; padding: 14px 10px 6px; font-weight: 700; }
 .pl-nav a, .pl-side-foot a, .pl-side-foot button { display: flex; align-items: center; gap: 10px; padding: 9px 10px; border-radius: 10px; color: #c9ccd3; font-size: 14px; font-weight: 500; border: 0; background: none; width: 100%; text-align: left; cursor: pointer; transition: background-color 140ms ease, color 140ms ease; }

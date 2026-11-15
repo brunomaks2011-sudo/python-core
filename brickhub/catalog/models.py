@@ -483,13 +483,16 @@ class Product(models.Model):
     is_bestseller = models.BooleanField("Хіт продажів", default=False)
     is_new = models.BooleanField("Новинка", default=False)
     is_rare = models.BooleanField("Рідкісний / колекційний", default=False)
-    # what buyers see while the product is in stock; the exact quantity is never shown on the site
+    # what buyers see while the product is in stock; the exact quantity only when the owner ticks show_stock
     AVAILABILITY_IN, AVAILABILITY_LOW = "in_stock", "low"
     AVAILABILITY = [(AVAILABILITY_IN, "Є в наявності"), (AVAILABILITY_LOW, "Закінчується")]
     availability = models.CharField(
         "Наявність на сайті", max_length=10, choices=AVAILABILITY, default=AVAILABILITY_IN,
-        help_text="Що бачать покупці, поки товар є на складі. Точна кількість на сайті не показується; "
-                  "коли залишок 0 — «Немає в наявності»")
+        help_text="Що бачать покупці, поки товар є на складі; коли залишок 0 — «Немає в наявності»")
+    show_stock = models.BooleanField(
+        "Показувати кількість на сайті", default=False,
+        help_text="Покупці бачать, скільки штук на складі, напр. «В наявності: 12 шт.». "
+                  "Без позначки — лише «Є в наявності» або «Закінчується»")
     # printed minifigure parts share one Design ID (e.g. torso 973) but are different items, not colours
     standalone = models.BooleanField(
         "Окремий товар, не варіант кольору", default=False,
@@ -612,7 +615,15 @@ class Product(models.Model):
 
     @property
     def availability_label(self) -> str:
-        return {"out": "Немає в наявності", "low": "Закінчується", "in": "Є в наявності"}[self.availability_state]
+        state = self.availability_state
+        if state != "out" and self.show_stock:
+            return f"{'Закінчується' if state == 'low' else 'В наявності'}: {self.stock} шт."
+        return {"out": "Немає в наявності", "low": "Закінчується", "in": "Є в наявності"}[state]
+
+    @property
+    def limit_note(self) -> str:
+        """What the quantity stepper says when the buyer asks for more than the stock."""
+        return f"У наявності {self.stock} шт." if self.show_stock else "Більше немає в наявності"
 
     @property
     def discount_percent(self) -> int:

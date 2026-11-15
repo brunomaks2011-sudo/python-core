@@ -33,7 +33,7 @@
           {% if lot.in_stock %}
             <form method="post" action="{% url 'cart:add' %}" data-add-to-cart class="lot-buy">{% csrf_token %}
               <input type="hidden" name="product" value="{{ lot.pk }}">
-              <div class="stepper sm" data-stepper><button type="button" data-step="-1" aria-label="Менше">−</button><input type="number" name="quantity" value="1" min="1" inputmode="numeric" aria-label="Кількість"><button type="button" data-step="1" aria-label="Більше">+</button></div>
+              <div class="stepper sm" data-stepper><button type="button" data-step="-1" aria-label="Менше">−</button><input type="number" name="quantity" value="1" min="1" max="{{ lot.stock }}" data-limit="{{ lot.limit_note }}" inputmode="numeric" aria-label="Кількість"><button type="button" data-step="1" aria-label="Більше">+</button></div>
               <button class="btn btn-sm btn-cart" type="submit"><svg class="ic"><use href="#i-shopbag"/></svg><span class="btn-label">У кошик</span></button>
             </form>
           {% else %}

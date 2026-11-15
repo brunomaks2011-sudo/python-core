@@ -158,7 +158,7 @@ def suggest(request):
             "title": p.title, "url": p.get_absolute_url(), "img": src, "fallback": fallback,
             "number": p.official_number, "kind": p.get_kind_display(), "price": f"{p.price:.2f}",
             "color": p.color.display_name if p.color_id else "", "hex": p.color.hex if p.color_id else "",
-            "stock": p.stock, "condition": p.get_condition_display(),
+            "in_stock": p.in_stock, "condition": p.get_condition_display(),
         })
     design = None
     for num in parsed.numbers:
@@ -459,7 +459,7 @@ def compare_rows(products):
             "minifigs": (s.minifigs_count if s and s.minifigs_count is not None else "—"),
             "age": (f"{s.age_min}+" if s and s.age_min else "—"),
             "color": p.color.display_name if p.color_id else "—",
-            "stock": "Є" if p.in_stock else "Немає",
+            "stock": p.availability_label,
             "rating": f"{p.rating_avg:.1f} ({p.reviews_count})" if p.reviews_count else "—",
         }[key]
 

@@ -156,6 +156,7 @@
           {% include "partials/field.html" with field=form.quantity %}
           {% include "partials/field.html" with field=form.location %}
           {% include "partials/field.html" with field=form.availability full=True %}
+          <label class="check" style="grid-column:1/-1">{{ form.show_stock }}<span>{{ form.show_stock.label }}<br><small class="muted">{{ form.show_stock.help_text }}</small></span></label>
           {% include "partials/field.html" with field=form.sku full=True %}
           {% include "partials/field.html" with field=form.owner full=True %}
         </div>

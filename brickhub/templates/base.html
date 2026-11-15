@@ -18,6 +18,7 @@
   {% if seo.image %}<meta property="og:image" content="{{ seo.image }}">{% endif %}
   <link rel="icon" href="{% static 'img/favicon.svg' %}" type="image/svg+xml">
   <link rel="preload" href="{% static 'fonts/manrope-cyrillic-wght-normal.woff2' %}" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="{% static 'fonts/unbounded-latin-wght-normal.woff2' %}" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
   {% for item in seo.jsonld %}<script type="application/ld+json">{{ item|jsonld }}</script>{% endfor %}
   {% block head %}{% endblock %}
@@ -47,7 +48,7 @@
     </button>
     <a class="logo" href="{% url 'core:home' %}" aria-label="{{ SHOP.NAME }} — на головну">
       {% include "partials/logo_mark.html" %}
-      <span>BRICKHUB</span>
+      <span>BRICK<b>HUB</b><small>Набори · деталі · мініфігурки</small></span>
     </a>
     <div class="search" data-search>
       <form action="{% url 'catalog:search' %}" method="get" role="search">
@@ -177,7 +178,7 @@
   <div class="container">
     <div class="footer-grid">
       <div>
-        <a class="logo" href="{% url 'core:home' %}">{% include "partials/logo_mark.html" %}<span>BRICKHUB</span></a>
+        <a class="logo" href="{% url 'core:home' %}">{% include "partials/logo_mark.html" %}<span>BRICK<b>HUB</b></span></a>
         <p>Оригінальні набори LEGO, окремі деталі за номером і мініфігурки з доставкою по Україні.</p>
         {% if SHOP.PHONE %}<a href="tel:{{ SHOP.PHONE|cut:' ' }}">{{ SHOP.PHONE }}</a>{% endif %}
         {% if SHOP.EMAIL %}<a href="mailto:{{ SHOP.EMAIL }}">{{ SHOP.EMAIL }}</a>{% endif %}
@@ -222,7 +223,7 @@
 <div class="drawer-backdrop" data-backdrop></div>
 <aside class="drawer drawer-left" id="nav-drawer" aria-label="Меню" aria-hidden="true">
   <div class="drawer-head">
-    <a class="logo" href="{% url 'core:home' %}">{% include "partials/logo_mark.html" %}<span>BRICKHUB</span></a>
+    <a class="logo" href="{% url 'core:home' %}">{% include "partials/logo_mark.html" %}<span>BRICK<b>HUB</b></span></a>
     <button class="btn btn-icon btn-ghost" type="button" data-close-drawer aria-label="Закрити"><svg class="ic"><use href="#i-x"/></svg></button>
   </div>
   <div class="drawer-body mnav">

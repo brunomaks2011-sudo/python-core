@@ -46,7 +46,8 @@ class ProductPageStyleTests(TestCase):
         html = self.page(self.set)
         self.assertIn('class="pdx-avail is-in">Є в наявності', html)
         self.assertNotIn("37 шт", html)
-        self.assertNotIn('max="37"', html)
+        # the stepper stops at the stock, but the number itself is not printed
+        self.assertIn('max="37" data-limit="Більше немає в наявності"', html)
         Product.objects.filter(pk=self.set.pk).update(availability=Product.AVAILABILITY_LOW)
         self.assertIn('class="pdx-avail is-low">Закінчується', self.page(self.set))
         Inventory.objects.filter(product=self.set).update(quantity=0)

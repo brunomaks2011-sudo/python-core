@@ -48,15 +48,21 @@
     const syncExtra = () => extras.forEach((el) => { el.hidden = el.dataset.bulkExtra !== actionSel.value; });
     actionSel.addEventListener("change", syncExtra);
     syncExtra();
+    const allFound = bulk.querySelector("[data-bulk-all]");  // every product the filter finds, on all pages
     bulk.addEventListener("submit", (e) => {
       const action = actionSel.value;
-      const n = $$("input[name=ids]:checked").length;
+      const everything = allFound && allFound.checked;
+      const n = everything ? Number(allFound.dataset.bulkAll) : $$("input[name=ids]:checked").length;
       if (!action || !n) { e.preventDefault(); window.bhToast && window.bhToast("Оберіть товари та дію", "info"); return; }
+      if (everything && action === "delete") {
+        e.preventDefault(); window.bhToast && window.bhToast("Видаляти можна лише позначені товари", "info"); return;
+      }
       const extra = extras.find((el) => el.dataset.bulkExtra === action);
       if (extra && !extra.value) {
         e.preventDefault(); window.bhToast && window.bhToast(extra.getAttribute("aria-label") + ": оберіть значення", "info"); extra.focus(); return;
       }
       if (action === "delete" && !confirm(`Видалити ${n} товар(ів)?`)) e.preventDefault();
+      else if (everything && !confirm(`«${actionSel.selectedOptions[0].text}» для всіх знайдених товарів: ${n}?`)) e.preventDefault();
     });
   }
   const importBtn = $("[data-confirm-import]");
