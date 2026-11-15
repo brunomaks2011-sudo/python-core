@@ -55,7 +55,7 @@
           <div data-kind-section="minifig">{% include "partials/field.html" with field=form.bricklink_id %}</div>
         </div>
         <details style="margin-top:14px" {% if form.create_catalog.value %}open{% endif %}>
-          <summary class="muted" style="cursor:pointer;font-size:14px">Номера немає в каталозі?</summary>
+          <summary class="muted" style="cursor:pointer;font-size:14px">Свою назву для нового номера</summary>
           <div class="fields" style="margin-top:10px">
             <label class="check full">{{ form.create_catalog }}<span>{{ form.create_catalog.label }}<br><small class="muted">{{ form.create_catalog.help_text }}</small></span></label>
             {% include "partials/field.html" with field=form.official_name full=True %}

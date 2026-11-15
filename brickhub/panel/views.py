@@ -24,6 +24,7 @@ from catalog.models import (
     Review, StockNotification, Theme,
 )
 from catalog import bricklink as bl
+from catalog.item_info import new_minifig_info, new_part_info
 from catalog.images import photos_to_process, remove_photo_background, restore_photo_background
 from catalog.notifications import notify_back_in_stock
 from orders.models import Order, OrderItem
@@ -485,14 +486,21 @@ def catalog_lookup(request):
                              "theme": root.display_name if root else "",
                              "listings": list(Product.objects.filter(lego_set=s).values("pk", "sku", "condition"))})
     if kind == "part":
-        p = Part.objects.filter(design_id__iexact=q).select_related("category").first()
+        p = (Part.objects.filter(design_id__iexact=q).select_related("category").first()
+             or Part.objects.filter(bricklink_no__iexact=q).select_related("category").first())
         if not p:
             el = Element.objects.filter(element_id=q).select_related("part", "color").first()
             if el:
                 return JsonResponse({"found": True, "design_id": el.part.design_id, "name": el.part.name,
                                      "name_uk": el.part.name_uk, "color_id": el.color_id,
                                      "category_id": el.part.category_id})
-            return JsonResponse({"found": False, "message": "Деталі немає в каталозі"})
+            info = new_part_info(q)
+            note = {"bricklink": "нова деталь, назва й розділ з BrickLink",
+                    "base": f"нова деталь, розділ за основною деталлю {info.get('base', '')}",
+                    "none": "нова деталь — вкажіть назву й розділ"}[info["source"]]
+            return JsonResponse({"found": True, "new": True, "design_id": q, "name": info["name"], "name_uk": "",
+                                 "category_id": info["category"].pk if info["category"] else None, "note": note,
+                                 "separate": bool(info["category"] and info["category"].pk in separate_part_category_ids())})
         return JsonResponse({"found": True, "design_id": p.design_id, "name": p.name, "name_uk": p.name_uk,
                              "category_id": p.category_id,
                              "separate": p.category_id in separate_part_category_ids(),
@@ -501,7 +509,13 @@ def catalog_lookup(request):
     if kind == "minifig":
         m = Minifigure.objects.filter(Q(fig_number__iexact=q) | Q(bricklink_id__iexact=q)).first()
         if not m:
-            return JsonResponse({"found": False, "message": "Мініфігурки немає в каталозі"})
+            info = new_minifig_info(q)
+            if info["source"] == "none":
+                return JsonResponse({"found": True, "new": True, "name": q, "year": None, "theme_id": None,
+                                     "bricklink_id": q, "note": "нова мініфігурка — вкажіть назву"})
+            return JsonResponse({"found": True, "new": True, "name": info["name"], "year": None,
+                                 "theme_id": info["theme"].pk if info["theme"] else None, "bricklink_id": q,
+                                 "note": "нова мініфігурка, назва з BrickLink"})
         return JsonResponse({"found": True, "name": m.name, "year": m.year,
                              "theme_id": m.theme_id, "bricklink_id": m.bricklink_id})
     return JsonResponse({"found": False})

@@ -99,7 +99,7 @@
         const theme = $("#id_theme", pf);
         if (theme && !theme.value && d.theme_id) { theme.value = d.theme_id; theme.dispatchEvent(new Event("change")); }
       } else if (type === "part") {
-        out.textContent = `✓ ${d.design_id} — ${d.name}${d.name_uk ? " (" + d.name_uk + ")" : ""}` +
+        out.textContent = `✓ ${d.design_id} — ${d.name}${d.name_uk ? " (" + d.name_uk + ")" : ""}${d.note ? " · " + d.note : ""}` +
           (d.listings && d.listings.length ? ` · вже є: ${d.listings.length} лот(ів)` : "");
         if (title && !title.value) title.placeholder = d.name_uk || d.name;
         if (d.design_id && d.design_id !== q) $("#id_design_id", pf).value = d.design_id;
@@ -110,7 +110,7 @@
         const own = $("#id_standalone", pf);
         if (own && d.separate && location.pathname.endsWith("/novyi/")) own.checked = true;
       } else {
-        out.textContent = `✓ ${d.name}${d.year ? " · " + d.year : ""}`;
+        out.textContent = `✓ ${d.name}${d.year ? " · " + d.year : ""}${d.note ? " · " + d.note : ""}`;
         if (title && !title.value && kind.value === "minifig") title.placeholder = d.name;
         const theme = $("#id_theme", pf);
         if (theme && !theme.value && d.theme_id) { theme.value = d.theme_id; theme.dispatchEvent(new Event("change")); }

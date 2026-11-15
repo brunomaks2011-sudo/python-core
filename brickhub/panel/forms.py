@@ -9,6 +9,8 @@ from catalog.images import validate_image_file
 from catalog.models import Category, category_tree, Color, Element, LegoSet, Minifigure, Part, Product, Theme
 from orders.models import Order
 
+from catalog.item_info import new_minifig_info, new_part_info
+
 from .owners import owner_name
 
 
@@ -63,7 +65,8 @@ class ProductForm(forms.ModelForm):
                                  help_text="Необов'язково: офіційний номер елемента LEGO для цього кольору")
     create_catalog = forms.BooleanField(
         label="Номера немає в каталозі — створити запис вручну", required=False,
-        help_text="Лише для нових офіційних позицій, яких ще немає в довіднику. Вкажіть офіційну назву.")
+        help_text="Нову деталь чи мініфігурку сайт додасть сам: назву й розділ візьме з BrickLink. Тут можна "
+                  "вказати свою офіційну назву замість неї.")
     official_name = forms.CharField(label="Офіційна назва (для нового запису каталогу)", required=False,
                                     max_length=255)
     quantity = forms.IntegerField(label="Кількість на складі", min_value=0, initial=0)
@@ -164,13 +167,13 @@ class ProductForm(forms.ModelForm):
             if not design:
                 self.add_error("design_id", "Вкажіть Design ID")
             else:
-                self.part = Part.objects.filter(design_id__iexact=design).first()
+                self.part = (Part.objects.filter(design_id__iexact=design).first()
+                             or Part.objects.filter(bricklink_no__iexact=design).first())
                 if not self.part:
-                    if create and official:
-                        self.part = Part(design_id=design, name=official)
-                    else:
-                        self.add_error("design_id", "Такої деталі немає в каталозі. Перевірте номер або позначте "
-                                                    "«створити запис вручну».")
+                    # a number the catalogue does not know yet: name and section from BrickLink or its base part
+                    info = new_part_info(design)
+                    self.part = Part(design_id=design, name=(official if create and official else info["name"]),
+                                     category=info["category"])
             if not data.get("color"):
                 self.add_error("color", "Для деталі обов'язково вкажіть колір")
             el = (data.get("element_id") or "").strip()
@@ -194,11 +197,11 @@ class ProductForm(forms.ModelForm):
                 self.minifigure = (Minifigure.objects.filter(fig_number__iexact=num).first()
                                    or Minifigure.objects.filter(bricklink_id__iexact=num).first())
                 if not self.minifigure:
-                    if create and official:
-                        self.minifigure = Minifigure(fig_number=num, name=official)
-                    else:
-                        self.add_error("fig_number", "Такої мініфігурки немає в каталозі. Перевірте номер або "
-                                                     "позначте «створити запис вручну».")
+                    # a BrickLink number the catalogue does not know yet: name and series from BrickLink
+                    info = new_minifig_info(num)
+                    self.minifigure = Minifigure(fig_number=num, bricklink_id=num,
+                                                 name=(official if create and official else info["name"]),
+                                                 theme=info["theme"])
         elif kind in Product.WITH_FIGURE and (data.get("fig_number") or "").strip():
             num = data["fig_number"].strip()
             self.minifigure = (Minifigure.objects.filter(fig_number__iexact=num).first()
@@ -230,7 +233,7 @@ class ProductForm(forms.ModelForm):
             if bl_no == self.part.design_id:
                 bl_no = ""
             if not self.part.pk:
-                self.part.category = data.get("category")
+                self.part.category = data.get("category") or self.part.category
                 self.part.bricklink_no = bl_no
                 self.part.save()
             elif "bricklink_no" in self.data and bl_no != self.part.bricklink_no:
@@ -335,7 +338,8 @@ class ImportForm(forms.Form):
     file = forms.FileField(label="Файл CSV або Excel (.xlsx)")
     kind = forms.ChoiceField(label="Тип даних", choices=KINDS, initial="auto")
     allow_new_catalog = forms.BooleanField(
-        label="Дозволити нові записи каталогу (якщо є колонка official_name)", required=False)
+        label="Додати нові номера в каталог (назва й розділ — з BrickLink або колонки official_name)",
+        required=False)
 
     def clean_file(self):
         f = self.cleaned_data["file"]

@@ -20,6 +20,7 @@ from catalog.models import (
     Category, Color, Element, Inventory, InventoryMovement, LegoSet, Minifigure, Part, Product, ProductImage,
     StockNotification, Theme,
 )
+from catalog.item_info import LookupBudget, new_minifig_info, new_part_info
 from core.utils import make_slug
 
 # header aliases (lower-case) -> canonical field
@@ -341,6 +342,7 @@ def _import_parts(rows, report, user=None, allow_new_catalog=False):
                 "inventory"):
             existing[(prod.part_id, prod.color_id, prod.condition)] = prod
     uniq = _Unique()
+    lookups = LookupBudget()
     now = timezone.now()
     to_create, to_update, inv_updates, movements, images, new_elements = [], [], [], [], [], []
     restocked = set()
@@ -360,13 +362,14 @@ def _import_parts(rows, report, user=None, allow_new_catalog=False):
             if not design and not part:
                 raise ValueError("не вказано design_id")
             if part is None:
-                official = (row.get("official_name") or "").strip()
-                if allow_new_catalog and official:
-                    part = Part.objects.create(design_id=design, name=official, name_uk=row.get("name_uk", ""),
-                                               category=fallback_cat)
-                    parts[design.lower()] = part
-                else:
+                if not allow_new_catalog:
                     raise ValueError(f"деталі {design} немає в каталозі LEGO (перевірте номер)")
+                # a new number: name and section from BrickLink (the first few) or from its base part
+                official = (row.get("official_name") or "").strip()
+                info = new_part_info(design, online=lookups.take())
+                part = Part.objects.create(design_id=design, name=official or info["name"],
+                                           name_uk=row.get("name_uk", ""), category=info["category"] or fallback_cat)
+                parts[design.lower()] = part
             if color is None:
                 raise ValueError(f"колір «{row.get('color_id') or row.get('color') or '—'}» не знайдено")
             cond = _cond(row.get("condition"))
@@ -558,6 +561,7 @@ def _import_sets(rows, report, user=None, allow_new_catalog=False):
 
 def _import_minifigs(rows, report, user=None, allow_new_catalog=False):
     restocked = set()
+    lookups = LookupBudget()
     cat = Category.objects.filter(slug="minifihurky").first()
     for n, row in enumerate(rows, start=2):
         try:
@@ -567,11 +571,14 @@ def _import_minifigs(rows, report, user=None, allow_new_catalog=False):
             fig = (Minifigure.objects.filter(fig_number__iexact=number).first()
                    or Minifigure.objects.filter(bricklink_id__iexact=number).first())
             if fig is None:
-                official = (row.get("official_name") or "").strip()
-                if not (allow_new_catalog and official):
+                if not allow_new_catalog:
                     raise ValueError(f"мініфігурки {number} немає в каталозі (перевірте номер)")
-                fig = Minifigure.objects.create(fig_number=number, bricklink_id=number if not number.startswith(
-                    "fig-") else "", name=official, theme=Theme.objects.filter(slug=row.get("theme", "")).first())
+                official = (row.get("official_name") or "").strip()
+                info = new_minifig_info(number, online=lookups.take())
+                fig = Minifigure.objects.create(
+                    fig_number=number, bricklink_id=number if not number.startswith("fig-") else "",
+                    name=official or info["name"],
+                    theme=Theme.objects.filter(slug=row.get("theme", "")).first() or info["theme"])
             cond = _cond(row.get("condition"))
             prod = Product.objects.filter(kind="minifig", minifigure=fig, condition=cond).order_by("pk").first()
             is_new = prod is None
