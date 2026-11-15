@@ -30,6 +30,7 @@ urlpatterns = [
     path("import/", views.import_view, name="import"),
     path("import/shablon/<str:kind>.xlsx", views.import_template, name="import_template"),
     path("eksport/tovary.csv", views.export_products, name="export_products"),
+    path("eksport/tovary.xlsx", views.export_products_xlsx, name="export_products_xlsx"),
     path("dovidnyk/<str:key>/", views.crud_list, name="crud_list"),
     path("dovidnyk/<str:key>/novyi/", views.crud_edit, name="crud_new"),
     path("dovidnyk/<str:key>/<int:pk>/", views.crud_edit, name="crud_edit"),

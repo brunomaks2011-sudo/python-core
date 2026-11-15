@@ -779,6 +779,20 @@ def export_products(request):
     return resp
 
 
+@staff_required
+def export_products_xlsx(request):
+    from .excel_export import products_workbook
+
+    qs = Product.objects.all()
+    kind = request.GET.get("kind")
+    if kind:
+        qs = qs.filter(kind=kind)
+    resp = HttpResponse(products_workbook(qs),
+                        content_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    resp["Content-Disposition"] = f'attachment; filename="brickhub-tovary-{timezone.localdate()}.xlsx"'
+    return resp
+
+
 def _with_bom(stream):
     yield "\ufeff"
     yield from stream

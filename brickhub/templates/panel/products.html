@@ -2,7 +2,8 @@
 {% block title %}Товари{% endblock %}
 {% block heading %}Товари і склад <span class="muted" style="font-size:15px;font-family:var(--font);font-weight:500">{{ total|thousands }}</span>{% endblock %}
 {% block actions %}
-  <a class="btn" href="{% url 'panel:export_products' %}{% if kind %}?kind={{ kind }}{% endif %}"><svg class="ic"><use href="#i-download"/></svg>Експорт CSV</a>
+  <a class="btn" href="{% url 'panel:export_products_xlsx' %}{% if kind %}?kind={{ kind }}{% endif %}"><svg class="ic"><use href="#i-download"/></svg>Експорт Excel</a>
+  <a class="btn btn-ghost" href="{% url 'panel:export_products' %}{% if kind %}?kind={{ kind }}{% endif %}">CSV</a>
   <a class="btn" href="{% url 'panel:import' %}"><svg class="ic"><use href="#i-upload"/></svg>Імпорт</a>
   {% if photos_waiting %}<form method="post" action="{% url 'panel:photos_remove_backgrounds' %}" style="display:inline">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button class="btn" type="submit" title="Фото, додані раніше: прибрати однотонний фон"><svg class="ic"><use href="#i-spark"/></svg>Прибрати фон зі старих фото ({{ photos_waiting }})</button></form>{% endif %}
   <a class="btn btn-primary" href="{% url 'panel:product_new' %}{% if kind %}?kind={{ kind }}{% endif %}"><svg class="ic"><use href="#i-plus"/></svg>Додати товар</a>
