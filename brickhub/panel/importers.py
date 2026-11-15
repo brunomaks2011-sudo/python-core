@@ -337,7 +337,8 @@ def _import_parts(rows, report, user=None, allow_new_catalog=False):
     existing = {}
     part_pks = [p.pk for p in parts.values()] + [e.part_id for e in elements.values()]
     for i in range(0, len(part_pks), 900):
-        for prod in Product.objects.filter(kind="part", part_id__in=part_pks[i:i + 900]).select_related("inventory"):
+        for prod in Product.objects.filter(kind="part", standalone=False, part_id__in=part_pks[i:i + 900]).select_related(
+                "inventory"):
             existing[(prod.part_id, prod.color_id, prod.condition)] = prod
     uniq = _Unique()
     now = timezone.now()

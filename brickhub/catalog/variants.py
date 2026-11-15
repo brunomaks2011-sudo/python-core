@@ -7,10 +7,10 @@ from .models import Product
 
 def color_variants(product) -> list[dict]:
     """One entry per colour of the same part; empty when the part has a single colour."""
-    if product.kind != Product.KIND_PART or not product.part_id:
+    if product.kind != Product.KIND_PART or not product.part_id or product.standalone:
         return []
     items = list(
-        Product.objects.active().filter(kind=Product.KIND_PART, part_id=product.part_id)
+        Product.objects.active().filter(kind=Product.KIND_PART, part_id=product.part_id, standalone=False)
         .select_related("color", "inventory").order_by("color__sort_order", "color__name", "condition")
     )
     groups: dict[int, list] = {}
@@ -45,7 +45,9 @@ def condition_variants(product) -> list[dict]:
     """New / used listings of the same item; empty when only one condition is on sale."""
     qs = Product.objects.active().filter(kind=product.kind).select_related("inventory")
     if product.kind == Product.KIND_PART and product.part_id:
-        qs = qs.filter(kind=Product.KIND_PART, part_id=product.part_id, color_id=product.color_id)
+        if product.standalone:
+            return []
+        qs = qs.filter(kind=Product.KIND_PART, part_id=product.part_id, color_id=product.color_id, standalone=False)
     elif product.minifigure_id:
         qs = qs.filter(minifigure_id=product.minifigure_id)
     elif product.lego_set_id:

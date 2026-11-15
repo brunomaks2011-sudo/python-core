@@ -82,7 +82,7 @@ class ProductForm(forms.ModelForm):
         model = Product
         fields = ["kind", "condition", "title", "sku", "color", "category", "theme", "theme2", "price", "old_price",
                   "completeness", "description", "owner", "is_active", "is_featured", "is_bestseller", "is_new",
-                  "is_rare"]
+                  "is_rare", "standalone"]
         widgets = {"description": forms.Textarea(attrs={"rows": 6}), "sku": forms.TextInput(
             attrs={"placeholder": "згенерується автоматично"}), "category": SearchableSelect,
             "theme": SearchableSelect, "theme2": SearchableSelect}
@@ -175,8 +175,8 @@ class ProductForm(forms.ModelForm):
                 if clash:
                     self.add_error("element_id", f"Element ID {el} вже належить {clash.part.design_id} "
                                                  f"({clash.color.name})")
-            if self.part and self.part.pk and data.get("color"):
-                dup = Product.objects.filter(kind="part", part=self.part, color=data["color"],
+            if self.part and self.part.pk and data.get("color") and not data.get("standalone"):
+                dup = Product.objects.filter(standalone=False,kind="part", part=self.part, color=data["color"],
                                              condition=data.get("condition")).exclude(pk=self.instance.pk).first()
                 if dup:
                     self.add_error(None, f"Ця деталь у цьому кольорі та стані вже є: {dup.sku}. Змініть кількість "

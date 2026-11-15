@@ -197,6 +197,17 @@ class Category(models.Model):
         return [int(x) for x in self.rebrickable_part_categories.replace(" ", "").split(",") if x.isdigit()]
 
 
+# part categories whose parts usually carry a print, so one Design ID means many different items
+SEPARATE_PART_SECTIONS = ("chastyny-minifihurok", "chastyny-minilialok")
+
+
+def separate_part_category_ids() -> set[int]:
+    ids: set[int] = set()
+    for root in Category.objects.filter(slug__in=SEPARATE_PART_SECTIONS):
+        ids.update(root.descendant_ids())
+    return ids
+
+
 def category_tree(categories=None) -> list[tuple["Category", int, str]]:
     """[(category, depth, "Деталі LEGO › Цеглинки › Звичайні цеглинки")] depth-first, in menu order."""
     cats = list(Category.objects.all() if categories is None else categories)
@@ -413,6 +424,10 @@ class Product(models.Model):
     is_bestseller = models.BooleanField("Хіт продажів", default=False)
     is_new = models.BooleanField("Новинка", default=False)
     is_rare = models.BooleanField("Рідкісний / колекційний", default=False)
+    # printed minifigure parts share one Design ID (e.g. torso 973) but are different items, not colours
+    standalone = models.BooleanField(
+        "Окремий товар, не варіант кольору", default=False,
+        help_text="Для деталей з принтом (торси, голови, ноги): не показувати разом з іншими кольорами цієї деталі")
     # whose goods these are (the shop owner or a partner selling through the shop); used in sales statistics
     owner = models.ForeignKey(settings.AUTH_USER_MODEL, null=True, blank=True, on_delete=models.SET_NULL,
                               related_name="owned_products", verbose_name="Чий товар",
@@ -438,7 +453,8 @@ class Product(models.Model):
         ]
         constraints = [
             models.UniqueConstraint(
-                fields=["part", "color", "condition"], condition=Q(kind="part"), name="unique_part_color_condition"
+                fields=["part", "color", "condition"], condition=Q(kind="part", standalone=False),
+                name="unique_part_color_condition"
             ),
         ]
 

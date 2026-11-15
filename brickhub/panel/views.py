@@ -20,7 +20,7 @@ from django.views.decorators.http import require_POST
 
 from cart.models import PromoCode
 from catalog.models import (
-    Category, category_tree, Color, Element, Inventory, InventoryMovement, LegoSet, Minifigure, Part, Product, ProductImage,
+    Category, category_tree, separate_part_category_ids, Color, Element, Inventory, InventoryMovement, LegoSet, Minifigure, Part, Product, ProductImage,
     Review, StockNotification, Theme,
 )
 from catalog.images import photos_to_process, remove_photo_background, restore_photo_background
@@ -428,6 +428,7 @@ def catalog_lookup(request):
             return JsonResponse({"found": False, "message": "Деталі немає в каталозі"})
         return JsonResponse({"found": True, "design_id": p.design_id, "name": p.name, "name_uk": p.name_uk,
                              "category_id": p.category_id,
+                             "separate": p.category_id in separate_part_category_ids(),
                              "listings": list(Product.objects.filter(part=p).values("pk", "sku", "color__name",
                                                                                     "condition"))})
     if kind == "minifig":

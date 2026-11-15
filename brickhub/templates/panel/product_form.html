@@ -37,6 +37,7 @@
           </div>
           {% include "partials/field.html" with field=form.color %}
           {% include "partials/field.html" with field=form.element_id %}
+          <label class="check full">{{ form.standalone }}<span>{{ form.standalone.label }}<br><small class="muted">{{ form.standalone.help_text }}. Дайте товару свою назву, напр. «Торс поліцейського».</small></span></label>
         </div>
         <div class="fields" style="margin-top:14px" data-kind-section="minifig keychain book">
           <div class="field{% if form.fig_number.errors %} has-error{% endif %}">

@@ -106,6 +106,9 @@
         if (d.color_id) { const color = $("#id_color", pf); color.value = d.color_id; color.dispatchEvent(new Event("change")); }
         const cat = $("#id_category", pf);
         if (cat && !cat.value && d.category_id) { cat.value = d.category_id; cat.dispatchEvent(new Event("change")); }
+        // printed minifigure parts (torsos, heads ...) are separate items by default when adding a new one
+        const own = $("#id_standalone", pf);
+        if (own && d.separate && location.pathname.endsWith("/novyi/")) own.checked = true;
       } else {
         out.textContent = `✓ ${d.name}${d.year ? " · " + d.year : ""}`;
         if (title && !title.value && kind.value === "minifig") title.placeholder = d.name;
