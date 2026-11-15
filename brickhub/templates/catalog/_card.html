@@ -50,7 +50,7 @@
           {% if p.old_price and p.discount_percent %}<s>{{ p.old_price|uah }}</s>{% endif %}
           <b>{{ p.price|uah }}</b>{% if p.kind == "part" %}<span class="per">за шт.</span>{% endif %}
         </div>
-        {% if p.in_stock %}{% if p.low_stock %}<span class="stock low">Закінчується</span>{% else %}<span class="stock in">{% if p.kind == "part" %}{{ p.stock|thousands }} шт.{% else %}В наявності{% endif %}</span>{% endif %}{% else %}<span class="stock out">Немає в наявності</span>{% endif %}
+        <span class="stock {{ p.availability_state }}">{{ p.availability_label }}</span>
       </div>
       {% if p.in_stock %}
         <form method="post" action="{% url 'cart:add' %}" data-add-to-cart>{% csrf_token %}

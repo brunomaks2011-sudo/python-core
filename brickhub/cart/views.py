@@ -63,7 +63,7 @@ def add(request):
         return redirect(request.POST.get("next") or product.get_absolute_url())
     msg = f"Додано в кошик: {product.title}" + (f" — {added} шт." if added > 1 else "")
     if added < qty:
-        msg += f" (доступно лише {product.stock} шт.)"
+        msg += " (більше немає в наявності)"
     if _wants_json(request):
         return _cart_payload(request, msg)
     messages.success(request, msg)
@@ -183,7 +183,7 @@ def parse_quick_order(text: str, limit: int = 300) -> list[dict]:
             if not product.in_stock:
                 row["error"] = "Немає в наявності"
             elif product.stock < row["qty"]:
-                row["error"] = f"Доступно лише {product.stock} шт."
+                row["error"] = "Стільки немає в наявності"
         elif not row["error"]:
             row["error"] = "Не знайдено в асортименті"
         rows.append(row)

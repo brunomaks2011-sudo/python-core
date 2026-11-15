@@ -17,7 +17,7 @@
   {% if seo.canonical %}<meta property="og:url" content="{{ seo.canonical }}">{% endif %}
   {% if seo.image %}<meta property="og:image" content="{{ seo.image }}">{% endif %}
   <link rel="icon" href="{% static 'img/favicon.svg' %}" type="image/svg+xml">
-  <link rel="preload" href="{% static 'fonts/inter-cyrillic-wght-normal.woff2' %}" as="font" type="font/woff2" crossorigin>
+  <link rel="preload" href="{% static 'fonts/manrope-cyrillic-wght-normal.woff2' %}" as="font" type="font/woff2" crossorigin>
   <link rel="preload" href="{% static 'fonts/unbounded-cyrillic-wght-normal.woff2' %}" as="font" type="font/woff2" crossorigin>
   <link rel="stylesheet" href="{% static 'css/app.css' %}">
   {% for item in seo.jsonld %}<script type="application/ld+json">{{ item|jsonld }}</script>{% endfor %}

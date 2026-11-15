@@ -92,7 +92,7 @@ class ProductForm(forms.ModelForm):
         model = Product
         fields = ["kind", "condition", "title", "sku", "color", "category", "theme", "theme2", "price", "old_price",
                   "completeness", "description", "owner", "is_active", "is_featured", "is_bestseller", "is_new",
-                  "is_rare", "standalone"]
+                  "is_rare", "standalone", "availability"]
         widgets = {"description": forms.Textarea(attrs={"rows": 6}), "sku": forms.TextInput(
             attrs={"placeholder": "згенерується автоматично"}), "category": SearchableSelect,
             "theme": SearchableSelect, "theme2": SearchableSelect}
@@ -100,6 +100,7 @@ class ProductForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.fields["title"].required = False
+        self.fields["availability"].required = False
         self.fields["sku"].required = False
         self.fields["color"].queryset = Color.objects.filter(is_active=True).order_by("sort_order", "name")
         tree = category_tree()
@@ -140,6 +141,10 @@ class ProductForm(forms.ModelForm):
                 self.fields["contents"].initial = "\n".join(
                     f"{c.get('part', '')} | {c.get('name', '')} | {c.get('color', '')} | {c.get('qty', 1)}"
                     for c in (m.contents or []))
+
+    def clean_availability(self):
+        # not sent (an older form, a script): keep what the product had
+        return self.cleaned_data.get("availability") or self.instance.availability or Product.AVAILABILITY_IN
 
     def clean_sku(self):
         sku = (self.cleaned_data.get("sku") or "").strip().upper()
@@ -420,8 +425,8 @@ class CategoryForm(forms.ModelForm):
 class ThemeForm(forms.ModelForm):
     class Meta:
         model = Theme
-        fields = ["name", "title", "slug", "parent", "is_primary", "show_in_minifigs", "accent", "description",
-                  "sort_order"]
+        fields = ["name", "title", "slug", "parent", "logo", "is_primary", "show_in_minifigs", "accent",
+                  "description", "sort_order"]
         widgets = {"description": forms.Textarea(attrs={"rows": 3}), "accent": forms.TextInput(attrs={"type": "color"}),
                    "parent": SearchableSelect}
 

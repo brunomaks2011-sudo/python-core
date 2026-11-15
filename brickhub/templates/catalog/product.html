@@ -2,131 +2,156 @@
 {% block content %}
 {% with p=product s=product.lego_set %}
 <div class="container">
-  <div class="pd">
+  <div class="pdx">
     {% gallery_items p as images %}
-    <div class="gallery{% if images|length < 2 %} single{% endif %}" data-gallery>
+    <div class="pdx-gallery" data-gallery>
+      <div class="pdx-stage" data-gallery-stage>
+        {% with im=images.0 %}
+          <img src="{{ im.src }}" alt="{{ im.alt }}" width="720" height="720" fetchpriority="high" data-gallery-main {% if im.fallback %}data-fallback="{{ im.fallback }}"{% endif %}>
+        {% endwith %}
+        {% if images|length > 1 %}
+          <span class="pdx-count" aria-live="polite"><span data-gallery-index>1</span>/{{ images|length }}</span>
+          <button class="gallery-nav prev" type="button" data-gallery-step="-1" aria-label="Попереднє фото"><svg class="ic"><use href="#i-chev-left"/></svg></button>
+          <button class="gallery-nav next" type="button" data-gallery-step="1" aria-label="Наступне фото"><svg class="ic"><use href="#i-chev-right"/></svg></button>
+          <button class="pdx-all" type="button" data-gallery-all><svg class="ic"><use href="#i-images"/></svg>Усі фото</button>
+        {% endif %}
+      </div>
       {% if images|length > 1 %}
-        <div class="gallery-thumbs" role="tablist" aria-label="Фото">
+        <div class="gallery-thumbs pdx-thumbs" role="tablist" aria-label="Фото">
           {% for im in images %}
             <button type="button" class="{% if forloop.first %}is-active{% endif %}" data-src="{{ im.src }}" {% if im.fallback %}data-fallback="{{ im.fallback }}"{% endif %} aria-label="Фото {{ forloop.counter }}">
               <img src="{{ im.thumb }}" alt="" loading="lazy" {% if im.fallback %}data-fallback="{{ im.fallback }}"{% endif %}>
             </button>
           {% endfor %}
         </div>
+        <dialog class="pdx-viewer" data-gallery-dialog aria-label="Усі фото">
+          <div class="pdx-viewer-head"><b>{{ p.title }}</b><button type="button" class="pdx-viewer-close" data-gallery-close aria-label="Закрити"><svg class="ic"><use href="#i-x"/></svg></button></div>
+          <div class="pdx-viewer-list">
+            {% for im in images %}<img src="{{ im.src }}" alt="{{ im.alt }}" loading="lazy" {% if im.fallback %}data-fallback="{{ im.fallback }}"{% endif %}>{% endfor %}
+          </div>
+        </dialog>
       {% endif %}
-      <div class="gallery-main">
-        {% with im=images.0 %}
-          <img src="{{ im.src }}" alt="{{ im.alt }}" width="720" height="720" fetchpriority="high" data-gallery-main {% if im.fallback %}data-fallback="{{ im.fallback }}"{% endif %}>
-        {% endwith %}
-        {% if images|length > 1 %}
-          <button class="gallery-nav prev" type="button" data-gallery-step="-1" aria-label="Попереднє фото"><svg class="ic"><use href="#i-chev-left"/></svg></button>
-          <button class="gallery-nav next" type="button" data-gallery-step="1" aria-label="Наступне фото"><svg class="ic"><use href="#i-chev-right"/></svg></button>
-        {% endif %}
-        <div class="card-badges">
-          {% if p.discount_percent %}<span class="badge badge-red">−{{ p.discount_percent }}%</span>{% endif %}
-          {% if p.is_new %}<span class="badge badge-yellow">Новинка</span>{% endif %}
-          {% if p.condition == "used" %}<span class="badge badge-dark">Б/у</span>{% endif %}
-          {% if p.is_rare %}<span class="badge badge-blue">Рідкісний</span>{% endif %}
-        </div>
-      </div>
     </div>
 
-    <div class="pd-info">
-      <div class="pd-kicker">
-        {% for t in p.themes %}<a class="chip" href="{{ t.get_absolute_url }}" style="height:30px"><span class="dot" style="--c:{{ t.accent }}"></span>{{ t.display_name }}</a>{% endfor %}
-        {% if p.category_id %}<a class="chip" href="{{ p.category.get_absolute_url }}" style="height:30px">{{ p.category.name }}</a>{% endif %}
-        <span class="badge">{{ p.get_kind_display }}</span>
-        <span class="badge {% if p.condition == 'new' %}badge-green{% else %}badge-orange{% endif %}">{{ p.get_condition_display }}</span>
-      </div>
-      <h1>{{ p.title }}</h1>
-      <div class="pd-ids">
-        {% if p.official_number %}<span class="idpill"><span>{{ p.number_label }}</span><b>{{ p.official_number }}</b><button type="button" data-copy="{{ p.official_number }}" aria-label="Копіювати номер"><svg class="ic"><use href="#i-copy"/></svg></button></span>{% endif %}
-        {% if element_id %}<span class="idpill"><span>Element ID</span><b>{{ element_id }}</b><button type="button" data-copy="{{ element_id }}" aria-label="Копіювати Element ID"><svg class="ic"><use href="#i-copy"/></svg></button></span>{% endif %}
-        {% if p.kind == "part" and p.lego_design_id and p.bricklink_number %}<span class="idpill"><span>BrickLink</span><b>{{ p.bricklink_number }}</b><button type="button" data-copy="{{ p.bricklink_number }}" aria-label="Копіювати номер BrickLink"><svg class="ic"><use href="#i-copy"/></svg></button></span>{% endif %}
-        {% if p.color_id %}<span class="idpill"><span class="swatch{% if p.color.is_transparent %} is-trans{% endif %}" style="--c:{{ p.color.hex }}"></span><span>Колір</span><b>{{ p.color.code }}</b></span>{% endif %}
-        <span class="idpill"><span>Артикул</span><b>{{ p.sku }}</b><button type="button" data-copy="{{ p.sku }}" aria-label="Копіювати артикул"><svg class="ic"><use href="#i-copy"/></svg></button></span>
-      </div>
-      {% if p.reviews_count %}<a class="rating-line" href="#reviews" style="margin:-6px 0 14px;font-size:14px"><span class="stars" style="font-size:16px">{{ p.rating_avg|stars }}</span>{{ p.rating_avg|floatformat:1 }} · {{ p.reviews_count }} {{ p.reviews_count|plural:"відгук,відгуки,відгуків" }}</a>{% endif %}
-
-      <div class="buybox">
-        {% if color_variants %}
-          <div class="variant-picker" id="kolir">
-            <div class="vp-head">
-              <span class="vp-label">Колір</span>
-              <a class="vp-all" href="{% url 'catalog:part_design' p.part.design_id %}">{{ color_variants|length }} {{ color_variants|length|plural:"колір,кольори,кольорів" }} · таблиця</a>
-            </div>
-            <div class="vp-select">
-              <span class="swatch{% if p.color.is_transparent %} is-trans{% endif %}" style="--c:{{ p.color.hex }}" aria-hidden="true"></span>
-              <select data-variant-select aria-label="Оберіть колір">
-                {% for v in color_variants %}
-                  <option value="{{ v.url }}" {% if v.current %}selected{% endif %}>{{ v.name }}{% if v.official and v.official != v.name %} ({{ v.official }}){% endif %}{% if not v.in_stock %} — немає в наявності{% endif %}</option>
-                {% endfor %}
-              </select>
-            </div>
-            <div class="vp-swatches" role="list">
-              {% for v in color_variants %}
-                <a role="listitem" href="{{ v.url }}" class="vp-swatch{% if v.trans %} is-trans{% endif %}{% if v.current %} is-active{% endif %}{% if not v.in_stock %} is-out{% endif %}" style="--c:{{ v.hex }}"
-                   title="{{ v.name }} · {{ v.price|uah }}{% if not v.in_stock %} · немає в наявності{% endif %}"
-                   aria-label="{{ v.name }}{% if not v.in_stock %}, немає в наявності{% endif %}"{% if v.current %} aria-current="true"{% endif %}></a>
-              {% endfor %}
-            </div>
-          </div>
-        {% endif %}
-        {% if condition_variants %}
-          <div class="variant-picker">
-            <div class="vp-head"><span class="vp-label">Стан</span></div>
-            <div class="vp-cond">
-              {% for v in condition_variants %}
-                <a href="{{ v.url }}" class="{% if v.current %}is-active{% endif %}{% if not v.in_stock %} is-out{% endif %}"{% if v.current %} aria-current="true"{% endif %}>
-                  <b>{{ v.label }}</b><span>{% if v.in_stock %}{{ v.price|uah }}{% else %}немає{% endif %}</span>
-                </a>
-              {% endfor %}
-            </div>
-          </div>
-        {% endif %}
-        <div class="price{% if p.discount_percent %} is-sale{% endif %}">
-          {% if p.discount_percent %}<s>{{ p.old_price|uah }}</s>{% endif %}
-          <b>{{ p.price|uah }}</b>{% if p.kind == "part" %}<span class="per">ціна за 1 шт.</span>{% endif %}
+    <div class="pdx-info">
+      {% if p.is_new or p.is_rare or p.is_bestseller or p.discount_percent or p.condition == "used" %}
+        <div class="pdx-flags">
+          {% if p.discount_percent %}<span class="pdx-flag is-sale">−{{ p.discount_percent }}%</span>{% endif %}
+          {% if p.condition == "used" %}<span class="pdx-flag is-used">Б/у</span>{% endif %}
+          {% if p.is_new %}<span class="pdx-flag">Новинка</span>{% endif %}
+          {% if p.is_bestseller %}<span class="pdx-flag">Хіт продажів</span>{% endif %}
+          {% if p.is_rare %}<span class="pdx-flag">Рідкісний</span>{% endif %}
         </div>
-        <div class="stock-line">
-          {% if p.in_stock %}
-            {% if p.low_stock %}<span class="stock low">Закінчується — залишилось {{ p.stock }} шт.</span>{% else %}<span class="stock in">В наявності{% if p.kind == "part" or p.stock > 3 %}: {{ p.stock|thousands }} шт.{% endif %}</span>{% endif %}
-            <span class="muted">· Відправка 1–2 дні</span>
-          {% else %}<span class="stock out">Немає в наявності</span>{% endif %}
-        </div>
-        {% if p.completeness %}<div class="alert" style="margin-top:12px"><svg class="ic"><use href="#i-info"/></svg>{{ p.completeness }}</div>{% endif %}
-
-        {% if p.in_stock %}
-          <form method="post" action="{% url 'cart:add' %}" data-add-to-cart class="buy-row">{% csrf_token %}
-            <input type="hidden" name="product" value="{{ p.pk }}">
-            <div class="stepper" data-stepper>
-              <button type="button" data-step="-1" aria-label="Менше">−</button>
-              <input type="number" name="quantity" value="1" min="1" max="{{ p.stock }}" inputmode="numeric" aria-label="Кількість">
-              <button type="button" data-step="1" aria-label="Більше">+</button>
-            </div>
-            <button class="btn btn-lg btn-primary" type="submit"><svg class="ic"><use href="#i-cart"/></svg><span class="btn-label">Додати в кошик</span></button>
-          </form>
-          {% if p.kind == "part" %}<p class="muted" style="font-size:13px;margin:10px 0 0">Сума за кількість рахується в кошику. Потрібно кілька кольорів? <a class="link" href="{% url 'catalog:part_design' p.part.design_id %}">Таблиця кольорів деталі</a>.</p>{% endif %}
+      {% endif %}
+      <div class="pdx-meta">
+        {% if p.kind == "part" %}
+          {% if p.category_id %}<a class="pdx-series" href="{{ p.category.get_absolute_url }}">{{ p.category.name }}</a>{% endif %}
         {% else %}
-          <div class="notify-box" id="notify">
-            <b>Повідомити про надходження</b>
-            <p class="muted" style="margin:4px 0 0;font-size:14px">Напишемо на пошту, щойно товар з'явиться на складі.</p>
-            <form method="post" action="{% url 'catalog:stock_notify' p.pk %}" data-notify>{% csrf_token %}
-              <input type="email" name="email" required placeholder="Ваш e-mail" value="{% if user.is_authenticated %}{{ user.email }}{% endif %}" autocomplete="email" aria-label="E-mail">
-              <button class="btn btn-dark" type="submit"><svg class="ic"><use href="#i-bell"/></svg>Повідомити</button>
-            </form>
-          </div>
+          {% for t in p.themes %}<a class="pdx-series" href="{{ t.get_absolute_url }}">{{ t.display_name }}</a>{% empty %}{% if p.category_id %}<a class="pdx-series" href="{{ p.category.get_absolute_url }}">{{ p.category.name }}</a>{% endif %}{% endfor %}
         {% endif %}
-        <div class="buy-row" style="margin-top:10px">
-          <form method="post" action="{% url 'catalog:toggle_favorite' p.pk %}" data-toggle="fav">{% csrf_token %}
-            <input type="hidden" name="next" value="{{ request.get_full_path }}">
-            <button class="btn{% if is_favorite %} is-active{% endif %}" type="submit" data-fav="{{ p.pk }}" aria-pressed="{% if is_favorite %}true{% else %}false{% endif %}"><svg class="ic ic-fill"><use href="#i-heart"/></svg><span data-label-on="В обраному" data-label-off="Додати в обране">{% if is_favorite %}В обраному{% else %}Додати в обране{% endif %}</span></button>
-          </form>
-          <form method="post" action="{% url 'catalog:toggle_compare' p.pk %}" data-toggle="compare">{% csrf_token %}
-            <input type="hidden" name="next" value="{{ request.get_full_path }}">
-            <button class="btn{% if in_compare %} is-active{% endif %}" type="submit" data-compare="{{ p.pk }}" aria-pressed="{% if in_compare %}true{% else %}false{% endif %}"><svg class="ic"><use href="#i-compare"/></svg><span data-label-on="У порівнянні" data-label-off="Порівняти">{% if in_compare %}У порівнянні{% else %}Порівняти{% endif %}</span></button>
+        {% if p.official_number %}<span class="pdx-number">#{{ p.official_number }}</span>{% endif %}
+      </div>
+      <h1 class="pdx-title">{{ p.title }}</h1>
+      {% if p.reviews_count %}<a class="rating-line pdx-rating" href="#reviews"><span class="stars">{{ p.rating_avg|stars }}</span>{{ p.rating_avg|floatformat:1 }} · {{ p.reviews_count }} {{ p.reviews_count|plural:"відгук,відгуки,відгуків" }}</a>{% endif %}
+
+      {% if p.kind == "part" %}
+        <div class="pd-ids">
+          {% if p.official_number %}<span class="idpill"><span>{{ p.number_label }}</span><b>{{ p.official_number }}</b><button type="button" data-copy="{{ p.official_number }}" aria-label="Копіювати номер"><svg class="ic"><use href="#i-copy"/></svg></button></span>{% endif %}
+          {% if element_id %}<span class="idpill"><span>Element ID</span><b>{{ element_id }}</b><button type="button" data-copy="{{ element_id }}" aria-label="Копіювати Element ID"><svg class="ic"><use href="#i-copy"/></svg></button></span>{% endif %}
+          {% if p.lego_design_id and p.bricklink_number %}<span class="idpill"><span>BrickLink</span><b>{{ p.bricklink_number }}</b><button type="button" data-copy="{{ p.bricklink_number }}" aria-label="Копіювати номер BrickLink"><svg class="ic"><use href="#i-copy"/></svg></button></span>{% endif %}
+        </div>
+      {% endif %}
+
+      {% if color_variants %}
+        <div class="variant-picker" id="kolir">
+          <div class="vp-head">
+            <span class="vp-label">Колір</span>
+            <a class="vp-all" href="{% url 'catalog:part_design' p.part.design_id %}">{{ color_variants|length }} {{ color_variants|length|plural:"колір,кольори,кольорів" }} · таблиця</a>
+          </div>
+          <div class="vp-select">
+            <span class="swatch{% if p.color.is_transparent %} is-trans{% endif %}" style="--c:{{ p.color.hex }}" aria-hidden="true"></span>
+            <select data-variant-select aria-label="Оберіть колір">
+              {% for v in color_variants %}
+                <option value="{{ v.url }}" {% if v.current %}selected{% endif %}>{{ v.name }}{% if v.official and v.official != v.name %} ({{ v.official }}){% endif %}{% if not v.in_stock %} — немає в наявності{% endif %}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="vp-swatches" role="list">
+            {% for v in color_variants %}
+              <a role="listitem" href="{{ v.url }}" class="vp-swatch{% if v.trans %} is-trans{% endif %}{% if v.current %} is-active{% endif %}{% if not v.in_stock %} is-out{% endif %}" style="--c:{{ v.hex }}"
+                 title="{{ v.name }} · {{ v.price|uah }}{% if not v.in_stock %} · немає в наявності{% endif %}"
+                 aria-label="{{ v.name }}{% if not v.in_stock %}, немає в наявності{% endif %}"{% if v.current %} aria-current="true"{% endif %}></a>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+      {% if condition_variants %}
+        <div class="variant-picker">
+          <div class="vp-head"><span class="vp-label">Стан</span></div>
+          <div class="vp-cond">
+            {% for v in condition_variants %}
+              <a href="{{ v.url }}" class="{% if v.current %}is-active{% endif %}{% if not v.in_stock %} is-out{% endif %}"{% if v.current %} aria-current="true"{% endif %}>
+                <b>{{ v.label }}</b><span>{% if v.in_stock %}{{ v.price|uah }}{% else %}немає{% endif %}</span>
+              </a>
+            {% endfor %}
+          </div>
+        </div>
+      {% endif %}
+
+      <div class="pdx-price{% if p.discount_percent %} is-sale{% endif %}">
+        <b>{{ p.price|uah }}</b>{% if p.discount_percent %}<s>{{ p.old_price|uah }}</s>{% endif %}{% if p.kind == "part" %}<span>за 1 шт.</span>{% endif %}
+      </div>
+      <p class="pdx-avail is-{{ p.availability_state }}">{{ p.availability_label }}</p>
+      {% if p.completeness %}<div class="alert" style="margin-top:12px"><svg class="ic"><use href="#i-info"/></svg>{{ p.completeness }}</div>{% endif %}
+
+      {% if p.in_stock %}
+        <form method="post" action="{% url 'cart:add' %}" data-add-to-cart id="buy-form" class="pdx-buy">{% csrf_token %}
+          <input type="hidden" name="product" value="{{ p.pk }}">
+          <div class="pdx-qty" data-stepper>
+            <button type="button" data-step="-1" aria-label="Менше"><svg class="ic"><use href="#i-minus"/></svg></button>
+            <input type="number" name="quantity" value="1" min="1" inputmode="numeric" aria-label="Кількість">
+            <button type="button" data-step="1" aria-label="Більше"><svg class="ic"><use href="#i-plus"/></svg></button>
+          </div>
+        </form>
+      {% else %}
+        <div class="notify-box" id="notify">
+          <b>Повідомити про надходження</b>
+          <p class="muted" style="margin:4px 0 0;font-size:14px">Напишемо на пошту, щойно товар з'явиться на складі.</p>
+          <form method="post" action="{% url 'catalog:stock_notify' p.pk %}" data-notify>{% csrf_token %}
+            <input type="email" name="email" required placeholder="Ваш e-mail" value="{% if user.is_authenticated %}{{ user.email }}{% endif %}" autocomplete="email" aria-label="E-mail">
+            <button class="btn btn-dark" type="submit"><svg class="ic"><use href="#i-bell"/></svg>Повідомити</button>
           </form>
         </div>
+      {% endif %}
+      <div class="pdx-actions">
+        {% if p.in_stock %}<button class="pdx-cart" type="submit" form="buy-form"><svg class="ic"><use href="#i-shopbag"/></svg><span class="btn-label">Додати в кошик</span></button>{% endif %}
+        <form method="post" action="{% url 'catalog:toggle_favorite' p.pk %}" data-toggle="fav">{% csrf_token %}
+          <input type="hidden" name="next" value="{{ request.get_full_path }}">
+          <button class="pdx-heart{% if is_favorite %} is-active{% endif %}" type="submit" data-fav="{{ p.pk }}" aria-pressed="{% if is_favorite %}true{% else %}false{% endif %}" aria-label="Додати в обране"><svg class="ic ic-fill"><use href="#i-heart"/></svg></button>
+        </form>
+      </div>
+
+      {% if p.kind != "part" %}{% with brand=p.theme.brand %}
+        {% if brand or s.age_min or s.pieces or p.minifigure.num_parts %}
+          <div class="pdx-facts">
+            {% if brand %}
+              <a class="pdx-fact pdx-brand" href="{{ brand.get_absolute_url }}" aria-label="Серія {{ brand.display_name }}">
+                {% if brand.logo %}<img src="{{ brand.logo.url }}" alt="{{ brand.display_name }}" loading="lazy">{% else %}<span class="pdx-brand-name" style="--c:{{ brand.accent }}">{{ brand.short_name }}</span>{% endif %}
+              </a>
+            {% endif %}
+            {% if s.age_min %}<div class="pdx-fact"><b>{{ s.age_min }}+</b><span>Вік</span></div>{% endif %}
+            {% if s.pieces and p.kind == "set" %}<div class="pdx-fact"><b>{{ s.pieces|thousands }}</b><span>Деталей</span></div>
+            {% elif p.kind == "minifig" and p.minifigure.num_parts %}<div class="pdx-fact"><b>{{ p.minifigure.num_parts }}</b><span>Деталей</span></div>{% endif %}
+          </div>
+        {% endif %}
+      {% endwith %}{% endif %}
+
+      <div class="pdx-extra">
+        <form method="post" action="{% url 'catalog:toggle_compare' p.pk %}" data-toggle="compare">{% csrf_token %}
+          <input type="hidden" name="next" value="{{ request.get_full_path }}">
+          <button class="pdx-link{% if in_compare %} is-active{% endif %}" type="submit" data-compare="{{ p.pk }}" aria-pressed="{% if in_compare %}true{% else %}false{% endif %}"><svg class="ic"><use href="#i-compare"/></svg><span data-label-on="У порівнянні" data-label-off="Порівняти">{% if in_compare %}У порівнянні{% else %}Порівняти{% endif %}</span></button>
+        </form>
+        {% if p.kind == "part" %}<a class="pdx-link" href="{% url 'catalog:part_design' p.part.design_id %}"><svg class="ic"><use href="#i-palette"/></svg>Таблиця кольорів</a>{% endif %}
       </div>
 
       <div class="perks">

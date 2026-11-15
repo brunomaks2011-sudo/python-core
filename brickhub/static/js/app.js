@@ -204,7 +204,8 @@
     const form = e.target;
     if (form.matches("[data-add-to-cart]")) {
       e.preventDefault();
-      const btn = form.querySelector("[type=submit]");
+      // the product page's button sits outside its form (form="buy-form")
+      const btn = e.submitter || form.querySelector("[type=submit]") || (form.id && $(`[form="${form.id}"]`));
       btn && btn.classList.add("is-loading");
       try {
         const { ok, data } = await post(form);
@@ -274,7 +275,7 @@
     const inp = e.target;
     if (inp.matches("[data-stepper] input")) {
       const min = Number(inp.min || 1), max = Number(inp.max || 999999);
-      if (Number(inp.value) > max) { inp.value = max; toast(`Доступно лише ${max} шт.`, "info"); }
+      if (Number(inp.value) > max) { inp.value = max; toast("Більше немає в наявності", "info"); }
       if (Number(inp.value) < min || !inp.value) inp.value = min;
       const auto = inp.closest("[data-auto-update]");
       if (auto) { clearTimeout(auto._t); auto._t = setTimeout(() => auto.requestSubmit(), 450); }
@@ -297,23 +298,44 @@
   /* ---------- gallery ---------- */
   $$("[data-gallery]").forEach((g) => {
     const main = g.querySelector("[data-gallery-main]");
-    const thumbs = () => Array.from(g.querySelectorAll("[data-src]"));
+    const index = g.querySelector("[data-gallery-index]");
+    const dialog = g.querySelector("[data-gallery-dialog]");
+    const thumbs = () => Array.from(g.querySelectorAll(".gallery-thumbs [data-src]"));
     const show = (t) => {
       if (!t || !main) return;
-      thumbs().forEach((x) => x.classList.toggle("is-active", x === t));
+      const list = thumbs();
+      list.forEach((x) => x.classList.toggle("is-active", x === t));
+      if (index) index.textContent = String(list.indexOf(t) + 1);
       if (t.dataset.fallback) main.dataset.fallback = t.dataset.fallback; else delete main.dataset.fallback;
       main.src = t.dataset.src;
     };
+    const step = (by) => {
+      const list = thumbs();
+      if (list.length < 2) return;
+      const i = list.findIndex((x) => x.classList.contains("is-active"));
+      show(list[(i + by + list.length) % list.length]);
+    };
     g.addEventListener("click", (e) => {
-      const step = e.target.closest("[data-gallery-step]");
-      if (step) {
-        const list = thumbs();
-        const i = list.findIndex((x) => x.classList.contains("is-active"));
-        show(list[(i + Number(step.dataset.galleryStep) + list.length) % list.length]);
-        return;
-      }
-      show(e.target.closest("[data-src]"));
+      const nav = e.target.closest("[data-gallery-step]");
+      if (nav) { step(Number(nav.dataset.galleryStep)); return; }
+      if (e.target.closest("[data-gallery-all]") && dialog) { dialog.showModal(); return; }
+      if (e.target.closest("[data-gallery-close]") && dialog) { dialog.close(); return; }
+      show(e.target.closest(".gallery-thumbs [data-src]"));
     });
+    // a click on the dimmed backdrop closes the photo viewer
+    if (dialog) dialog.addEventListener("click", (e) => { if (e.target === dialog) dialog.close(); });
+    // swipe between photos on touch screens
+    const stage = g.querySelector("[data-gallery-stage]");
+    if (stage) {
+      let x0 = null, y0 = null;
+      stage.addEventListener("touchstart", (e) => { x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; }, { passive: true });
+      stage.addEventListener("touchend", (e) => {
+        if (x0 === null) return;
+        const dx = e.changedTouches[0].clientX - x0, dy = e.changedTouches[0].clientY - y0;
+        if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy) * 1.5) step(dx < 0 ? 1 : -1);
+        x0 = y0 = null;
+      }, { passive: true });
+    }
   });
 
   /* ---------- colour / variant picker: each colour is its own listing ---------- */

@@ -10,6 +10,7 @@ Two layers, as on BrickLink:
 from __future__ import annotations
 
 import re
+from pathlib import Path
 
 from decimal import Decimal
 
@@ -87,6 +88,14 @@ class Color(models.Model):
         super().save(*args, **kwargs)
 
 
+def theme_logo_path(instance, filename: str) -> str:
+    """themes/<slug>-<random>.<ext>: a new name for every upload, so browsers may cache logos for long."""
+    import uuid
+
+    ext = (Path(filename).suffix or ".png").lower()
+    return f"themes/{instance.slug or 'seriia'}-{uuid.uuid4().hex[:8]}{ext}"
+
+
 class Theme(models.Model):
     """A LEGO series (City, Technic, Star Wars ...)."""
 
@@ -99,6 +108,9 @@ class Theme(models.Model):
     is_primary = models.BooleanField("Показувати в меню наборів", default=False)
     show_in_minifigs = models.BooleanField("Показувати в меню мініфігурок", default=False)
     accent = models.CharField("Колір акценту", max_length=7, default="#E3000B")
+    logo = models.ImageField("Логотип серії", upload_to=theme_logo_path, blank=True,
+                             help_text="PNG або WebP з прозорим фоном. Показується на сторінці товару під кнопкою "
+                                       "«Додати в кошик»")
     description = models.TextField("Опис", blank=True)
     sort_order = models.PositiveIntegerField("Порядок", default=100)
 
@@ -117,6 +129,20 @@ class Theme(models.Model):
     @property
     def short_name(self) -> str:
         return self.display_name.removeprefix("LEGO ").strip()
+
+    @property
+    def brand(self) -> "Theme":
+        """The series shown under «Додати в кошик»: the nearest one up the tree with a logo, otherwise the main
+        series (a sub-series such as «Star Wars Episode 1» shows «LEGO Star Wars»)."""
+        node, seen, main = self, set(), None
+        while node is not None and node.pk not in seen:
+            seen.add(node.pk)
+            if node.logo:
+                return node
+            if main is None and (node.is_primary or node.parent_id is None):
+                main = node
+            node = node.parent
+        return main or self
 
     def get_absolute_url(self):
         return reverse("catalog:theme", args=[self.slug])
@@ -457,6 +483,13 @@ class Product(models.Model):
     is_bestseller = models.BooleanField("Хіт продажів", default=False)
     is_new = models.BooleanField("Новинка", default=False)
     is_rare = models.BooleanField("Рідкісний / колекційний", default=False)
+    # what buyers see while the product is in stock; the exact quantity is never shown on the site
+    AVAILABILITY_IN, AVAILABILITY_LOW = "in_stock", "low"
+    AVAILABILITY = [(AVAILABILITY_IN, "Є в наявності"), (AVAILABILITY_LOW, "Закінчується")]
+    availability = models.CharField(
+        "Наявність на сайті", max_length=10, choices=AVAILABILITY, default=AVAILABILITY_IN,
+        help_text="Що бачать покупці, поки товар є на складі. Точна кількість на сайті не показується; "
+                  "коли залишок 0 — «Немає в наявності»")
     # printed minifigure parts share one Design ID (e.g. torso 973) but are different items, not colours
     standalone = models.BooleanField(
         "Окремий товар, не варіант кольору", default=False,
@@ -570,8 +603,16 @@ class Product(models.Model):
 
     @property
     def low_stock(self) -> bool:
-        threshold = settings.SHOP["LOW_STOCK_THRESHOLD"]
-        return 0 < self.stock <= threshold and self.kind != self.KIND_PART
+        """Marked «Закінчується» in the panel (the shop does not tell buyers how many are left)."""
+        return self.in_stock and self.availability == self.AVAILABILITY_LOW
+
+    @property
+    def availability_state(self) -> str:
+        return "out" if not self.in_stock else ("low" if self.low_stock else "in")
+
+    @property
+    def availability_label(self) -> str:
+        return {"out": "Немає в наявності", "low": "Закінчується", "in": "Є в наявності"}[self.availability_state]
 
     @property
     def discount_percent(self) -> int:

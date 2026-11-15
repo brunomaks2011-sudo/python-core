@@ -23,8 +23,8 @@ urlpatterns = [
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 elif settings.SERVE_MEDIA and settings.MEDIA_URL.startswith("/"):
-    # only product photos live in MEDIA_ROOT; nothing else is reachable through this route
-    urlpatterns += [re_path(rf"^{settings.MEDIA_URL.strip('/')}/(?P<path>products/.+)$", media_file)]
+    # only product photos and series logos live in MEDIA_ROOT; nothing else is reachable through this route
+    urlpatterns += [re_path(rf"^{settings.MEDIA_URL.strip('/')}/(?P<path>(?:products|themes)/.+)$", media_file)]
 
 handler404 = "core.views.error_404"
 handler500 = "core.views.error_500"

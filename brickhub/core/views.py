@@ -124,9 +124,9 @@ def error_500(request):
 
 @require_safe
 def media_file(request, path):
-    """An uploaded product photo, for servers that do not serve /media/ themselves (settings.SERVE_MEDIA)."""
-    if posixpath.normpath(path) != path or not path.startswith("products/"):
-        raise Http404  # no "..", "//" or anything outside the product photos folder
+    """An uploaded product photo or series logo, for servers that do not serve /media/ themselves."""
+    if posixpath.normpath(path) != path or not path.startswith(("products/", "themes/")):
+        raise Http404  # no "..", "//" or anything outside the photo and logo folders
     response = serve(request, path, document_root=settings.MEDIA_ROOT)
     # every upload gets a new file name, so browsers may keep photos for a long time
     response["Cache-Control"] = "public, max-age=2592000"

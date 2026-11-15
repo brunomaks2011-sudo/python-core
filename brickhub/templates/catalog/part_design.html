@@ -27,13 +27,13 @@
         <td class="mono">{{ lot.color.code }}</td>
         <td class="mono">{{ lot.el_id|default:"—" }}</td>
         <td><span class="badge {% if lot.condition == 'new' %}badge-green{% else %}badge-orange{% endif %}">{{ lot.get_condition_display }}</span></td>
-        <td>{% if lot.in_stock %}<span class="stock in">{{ lot.stock|thousands }} шт.</span>{% else %}<span class="stock out">Немає</span>{% endif %}</td>
+        <td><span class="stock {{ lot.availability_state }}">{{ lot.availability_label }}</span></td>
         <td><b>{{ lot.price|uah }}</b></td>
         <td class="lot-buy-c">
           {% if lot.in_stock %}
             <form method="post" action="{% url 'cart:add' %}" data-add-to-cart class="lot-buy">{% csrf_token %}
               <input type="hidden" name="product" value="{{ lot.pk }}">
-              <div class="stepper sm" data-stepper><button type="button" data-step="-1" aria-label="Менше">−</button><input type="number" name="quantity" value="1" min="1" max="{{ lot.stock }}" inputmode="numeric" aria-label="Кількість"><button type="button" data-step="1" aria-label="Більше">+</button></div>
+              <div class="stepper sm" data-stepper><button type="button" data-step="-1" aria-label="Менше">−</button><input type="number" name="quantity" value="1" min="1" inputmode="numeric" aria-label="Кількість"><button type="button" data-step="1" aria-label="Більше">+</button></div>
               <button class="btn btn-sm btn-dark" type="submit"><svg class="ic"><use href="#i-cart"/></svg><span class="btn-label">У кошик</span></button>
             </form>
           {% else %}

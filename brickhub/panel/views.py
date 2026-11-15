@@ -256,6 +256,9 @@ def product_bulk(request):
         messages.success(request, f"Розкладено за категоріями каталогу: {n}")
         if skipped:
             messages.info(request, f"Без змін: {skipped} (не деталі або деталі без категорії в каталозі)")
+    elif action in ("available", "running_low"):
+        n = qs.update(availability=Product.AVAILABILITY_LOW if action == "running_low" else Product.AVAILABILITY_IN)
+        messages.success(request, f"Оновлено наявність: {n}")
     elif action in ("set_new", "unset_new", "set_featured", "unset_featured", "set_bestseller", "unset_bestseller"):
         field = {"new": "is_new", "featured": "is_featured", "bestseller": "is_bestseller"}[action.split("_", 1)[1]]
         n = qs.update(**{field: action.startswith("set_")})
@@ -822,7 +825,8 @@ CRUD = {
                                ("sort_order", "Порядок"), ("is_active", "Активна")],
                    "search": ["name", "slug"], "order": ("parent__sort_order", "sort_order")},
     "themes": {"model": Theme, "form": pf.ThemeForm, "title": "Серії LEGO", "one": "серію",
-               "columns": [("display_name", "Назва"), ("parent", "Батьківська"), ("is_primary", "У меню наборів"),
+               "columns": [("display_name", "Назва"), ("logo", "Логотип"), ("parent", "Батьківська"),
+                           ("is_primary", "У меню наборів"),
                            ("show_in_minifigs", "У меню фігурок"), ("sort_order", "Порядок")],
                "search": ["name", "title"], "order": ("-is_primary", "-show_in_minifigs", "sort_order", "name")},
     "parts": {"model": Part, "form": pf.PartForm, "title": "Каталог деталей", "one": "деталь",
@@ -872,6 +876,9 @@ def crud_list(request, key):
             if attr == "swatch":
                 cells.append({"swatch": obj.hex, "trans": obj.is_transparent})
                 continue
+            if attr == "logo":
+                cells.append({"logo": obj.logo.url if obj.logo else "", "is_logo": True})
+                continue
             value = getattr(obj, attr, "")
             display = getattr(obj, f"get_{attr}_display", None)
             if callable(display):
@@ -886,7 +893,7 @@ def crud_list(request, key):
 def crud_edit(request, key, pk=None):
     cfg = _cfg(key)
     obj = get_object_or_404(cfg["model"], pk=pk) if pk else None
-    form = cfg["form"](request.POST or None, instance=obj)
+    form = cfg["form"](request.POST or None, request.FILES or None, instance=obj)
     if request.method == "POST" and form.is_valid():
         obj = form.save()
         messages.success(request, "Збережено")

@@ -62,7 +62,7 @@ def add_product(cart: Cart, product: Product, quantity: int = 1) -> tuple[CartIt
         new_qty = min(item.quantity + quantity, stock)
         added = new_qty - item.quantity
         if added <= 0:
-            raise CartError(f"У кошику вже максимальна доступна кількість ({stock} шт.).")
+            raise CartError("У кошику вже вся кількість цього товару, що є в наявності.")
         item.quantity = new_qty
         item.save(update_fields=["quantity"])
     cart.save(update_fields=["updated_at"])
@@ -119,7 +119,7 @@ def summarize(cart: Cart | None, user=None, email: str = "") -> CartSummary:
             if p.stock <= 0:
                 summary.warnings.append(f"«{p.title}» закінчився на складі.")
             else:
-                summary.warnings.append(f"«{p.title}»: у наявності лише {p.stock} шт., кількість зменшено.")
+                summary.warnings.append(f"«{p.title}»: стільки немає в наявності, кількість зменшено.")
                 item.quantity = p.stock
                 item.save(update_fields=["quantity"])
     sellable = [i for i in items if i.product.is_active and i.product.stock > 0]

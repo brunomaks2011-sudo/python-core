@@ -110,7 +110,7 @@ class PhotoAndVariantTests(TestCase):
                     self.red: "https://img.bricklink.com/ItemImage/PN/5/3001.png"}  # red = BrickLink colour 5
         for product, url in pictures.items():
             html = self.client.get(product.get_absolute_url()).content.decode()
-            gallery = html.split('class="gallery-main"', 1)[1].split('class="card-badges"', 1)[0]
+            gallery = html.split('data-gallery-stage', 1)[1].split('class="pdx-info"', 1)[0]
             self.assertIn(url, gallery)
             self.assertIn("img/no-photo.svg", gallery)  # shown if BrickLink has no picture
             self.assertIn(f'"image": ["{url}"]', html)
@@ -120,7 +120,7 @@ class PhotoAndVariantTests(TestCase):
 
         ProductImage.objects.create(product=self.xwing, external_url="https://example.com/my-photo.jpg")
         r = self.client.get(self.xwing.get_absolute_url()).content.decode()
-        gallery = r.split('class="gallery-main"', 1)[1].split('class="card-badges"', 1)[0]
+        gallery = r.split('data-gallery-stage', 1)[1].split('class="pdx-info"', 1)[0]
         self.assertIn("https://example.com/my-photo.jpg", gallery)
         self.assertNotIn(pictures[self.xwing], gallery)
 

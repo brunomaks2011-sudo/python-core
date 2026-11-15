@@ -1,5 +1,19 @@
 /* BRICK HUB — storefront styles
-   Light, calm surfaces · LEGO red accents · Unbounded headings / Inter text */
+   Light, calm surfaces · LEGO red accents · Manrope (a free geometric face close to lego.com's) for text and
+   headings, Unbounded only for the BRICK HUB wordmark */
+
+@font-face { font-family: "Manrope"; font-style: normal; font-display: swap; font-weight: 200 800;
+  src: url("../fonts/manrope-latin-wght-normal.woff2") format("woff2");
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: "Manrope"; font-style: normal; font-display: swap; font-weight: 200 800;
+  src: url("../fonts/manrope-latin-ext-wght-normal.woff2") format("woff2");
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: "Manrope"; font-style: normal; font-display: swap; font-weight: 200 800;
+  src: url("../fonts/manrope-cyrillic-wght-normal.woff2") format("woff2");
+  unicode-range: U+0301, U+0400-045F, U+0490-0491, U+04B0-04B1, U+2116; }
+@font-face { font-family: "Manrope"; font-style: normal; font-display: swap; font-weight: 200 800;
+  src: url("../fonts/manrope-cyrillic-ext-wght-normal.woff2") format("woff2");
+  unicode-range: U+0460-052F, U+1C80-1C8A, U+2DE0-2DFF, U+A640-A69F, U+FE2E-FE2F; }
 
 @font-face { font-family: "Inter"; font-style: normal; font-display: swap; font-weight: 100 900;
   src: url("../fonts/inter-latin-wght-normal.woff2") format("woff2");
@@ -49,8 +63,9 @@
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
-  --font: "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-  --font-display: "Unbounded", "Inter", system-ui, sans-serif;
+  --font: "Manrope", "Inter", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-display: "Manrope", "Inter", system-ui, sans-serif;
+  --font-brand: "Unbounded", "Manrope", system-ui, sans-serif;
   --container: 1320px;
   --gutter: clamp(16px, 3vw, 32px);
   --header-h: 72px;
@@ -189,7 +204,7 @@ img.pimg { height: auto; }
   padding-top: env(safe-area-inset-top, 0px);
 }
 .header-main { position: relative; display: flex; align-items: center; gap: 16px; height: var(--header-h); }
-.logo { display: flex; align-items: center; gap: 10px; flex: none; font-family: var(--font-display); font-weight: 800; font-size: 20px; letter-spacing: -0.03em; }
+.logo { display: flex; align-items: center; gap: 10px; flex: none; font-family: var(--font-brand); font-weight: 800; font-size: 20px; letter-spacing: -0.03em; }
 .logo-mark { width: 38px; height: 38px; flex: none; }
 .logo small { display: block; font-family: var(--font); font-weight: 500; font-size: 11px; letter-spacing: .02em; color: var(--muted); margin-top: 1px; }
 .logo b { color: var(--red); }
@@ -990,3 +1005,115 @@ img.pimg { height: auto; }
   .topbar, .header, .footer, .toasts, .drawer, .drawer-backdrop { display: none !important; }
   body { background: #fff; }
 }
+
+/* ---------- product page, lego.com-style buy area ---------- */
+.pdx { --buy: #e07a2e; --buy-hover: #cf6a1f; --flag: #ffcf00; --avail: #00852b;
+  display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: 40px; align-items: start; padding: 8px 0 28px; }
+.pdx-gallery { position: sticky; top: calc(var(--header-h) + 24px); min-width: 0; }
+.pdx-stage { position: relative; aspect-ratio: 1; background: #fff; border-radius: var(--radius-lg); overflow: hidden; touch-action: pan-y; }
+.pdx-stage img[data-gallery-main] { width: 100%; height: 100%; object-fit: contain; padding: 28px; transition: opacity 220ms ease; }
+.pdx-count { position: absolute; left: 16px; top: 16px; z-index: 2; padding: 6px 14px; border-radius: 999px;
+  background: rgba(40, 40, 40, .72); color: #fff; font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.pdx-all { position: absolute; right: 16px; bottom: 16px; z-index: 2; display: inline-flex; align-items: center; gap: 10px;
+  height: 46px; padding: 0 20px; border: 0; border-radius: 999px; background: #111; color: #fff; font: inherit;
+  font-size: 15px; font-weight: 600; cursor: pointer; transition: transform 140ms var(--ease-out), background-color 160ms ease; }
+.pdx-all .ic { width: 20px; height: 20px; }
+.pdx-all:active { transform: scale(.97); }
+.pdx-thumbs { display: flex; flex-direction: row; gap: 10px; margin-top: 12px; overflow-x: auto; scrollbar-width: none; padding: 2px; }
+.pdx-thumbs::-webkit-scrollbar { display: none; }
+.pdx-thumbs button { flex: none; width: 76px; height: 76px; border-radius: 12px; }
+.pdx-viewer { width: min(860px, calc(100vw - 24px)); max-height: calc(100dvh - 24px); padding: 0; border: 0; border-radius: var(--radius-lg); background: #fff; }
+.pdx-viewer::backdrop { background: rgba(10, 12, 16, .6); }
+.pdx-viewer-head { position: sticky; top: 0; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px;
+  padding: 14px 16px 14px 22px; background: rgba(255, 255, 255, .96); border-bottom: 1px solid var(--line); }
+.pdx-viewer-close { width: 40px; height: 40px; border: 0; border-radius: 50%; background: var(--surface-2); display: grid; place-items: center; cursor: pointer; }
+.pdx-viewer-list { display: grid; gap: 12px; padding: 16px; }
+.pdx-viewer-list img { width: 100%; aspect-ratio: 1; object-fit: contain; background: #fff; border: 1px solid var(--line-2); border-radius: 14px; padding: 20px; }
+
+.pdx-info { min-width: 0; }
+.pdx-flags { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 10px; margin-bottom: 14px; }
+.pdx-flag { display: inline-flex; align-items: center; height: 34px; padding: 0 14px; border-radius: 4px; background: var(--flag);
+  color: #000; font-size: 15px; font-weight: 600; }
+.pdx-flag.is-sale { background: var(--red); color: #fff; }
+.pdx-flag.is-used { background: var(--ink); color: #fff; }
+.pdx-meta { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 22px; font-size: 18px; }
+.pdx-series { color: var(--ink); font-weight: 500; text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 1.5px; }
+.pdx-number { color: #5c5c5c; font-variant-numeric: tabular-nums; }
+.pdx-title { font-family: var(--font); font-size: clamp(28px, 3vw, 40px); font-weight: 700; line-height: 1.22; letter-spacing: -0.01em;
+  margin: 14px 0 18px; text-wrap: balance; }
+.pdx-rating { display: inline-flex; gap: 8px; align-items: center; margin: -6px 0 16px; font-size: 14px; }
+.pdx-info .pd-ids { margin-bottom: 20px; }
+.pdx-price { display: flex; align-items: baseline; flex-wrap: wrap; gap: 6px 14px; margin-top: 26px; }
+.pdx-price b { font-size: 34px; font-weight: 700; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pdx-price s { font-size: 18px; color: var(--muted); }
+.pdx-price span { font-size: 15px; color: var(--muted); }
+.pdx-price.is-sale b { color: var(--red); }
+.pdx-avail { margin: 6px 0 0; font-size: 20px; font-weight: 500; color: var(--avail); }
+.pdx-avail.is-low { color: var(--orange); }
+.pdx-avail.is-out { color: var(--muted); }
+.pdx-buy { margin-top: 26px; }
+.pdx-qty { display: inline-grid; grid-template-columns: 56px 64px 56px; height: 56px; border: 1px solid #b9b9b9; border-radius: 4px; overflow: hidden; background: #fff; }
+.pdx-qty button { display: grid; place-items: center; border: 0; background: #fff; color: var(--ink); cursor: pointer; transition: background-color 140ms ease; }
+.pdx-qty button .ic { width: 22px; height: 22px; }
+.pdx-qty button:active { background: var(--surface-2); }
+.pdx-qty input { width: 100%; height: 100%; border: 0; border-left: 1px solid #b9b9b9; border-right: 1px solid #b9b9b9; text-align: center;
+  font: inherit; font-size: 20px; font-weight: 500; -moz-appearance: textfield; appearance: textfield; outline: none; }
+.pdx-qty input::-webkit-outer-spin-button, .pdx-qty input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+.pdx-qty input:focus-visible { box-shadow: inset 0 0 0 2px var(--blue); }
+.pdx-actions { display: flex; align-items: center; gap: 16px; margin-top: 22px; }
+.pdx-actions form { display: contents; }
+.pdx-cart { flex: 1; display: inline-flex; align-items: center; justify-content: center; gap: 14px; height: 64px; padding: 0 24px;
+  border: 0; border-radius: 999px; background: var(--buy); color: #151515; font: inherit; font-size: 20px; font-weight: 600; cursor: pointer;
+  transition: transform 140ms var(--ease-out), background-color 160ms ease; }
+.pdx-cart .ic { width: 26px; height: 26px; }
+.pdx-cart:active { transform: scale(.98); }
+.pdx-cart.is-loading { opacity: .75; pointer-events: none; }
+.pdx-heart { flex: none; width: 64px; height: 64px; border: 0; border-radius: 50%; background: #e8e8e8; color: #151515; display: grid; place-items: center;
+  cursor: pointer; transition: transform 140ms var(--ease-out), background-color 160ms ease, color 160ms ease; }
+.pdx-heart .ic { width: 28px; height: 28px; fill: none; }
+.pdx-heart.is-active { color: var(--red); }
+.pdx-heart.is-active .ic { fill: currentColor; }
+.pdx-heart:active { transform: scale(.94); }
+.pdx-facts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-items: center; gap: 12px; margin-top: 28px; padding-top: 4px; }
+.pdx-fact { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: 84px; text-align: center; }
+.pdx-fact b { font-size: 30px; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; }
+.pdx-fact span { font-size: 17px; color: #2b2b2b; }
+.pdx-brand { align-items: flex-start; }
+.pdx-brand img { max-width: 100%; max-height: 84px; object-fit: contain; }
+.pdx-brand-name { display: inline-flex; align-items: center; min-height: 48px; padding: 8px 14px; border-radius: 12px; border: 2px solid var(--c);
+  font-weight: 700; font-size: 15px; line-height: 1.15; text-align: left; color: var(--ink); }
+.pdx-extra { display: flex; flex-wrap: wrap; gap: 6px 20px; margin: 22px 0 18px; }
+.pdx-extra form { display: contents; }
+.pdx-link { display: inline-flex; align-items: center; gap: 8px; height: 36px; padding: 0; border: 0; background: none; color: var(--ink-2);
+  font: inherit; font-size: 15px; font-weight: 500; cursor: pointer; }
+.pdx-link .ic { width: 18px; height: 18px; }
+.pdx-link.is-active { color: var(--blue); }
+@media (hover: hover) and (pointer: fine) {
+  .pdx-all:hover { background: #333; }
+  .pdx-cart:hover { background: var(--buy-hover); }
+  .pdx-heart:hover { background: #dcdcdc; }
+  .pdx-qty button:hover { background: var(--surface-2); }
+  .pdx-series:hover { color: var(--red); }
+  .pdx-link:hover { color: var(--ink); text-decoration: underline; text-underline-offset: 3px; }
+}
+@media (max-width: 860px) {
+  .pdx { grid-template-columns: minmax(0, 1fr); gap: 18px; padding-top: 0; }
+  .pdx-gallery { position: static; margin: 0 calc(var(--gutter) * -1); }
+  .pdx-stage { border-radius: 0; border-bottom: 1px solid var(--line); }
+  .pdx-stage img[data-gallery-main] { padding: 18px; }
+  .pdx-stage .gallery-nav { display: none; }
+  .pdx-thumbs { display: none; }
+  .pdx-meta { font-size: 17px; }
+  .pdx-avail { font-size: 18px; }
+  .pdx-cart { height: 60px; font-size: 19px; }
+  .pdx-heart { width: 60px; height: 60px; }
+  .pdx-fact b { font-size: 26px; }
+  .pdx-fact span { font-size: 15px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .pdx-cart, .pdx-heart, .pdx-all { transition: none; }
+}
+/* the product page sits on white, like lego.com; the photo keeps a hairline so it does not float */
+body:has(.pdx) { background: #fff; }
+body:has(.pdx) .pdx-stage { box-shadow: inset 0 0 0 1px var(--line-2); }
+@media (max-width: 860px) { body:has(.pdx) .pdx-stage { box-shadow: none; } }

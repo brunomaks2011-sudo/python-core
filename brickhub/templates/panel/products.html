@@ -40,6 +40,7 @@
     <select name="action" class="select" style="height:36px">
       <option value="">Дія з обраними…</option>
       <option value="activate">Показати на сайті</option><option value="deactivate">Приховати</option>
+      <option value="available">Наявність: «Є в наявності»</option><option value="running_low">Наявність: «Закінчується»</option>
       <option value="set_new">Позначити «Новинка»</option><option value="unset_new">Зняти «Новинка»</option>
       <option value="set_featured">Позначити «Популярний»</option><option value="unset_featured">Зняти «Популярний»</option>
       <option value="set_bestseller">Позначити «Хіт»</option><option value="unset_bestseller">Зняти «Хіт»</option>
@@ -71,6 +72,7 @@
             <span class="muted mono" style="font-size:12px">{{ p.sku }}</span> {% owner_badge p.owner_id %}
             {% if p.color_id %}<span class="swatch-inline muted" style="font-size:12px;margin-left:6px"><span class="swatch" style="--c:{{ p.color.hex }};--s:10px"></span>{{ p.color.display_name }}</span>{% endif %}
             {% if not p.is_active %}<span class="badge" style="height:20px">прихований</span>{% endif %}
+            {% if p.low_stock %}<span class="badge badge-orange" style="height:20px">закінчується</span>{% endif %}
             {% photo_badge p small=True %}</td>
           <td class="mono">{{ p.official_number|default:"—" }}{% if p.kind == "part" and p.lego_design_id and p.bricklink_number and p.bricklink_number != p.lego_design_id %}<br><span class="muted" style="font-size:12px">BL {{ p.bricklink_number }}</span>{% endif %}</td>
           <td><span class="badge {% if p.condition == 'new' %}badge-green{% else %}badge-orange{% endif %}">{{ p.get_condition_display }}</span></td>

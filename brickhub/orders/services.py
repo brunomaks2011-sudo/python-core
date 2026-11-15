@@ -42,9 +42,8 @@ def place_order(request, cart, data: dict, user=None) -> Order:
         for item in sellable:
             inv = locked.get(item.product_id)
             if inv is None or inv.quantity < item.quantity:
-                available = inv.quantity if inv else 0
                 raise CheckoutError(
-                    f"«{item.product.title}»: у наявності лише {available} шт. Оновіть кількість у кошику.")
+                    f"«{item.product.title}»: стільки немає в наявності. Оновіть кількість у кошику.")
         promo = summary.promo
         if promo:
             promo = PromoCode.objects.select_for_update().get(pk=promo.pk)

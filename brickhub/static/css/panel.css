@@ -2,7 +2,7 @@
 .panel-body { background: #f3f4f6; }
 .pl { display: grid; grid-template-columns: 260px minmax(0, 1fr); min-height: 100dvh; }
 .pl-side { position: sticky; top: 0; height: 100dvh; overflow-y: auto; overscroll-behavior: contain; background: #111318; color: #c9ccd3; padding: 18px 12px; display: flex; flex-direction: column; gap: 10px; }
-.pl-logo { display: flex; align-items: center; gap: 10px; padding: 4px 8px 14px; color: #fff; font-family: var(--font-display); font-weight: 800; font-size: 18px; }
+.pl-logo { display: flex; align-items: center; gap: 10px; padding: 4px 8px 14px; color: #fff; font-family: var(--font-brand); font-weight: 800; font-size: 18px; }
 .pl-logo small { display: block; font-family: var(--font); font-size: 11px; color: #8e939c; font-weight: 500; }
 .pl-logo b { color: var(--red); }
 .pl-nav { display: flex; flex-direction: column; gap: 2px; }
