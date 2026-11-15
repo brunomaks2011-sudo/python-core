@@ -261,6 +261,8 @@ class Part(models.Model):
                                  verbose_name="Категорія магазину", related_name="parts")
     alternate_ids = models.CharField("Альтернативні номери", max_length=255, blank=True,
                                      help_text="Через кому, напр. 3068, 3068a")
+    bricklink_no = models.CharField("Номер BrickLink", max_length=60, blank=True, db_index=True,
+                                    help_text="Лише якщо на BrickLink деталь має інший номер, ніж Design ID")
     description = models.TextField("Опис", blank=True)
 
     class Meta:
@@ -599,7 +601,7 @@ class Product(models.Model):
             bits += [s.number, s.base_number, s.name]
         if self.part_id:
             p = self.part
-            bits += [p.design_id, p.name, p.name_uk, p.alternate_ids.replace(",", " ")]
+            bits += [p.design_id, p.bricklink_no, p.name, p.name_uk, p.alternate_ids.replace(",", " ")]
             if self.color_id:
                 bits += list(Element.objects.filter(part=p, color_id=self.color_id).values_list("element_id", flat=True))
         if self.color_id:

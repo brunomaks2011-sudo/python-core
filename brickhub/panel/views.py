@@ -23,6 +23,7 @@ from catalog.models import (
     Category, category_tree, separate_part_category_ids, Color, Element, Inventory, InventoryMovement, LegoSet, Minifigure, Part, Product, ProductImage,
     Review, StockNotification, Theme,
 )
+from catalog import bricklink as bl
 from catalog.images import photos_to_process, remove_photo_background, restore_photo_background
 from catalog.notifications import notify_back_in_stock
 from orders.models import Order, OrderItem
@@ -396,6 +397,72 @@ def photos_remove_backgrounds(request):
     messages.success(request, f"Оброблено фото: {done}, фон прибрано на {removed}."
                               + (f" Залишилося {left} — натисніть ще раз." if left else ""))
     return redirect(request.POST.get("next") or "panel:products")
+
+
+@staff_required
+def bricklink_check(request):
+    """Every listing next to its BrickLink picture, so wrong numbers stand out; numbers are fixed in place."""
+    tab = request.GET.get("tab", "parts")
+    if tab not in ("parts", "minifigs", "sets"):
+        tab = "parts"
+    kind = {"parts": "part", "minifigs": "minifig", "sets": "set"}[tab]
+    qs = (Product.objects.filter(kind=kind).select_related("part", "color", "minifigure", "lego_set")
+          .order_by("part__design_id", "color__sort_order", "pk") if kind == "part" else
+          Product.objects.filter(kind=kind).select_related("minifigure", "lego_set").order_by("-updated_at"))
+    page = _page(request, qs, 60)
+    rows = list(page.object_list)
+    elements = {}
+    if kind == "part":
+        for part_id, color_id, element_id in Element.objects.filter(
+                part_id__in={p.part_id for p in rows}).values_list("part_id", "color_id", "element_id"):
+            elements.setdefault((part_id, color_id), element_id)
+    for p in rows:
+        p.bl_image = bl.item_image(p)
+        p.bl_url = bl.catalog_url(p)
+        if kind == "part" and p.part_id:
+            p.bl_number = bl.part_number(p.part)
+            p.el = elements.get((p.part_id, p.color_id), "")
+            p.el_image = bl.element_image(p.el)
+    counts = {"parts": Product.objects.filter(kind="part").count(),
+              "minifigs": Product.objects.filter(kind="minifig").count(),
+              "sets": Product.objects.filter(kind="set").count()}
+    return render(request, "panel/bricklink.html", {"tab": tab, "page": page, "rows": rows, "counts": counts,
+                                                    "section": "bricklink"})
+
+
+@staff_required
+@require_POST
+def bricklink_fix(request, pk):
+    """Save a corrected BrickLink number / Element ID from the check page."""
+    product = get_object_or_404(Product.objects.select_related("part", "color", "minifigure"), pk=pk)
+    if product.kind == "part" and product.part_id:
+        part = product.part
+        number = (request.POST.get("bricklink_no") or "").strip()[:60]
+        part.bricklink_no = "" if number == part.design_id else number
+        part.save(update_fields=["bricklink_no"])
+        if "element_id" in request.POST and product.color_id:
+            element = (request.POST.get("element_id") or "").strip()[:20]
+            clash = Element.objects.filter(element_id=element).exclude(part=part, color_id=product.color_id).first() \
+                if element else None
+            if clash:
+                return JsonResponse({"ok": False, "error": f"Element ID {element} уже належить "
+                                                           f"{clash.part.design_id} ({clash.color.name})"}, status=400)
+            Element.objects.filter(part=part, color_id=product.color_id).exclude(element_id=element).delete()
+            if element:
+                Element.objects.get_or_create(element_id=element, defaults={"part": part, "color_id": product.color_id})
+        for listing in Product.objects.filter(part=part):
+            listing.save(update_fields=["search_text"])  # numbers are part of the search index
+    elif product.kind == "minifig" and product.minifigure_id:
+        fig = product.minifigure
+        fig.bricklink_id = (request.POST.get("bricklink_id") or "").strip()[:40]
+        fig.save(update_fields=["bricklink_id"])
+        for listing in Product.objects.filter(minifigure=fig):
+            listing.save(update_fields=["search_text"])
+    else:
+        return JsonResponse({"ok": False, "error": "Для цього товару номер BrickLink береться з каталогу наборів"},
+                            status=400)
+    product.refresh_from_db()
+    return JsonResponse({"ok": True, "image": bl.item_image(product), "url": bl.catalog_url(product)})
 
 
 @staff_required

@@ -239,6 +239,8 @@ SHOP = {
     "LOW_STOCK_THRESHOLD": int(env("SHOP_LOW_STOCK_THRESHOLD", "3")),
     # uploaded product photos lose a plain background automatically (the photo with it is kept)
     "REMOVE_PHOTO_BACKGROUND": env_bool("SHOP_REMOVE_PHOTO_BACKGROUND", True),
+    # listings without their own photo show the BrickLink catalogue picture (loaded by the buyer's browser)
+    "BRICKLINK_IMAGES": env_bool("SHOP_BRICKLINK_IMAGES", True),
 }
 
 # Integrations. Each one is switched on only when its credentials are present;

@@ -170,6 +170,7 @@
           {% if p.color.bricklink_id is not None %}<tr><th>Номер кольору (BrickLink)</th><td class="mono">{{ p.color.bricklink_id }}</td></tr>{% endif %}
           {% if p.color.lego_id %}<tr><th>Номер кольору LEGO</th><td class="mono">{{ p.color.lego_id }}</td></tr>{% endif %}
           {% if p.part.part_category %}<tr><th>Тип деталі</th><td>{{ p.part.part_category.display_name }}</td></tr>{% endif %}
+          {% if p.part.bricklink_no %}<tr><th>Номер BrickLink</th><td class="mono">{{ p.part.bricklink_no }}</td></tr>{% endif %}
           {% if p.part.alternate_ids %}<tr><th>Альтернативні номери</th><td class="mono">{{ p.part.alternate_ids }}</td></tr>{% endif %}
         {% endif %}
         {% if p.themes and p.kind != "part" %}<tr><th>{% if p.theme2_id and p.theme_id %}Серії{% else %}Серія{% endif %}</th><td>{% for t in p.themes %}<a class="link" href="{{ t.get_absolute_url }}">{{ t.display_name }}</a>{% if not forloop.last %}, {% endif %}{% endfor %}</td></tr>{% endif %}
@@ -194,6 +195,7 @@
         <tr><th>Стан</th><td>{{ p.get_condition_display }}</td></tr>
         {% if p.completeness %}<tr><th>Комплектація</th><td>{{ p.completeness }}</td></tr>{% endif %}
         <tr><th>Артикул магазину</th><td class="mono">{{ p.sku }}</td></tr>
+        {% if bricklink_url %}<tr><th>BrickLink</th><td><a class="link" href="{{ bricklink_url }}" target="_blank" rel="noopener">Сторінка в каталозі BrickLink</a></td></tr>{% endif %}
       </table>
     </section>
   </div>

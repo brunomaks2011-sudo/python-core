@@ -28,6 +28,7 @@
       <a href="{% url 'panel:crud_list' 'categories' %}" class="{% if section == 'categories' %}is-active{% endif %}"><svg class="ic"><use href="#i-grid4"/></svg>Категорії</a>
       <a href="{% url 'panel:crud_list' 'themes' %}" class="{% if section == 'themes' %}is-active{% endif %}"><svg class="ic"><use href="#i-spark"/></svg>Серії LEGO</a>
       <a href="{% url 'panel:crud_list' 'colors' %}" class="{% if section == 'colors' %}is-active{% endif %}"><svg class="ic"><use href="#i-palette"/></svg>Кольори</a>
+      <a href="{% url 'panel:bricklink' %}" class="{% if section == 'bricklink' %}is-active{% endif %}"><svg class="ic"><use href="#i-check"/></svg>Перевірка BrickLink</a>
       <a href="{% url 'panel:crud_list' 'parts' %}" class="{% if section == 'parts' %}is-active{% endif %}"><svg class="ic"><use href="#i-brick"/></svg>Каталог деталей</a>
       <a href="{% url 'panel:crud_list' 'elements' %}" class="{% if section == 'elements' %}is-active{% endif %}"><svg class="ic"><use href="#i-tag"/></svg>Element ID</a>
       <a href="{% url 'panel:crud_list' 'sets' %}" class="{% if section == 'sets' %}is-active{% endif %}"><svg class="ic"><use href="#i-box"/></svg>Каталог наборів</a>

@@ -23,6 +23,8 @@ class SearchableSelect(forms.Select):
         obj = getattr(value, "instance", None)
         if isinstance(obj, Color):
             option["attrs"]["data-hex"] = obj.hex
+            if obj.bricklink_id is not None:
+                option["attrs"]["data-bl"] = obj.bricklink_id
             option["attrs"]["data-search"] = " ".join(
                 str(x) for x in (obj.name, obj.name_uk, obj.lego_name, obj.bricklink_id, obj.rebrickable_id)
                 if x not in (None, ""))
@@ -55,6 +57,8 @@ class ProductForm(forms.ModelForm):
     fig_number = forms.CharField(label="Номер мініфігурки", required=False, max_length=40,
                                  help_text="Номер каталогу (fig-000123) або BrickLink (sw0001). Для брелока чи "
                                            "книги — фігурка в комплекті, необов'язково")
+    bricklink_no = forms.CharField(label="Номер BrickLink (якщо інший)", required=False, max_length=60,
+                                   help_text="Заповніть, лише якщо на BrickLink у деталі інший номер, ніж Design ID")
     element_id = forms.CharField(label="Element ID", required=False, max_length=20,
                                  help_text="Необов'язково: офіційний номер елемента LEGO для цього кольору")
     create_catalog = forms.BooleanField(
@@ -120,6 +124,7 @@ class ProductForm(forms.ModelForm):
                     self.fields[f].initial = getattr(s, f)
             if p.part_id:
                 self.fields["design_id"].initial = p.part.design_id
+                self.fields["bricklink_no"].initial = p.part.bricklink_no
                 self.fields["element_id"].initial = p.element_id
             if p.minifigure_id:
                 m = p.minifigure
@@ -221,9 +226,16 @@ class ProductForm(forms.ModelForm):
             s.save()
             product.lego_set = s
         if self.part is not None:
+            bl_no = (data.get("bricklink_no") or "").strip()
+            if bl_no == self.part.design_id:
+                bl_no = ""
             if not self.part.pk:
                 self.part.category = data.get("category")
+                self.part.bricklink_no = bl_no
                 self.part.save()
+            elif "bricklink_no" in self.data and bl_no != self.part.bricklink_no:
+                self.part.bricklink_no = bl_no
+                self.part.save(update_fields=["bricklink_no"])
             product.part = self.part
             el = (data.get("element_id") or "").strip()
             if el and data.get("color"):

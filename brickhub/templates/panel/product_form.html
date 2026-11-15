@@ -36,7 +36,12 @@
             <div class="lookup-result" data-lookup-out="part"></div>
           </div>
           {% include "partials/field.html" with field=form.color %}
+          {% include "partials/field.html" with field=form.bricklink_no %}
           {% include "partials/field.html" with field=form.element_id %}
+          <div class="bl-preview full" data-bl-preview hidden>
+            <img alt="" width="96" height="96" data-bl-img>
+            <div><b>Картинка BrickLink</b><p class="muted" data-bl-note>Так деталь виглядатиме на сайті, якщо не додати своє фото.</p><a class="link" href="#" target="_blank" rel="noopener" data-bl-link>Відкрити на BrickLink</a></div>
+          </div>
           <label class="check full">{{ form.standalone }}<span>{{ form.standalone.label }}<br><small class="muted">{{ form.standalone.help_text }}. Дайте товару свою назву, напр. «Торс поліцейського».</small></span></label>
         </div>
         <div class="fields" style="margin-top:14px" data-kind-section="minifig keychain book">

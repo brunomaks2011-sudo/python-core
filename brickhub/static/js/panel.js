@@ -123,6 +123,111 @@
     });
   }
 
+  // BrickLink check page: every row is judged by whether BrickLink has a picture for it
+  const blTable = $("[data-bl-check]");
+  if (blTable) {
+    const rows = $$("[data-bl-row]", blTable);
+    const onlyBad = $("[data-bl-only-bad]");
+    const summary = $("[data-bl-summary]");
+    const BAD = "BrickLink не має такої позиції — перевірте номер і колір";
+    const refresh = () => {
+      const bad = rows.filter((r) => r.classList.contains("is-bad")).length;
+      const done = rows.filter((r) => r.dataset.state).length;
+      summary.textContent = done < rows.length ? `Перевірено ${done} з ${rows.length}` : `Проблемних: ${bad} з ${rows.length}`;
+      rows.forEach((r) => { r.hidden = Boolean(onlyBad && onlyBad.checked && !r.classList.contains("is-bad")); });
+    };
+    const mark = (row, ok, text) => {
+      row.dataset.state = ok ? "ok" : "bad";
+      row.classList.toggle("is-bad", !ok);
+      const cell = $("[data-bl-status]", row);
+      cell.textContent = text;
+      cell.className = ok ? "bl-ok" : "bl-bad";
+      refresh();
+    };
+    const watch = (row, img) => {
+      img.addEventListener("load", () => mark(row, true, "Є на BrickLink"));
+      img.addEventListener("error", () => mark(row, false, BAD));
+      if (img.complete && img.getAttribute("src")) {
+        if (img.naturalWidth) mark(row, true, "Є на BrickLink"); else mark(row, false, BAD);
+      }
+    };
+    rows.forEach((row) => {
+      const img = $("[data-bl-img]", row);
+      if (img) watch(row, img);
+      else if (row.dataset.kind === "minifig") mark(row, false, "Не вказано номер BrickLink");
+      else if (row.dataset.kind === "part" && !row.dataset.color) mark(row, false, "Колір без номера BrickLink");
+      else mark(row, false, "Немає номера BrickLink");
+      const el = $("[data-el-img]", row);
+      if (el) el.addEventListener("error", () => { el.hidden = true; });
+      const number = $("input[name=bricklink_no]", row);
+      if (number && row.dataset.color) {
+        number.addEventListener("change", () => {
+          let pic = $("[data-bl-img]", row);
+          if (!pic) {
+            pic = document.createElement("img");
+            pic.className = "bl-img";
+            pic.width = 64;
+            pic.height = 64;
+            pic.setAttribute("data-bl-img", "");
+            const empty = $("[data-bl-img-empty]", row);
+            if (empty) empty.replaceWith(pic);
+            watch(row, pic);
+          }
+          delete row.dataset.state;
+          pic.src = "https://img.bricklink.com/ItemImage/PN/" + row.dataset.color + "/" + encodeURIComponent(number.value.trim()) + ".png";
+        });
+      }
+      const save = $("[data-bl-save]", row);
+      if (save) save.addEventListener("click", async () => {
+        const body = new FormData();
+        body.append("csrfmiddlewaretoken", csrf());
+        $$("input", row).forEach((i) => body.append(i.name, i.value));
+        save.disabled = true;
+        try {
+          const r = await fetch(row.dataset.save, { method: "POST", body, headers: { "X-Requested-With": "fetch" } });
+          const d = await r.json();
+          if (!d.ok) { if (window.bhToast) window.bhToast(d.error || "Не вдалося зберегти", "error"); return; }
+          if (window.bhToast) window.bhToast("Збережено", "success");
+          const pic = $("[data-bl-img]", row);
+          if (pic && d.image && pic.src !== d.image) { delete row.dataset.state; pic.src = d.image; }
+          const link = $("[data-bl-link]", row);
+          if (link && d.url) link.href = d.url;
+        } finally { save.disabled = false; }
+      });
+    });
+    if (onlyBad) onlyBad.addEventListener("change", refresh);
+    refresh();
+  }
+
+  // BrickLink picture of the part in the chosen colour: shows at once whether the number and colour exist there
+  const blBox = $("[data-bl-preview]");
+  if (blBox) {
+    const form = blBox.closest("form");
+    const img = $("[data-bl-img]", blBox), note = $("[data-bl-note]", blBox), link = $("[data-bl-link]", blBox);
+    const normal = note.textContent;
+    const update = () => {
+      const kindSel = $("#id_kind", form);
+      const number = ($("#id_bricklink_no", form).value || $("#id_design_id", form).value || "").trim();
+      const opt = $("#id_color", form).selectedOptions[0];
+      const color = opt ? opt.dataset.bl : "";
+      if (kindSel.value !== "part" || !number || !color) { blBox.hidden = true; return; }
+      blBox.hidden = false;
+      blBox.classList.remove("is-missing");
+      note.textContent = normal;
+      img.src = `https://img.bricklink.com/ItemImage/PN/${color}/${encodeURIComponent(number)}.png`;
+      link.href = `https://www.bricklink.com/v2/catalog/catalogitem.page?P=${encodeURIComponent(number)}&idColor=${color}`;
+    };
+    img.addEventListener("error", () => {
+      blBox.classList.add("is-missing");
+      note.textContent = "BrickLink не має картинки для цього номера в цьому кольорі. Перевірте Design ID (або номер BrickLink) і колір.";
+    });
+    ["#id_design_id", "#id_bricklink_no", "#id_color", "#id_kind"].forEach((sel) => {
+      const el = $(sel, form);
+      el && el.addEventListener("change", update);
+    });
+    update();
+  }
+
   // photos that cannot be opened are flagged in the product form
   $$("img[data-photo-check]").forEach((img) => {
     const flag = () => {

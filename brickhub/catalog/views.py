@@ -17,7 +17,8 @@ from core.seo import breadcrumbs_jsonld, product_jsonld
 
 from .filters import COLLECTIONS, SORT_OPTIONS, PER_PAGE_OPTIONS, build_listing
 from .forms import ReviewForm
-from .media import has_photo, image_urls
+from .bricklink import catalog_url
+from .media import bricklink_picture, has_photo, image_urls
 from .models import (
     Category, Color, Element, Part, Product, ProductImage, Review, StockNotification, Theme, category_tree,
 )
@@ -233,6 +234,8 @@ def product_detail(request, slug):
     if has_photo(product):
         src = product.main_image.share_url
         photo = request.build_absolute_uri(src) if src.startswith("/") else src
+    else:
+        photo = bricklink_picture(product) or None
     seo = {
         "title": seo_title(product),
         "description": (product.description or product.title)[:300],
@@ -246,6 +249,7 @@ def product_detail(request, slug):
         "similar": similar, "recent": recently_viewed(request, product.pk),
         "reviews": reviews, "my_review": my_review, "review_form": ReviewForm(instance=my_review),
         "element_id": element_id, "crumbs": crumbs, "seo": seo, "contains_figs": contains_figs,
+        "bricklink_url": catalog_url(product),
         "is_favorite": product.pk in cart_services.favorite_ids(request),
         "in_compare": product.pk in cart_services.compare_ids(request),
     })
@@ -277,6 +281,7 @@ def part_finder(request):
         for tok in q.lower().split():
             parts = parts.filter(Q(design_id__iexact=tok) | Q(name__icontains=tok) | Q(name_uk__icontains=tok) |
                                  Q(alternate_ids__icontains=tok) | Q(elements__element_id=tok) |
+                                 Q(bricklink_no__iexact=tok) |
                                  Q(design_id__istartswith=tok))
     if color:
         parts = parts.filter(products__color=color)

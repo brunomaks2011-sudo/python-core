@@ -1,0 +1,41 @@
+{% extends "panel/base.html" %}{% load shop_tags %}
+{% block title %}Перевірка BrickLink{% endblock %}
+{% block heading %}Перевірка за BrickLink{% endblock %}
+{% block content %}
+<p class="muted" style="margin:0 0 14px;max-width:820px">Біля кожного товару — його картинка з каталогу BrickLink. Якщо BrickLink не має картинки, рядок позначено: найчастіше це неправильний номер деталі або колір. Виправте номер BrickLink чи Element ID прямо в рядку й натисніть «Зберегти» — картинка оновиться одразу.</p>
+<div class="row" style="margin-bottom:14px">
+  <a class="btn btn-sm {% if tab == 'parts' %}btn-dark{% else %}btn-soft{% endif %}" href="?tab=parts">Деталі ({{ counts.parts }})</a>
+  <a class="btn btn-sm {% if tab == 'minifigs' %}btn-dark{% else %}btn-soft{% endif %}" href="?tab=minifigs">Мініфігурки ({{ counts.minifigs }})</a>
+  <a class="btn btn-sm {% if tab == 'sets' %}btn-dark{% else %}btn-soft{% endif %}" href="?tab=sets">Набори ({{ counts.sets }})</a>
+  <span class="spacer"></span>
+  <span class="muted" data-bl-summary></span>
+  <label class="check"><input type="checkbox" data-bl-only-bad><span>Лише проблемні</span></label>
+</div>
+<form method="post" data-bl-check>{% csrf_token %}
+<div class="ptable-wrap"><table class="ptable bl-table">
+  <thead><tr><th>Товар</th><th>BrickLink</th>{% if tab == "parts" %}<th>Номер BrickLink</th><th>Колір BrickLink</th><th>Element ID</th>{% elif tab == "minifigs" %}<th>Номер BrickLink</th>{% else %}<th>Номер набору</th>{% endif %}<th>Стан</th><th></th></tr></thead>
+  <tbody>
+  {% for p in rows %}
+    <tr data-bl-row data-save="{% url 'panel:bricklink_fix' p.pk %}" data-kind="{{ p.kind }}" data-color="{% if p.color_id and p.color.bricklink_id is not None %}{{ p.color.bricklink_id }}{% endif %}">
+      <td style="min-width:220px"><a class="link" style="color:var(--ink)" href="{% url 'panel:product_edit' p.pk %}">{{ p.title|truncatechars:60 }}</a><br><span class="muted mono" style="font-size:12px">{{ p.sku }}{% if p.part_id %} · Design ID {{ p.part.design_id }}{% endif %}</span></td>
+      <td><a href="{{ p.bl_url|default:'#' }}" target="_blank" rel="noopener" data-bl-link>{% if p.bl_image %}<img class="bl-img" src="{{ p.bl_image }}" alt="" width="64" height="64" loading="lazy" data-bl-img>{% else %}<span class="bl-img is-empty" data-bl-img-empty></span>{% endif %}</a></td>
+      {% if tab == "parts" %}
+        <td><input class="inline mono" name="bricklink_no" value="{{ p.bl_number }}" aria-label="Номер BrickLink {{ p.sku }}"></td>
+        <td>{% if p.color_id %}<span class="swatch-inline"><span class="swatch" style="--c:{{ p.color.hex }};--s:12px"></span>{{ p.color.display_name }}</span><br><span class="muted mono" style="font-size:12px">{% if p.color.bricklink_id is not None %}BrickLink {{ p.color.bricklink_id }}{% else %}немає номера BrickLink{% endif %}</span>{% endif %}</td>
+        <td><div class="row" style="flex-wrap:nowrap;gap:8px"><input class="inline mono" name="element_id" value="{{ p.el }}" aria-label="Element ID {{ p.sku }}" style="width:110px">{% if p.el_image %}<img class="el-img" src="{{ p.el_image }}" alt="" width="40" height="40" loading="lazy" data-el-img>{% endif %}</div></td>
+      {% elif tab == "minifigs" %}
+        <td><input class="inline mono" name="bricklink_id" value="{{ p.minifigure.bricklink_id }}" placeholder="напр. sw0001a" aria-label="Номер BrickLink {{ p.sku }}"></td>
+      {% else %}
+        <td class="mono">{{ p.lego_set.number|default:"—" }}</td>
+      {% endif %}
+      <td data-bl-status class="muted">Перевіряю…</td>
+      <td>{% if tab != "sets" %}<button class="btn btn-sm" type="button" data-bl-save>Зберегти</button>{% endif %}</td>
+    </tr>
+  {% empty %}
+    <tr><td colspan="7" class="muted" style="padding:28px">Таких товарів ще немає.</td></tr>
+  {% endfor %}
+  </tbody>
+</table></div>
+</form>
+{% include "partials/pagination.html" %}
+{% endblock %}

@@ -114,3 +114,20 @@
 .img-bg.bg-removed { color: var(--green); }
 .img-bg.bg-skipped { color: #b7791f; }
 .img-bg-btn { display: block; width: calc(100% - 12px); margin: 0 6px 6px; padding: 4px 6px; height: auto; min-height: 30px; font-size: 12px; white-space: normal; line-height: 1.2; }
+
+/* BrickLink picture preview in the product form */
+.bl-preview { display: flex; gap: 14px; align-items: center; padding: 12px; border: 1px solid var(--line); border-radius: 12px; background: #fff; }
+.bl-preview img { width: 96px; height: 96px; object-fit: contain; border-radius: 8px; background: var(--surface-2); flex: none; }
+.bl-preview p { margin: 4px 0 6px; font-size: 13px; }
+.bl-preview.is-missing { border-color: #f1b8b4; background: #fff7f6; }
+.bl-preview.is-missing img { opacity: .3; }
+.bl-preview.is-missing p { color: var(--red); }
+
+/* BrickLink check page */
+.bl-table td { vertical-align: middle; }
+.bl-img { display: block; width: 64px; height: 64px; object-fit: contain; border-radius: 8px; background: var(--surface-2); }
+.bl-img.is-empty { border: 1px dashed var(--line); }
+.el-img { width: 40px; height: 40px; object-fit: contain; border-radius: 6px; background: var(--surface-2); }
+.bl-ok { color: var(--green); font-size: 13px; }
+.bl-bad { color: var(--red); font-size: 13px; max-width: 220px; }
+.bl-table tr.is-bad td { background: #fff7f6; }

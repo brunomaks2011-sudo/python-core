@@ -105,21 +105,24 @@ class PhotoAndVariantTests(TestCase):
                                   color=cls.colors["clear"])
         cls.xwing = set_product()
 
-    def test_only_owner_photos_are_shown(self):
-        for product in (self.xwing, self.red):
+    def test_bricklink_pictures_unless_the_owner_added_a_photo(self):
+        pictures = {self.xwing: "https://img.bricklink.com/ItemImage/SN/0/75355-1.png",
+                    self.red: "https://img.bricklink.com/ItemImage/PN/5/3001.png"}  # red = BrickLink colour 5
+        for product, url in pictures.items():
             html = self.client.get(product.get_absolute_url()).content.decode()
             gallery = html.split('class="gallery-main"', 1)[1].split('class="card-badges"', 1)[0]
-            self.assertIn("img/no-photo.svg", gallery)
-            self.assertNotIn("/img/part/", gallery)
-            self.assertNotIn('"image":', html)  # no picture in JSON-LD without a real photo
-        r = self.client.get(reverse("catalog:category", args=["detali"]))
-        cards = r.content.decode().split('class="listing"', 1)[1]
-        self.assertNotIn("/img/part/", cards.split('class="card-media', 1)[1].split("</a>", 1)[0])
+            self.assertIn(url, gallery)
+            self.assertIn("img/no-photo.svg", gallery)  # shown if BrickLink has no picture
+            self.assertIn(f'"image": ["{url}"]', html)
+        cards = self.client.get(reverse("catalog:category", args=["detali"])).content.decode()
+        self.assertIn("https://img.bricklink.com/ItemImage/PN/", cards)
         from catalog.models import ProductImage
 
         ProductImage.objects.create(product=self.xwing, external_url="https://example.com/my-photo.jpg")
-        r = self.client.get(self.xwing.get_absolute_url())
-        self.assertContains(r, "https://example.com/my-photo.jpg")
+        r = self.client.get(self.xwing.get_absolute_url()).content.decode()
+        gallery = r.split('class="gallery-main"', 1)[1].split('class="card-badges"', 1)[0]
+        self.assertIn("https://example.com/my-photo.jpg", gallery)
+        self.assertNotIn(pictures[self.xwing], gallery)
 
     def test_colour_picker(self):
         r = self.client.get(self.red.get_absolute_url())
