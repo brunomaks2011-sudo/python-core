@@ -328,6 +328,43 @@ def add_missing(folder: Path | str = UPDATE_DIR, dry_run: bool = False) -> dict:
     folder = Path(folder)
     stats = {}
     with transaction.atomic():
+        rows = _rows(folder, "themes")
+        if rows is not None:
+            existing = {t.rebrickable_id: t for t in Theme.objects.filter(rebrickable_id__isnull=False)}
+            slugs = set(Theme.objects.values_list("slug", flat=True))
+            names = {_int(r["id"]): r["name"] for r in rows}
+            new = []
+            for r in rows:
+                rb, parent = _int(r["id"]), _int(r.get("parent_id"))
+                if rb is None or rb in existing:
+                    continue
+                label = f"{names.get(parent, '')} {r['name']}" if parent else r["name"]
+                base = make_slug(label) or f"seriia-{rb}"
+                slug, k = base, 2
+                while slug in slugs:
+                    slug, k = f"{base}-{k}", k + 1
+                slugs.add(slug)
+                existing[rb] = Theme.objects.create(rebrickable_id=rb, name=r["name"][:120], slug=slug)
+                new.append((existing[rb], parent))
+            for theme, parent in new:
+                if parent in existing:
+                    Theme.objects.filter(pk=theme.pk).update(parent=existing[parent])
+            stats["themes"] = (len(new), len(rows) - len(new))
+        rows = _rows(folder, "sets")
+        if rows is not None:
+            known = {n.lower() for n in LegoSet.objects.values_list("number", flat=True)}
+            themes = dict(Theme.objects.filter(rebrickable_id__isnull=False).values_list("rebrickable_id", "pk"))
+            new = []
+            for r in rows:
+                num = r["set_num"][:40]
+                if num.lower() in known:
+                    continue
+                known.add(num.lower())
+                new.append(LegoSet(number=num, name=r["name"][:255], year=_int(r.get("year")) or None,
+                                   theme_id=themes.get(_int(r.get("theme_id"))),
+                                   pieces=_int(r.get("num_parts")) or None))
+            LegoSet.objects.bulk_create(new, batch_size=BATCH, ignore_conflicts=True)
+            stats["sets"] = (len(new), len(rows) - len(new))
         rows = _rows(folder, "parts")
         if rows is not None:
             known = {d.lower() for d in Part.objects.values_list("design_id", flat=True)}

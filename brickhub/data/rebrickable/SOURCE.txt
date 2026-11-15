@@ -1,4 +1,5 @@
 Rebrickable catalogue downloads (https://rebrickable.com/downloads/), fetched 2026-11-15.
 Only numbers and names are kept: elements (element_id, part_num, color_id, design_id),
-parts (part_num, name, part_cat_id) and minifigs (fig_num, name, num_parts). No pictures.
+parts (part_num, name, part_cat_id), minifigs (fig_num, name, num_parts),
+sets (set_num, name, year, theme_id, num_parts) and themes (id, name, parent_id). No pictures.
 Load into the shop with: python manage.py update_catalog

@@ -9,7 +9,7 @@ from catalog.images import validate_image_file
 from catalog.models import Category, category_tree, Color, Element, LegoSet, Minifigure, Part, Product, Theme
 from orders.models import Order
 
-from catalog.item_info import element_for, known_part, new_minifig_info, new_part_info
+from catalog.item_info import element_for, known_part, new_minifig_info, new_part_info, new_set_info
 
 from .owners import owner_name
 
@@ -152,17 +152,23 @@ class ProductForm(forms.ModelForm):
         kind = data.get("kind")
         create = data.get("create_catalog")
         official = (data.get("official_name") or "").strip()
+        typed_title = (data.get("title") or "").strip()
         self.lego_set = self.part = self.minifigure = None
         if kind in ("set", "accessory", Product.KIND_KEYCHAIN, Product.KIND_BOOK) and data.get("set_number"):
             num = data["set_number"].strip()
             full = num if "-" in num else f"{num}-1"
             self.lego_set = LegoSet.objects.filter(number__iexact=full).first()
             if not self.lego_set:
-                if create and official:
-                    self.lego_set = LegoSet(number=full, name=official)
+                # a set the catalogue does not know yet (a new release): its name from the form or BrickLink
+                name, theme = official or typed_title, None
+                if not name:
+                    info = new_set_info(full)
+                    name, theme = info["name"], info["theme"]
+                if name:
+                    self.lego_set = LegoSet(number=full, name=name[:255], theme=theme)
                 else:
-                    self.add_error("set_number", "Такого номера немає в каталозі LEGO. Перевірте номер або "
-                                                 "позначте «створити запис вручну» та вкажіть офіційну назву.")
+                    self.add_error("set_number", f"Набору {num} ще немає в каталозі сайту. Впишіть його назву в "
+                                                 "поле «Назва» нижче й збережіть — набір додасться в каталог.")
         elif kind == "set":
             self.add_error("set_number", "Вкажіть номер набору")
         if kind == "part":
@@ -194,8 +200,15 @@ class ProductForm(forms.ModelForm):
                 if not self.part:
                     # a number the catalogue does not know yet: name and section from BrickLink or its base part
                     info = new_part_info(design)
-                    self.part = Part(design_id=design, name=(official if create and official else info["name"]),
-                                     category=info["category"], lego_no=design if design.isdigit() else "")
+                    # the owner's own name beats a made-up one ("Торси (973pb…)"); BrickLink's official one wins
+                    name = official or (info["name"] if info["source"] == "bricklink" else "") or typed_title \
+                        or info["name"]
+                    if name:
+                        self.part = Part(design_id=design, name=name[:255], category=info["category"],
+                                         lego_no=design if design.isdigit() else "")
+                    else:
+                        self.add_error("design_id", f"Деталі {design} ще немає в каталозі, і назву знайти не "
+                                                    "вдалося. Впишіть її в поле «Назва» нижче й збережіть.")
             if not data.get("color"):
                 self.add_error("color", "Для деталі обов'язково вкажіть колір")
             el = (data.get("element_id") or "").strip()
@@ -221,9 +234,13 @@ class ProductForm(forms.ModelForm):
                 if not self.minifigure:
                     # a BrickLink number the catalogue does not know yet: name and series from BrickLink
                     info = new_minifig_info(num)
-                    self.minifigure = Minifigure(fig_number=num, bricklink_id=num,
-                                                 name=(official if create and official else info["name"]),
-                                                 theme=info["theme"])
+                    name = official or info["name"] or typed_title
+                    if name:
+                        self.minifigure = Minifigure(fig_number=num, bricklink_id=num, name=name[:255],
+                                                     theme=info["theme"])
+                    else:
+                        self.add_error("fig_number", f"Мініфігурки {num} ще немає в каталозі, і назву знайти не "
+                                                     "вдалося. Впишіть її в поле «Назва» нижче й збережіть.")
         elif kind in Product.WITH_FIGURE and (data.get("fig_number") or "").strip():
             num = data["fig_number"].strip()
             self.minifigure = (Minifigure.objects.filter(fig_number__iexact=num).first()

@@ -85,7 +85,12 @@
       const r = await fetch(`${pf.dataset.lookup}?kind=${k}&q=${encodeURIComponent(q)}${extra}`);
       const d = await r.json();
       out.className = "lookup-result " + (d.found ? "is-ok" : "is-bad");
-      if (!d.found) { out.textContent = d.message || "Не знайдено в каталозі"; return; }
+      if (!d.found) {
+        out.textContent = d.message || "Не знайдено в каталозі";
+        const titleField = $("#id_title", pf);
+        if (titleField && !titleField.value) { titleField.placeholder = "Впишіть назву"; titleField.focus(); }
+        return;
+      }
       const title = $("#id_title", pf);
       if (type === "set") {
         // pieces and minifigure counts are shown (and filled in) only for sets
@@ -94,6 +99,7 @@
         if (d.year) bits.push(d.year);
         if (isSet) bits.push(`${d.pieces || "?"} дет.`, `мініфігурок: ${d.minifigs ?? "?"}`);
         if (d.theme) bits.push(d.theme);
+        if (d.note) bits.push(d.note);
         out.textContent = "✓ " + bits.join(" · ") +
           (d.listings && d.listings.length ? ` · вже є лоти: ${d.listings.map((l) => l.sku).join(", ")}` : "");
         if (title && !title.value) title.placeholder = d.name;

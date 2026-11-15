@@ -26,7 +26,7 @@ from catalog.models import (
 )
 from catalog import bricklink as bl
 from catalog.media import catalogue_pictures
-from catalog.item_info import element_for, known_part, lego_numbers, new_minifig_info, new_part_info
+from catalog.item_info import element_for, known_part, lego_numbers, new_minifig_info, new_part_info, new_set_info
 from catalog.images import photos_to_process, remove_photo_background, restore_photo_background
 from catalog.notifications import notify_back_in_stock
 from orders.models import Order, OrderItem
@@ -522,9 +522,18 @@ def catalog_lookup(request):
     if not q:
         return JsonResponse({"found": False})
     if kind in ("set", "accessory"):
-        s = LegoSet.objects.filter(number__iexact=q if "-" in q else f"{q}-1").select_related("theme").first()
+        full = q if "-" in q else f"{q}-1"
+        s = LegoSet.objects.filter(number__iexact=full).select_related("theme").first()
         if not s:
-            return JsonResponse({"found": False, "message": "Номера немає в каталозі"})
+            info = new_set_info(full)
+            if info["name"]:
+                return JsonResponse({"found": True, "new": True, "name": info["name"], "year": None, "pieces": None,
+                                     "minifigs": None, "age": None, "listings": [],
+                                     "theme_id": info["theme"].pk if info["theme"] else None,
+                                     "theme": info["theme"].display_name if info["theme"] else "",
+                                     "note": "новий набір, назва з BrickLink"})
+            return JsonResponse({"found": False, "message": "Цього набору ще немає в каталозі сайту — впишіть його "
+                                                            "назву в поле «Назва», набір додасться при збереженні"})
         root = s.theme
         while root and root.parent_id and not root.is_primary:
             root = root.parent
@@ -552,7 +561,7 @@ def catalog_lookup(request):
             note = {"bricklink": "нова деталь, назва й розділ з BrickLink",
                     "base": f"нова деталь, розділ за основною деталлю {info.get('base', '')}",
                     "design": "нова деталь, розділ за номером дизайну LEGO",
-                    "none": "нова деталь — вкажіть назву й розділ"}[info["source"]]
+                    "none": "нова деталь — впишіть її назву в поле «Назва» й оберіть розділ"}[info["source"]]
             return JsonResponse({"found": True, "new": True, "design_id": q, "name": info["name"], "name_uk": "",
                                  "lego_design_id": q if q.isdigit() else "", "bricklink_no": "" if q.isdigit() else q,
                                  "category_id": info["category"].pk if info["category"] else None, "note": note,
@@ -570,8 +579,8 @@ def catalog_lookup(request):
         if not m:
             info = new_minifig_info(q)
             if info["source"] == "none":
-                return JsonResponse({"found": True, "new": True, "name": q, "year": None, "theme_id": None,
-                                     "bricklink_id": q, "note": "нова мініфігурка — вкажіть назву"})
+                return JsonResponse({"found": False, "message": "Цієї мініфігурки ще немає в каталозі — впишіть її "
+                                                                "назву в поле «Назва», вона додасться при збереженні"})
             return JsonResponse({"found": True, "new": True, "name": info["name"], "year": None,
                                  "theme_id": info["theme"].pk if info["theme"] else None, "bricklink_id": q,
                                  "note": "нова мініфігурка, назва з BrickLink"})

@@ -198,17 +198,31 @@ def new_part_info(number: str, online: bool = True) -> dict:
     if cats:
         category = Category.objects.get(pk=cats.most_common(1)[0][0])
         return {"name": f"{category.name} ({number})", "category": category, "source": "design"}
-    return {"name": number, "category": None, "source": "none"}
+    return {"name": "", "category": None, "source": "none"}  # no name to be found: the owner types one
+
+
+def _theme_for(category: str) -> Theme | None:
+    """The shop series for BrickLink's category ("Star Wars:Star Wars Episode 1" -> LEGO Star Wars)."""
+    first = (category or "").split(":")[0].strip()
+    if not first:
+        return None
+    return (Theme.objects.filter(title__iexact=f"LEGO {first}").first()
+            or Theme.objects.filter(name__iexact=first, parent__isnull=True).first())
 
 
 def new_minifig_info(number: str, online: bool = True) -> dict:
-    """{"name", "theme", "source"} for a BrickLink minifigure number that is not in the local catalogue."""
+    """{"name", "theme", "source"} for a BrickLink minifigure number that is not in the local catalogue.
+
+    With source "none" there is no name: the owner has to type one (a number is never used as a name)."""
     online = bricklink_title("M", number) if online else cache.get(f"bricklink:title:M:{number.lower()}")
     if online and online.get("name"):
-        theme = None
-        first = online.get("category", "").split(":")[0].strip()
-        if first:
-            theme = (Theme.objects.filter(title__iexact=f"LEGO {first}").first()
-                     or Theme.objects.filter(name__iexact=first, parent__isnull=True).first())
-        return {"name": online["name"], "theme": theme, "source": "bricklink"}
-    return {"name": number, "theme": None, "source": "none"}
+        return {"name": online["name"], "theme": _theme_for(online.get("category", "")), "source": "bricklink"}
+    return {"name": "", "theme": None, "source": "none"}
+
+
+def new_set_info(number: str, online: bool = True) -> dict:
+    """{"name", "theme", "source"} for a set number (75355-1) that is not in the local catalogue."""
+    online = bricklink_title("S", number) if online else cache.get(f"bricklink:title:S:{number.lower()}")
+    if online and online.get("name"):
+        return {"name": online["name"], "theme": _theme_for(online.get("category", "")), "source": "bricklink"}
+    return {"name": "", "theme": None, "source": "none"}

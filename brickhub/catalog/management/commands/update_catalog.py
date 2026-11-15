@@ -4,8 +4,8 @@ from catalog.importer import UPDATE_DIR, add_missing
 
 
 class Command(BaseCommand):
-    help = ("Додає в довідник нові деталі, мініфігурки та Element ID з файлів Rebrickable (parts, minifigs, "
-            "elements .csv або .csv.gz). Наявні записи й товари не змінюються.")
+    help = ("Додає в довідник нові набори, серії, деталі, мініфігурки та Element ID з файлів Rebrickable (sets, "
+            "themes, parts, minifigs, elements .csv або .csv.gz). Наявні записи й товари не змінюються.")
 
     def add_arguments(self, parser):
         parser.add_argument("--dir", default=str(UPDATE_DIR), help="Папка з файлами (типово data/rebrickable)")
@@ -20,7 +20,8 @@ class Command(BaseCommand):
         stats = add_missing(folder, dry_run=opts["dry_run"])
         if not stats:
             raise CommandError(f"У папці {folder} немає parts / minifigs / elements (.csv або .csv.gz)")
-        labels = {"parts": "Деталі", "minifigs": "Мініфігурки", "elements": "Element ID"}
+        labels = {"themes": "Серії", "sets": "Набори", "parts": "Деталі", "minifigs": "Мініфігурки",
+                  "elements": "Element ID"}
         for key, label in labels.items():
             if key in stats:
                 added, had = stats[key]
