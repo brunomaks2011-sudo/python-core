@@ -131,8 +131,6 @@ img.pimg { height: auto; }
 .row { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
 .spacer { flex: 1; }
 [hidden] { display: none !important; }
-/* drawings of parts used as category icons are kept grey, so colour stays with the products */
-.mega a.mlink img, .chip img, .cat-tile img, .pp-visual img, .mnav img { filter: grayscale(1) contrast(1.05); }
 
 /* ---------- buttons ---------- */
 .btn {
