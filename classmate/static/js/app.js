@@ -1,4 +1,4 @@
-// Точка входа: маршруты, обработчики кнопок, синхронизация с сервером.
+// Einstiegspunkt: Routen, Button-Aktionen, Synchronisierung mit dem Server.
 import { api } from './api.js';
 import { loadClass, loadEverything, loadHomework, loadMe, loadNotifications, refreshClassData } from './data.js';
 import { closeModal, confirmDialog, escapeModal, isModalOpen, openHomeworkForm, submitHomework } from './forms.js';
@@ -177,7 +177,7 @@ async function toggleDone(id) {
   try {
     const result = await api(`/api/homework/${id}/done`, { method: 'PUT', body: { done: next } });
     state.doneCount = result.doneCount;
-    if (next) toast('Отлично! Задание выполнено ✓', 'success');
+    if (next) toast('Super! Aufgabe erledigt ✓', 'success');
   } catch (err) {
     h.done = !next;
     render();
@@ -189,7 +189,7 @@ async function uploadPhotos(homeworkId, files) {
   let ok = 0;
   for (const file of files) {
     if (file.size > 5 * 1024 * 1024) {
-      toast(`«${file.name}» больше 5 МБ`, 'error');
+      toast(`„${file.name}“ ist größer als 5 MB`, 'error');
       continue;
     }
     const form = new FormData();
@@ -204,7 +204,7 @@ async function uploadPhotos(homeworkId, files) {
   }
   await refreshClassData();
   render();
-  if (ok) toast(`Фото добавлено: ${ok}`, 'success');
+  if (ok) toast(`Fotos hinzugefügt: ${ok}`, 'success');
 }
 
 function shiftCalendar(dir) {
@@ -222,20 +222,20 @@ const actions = {
 
   async 'delete-task'(el) {
     const id = Number(el.dataset.id);
-    if (!(await confirmDialog('Удалить задание?', 'Оно пропадёт у всех участников класса вместе с фото.'))) return;
+    if (!(await confirmDialog('Aufgabe löschen?', 'Sie verschwindet für die ganze Klasse, samt Fotos.'))) return;
     await api(`/api/homework/${id}`, { method: 'DELETE' });
     await refreshClassData();
     navigate('tasks');
     render();
-    toast('Задание удалено', 'success');
+    toast('Aufgabe gelöscht', 'success');
   },
 
   async 'delete-attachment'(el) {
-    if (!(await confirmDialog('Удалить фото?', 'Фото пропадёт у всех участников класса.'))) return;
+    if (!(await confirmDialog('Foto löschen?', 'Das Foto verschwindet für die ganze Klasse.'))) return;
     await api(`/api/attachments/${el.dataset.id}`, { method: 'DELETE' });
     await refreshClassData();
     render();
-    toast('Фото удалено', 'success');
+    toast('Foto gelöscht', 'success');
   },
 
   'set-filter': (el) => {
@@ -287,35 +287,35 @@ const actions = {
     const code = state.cls?.inviteCode;
     try {
       await navigator.clipboard.writeText(code);
-      toast(`Код ${code} скопирован`, 'success');
+      toast(`Code ${code} kopiert`, 'success');
     } catch {
-      toast(`Код приглашения: ${code}`, 'info');
+      toast(`Einladungscode: ${code}`, 'info');
     }
   },
   async 'regen-code'() {
-    if (!(await confirmDialog('Создать новый код?', 'Старый код перестанет работать. Уже вступившие участники останутся в классе.', 'Создать', 'primary'))) return;
+    if (!(await confirmDialog('Neuen Code erstellen?', 'Der alte Code funktioniert dann nicht mehr. Wer schon drin ist, bleibt in der Klasse.', 'Erstellen', 'primary'))) return;
     await api('/api/class/invite-code', { method: 'POST' });
     await loadClass();
     render();
-    toast('Новый код создан', 'success');
+    toast('Neuer Code erstellt', 'success');
   },
   async 'set-role'(el) {
     await api(`/api/class/members/${el.dataset.id}`, { method: 'PATCH', body: { role: el.dataset.value } });
     await loadClass();
     render();
-    toast('Роль изменена', 'success');
+    toast('Rolle geändert', 'success');
   },
   async 'remove-member'(el) {
-    if (!(await confirmDialog(`Исключить ${el.dataset.name}?`, 'Участник потеряет доступ к заданиям класса. Его задания останутся.', 'Исключить'))) return;
+    if (!(await confirmDialog(`${el.dataset.name} entfernen?`, 'Die Person verliert den Zugriff auf die Klasse. Ihre Aufgaben bleiben erhalten.', 'Entfernen'))) return;
     await api(`/api/class/members/${el.dataset.id}`, { method: 'DELETE' });
     await loadClass();
     render();
-    toast('Участник исключён', 'success');
+    toast('Mitglied entfernt', 'success');
   },
   async 'leave-class'() {
     const last = state.cls?.members.length === 1;
-    const text = last ? 'Ты последний участник: класс и все задания будут удалены навсегда.' : 'Ты сможешь вернуться по коду приглашения.';
-    if (!(await confirmDialog('Выйти из класса?', text, 'Выйти'))) return;
+    const text = last ? 'Du bist das letzte Mitglied: Die Klasse und alle Aufgaben werden endgültig gelöscht.' : 'Mit dem Einladungscode kannst du jederzeit zurückkommen.';
+    if (!(await confirmDialog('Klasse verlassen?', text, 'Verlassen'))) return;
     await api('/api/class/leave', { method: 'POST' });
     await loadEverything();
     navigate('setup');
@@ -327,7 +327,7 @@ const actions = {
     try {
       await enablePush();
       state.pushSubscribed = true;
-      toast('Уведомления включены', 'success');
+      toast('Mitteilungen aktiviert', 'success');
     } finally {
       el.disabled = false;
       render();
@@ -337,11 +337,11 @@ const actions = {
     await disablePush();
     state.pushSubscribed = false;
     render();
-    toast('Push-уведомления выключены', 'info');
+    toast('Push-Mitteilungen ausgeschaltet', 'info');
   },
   async 'test-push'() {
     await api('/api/push/test', { method: 'POST' });
-    toast('Тестовое уведомление отправлено. Сверни сайт, чтобы увидеть его в системе.', 'info');
+    toast('Test gesendet. Minimier die Seite, um die Mitteilung im System zu sehen.', 'info');
   },
 };
 
@@ -372,32 +372,32 @@ const forms = {
       method: 'POST',
       body: { displayName: fd.get('displayName'), username: fd.get('username'), password: fd.get('password'), timezone: userTimezone() },
     });
-    toast('Аккаунт создан!', 'success');
+    toast('Konto erstellt!', 'success');
     await afterAuth();
   },
   async 'create-class'(form) {
     state.me = await api('/api/classes', { method: 'POST', body: { name: new FormData(form).get('name') } });
     await afterAuth();
-    toast('Класс создан! Поделись кодом приглашения с одноклассниками', 'success');
+    toast('Klasse erstellt! Teil den Einladungscode mit deiner Klasse', 'success');
     navigate('class');
   },
   async 'join-class'(form) {
     state.me = await api('/api/classes/join', { method: 'POST', body: { code: new FormData(form).get('code') } });
     await afterAuth();
-    toast(`Добро пожаловать в ${state.me.class.name}!`, 'success');
+    toast(`Willkommen in ${state.me.class.name}!`, 'success');
   },
   async 'rename-class'(form) {
     await api('/api/class', { method: 'PATCH', body: { name: new FormData(form).get('name') } });
     await loadMe();
     await loadClass();
     render();
-    toast('Название сохранено', 'success');
+    toast('Name gespeichert', 'success');
   },
   async profile(form) {
     state.me = await api('/api/me', { method: 'PATCH', body: { displayName: new FormData(form).get('displayName') } });
     await loadHomework();
     render();
-    toast('Профиль сохранён', 'success');
+    toast('Profil gespeichert', 'success');
   },
   async password(form) {
     const fd = new FormData(form);
@@ -406,7 +406,7 @@ const forms = {
       body: { currentPassword: fd.get('currentPassword'), newPassword: fd.get('newPassword') },
     });
     form.reset();
-    toast('Пароль изменён', 'success');
+    toast('Passwort geändert', 'success');
   },
 };
 
@@ -419,7 +419,7 @@ document.addEventListener('click', async (event) => {
   try {
     await actions[el.dataset.action](el, event);
   } catch (err) {
-    toast(err.message || 'Что-то пошло не так', 'error');
+    toast(err.message || 'Etwas ist schiefgelaufen', 'error');
   }
 });
 
@@ -435,7 +435,7 @@ document.addEventListener('submit', async (event) => {
   try {
     await handler(form);
   } catch (err) {
-    formError(form, err.message || 'Что-то пошло не так');
+    formError(form, err.message || 'Etwas ist schiefgelaufen');
   } finally {
     if (form.dataset.form !== 'homework' && button && button.isConnected) button.disabled = false;
   }
@@ -451,7 +451,7 @@ document.addEventListener('change', async (event) => {
       const value = el.type === 'checkbox' ? el.checked : el.value;
       if (el.type === 'time' && !value) return;
       state.me = await api('/api/me', { method: 'PATCH', body: { [el.dataset.key]: value } });
-      toast('Настройки сохранены', 'success');
+      toast('Einstellungen gespeichert', 'success');
     } else if (el.dataset.change === 'attach') {
       const files = [...el.files];
       if (files.length) await uploadPhotos(Number(el.dataset.id), files);

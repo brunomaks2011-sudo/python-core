@@ -1,4 +1,4 @@
-// Браузерные и push-уведомления.
+// Browser- und Push-Mitteilungen.
 import { api } from './api.js';
 
 export function pushSupported() {
@@ -23,13 +23,13 @@ function base64UrlToBytes(value) {
 
 export async function enablePush() {
   if (!pushSupported()) {
-    throw new Error('Этот браузер не поддерживает push-уведомления (нужен HTTPS или localhost)');
+    throw new Error('Dieser Browser unterstützt keine Push-Mitteilungen (HTTPS oder localhost nötig)');
   }
   const config = await api('/api/push/config');
-  if (!config.enabled) throw new Error('На сервере push-уведомления не настроены');
+  if (!config.enabled) throw new Error('Push-Mitteilungen sind auf dem Server nicht eingerichtet');
 
   const permission = await Notification.requestPermission();
-  if (permission !== 'granted') throw new Error('Разрешите уведомления для этого сайта в настройках браузера');
+  if (permission !== 'granted') throw new Error('Bitte erlaube Mitteilungen für diese Seite in den Browser-Einstellungen');
 
   const registration = await navigator.serviceWorker.register('/sw.js', { scope: '/' });
   await navigator.serviceWorker.ready;

@@ -81,8 +81,8 @@ def new_homework_notifications(
            WHERE m.class_id = ? AND u.id <> ? AND u.notify_new = 1""",
         (class_id, author_id),
     ).fetchall()
-    title = f"Новое задание: {subject}"
-    body = f"{author_name} · сдать до {format_due(due_date)} · {excerpt(description)}"
+    title = f"Neue Aufgabe: {subject}"
+    body = f"{author_name} · fällig am {format_due(due_date)} · {excerpt(description)}"
     created = []
     for row in recipients:
         item = insert_notification(conn, row["id"], homework_id, "new", title, body, now)
@@ -135,9 +135,9 @@ def run_reminders(conn, now: datetime, user_id: int | None = None) -> list[dict]
 
         for kind in kinds:
             if kind == "day_before":
-                title = f"Завтра сдавать: {row['subject']}"
+                title = f"Morgen fällig: {row['subject']}"
             else:
-                title = f"Сегодня сдавать: {row['subject']}"
+                title = f"Heute fällig: {row['subject']}"
             item = insert_notification(
                 conn,
                 row["user_id"],

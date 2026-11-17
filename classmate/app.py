@@ -62,9 +62,9 @@ CONTENT_SECURITY_POLICY = (
     "worker-src 'self'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
 )
 HTTP_MESSAGES = {
-    404: "Не найдено",
-    405: "Метод не поддерживается",
-    413: "Файл слишком большой (максимум 5 МБ)",
+    404: "Nicht gefunden",
+    405: "Methode nicht erlaubt",
+    413: "Datei zu groß (maximal 5 MB)",
 }
 
 mimetypes.add_type("application/manifest+json", ".webmanifest")
@@ -131,7 +131,7 @@ def now_utc() -> datetime:
 def read_json() -> dict:
     data = request.get_json(silent=True)
     if not isinstance(data, dict):
-        raise ApiError(400, "Некорректный запрос")
+        raise ApiError(400, "Ungültige Anfrage")
     return data
 
 
@@ -140,30 +140,30 @@ def read_text(data: dict, key: str, label: str, max_len: int, required: bool = F
     if value is None:
         value = ""
     if not isinstance(value, str):
-        raise ApiError(400, f"Поле «{label}» заполнено неверно")
+        raise ApiError(400, f"Das Feld „{label}“ ist ungültig")
     value = value.strip()
     if required and not value:
-        raise ApiError(400, f"Заполните поле «{label}»")
+        raise ApiError(400, f"Bitte fülle das Feld „{label}“ aus")
     if len(value) > max_len:
-        raise ApiError(400, f"Поле «{label}» слишком длинное (до {max_len} символов)")
+        raise ApiError(400, f"Das Feld „{label}“ ist zu lang (maximal {max_len} Zeichen)")
     return value
 
 
 def read_password(data: dict, key: str) -> str:
     value = data.get(key)
     if not isinstance(value, str) or len(value) < 6:
-        raise ApiError(400, "Пароль должен быть не короче 6 символов")
+        raise ApiError(400, "Das Passwort muss mindestens 6 Zeichen lang sein")
     if len(value) > 200:
-        raise ApiError(400, "Пароль слишком длинный")
+        raise ApiError(400, "Das Passwort ist zu lang")
     return value
 
 
 def read_username(data: dict) -> str:
-    username = read_text(data, "username", "Логин", 32, required=True)
+    username = read_text(data, "username", "Benutzername", 32, required=True)
     if not USERNAME_RE.match(username):
         raise ApiError(
             400,
-            "Логин: от 3 до 32 символов, латинские буквы, цифры, точка или подчёркивание",
+            "Benutzername: 3 bis 32 Zeichen, lateinische Buchstaben, Ziffern, Punkt oder Unterstrich",
         )
     return username.lower()
 
@@ -179,21 +179,21 @@ def read_timezone(value) -> str | None:
 
 
 def parse_homework(data: dict) -> dict:
-    subject = read_text(data, "subject", "Предмет", SUBJECT_MAX, required=True)
-    description = read_text(data, "description", "Что задали", DESCRIPTION_MAX, required=True)
-    raw_due = read_text(data, "dueDate", "Дата выполнения", 10, required=True)
+    subject = read_text(data, "subject", "Fach", SUBJECT_MAX, required=True)
+    description = read_text(data, "description", "Aufgabe", DESCRIPTION_MAX, required=True)
+    raw_due = read_text(data, "dueDate", "Abgabedatum", 10, required=True)
     try:
         due = date.fromisoformat(raw_due)
     except ValueError:
-        raise ApiError(400, "Укажите корректную дату выполнения")
+        raise ApiError(400, "Bitte gib ein gültiges Abgabedatum an")
     if not date(2020, 1, 1) <= due <= date(2100, 12, 31):
-        raise ApiError(400, "Дата выполнения вне допустимого диапазона")
+        raise ApiError(400, "Das Abgabedatum liegt außerhalb des erlaubten Bereichs")
     return {
         "subject": subject,
         "description": description,
         "due_date": due.isoformat(),
-        "pages": read_text(data, "pages", "Страница и упражнение", PAGES_MAX),
-        "comment": read_text(data, "comment", "Комментарий", COMMENT_MAX),
+        "pages": read_text(data, "pages", "Seite und Übung", PAGES_MAX),
+        "comment": read_text(data, "comment", "Kommentar", COMMENT_MAX),
     }
 
 
@@ -284,14 +284,14 @@ def is_admin() -> bool:
 
 def require_admin() -> None:
     if not is_admin():
-        raise ApiError(403, "Это может сделать только администратор класса")
+        raise ApiError(403, "Das darf nur der Admin der Klasse")
 
 
 def login_required(view):
     @wraps(view)
     def wrapper(*args, **kwargs):
         if g.user is None:
-            raise ApiError(401, "Войдите в аккаунт")
+            raise ApiError(401, "Bitte melde dich an")
         return view(*args, **kwargs)
 
     return wrapper
@@ -301,9 +301,9 @@ def class_required(view):
     @wraps(view)
     def wrapper(*args, **kwargs):
         if g.user is None:
-            raise ApiError(401, "Войдите в аккаунт")
+            raise ApiError(401, "Bitte melde dich an")
         if g.user["class_id"] is None:
-            raise ApiError(403, "Сначала создайте класс или вступите в него", code="no_class")
+            raise ApiError(403, "Erstelle zuerst eine Klasse oder tritt einer bei", code="no_class")
         return view(*args, **kwargs)
 
     return wrapper
@@ -315,7 +315,7 @@ def load_homework_row(hid: int):
         (hid, g.user["class_id"]),
     ).fetchone()
     if row is None:
-        raise ApiError(404, "Задание не найдено")
+        raise ApiError(404, "Aufgabe nicht gefunden")
     return row
 
 
@@ -340,7 +340,7 @@ def serialize_homework(row, attachments, user) -> dict:
         "dueDate": row["due_date"],
         "pages": row["pages"],
         "comment": row["comment"],
-        "author": {"id": row["author_id"], "name": row["author_name"] or "Участник"},
+        "author": {"id": row["author_id"], "name": row["author_name"] or "Mitglied"},
         "createdAt": row["created_at"],
         "updatedAt": row["updated_at"],
         "done": row["completed_at"] is not None,
@@ -444,7 +444,7 @@ def handle_api_error(err: ApiError):
 def register():
     data = read_json()
     username = read_username(data)
-    display_name = read_text(data, "displayName", "Имя", NAME_MAX, required=True)
+    display_name = read_text(data, "displayName", "Name", NAME_MAX, required=True)
     password = read_password(data, "password")
     tz = read_timezone(data.get("timezone")) or "UTC"
     try:
@@ -454,7 +454,7 @@ def register():
             (username, display_name, generate_password_hash(password), tz, iso(now_utc())),
         )
     except sqlite3.IntegrityError:
-        raise ApiError(409, "Такой логин уже занят")
+        raise ApiError(409, "Dieser Benutzername ist schon vergeben")
     g.db.commit()
     start_session(cur.lastrowid)
     return jsonify(serialize_me(load_user(cur.lastrowid))), 201
@@ -463,19 +463,19 @@ def register():
 @api_bp.post("/auth/login")
 def login():
     data = read_json()
-    username = read_text(data, "username", "Логин", 32, required=True).lower()
+    username = read_text(data, "username", "Benutzername", 32, required=True).lower()
     password = data.get("password")
     if not isinstance(password, str):
-        raise ApiError(400, "Введите пароль")
+        raise ApiError(400, "Bitte gib dein Passwort ein")
     limiter: AttemptLimiter = current_app.extensions["login_limiter"]
     key = f"{request.remote_addr or 'unknown'}:{username}"
     if limiter.blocked(key):
-        raise ApiError(429, "Слишком много попыток входа. Попробуйте через 15 минут")
+        raise ApiError(429, "Zu viele Anmeldeversuche. Bitte versuch es in 15 Minuten erneut")
 
     row = g.db.execute("SELECT id, password_hash FROM users WHERE username = ?", (username,)).fetchone()
     if row is None or not check_password_hash(row["password_hash"], password):
         limiter.hit(key)
-        raise ApiError(401, "Неверный логин или пароль")
+        raise ApiError(401, "Benutzername oder Passwort ist falsch")
 
     limiter.reset(key)
     tz = read_timezone(data.get("timezone"))
@@ -495,7 +495,7 @@ def logout():
 @api_bp.get("/me")
 def me():
     if g.user is None:
-        raise ApiError(401, "Войдите в аккаунт")
+        raise ApiError(401, "Bitte melde dich an")
     return jsonify(serialize_me(g.user))
 
 
@@ -505,11 +505,11 @@ def update_me():
     data = read_json()
     updates: dict[str, object] = {}
     if "displayName" in data:
-        updates["display_name"] = read_text(data, "displayName", "Имя", NAME_MAX, required=True)
+        updates["display_name"] = read_text(data, "displayName", "Name", NAME_MAX, required=True)
     if "reminderTime" in data:
         value = data["reminderTime"]
         if not isinstance(value, str) or not TIME_RE.match(value):
-            raise ApiError(400, "Укажите время напоминания в формате ЧЧ:ММ")
+            raise ApiError(400, "Bitte gib die Erinnerungszeit im Format HH:MM an")
         updates["reminder_time"] = value
     for key, column in (
         ("remindDayBefore", "remind_day_before"),
@@ -518,12 +518,12 @@ def update_me():
     ):
         if key in data:
             if not isinstance(data[key], bool):
-                raise ApiError(400, "Настройка должна быть включена или выключена")
+                raise ApiError(400, "Die Einstellung muss ein- oder ausgeschaltet sein")
             updates[column] = int(data[key])
     if "timezone" in data:
         tz = read_timezone(data["timezone"])
         if tz is None:
-            raise ApiError(400, "Некорректный часовой пояс")
+            raise ApiError(400, "Ungültige Zeitzone")
         updates["timezone"] = tz
 
     if updates:
@@ -543,7 +543,7 @@ def change_password():
     data = read_json()
     current = data.get("currentPassword")
     if not isinstance(current, str) or not check_password_hash(g.user["password_hash"], current):
-        raise ApiError(400, "Текущий пароль введён неверно")
+        raise ApiError(400, "Das aktuelle Passwort ist falsch")
     new_password = read_password(data, "newPassword")
     g.db.execute(
         "UPDATE users SET password_hash = ? WHERE id = ?",
@@ -559,9 +559,9 @@ def change_password():
 @login_required
 def create_class():
     if g.user["class_id"] is not None:
-        raise ApiError(409, "Вы уже состоите в классе")
+        raise ApiError(409, "Du bist schon in einer Klasse")
     data = read_json()
-    name = read_text(data, "name", "Название класса", CLASS_NAME_MAX, required=True)
+    name = read_text(data, "name", "Klassenname", CLASS_NAME_MAX, required=True)
     now = iso(now_utc())
     code = new_invite_code(g.db)
     cur = g.db.execute(
@@ -580,25 +580,25 @@ def create_class():
 @login_required
 def join_class():
     if g.user["class_id"] is not None:
-        raise ApiError(409, "Вы уже состоите в классе. Сначала выйдите из него")
+        raise ApiError(409, "Du bist schon in einer Klasse. Verlass sie zuerst")
     limiter: AttemptLimiter = current_app.extensions["join_limiter"]
     key = f"user:{g.user['id']}"
     if limiter.blocked(key):
-        raise ApiError(429, "Слишком много попыток. Попробуйте позже")
+        raise ApiError(429, "Zu viele Versuche. Bitte versuch es später erneut")
     data = read_json()
-    code = read_text(data, "code", "Код приглашения", 12, required=True)
+    code = read_text(data, "code", "Einladungscode", 12, required=True)
     code = code.upper().replace(" ", "").replace("-", "")
     cls = g.db.execute("SELECT id FROM classes WHERE invite_code = ?", (code,)).fetchone()
     if cls is None:
         limiter.hit(key)
-        raise ApiError(404, "Класс с таким кодом не найден")
+        raise ApiError(404, "Keine Klasse mit diesem Code gefunden")
     try:
         g.db.execute(
             "INSERT INTO memberships (user_id, class_id, role, joined_at) VALUES (?, ?, 'member', ?)",
             (g.user["id"], cls["id"], iso(now_utc())),
         )
     except sqlite3.IntegrityError:
-        raise ApiError(409, "Вы уже состоите в классе")
+        raise ApiError(409, "Du bist schon in einer Klasse")
     bump_version(cls["id"])
     g.db.commit()
     return jsonify(serialize_me(load_user(g.user["id"])))
@@ -615,7 +615,7 @@ def get_class():
 def rename_class():
     require_admin()
     data = read_json()
-    name = read_text(data, "name", "Название класса", CLASS_NAME_MAX, required=True)
+    name = read_text(data, "name", "Klassenname", CLASS_NAME_MAX, required=True)
     g.db.execute("UPDATE classes SET name = ? WHERE id = ?", (name, g.user["class_id"]))
     bump_version(g.user["class_id"])
     g.db.commit()
@@ -639,13 +639,13 @@ def change_member_role(user_id: int):
     data = read_json()
     role = data.get("role")
     if role not in ("admin", "member"):
-        raise ApiError(400, "Роль должна быть admin или member")
+        raise ApiError(400, "Die Rolle muss admin oder member sein")
     target = g.db.execute(
         "SELECT role FROM memberships WHERE user_id = ? AND class_id = ?",
         (user_id, g.user["class_id"]),
     ).fetchone()
     if target is None:
-        raise ApiError(404, "Участник не найден")
+        raise ApiError(404, "Mitglied nicht gefunden")
     if target["role"] == role:
         return jsonify(ok=True)
     if role == "member":
@@ -654,7 +654,7 @@ def change_member_role(user_id: int):
             (g.user["class_id"],),
         ).fetchone()[0]
         if admins <= 1:
-            raise ApiError(400, "В классе должен остаться хотя бы один администратор")
+            raise ApiError(400, "In der Klasse muss mindestens ein Admin bleiben")
     g.db.execute(
         "UPDATE memberships SET role = ? WHERE user_id = ? AND class_id = ?",
         (role, user_id, g.user["class_id"]),
@@ -669,13 +669,13 @@ def change_member_role(user_id: int):
 def remove_member(user_id: int):
     require_admin()
     if user_id == g.user["id"]:
-        raise ApiError(400, "Чтобы выйти из класса, используйте кнопку «Выйти из класса»")
+        raise ApiError(400, "Um die Klasse zu verlassen, nutze „Klasse verlassen“")
     exists = g.db.execute(
         "SELECT 1 FROM memberships WHERE user_id = ? AND class_id = ?",
         (user_id, g.user["class_id"]),
     ).fetchone()
     if exists is None:
-        raise ApiError(404, "Участник не найден")
+        raise ApiError(404, "Mitglied nicht gefunden")
     g.db.execute("DELETE FROM memberships WHERE user_id = ?", (user_id,))
     forget_member_in_class(user_id, g.user["class_id"])
     bump_version(g.user["class_id"])
@@ -789,7 +789,7 @@ def create_homework():
 def update_homework(hid: int):
     row = load_homework_row(hid)
     if not can_edit_homework(row):
-        raise ApiError(403, "Редактировать может только автор или администратор")
+        raise ApiError(403, "Bearbeiten dürfen nur die Person, die die Aufgabe eingetragen hat, oder der Admin")
     data = parse_homework(read_json())
     g.db.execute(
         """UPDATE homework SET subject = ?, description = ?, due_date = ?,
@@ -820,7 +820,7 @@ def update_homework(hid: int):
 def delete_homework(hid: int):
     row = load_homework_row(hid)
     if not can_edit_homework(row):
-        raise ApiError(403, "Удалить может только автор или администратор")
+        raise ApiError(403, "Löschen dürfen nur die Person, die die Aufgabe eingetragen hat, oder der Admin")
     names = [
         a["stored_name"]
         for a in g.db.execute("SELECT stored_name FROM attachments WHERE homework_id = ?", (hid,)).fetchall()
@@ -838,7 +838,7 @@ def set_done(hid: int):
     load_homework_row(hid)
     done = read_json().get("done")
     if not isinstance(done, bool):
-        raise ApiError(400, "Укажите done: true или false")
+        raise ApiError(400, "Bitte gib done: true oder false an")
     if done:
         g.db.execute(
             "INSERT OR IGNORE INTO completions (user_id, homework_id, completed_at) VALUES (?, ?, ?)",
@@ -864,16 +864,16 @@ def upload_attachment(hid: int):
         "SELECT COUNT(*) FROM attachments WHERE homework_id = ?", (hid,)
     ).fetchone()[0]
     if count >= MAX_ATTACHMENTS:
-        raise ApiError(400, f"Можно прикрепить не больше {MAX_ATTACHMENTS} фото")
+        raise ApiError(400, f"Höchstens {MAX_ATTACHMENTS} Fotos pro Aufgabe")
     uploaded = request.files.get("file")
     if uploaded is None or not uploaded.filename:
-        raise ApiError(400, "Выберите файл")
+        raise ApiError(400, "Bitte wähl eine Datei aus")
     blob = uploaded.read(MAX_FILE_BYTES + 1)
     if len(blob) > MAX_FILE_BYTES:
-        raise ApiError(413, "Файл больше 5 МБ")
+        raise ApiError(413, "Die Datei ist größer als 5 MB")
     kind = detect_image(blob[:16])
     if kind is None:
-        raise ApiError(400, "Можно загружать только изображения: JPG, PNG, GIF или WebP")
+        raise ApiError(400, "Nur Bilder sind erlaubt: JPG, PNG, GIF oder WebP")
     mime, ext = kind
 
     stored = f"{uuid.uuid4().hex}{ext}"
@@ -897,7 +897,7 @@ def load_attachment_row(aid: int):
         (aid,),
     ).fetchone()
     if row is None or row["class_id"] != g.user["class_id"]:
-        raise ApiError(404, "Файл не найден")
+        raise ApiError(404, "Datei nicht gefunden")
     return row
 
 
@@ -920,7 +920,7 @@ def get_attachment(aid: int):
 def delete_attachment(aid: int):
     row = load_attachment_row(aid)
     if row["uploaded_by"] != g.user["id"] and not is_admin():
-        raise ApiError(403, "Удалить фото может тот, кто его загрузил, или администратор")
+        raise ApiError(403, "Fotos löschen dürfen nur die Person, die sie hochgeladen hat, oder der Admin")
     g.db.execute("DELETE FROM attachments WHERE id = ?", (aid,))
     bump_version(g.user["class_id"])
     g.db.commit()
@@ -974,7 +974,7 @@ def mark_read():
         if not isinstance(ids, list) or len(ids) > 500 or not all(
             isinstance(i, int) and not isinstance(i, bool) for i in ids
         ):
-            raise ApiError(400, "Укажите список идентификаторов ids")
+            raise ApiError(400, "Bitte gib eine Liste ids an")
         if ids:
             marks = ",".join("?" for _ in ids)
             g.db.execute(
@@ -1030,13 +1030,13 @@ def push_config():
 @login_required
 def push_subscribe():
     data = read_json()
-    endpoint = read_text(data, "endpoint", "Подписка", 2048, required=True)
+    endpoint = read_text(data, "endpoint", "Abonnement", 2048, required=True)
     if not endpoint.startswith("https://"):
-        raise ApiError(400, "Некорректная подписка push-уведомлений")
+        raise ApiError(400, "Ungültiges Push-Abonnement")
     keys = data.get("keys") if isinstance(data.get("keys"), dict) else {}
     p256dh, auth = keys.get("p256dh"), keys.get("auth")
     if not isinstance(p256dh, str) or not isinstance(auth, str) or not p256dh or not auth:
-        raise ApiError(400, "Некорректные ключи подписки")
+        raise ApiError(400, "Ungültige Abonnement-Schlüssel")
     g.db.execute(
         """INSERT INTO push_subscriptions (user_id, endpoint, p256dh, auth, created_at)
            VALUES (?, ?, ?, ?, ?)
@@ -1051,7 +1051,7 @@ def push_subscribe():
 @api_bp.post("/push/unsubscribe")
 @login_required
 def push_unsubscribe():
-    endpoint = read_text(read_json(), "endpoint", "Подписка", 2048, required=True)
+    endpoint = read_text(read_json(), "endpoint", "Abonnement", 2048, required=True)
     g.db.execute(
         "DELETE FROM push_subscriptions WHERE user_id = ? AND endpoint = ?",
         (g.user["id"], endpoint),
@@ -1065,14 +1065,14 @@ def push_unsubscribe():
 def push_test():
     push: PushService = current_app.extensions["push"]
     if not push.enabled:
-        raise ApiError(503, "Push-уведомления не настроены на сервере")
+        raise ApiError(503, "Push-Mitteilungen sind auf dem Server nicht eingerichtet")
     count = g.db.execute(
         "SELECT COUNT(*) FROM push_subscriptions WHERE user_id = ?", (g.user["id"],)
     ).fetchone()[0]
     if count == 0:
-        raise ApiError(400, "Сначала включите push-уведомления на этом устройстве")
+        raise ApiError(400, "Aktiviere zuerst Push-Mitteilungen auf diesem Gerät")
     push.send_async(
-        [{"user_id": g.user["id"], "homework_id": None, "title": "ClassMate", "body": "Уведомления работают!"}]
+        [{"user_id": g.user["id"], "homework_id": None, "title": "ClassMate", "body": "Mitteilungen funktionieren!"}]
     )
     return jsonify(sent=count)
 
@@ -1165,8 +1165,8 @@ def create_app(test_config: dict | None = None) -> Flask:
     def handle_unexpected(err: Exception):
         app.logger.exception("Внутренняя ошибка: %s", err)
         if request.path.startswith("/api/"):
-            return jsonify(error="Внутренняя ошибка сервера"), 500
-        return "Внутренняя ошибка сервера", 500
+            return jsonify(error="Interner Serverfehler"), 500
+        return "Interner Serverfehler", 500
 
     @app.after_request
     def security_headers(response):

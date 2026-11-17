@@ -1,4 +1,4 @@
-// Общие помощники: экранирование, даты, цвета предметов, иконки, всплывающие сообщения.
+// Hilfsfunktionen: Escaping, Datumsangaben, Fächerfarben, Icons, Hinweise.
 
 export function esc(value) {
   return String(value ?? '').replace(/[&<>"']/g, (ch) => ({
@@ -6,15 +6,9 @@ export function esc(value) {
   }[ch]));
 }
 
-export function plural(n, [one, few, many]) {
-  const m10 = n % 10;
-  const m100 = n % 100;
-  if (m10 === 1 && m100 !== 11) return one;
-  if (m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14)) return few;
-  return many;
-}
+export const plural = (n, one, many) => (n === 1 ? one : many);
 
-export const countTasks = (n) => `${n} ${plural(n, ['задание', 'задания', 'заданий'])}`;
+export const countTasks = (n) => `${n} ${plural(n, 'Aufgabe', 'Aufgaben')}`;
 
 export function truncate(text, max) {
   const clean = String(text).replace(/\s+/g, ' ').trim();
@@ -25,7 +19,6 @@ export function initials(name) {
   return String(name).trim().split(/\s+/).slice(0, 2).map((p) => p[0] || '').join('').toUpperCase() || '?';
 }
 
-export const capitalize = (s) => (s ? s[0].toUpperCase() + s.slice(1) : s);
 
 // ---------- даты (всё в местном времени пользователя, формат YYYY-MM-DD)
 
@@ -56,36 +49,37 @@ export function startOfWeek(iso) {
   return addDays(iso, -((d.getDay() + 6) % 7));
 }
 
-const fmtFull = new Intl.DateTimeFormat('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' });
-const fmtDayMonth = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long' });
-const fmtShort = new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short' });
-const fmtWeekday = new Intl.DateTimeFormat('ru-RU', { weekday: 'short' });
-const fmtMonth = new Intl.DateTimeFormat('ru-RU', { month: 'long', year: 'numeric' });
+const LOCALE = 'de-DE';
+const fmtFull = new Intl.DateTimeFormat(LOCALE, { weekday: 'long', day: 'numeric', month: 'long' });
+const fmtDayMonth = new Intl.DateTimeFormat(LOCALE, { day: 'numeric', month: 'long' });
+const fmtShort = new Intl.DateTimeFormat(LOCALE, { day: 'numeric', month: 'short' });
+const fmtWeekday = new Intl.DateTimeFormat(LOCALE, { weekday: 'short' });
+const fmtMonth = new Intl.DateTimeFormat(LOCALE, { month: 'long', year: 'numeric' });
 
-export const formatFull = (iso) => capitalize(fmtFull.format(parseIso(iso)));
+export const formatFull = (iso) => fmtFull.format(parseIso(iso));
 export const formatDayMonth = (iso) => fmtDayMonth.format(parseIso(iso));
-export const formatShort = (iso) => fmtShort.format(parseIso(iso)).replace('.', '');
-export const formatWeekday = (iso) => capitalize(fmtWeekday.format(parseIso(iso)));
-export const formatMonth = (iso) => capitalize(fmtMonth.format(parseIso(iso)).replace(' г.', ''));
+export const formatShort = (iso) => fmtShort.format(parseIso(iso));
+export const formatWeekday = (iso) => fmtWeekday.format(parseIso(iso)).replace('.', '');
+export const formatMonth = (iso) => fmtMonth.format(parseIso(iso));
+
+export const days = (n) => `${n} ${n === 1 ? 'Tag' : 'Tagen'}`;
 
 export function relativeDay(iso, today = todayIso()) {
   const diff = diffDays(today, iso);
-  if (diff === 0) return 'Сегодня';
-  if (diff === 1) return 'Завтра';
-  if (diff === 2) return 'Послезавтра';
-  if (diff === -1) return 'Вчера';
-  const n = Math.abs(diff);
-  const days = `${n} ${plural(n, ['день', 'дня', 'дней'])}`;
-  return diff > 0 ? `Через ${days}` : `${days} назад`;
+  if (diff === 0) return 'Heute';
+  if (diff === 1) return 'Morgen';
+  if (diff === 2) return 'Übermorgen';
+  if (diff === -1) return 'Gestern';
+  return diff > 0 ? `In ${days(diff)}` : `Vor ${days(-diff)}`;
 }
 
-const rtf = new Intl.RelativeTimeFormat('ru', { numeric: 'auto' });
+const rtf = new Intl.RelativeTimeFormat('de', { numeric: 'auto' });
 export function timeAgo(isoDateTime) {
   const seconds = (Date.now() - new Date(isoDateTime).getTime()) / 1000;
   for (const [unit, size] of [['day', 86400], ['hour', 3600], ['minute', 60]]) {
     if (Math.abs(seconds) >= size) return rtf.format(-Math.round(seconds / size), unit);
   }
-  return 'только что';
+  return 'gerade eben';
 }
 
 export function userTimezone() {
@@ -96,33 +90,33 @@ export function userTimezone() {
   }
 }
 
-// ---------- предметы и их цвета
+// ---------- Fächer und ihre Farben
 
 const SUBJECT_COLORS = {
-  'Математика': '#7c5cff',
-  'Алгебра': '#7c5cff',
-  'Геометрия': '#9b7bff',
-  'Русский язык': '#ff6b8b',
-  'Литература': '#b06ad9',
-  'Английский язык': '#3ab0ff',
-  'История': '#f5a524',
-  'Обществознание': '#ff8e5e',
-  'География': '#20b2aa',
-  'Физика': '#5b8def',
-  'Химия': '#2fbf86',
-  'Биология': '#7bc950',
-  'Информатика': '#4fb3bf',
-  'ОБЖ': '#e5534b',
-  'Физкультура': '#00a896',
-  'Музыка': '#f472b6',
-  'ИЗО': '#e0a100',
-  'Технология': '#8d99ae',
+  'Mathematik': '#7c5cff',
+  'Deutsch': '#ff6b8b',
+  'Englisch': '#3ab0ff',
+  'Französisch': '#5b8def',
+  'Latein': '#b06ad9',
+  'Spanisch': '#ff8e5e',
+  'Geschichte': '#f5a524',
+  'Erdkunde': '#20b2aa',
+  'Politik': '#e5534b',
+  'Biologie': '#7bc950',
+  'Chemie': '#2fbf86',
+  'Physik': '#4f7df0',
+  'Informatik': '#4fb3bf',
+  'Religion': '#a98b6f',
+  'Ethik': '#a98b6f',
+  'Kunst': '#e0a100',
+  'Musik': '#f472b6',
+  'Sport': '#00a896',
 };
 const EXTRA_COLORS = ['#7c5cff', '#ff6b8b', '#3ab0ff', '#f5a524', '#b06ad9', '#20b2aa', '#2fbf86', '#ff8e5e', '#5b8def', '#f472b6'];
 
 export const SUBJECT_PRESETS = [
-  'Математика', 'Русский язык', 'Литература', 'Английский язык', 'История', 'Обществознание',
-  'География', 'Физика', 'Химия', 'Биология', 'Информатика', 'ОБЖ', 'Физкультура', 'Музыка', 'ИЗО', 'Технология',
+  'Mathematik', 'Deutsch', 'Englisch', 'Französisch', 'Latein', 'Geschichte', 'Erdkunde', 'Politik',
+  'Biologie', 'Chemie', 'Physik', 'Informatik', 'Religion', 'Ethik', 'Kunst', 'Musik', 'Sport',
 ];
 
 export function subjectColor(name) {

@@ -1,4 +1,4 @@
-// Модальные окна: форма задания и подтверждение действий.
+// Dialoge: Aufgabenformular und Bestätigungen.
 import { api } from './api.js';
 import { refreshClassData } from './data.js';
 import { render, state } from './store.js';
@@ -29,14 +29,14 @@ export function closeModal() {
 
 export const isModalOpen = () => Boolean(modalRoot().innerHTML);
 
-/** Красивое окно подтверждения вместо системного confirm(). */
-export function confirmDialog(title, text, okLabel = 'Удалить', tone = 'danger') {
+/** Bestätigungsdialog statt des System-confirm(). */
+export function confirmDialog(title, text, okLabel = 'Löschen', tone = 'danger') {
   return new Promise((resolve) => {
     openModal(`<section class="modal small" role="alertdialog" aria-modal="true" aria-labelledby="cf-title">
       <h2 id="cf-title">${esc(title)}</h2>
       <p class="muted">${esc(text)}</p>
       <div class="modal-actions">
-        <button class="btn ghost" data-cf="no">Отмена</button>
+        <button class="btn ghost" data-cf="no">Abbrechen</button>
         <button class="btn ${tone}" data-cf="yes" autofocus>${esc(okLabel)}</button>
       </div></section>`);
     const finish = (value) => {
@@ -54,7 +54,7 @@ export function confirmDialog(title, text, okLabel = 'Удалить', tone = 'd
   });
 }
 
-/** Нажата клавиша Escape: закрыть то, что открыто. */
+/** Escape schließt den offenen Dialog. */
 export function escapeModal() {
   const modal = modalRoot().querySelector('.modal');
   if (!modal) return;
@@ -73,59 +73,59 @@ export function openHomeworkForm({ id = null, copyFrom = null, date = null } = {
     pages: source?.pages ?? '',
     comment: source?.comment ?? '',
   };
-  const title = existing ? 'Редактировать задание' : source ? 'Копия задания' : 'Новое задание';
+  const title = existing ? 'Aufgabe bearbeiten' : source ? 'Aufgabe kopieren' : 'Neue Aufgabe';
   const author = existing ? existing.author.name : state.me.displayName;
-  const dateChips = [['Сегодня', 0], ['Завтра', 1], ['Послезавтра', 2], ['Через неделю', 7]];
+  const dateChips = [['Heute', 0], ['Morgen', 1], ['Übermorgen', 2], ['In einer Woche', 7]];
 
   openModal(`<section class="modal" role="dialog" aria-modal="true" aria-labelledby="hw-title">
     <header class="modal-head">
       <div><h2 id="hw-title">${title}</h2>
-        <p class="muted small">${source && !existing ? 'Выбери новую дату — остальное уже заполнено' : 'Задание увидит весь класс'}</p></div>
-      <button class="icon-btn" type="button" data-action="close-modal" aria-label="Закрыть">${icon('x')}</button>
+        <p class="muted small">${source && !existing ? 'Wähl ein neues Datum – der Rest ist schon ausgefüllt' : 'Die ganze Klasse sieht diese Aufgabe'}</p></div>
+      <button class="icon-btn" type="button" data-action="close-modal" aria-label="Schließen">${icon('x')}</button>
     </header>
     <form class="stack" data-form="homework" novalidate>
       <input type="hidden" name="id" value="${existing ? existing.id : ''}">
       <div class="field">
-        <label for="hw-subject">Предмет <span class="req">*</span></label>
-        <input id="hw-subject" class="input" name="subject" maxlength="40" required value="${esc(values.subject)}" placeholder="Выбери ниже или впиши свой" autocomplete="off">
+        <label for="hw-subject">Fach <span class="req">*</span></label>
+        <input id="hw-subject" class="input" name="subject" maxlength="40" required value="${esc(values.subject)}" placeholder="Unten auswählen oder selbst eintippen" autocomplete="off">
         <div class="chips scroll-x" id="hw-subjects">
           ${SUBJECT_PRESETS.map((s) => `<button type="button" class="chip subject-chip${s === values.subject ? ' active' : ''}" data-subject="${esc(s)}" style="--c:${subjectColor(s)}">${esc(s)}</button>`).join('')}
         </div>
       </div>
       <div class="field">
-        <label for="hw-desc">Что задали <span class="req">*</span></label>
-        <textarea id="hw-desc" class="input" name="description" rows="3" maxlength="2000" required placeholder="Например: выучить параграф 12, ответить на вопросы 1–4">${esc(values.description)}</textarea>
+        <label for="hw-desc">Was ist aufgegeben? <span class="req">*</span></label>
+        <textarea id="hw-desc" class="input" name="description" rows="3" maxlength="2000" required placeholder="z. B. Kapitel 12 lesen, Fragen 1–4 beantworten">${esc(values.description)}</textarea>
       </div>
       <div class="field">
-        <label for="hw-date">На какую дату <span class="req">*</span></label>
+        <label for="hw-date">Bis wann? <span class="req">*</span></label>
         <input id="hw-date" class="input" type="date" name="dueDate" required value="${values.dueDate}">
         <div class="chips" id="hw-dates">${dateChips.map(([label, offset]) => `<button type="button" class="chip" data-offset="${offset}">${label}</button>`).join('')}</div>
         <small class="hint" id="hw-date-hint">${formatFull(values.dueDate)}</small>
       </div>
       <div class="grid-2">
         <div class="field">
-          <label for="hw-pages">Страница, упражнение</label>
-          <input id="hw-pages" class="input" name="pages" maxlength="200" value="${esc(values.pages)}" placeholder="стр. 45, упр. 3">
+          <label for="hw-pages">Seite, Übung</label>
+          <input id="hw-pages" class="input" name="pages" maxlength="200" value="${esc(values.pages)}" placeholder="S. 45, Nr. 3">
         </div>
         <div class="field">
-          <label>Кто добавил</label>
+          <label>Eingetragen von</label>
           <div class="input readonly">${icon('user', 16)} ${esc(author)}</div>
         </div>
       </div>
       <div class="field">
-        <label for="hw-comment">Комментарий</label>
-        <textarea id="hw-comment" class="input" name="comment" rows="2" maxlength="1000" placeholder="Например: сдавать в тетради, можно с калькулятором">${esc(values.comment)}</textarea>
+        <label for="hw-comment">Kommentar</label>
+        <textarea id="hw-comment" class="input" name="comment" rows="2" maxlength="1000" placeholder="z. B. ins Heft schreiben, Taschenrechner erlaubt">${esc(values.comment)}</textarea>
       </div>
       <div class="field">
-        <label for="hw-files">Фото задания</label>
-        <label class="file-drop" for="hw-files">${icon('image', 20)} <span id="hw-files-label">Выбрать фото (до ${MAX_FILES} шт., до 5 МБ)</span></label>
+        <label for="hw-files">Fotos zur Aufgabe</label>
+        <label class="file-drop" for="hw-files">${icon('image', 20)} <span id="hw-files-label">Fotos auswählen (bis ${MAX_FILES} Stück, je bis 5 MB)</span></label>
         <input id="hw-files" class="visually-hidden" type="file" name="files" accept="image/jpeg,image/png,image/gif,image/webp" multiple>
-        ${existing?.attachments.length ? `<small class="hint">Уже прикреплено: ${existing.attachments.length}. Удалить фото можно на странице задания.</small>` : ''}
+        ${existing?.attachments.length ? `<small class="hint">Schon angehängt: ${existing.attachments.length}. Fotos löschst du auf der Seite der Aufgabe.</small>` : ''}
       </div>
       <p class="form-error" hidden></p>
       <footer class="modal-actions">
-        <button type="button" class="btn ghost" data-action="close-modal">Отмена</button>
-        <button type="submit" class="btn primary">${existing ? 'Сохранить' : 'Добавить задание'}</button>
+        <button type="button" class="btn ghost" data-action="close-modal">Abbrechen</button>
+        <button type="submit" class="btn primary">${existing ? 'Speichern' : 'Aufgabe hinzufügen'}</button>
       </footer>
     </form>
   </section>`);
@@ -159,8 +159,8 @@ export function openHomeworkForm({ id = null, copyFrom = null, date = null } = {
   form.querySelector('#hw-files').addEventListener('change', (event) => {
     const files = [...event.target.files];
     form.querySelector('#hw-files-label').textContent = files.length
-      ? `Выбрано фото: ${files.length} (${files.map((f) => f.name).join(', ')})`
-      : `Выбрать фото (до ${MAX_FILES} шт., до 5 МБ)`;
+      ? `Ausgewählt: ${files.length} (${files.map((f) => f.name).join(', ')})`
+      : `Fotos auswählen (bis ${MAX_FILES} Stück, je bis 5 MB)`;
   });
   if (!values.subject) subjectInput.focus();
   else form.querySelector('#hw-desc').focus();
@@ -183,19 +183,19 @@ export async function submitHomework(form) {
     pages: String(fd.get('pages') || '').trim(),
     comment: String(fd.get('comment') || '').trim(),
   };
-  if (!payload.subject) return showError('Укажи предмет');
-  if (!payload.description) return showError('Напиши, что задали');
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(payload.dueDate)) return showError('Выбери дату, к которой нужно сделать задание');
+  if (!payload.subject) return showError('Bitte gib ein Fach an');
+  if (!payload.description) return showError('Bitte schreib, was aufgegeben ist');
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(payload.dueDate)) return showError('Bitte wähl das Abgabedatum');
 
   const files = [...form.querySelector('#hw-files').files];
   const existing = id ? state.homework.find((h) => h.id === Number(id)) : null;
-  if (files.length + (existing?.attachments.length || 0) > MAX_FILES) return showError(`Можно прикрепить не больше ${MAX_FILES} фото`);
+  if (files.length + (existing?.attachments.length || 0) > MAX_FILES) return showError(`Höchstens ${MAX_FILES} Fotos pro Aufgabe`);
   const tooBig = files.find((f) => f.size > MAX_BYTES);
-  if (tooBig) return showError(`Файл «${tooBig.name}» больше 5 МБ`);
+  if (tooBig) return showError(`„${tooBig.name}“ ist größer als 5 MB`);
 
   const submit = form.querySelector('[type=submit]');
   submit.disabled = true;
-  submit.textContent = 'Сохраняем…';
+  submit.textContent = 'Wird gespeichert …';
   try {
     const saved = id
       ? await api(`/api/homework/${id}`, { method: 'PUT', body: payload })
@@ -213,11 +213,11 @@ export async function submitHomework(form) {
     closeModal();
     await refreshClassData();
     render();
-    toast(id ? 'Изменения сохранены' : 'Задание добавлено — его видит весь класс', 'success');
-    if (failed) toast(`Не удалось загрузить фото: ${failed}`, 'error');
+    toast(id ? 'Änderungen gespeichert' : 'Aufgabe eingetragen – die ganze Klasse sieht sie', 'success');
+    if (failed) toast(`Fotos konnten nicht hochgeladen werden: ${failed}`, 'error');
   } catch (err) {
     showError(err.message);
     submit.disabled = false;
-    submit.textContent = id ? 'Сохранить' : 'Добавить задание';
+    submit.textContent = id ? 'Speichern' : 'Aufgabe hinzufügen';
   }
 }

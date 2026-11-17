@@ -1,4 +1,4 @@
-// Запросы к серверу ClassMate.
+// Anfragen an den ClassMate-Server.
 
 export class ApiError extends Error {
   constructor(message, status, code) {
@@ -21,7 +21,7 @@ export async function api(path, { method = 'GET', body, form } = {}) {
   try {
     response = await fetch(path, init);
   } catch {
-    throw new ApiError('Нет соединения с сервером. Проверьте интернет.', 0);
+    throw new ApiError('Keine Verbindung zum Server. Bitte prüf deine Internetverbindung.', 0);
   }
 
   const text = await response.text();
@@ -32,7 +32,7 @@ export async function api(path, { method = 'GET', body, form } = {}) {
     data = null;
   }
   if (!response.ok) {
-    const message = (data && data.error) || `Ошибка сервера (${response.status})`;
+    const message = (data && data.error) || `Serverfehler (${response.status})`;
     throw new ApiError(message, response.status, data && data.code);
   }
   return data;

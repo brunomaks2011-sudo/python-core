@@ -156,7 +156,7 @@ def test_new_homework_notifies_classmates_not_author(classroom):
     assert data["unread"] == 1
     note = data["items"][0]
     assert note["kind"] == "new" and note["homeworkId"] == hw["id"]
-    assert "История" in note["title"]
+    assert note["title"] == "Neue Aufgabe: История"
 
     petya.post("/api/notifications/read", json={"ids": [note["id"]]})
     assert petya.get("/api/sync").get_json()["unread"] == 0
@@ -222,4 +222,4 @@ def test_security_headers_and_static(app):
     assert "ClassMate" in page.get_data(as_text=True)
     assert "default-src 'self'" in page.headers["Content-Security-Policy"]
     assert client.get("/sw.js").headers["Service-Worker-Allowed"] == "/"
-    assert client.get("/api/nope").get_json()["error"] == "Не найдено"
+    assert client.get("/api/nope").get_json()["error"] == "Nicht gefunden"

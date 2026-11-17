@@ -1,11 +1,11 @@
-// Service worker ClassMate: показывает push-уведомления, когда сайт закрыт или свёрнут.
+// ClassMate Service Worker: zeigt Push-Mitteilungen, wenn die Seite geschlossen oder minimiert ist.
 
 self.addEventListener('install', () => self.skipWaiting());
 self.addEventListener('activate', (event) => event.waitUntil(self.clients.claim()));
 
 self.addEventListener('push', (event) => {
   event.waitUntil((async () => {
-    let data = { title: 'ClassMate', body: 'Новое уведомление', url: '/#/notifications', tag: 'classmate' };
+    let data = { title: 'ClassMate', body: 'Neue Mitteilung', url: '/#/notifications', tag: 'classmate' };
     try {
       if (event.data) data = { ...data, ...event.data.json() };
     } catch (e) { /* не JSON — показываем стандартный текст */ }

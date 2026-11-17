@@ -1,12 +1,12 @@
 {
-  "name": "ClassMate — Домашние задания",
+  "name": "ClassMate – Hausaufgaben",
   "short_name": "ClassMate",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
   "background_color": "#f4f7ff",
   "theme_color": "#7c5cff",
-  "lang": "ru",
+  "lang": "de",
   "icons": [
     { "src": "/static/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
   ]
