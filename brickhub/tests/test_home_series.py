@@ -41,7 +41,7 @@ class HomeSeriesTests(TestCase):
         self.assertIn("brickheadz", self.order())
 
     def test_character_pictures_are_in_the_static_files(self):
-        for name in ("dc-batman", "brickheadz-emmet", "star-wars-vader", "ninjago-kai", "harry-potter-harry", "city-police", "cmf-dino", "disney-mickey"):
+        for name in ("dc-batman", "brickheadz-emmet", "star-wars-vader", "ninjago-kai", "harry-potter-harry", "city-police", "cmf-dino", "disney-mickey", "marvel-doom"):
             self.assertTrue(finders.find(f"img/series/{name}.webp"), name)
 
     def test_tile_shows_the_name_even_with_a_logo(self):
