@@ -890,20 +890,21 @@ local function wallOpen(parent, cf, length, height, thick, openings, color, mat,
 		local a, b = xs[k], xs[k + 1]
 		if b - a > 0.05 then
 			local mid = (a + b) / 2
-			local op = nil
+			local ops = {}
 			for _, o in ipairs(openings) do
-				if mid > o[1] and mid < o[2] then op = o end
+				if mid > o[1] and mid < o[2] then ops[#ops + 1] = o end
 			end
+			table.sort(ops, function(p, q) return p[3] < q[3] end)
 			local top = height
 			if ruin then
 				if rng.chance(0.12) then top = 0 else top = height * rng.num(0.3, 1) end
 			end
-			if op then
-				wallSeg(parent, cf, a, b, 0, min(op[3], top), thick, color, mat)
-				if top > op[4] then wallSeg(parent, cf, a, b, op[4], top, thick, color, mat) end
-			else
-				wallSeg(parent, cf, a, b, 0, top, thick, color, mat)
+			local y = 0
+			for _, o in ipairs(ops) do
+				wallSeg(parent, cf, a, b, y, min(o[3], top), thick, color, mat)
+				if o[4] > y then y = o[4] end
 			end
+			wallSeg(parent, cf, a, b, y, top, thick, color, mat)
 		end
 	end
 end
