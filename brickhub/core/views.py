@@ -12,6 +12,7 @@ from django.views.decorators.cache import cache_page
 from django.core.cache import cache
 
 from catalog.models import Category, Color, LegoSet, Part, Product, Theme, category_tree
+from catalog.structure import SERIES
 from catalog.views import recently_viewed
 
 from .seo import organization_jsonld
@@ -33,11 +34,14 @@ def home(request):
     rare = list(active.filter(is_rare=True).order_by("-is_featured", "-views_count", "-created_at")[:10])
     minifigs = list(active.filter(kind="minifig", condition="new").order_by("-is_featured", "-views_count",
                                                                           "-created_at")[:10])
-    series = list(Theme.objects.filter(is_primary=True).annotate(
+    # the main series, plus the shop's other series (DC, Jurassic World…) once they have something on sale;
+    # the ones with the most products first, two rows of seven at most
+    series = list(Theme.objects.filter(Q(is_primary=True) | Q(slug__in=[s[0] for s in SERIES])).annotate(
         n1=Count("products", filter=Q(products__is_active=True), distinct=True),
-        n2=Count("products_second", filter=Q(products_second__is_active=True), distinct=True)).order_by("sort_order"))
+        n2=Count("products_second", filter=Q(products_second__is_active=True), distinct=True)))
     for s in series:
         s.n = s.n1 + s.n2
+    series = sorted((s for s in series if s.is_primary or s.n), key=lambda s: (-s.n, s.sort_order, s.name))[:14]
     # part categories of the second level; a category counts the products of its subcategories too
     counts = dict(Product.objects.active().exclude(category__isnull=True).order_by()
                   .values_list("category_id").annotate(n=Count("id")))

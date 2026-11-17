@@ -440,6 +440,19 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; a
 .series-tile:nth-child(6n+4) { --tile: var(--lego-green); }
 .series-tile:nth-child(6n+5) { --tile: var(--lego-orange); --tile-ink: var(--ink); }
 .series-tile:nth-child(6n+6) { --tile: var(--lego-azure); --tile-ink: var(--ink); }
+/* DC: the owner's slate colour, with Batman running out of the brick instead of the studs */
+.series-tile[data-series="dc"] {
+  --tile: #3b3d4c;
+  /* the slate fades over Batman's raised fist, so the name and the count stay on a calm ground */
+  background:
+    linear-gradient(90deg, var(--tile) 0 34%, rgba(59, 61, 76, 0) 58%),
+    url("../img/series/dc-batman.webp") right -6px top 6px / auto 146px no-repeat,
+    var(--tile);
+}
+.series-tile[data-series="dc"]::after { display: none; }
+.series-tile[data-series="dc"] :is(b, span) { position: relative; text-shadow: 0 1px 8px rgba(29, 31, 40, .9); }
+.series-tile[data-series="dc"] b { margin-right: 64px; }
+.series-tile[data-series="dc"] span { white-space: nowrap; }
 .series-tile:active { transform: scale(.98); }
 @media (hover: hover) and (pointer: fine) { .series-tile:hover { box-shadow: inset 0 -4px 0 rgba(0, 0, 0, .16), 0 12px 24px -12px rgba(0, 0, 0, .45); } }
 
