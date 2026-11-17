@@ -447,7 +447,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; a
 .series-tile[data-series="ninjago"] { --tile: var(--lego-red); --tile-ink: #fff; --hero: url("../img/series/ninjago-kai.webp"); }
 .series-tile[data-series="harry-potter"] { --tile: #7a1f2b; --tile-ink: #fff; --hero: url("../img/series/harry-potter-harry.webp"); }
 .series-tile[data-series="city"] { --tile: #12318b; --tile-ink: #fff; --hero: url("../img/series/city-police.webp"); }
-.series-tile[data-series="collectible-minifigures"] { --tile: #e4e6ea; --tile-ink: var(--ink); --hero: url("../img/series/cmf-wolf.webp"); }
+.series-tile[data-series="collectible-minifigures"] { --tile: #e4e6ea; --tile-ink: var(--ink); --hero: url("../img/series/cmf-dino.webp"); }
 .series-tile:is([data-series="dc"], [data-series="brickheadz"], [data-series="star-wars"], [data-series="ninjago"], [data-series="harry-potter"], [data-series="city"], [data-series="collectible-minifigures"]) {
   background: linear-gradient(90deg, var(--tile) 0 34%, transparent 58%), var(--hero) right -6px top 6px / auto 146px no-repeat, var(--tile);
 }
@@ -456,9 +456,9 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; a
 .series-tile:is([data-series="dc"], [data-series="brickheadz"], [data-series="star-wars"], [data-series="ninjago"], [data-series="harry-potter"], [data-series="city"], [data-series="collectible-minifigures"]) b { margin-right: 64px; }
 .series-tile:is([data-series="dc"], [data-series="brickheadz"], [data-series="star-wars"], [data-series="ninjago"], [data-series="harry-potter"], [data-series="city"], [data-series="collectible-minifigures"]) span { white-space: nowrap; }
 .series-tile[data-series="ninjago"] :is(b, span) { text-shadow: 0 1px 6px rgba(110, 0, 8, .75); }
-/* the wolf knight stands on light grey: dark text, a light halo instead of a shadow, and a smaller figure, lower, since he is wide and the name is long */
+/* the dinosaur-costume fan stands on light grey: dark text, a light halo instead of a shadow, a little lower so the long name stays clear */
 .series-tile[data-series="collectible-minifigures"] :is(b, span) { text-shadow: 0 1px 6px rgba(228, 230, 234, .95); }
-.series-tile[data-series="collectible-minifigures"] { background-position: 0 0, right -10px top 46px, 0 0; background-size: auto, auto 100px, auto; }
+.series-tile[data-series="collectible-minifigures"] { background-position: 0 0, right -8px top 30px, 0 0; background-size: auto, auto 128px, auto; }
 /* Emmet's big head sits lower, under the name */
 .series-tile[data-series="brickheadz"] { background-position: 0 0, right -12px top 36px, 0 0; background-size: auto, auto 128px, auto; }
 .series-tile:active { transform: scale(.98); }
@@ -1330,6 +1330,8 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; a
    and the old price drops its ₴ so the discount tag still fits beside it on a 360px Android */
 @media (max-width: 599px) {
   .card-facts { flex-basis: 100%; }
+  /* the name wraps on a phone tile: the dinosaur fan steps down under it */
+  .series-tile[data-series="collectible-minifigures"] { background-position: 0 0, right -8px top 50px, 0 0; }
   .price-was { gap: 2px 5px; }
   .price-was .cur { display: none; }
   .price-was .sale-tag { height: 18px; padding: 0 5px; font-size: 11px; }
