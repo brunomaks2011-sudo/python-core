@@ -44,7 +44,7 @@
     <div class="series-strip">
       {% for t in series %}
         <a class="series-tile" href="{{ t.get_absolute_url }}" data-series="{{ t.slug }}">
-          {% if t.logo %}<img src="{{ t.logo.url }}" alt="{{ t.display_name }}" loading="lazy">{% else %}<b>{{ t.short_name }}</b>{% endif %}
+          <b>{{ t.short_name }}</b>
           <span>{{ t.n }} {{ t.n|plural:"товар,товари,товарів" }}</span>
         </a>
       {% endfor %}

@@ -430,7 +430,6 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; a
   transition: box-shadow 200ms ease, transform 160ms var(--ease-out);
 }
 .series-tile::after { content: ""; position: absolute; top: 12px; right: 12px; width: 38px; height: 16px; background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='38' height='16'%3E%3Ccircle cx='8' cy='8.6' r='6.2' fill='%23000' fill-opacity='.2'/%3E%3Ccircle cx='7.2' cy='7.4' r='6.2' fill='%23fff' fill-opacity='.26'/%3E%3Ccircle cx='5.4' cy='5.4' r='2' fill='%23fff' fill-opacity='.6'/%3E%3Ccircle cx='30' cy='8.6' r='6.2' fill='%23000' fill-opacity='.2'/%3E%3Ccircle cx='29.2' cy='7.4' r='6.2' fill='%23fff' fill-opacity='.26'/%3E%3Ccircle cx='27.4' cy='5.4' r='2' fill='%23fff' fill-opacity='.6'/%3E%3C/svg%3E") no-repeat; pointer-events: none; }
-.series-tile img { max-height: 40px; max-width: calc(100% - 44px); width: auto; object-fit: contain; object-position: left center; background: #fff; border-radius: 8px; padding: 4px 8px; }
 .series-tile b { font-size: 16px; font-weight: 700; line-height: 1.2; letter-spacing: -0.01em; margin-right: 40px; }
 .series-tile span { font-size: 13px; font-weight: 500; color: inherit; font-variant-numeric: tabular-nums; }
 /* six colours over seven columns: the second row shifts by one, so no two neighbours match */
@@ -446,13 +445,14 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; a
 .series-tile[data-series="brickheadz"] { --tile: #3b3d4c; --tile-ink: #fff; --hero: url("../img/series/brickheadz-emmet.webp"); }
 .series-tile[data-series="star-wars"] { --tile: #141414; --tile-ink: #fff; --hero: url("../img/series/star-wars-vader.webp"); }
 .series-tile[data-series="ninjago"] { --tile: var(--lego-red); --tile-ink: #fff; --hero: url("../img/series/ninjago-kai.webp"); }
-.series-tile:is([data-series="dc"], [data-series="brickheadz"], [data-series="star-wars"], [data-series="ninjago"]) {
+.series-tile[data-series="harry-potter"] { --tile: #7a1f2b; --tile-ink: #fff; --hero: url("../img/series/harry-potter-harry.webp"); }
+.series-tile:is([data-series="dc"], [data-series="brickheadz"], [data-series="star-wars"], [data-series="ninjago"], [data-series="harry-potter"]) {
   background: linear-gradient(90deg, var(--tile) 0 34%, transparent 58%), var(--hero) right -6px top 6px / auto 146px no-repeat, var(--tile);
 }
-.series-tile:is([data-series="dc"], [data-series="brickheadz"], [data-series="star-wars"], [data-series="ninjago"])::after { display: none; }
-.series-tile:is([data-series="dc"], [data-series="brickheadz"], [data-series="star-wars"], [data-series="ninjago"]) :is(b, span) { position: relative; text-shadow: 0 1px 8px rgba(20, 20, 24, .9); }
-.series-tile:is([data-series="dc"], [data-series="brickheadz"], [data-series="star-wars"], [data-series="ninjago"]) b { margin-right: 64px; }
-.series-tile:is([data-series="dc"], [data-series="brickheadz"], [data-series="star-wars"], [data-series="ninjago"]) span { white-space: nowrap; }
+.series-tile:is([data-series="dc"], [data-series="brickheadz"], [data-series="star-wars"], [data-series="ninjago"], [data-series="harry-potter"])::after { display: none; }
+.series-tile:is([data-series="dc"], [data-series="brickheadz"], [data-series="star-wars"], [data-series="ninjago"], [data-series="harry-potter"]) :is(b, span) { position: relative; text-shadow: 0 1px 8px rgba(20, 20, 24, .9); }
+.series-tile:is([data-series="dc"], [data-series="brickheadz"], [data-series="star-wars"], [data-series="ninjago"], [data-series="harry-potter"]) b { margin-right: 64px; }
+.series-tile:is([data-series="dc"], [data-series="brickheadz"], [data-series="star-wars"], [data-series="ninjago"], [data-series="harry-potter"]) span { white-space: nowrap; }
 .series-tile[data-series="ninjago"] :is(b, span) { text-shadow: 0 1px 6px rgba(110, 0, 8, .75); }
 /* Emmet's big head sits lower, under the name */
 .series-tile[data-series="brickheadz"] { background-position: 0 0, right -12px top 36px, 0 0; background-size: auto, auto 128px, auto; }
