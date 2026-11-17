@@ -6,7 +6,7 @@
       {% if p.is_new %}<span class="badge badge-yellow">Новинка</span>{% endif %}
       {% if p.is_rare %}<span class="badge badge-blue">Рідкісний</span>{% endif %}
       {% if p.condition == "used" %}<span class="badge badge-dark">Б/у</span>{% endif %}
-      {% if p.is_bestseller and not p.is_new %}<span class="badge badge-outline">Хіт</span>{% endif %}
+      {% if p.is_bestseller and not p.is_new %}<span class="badge badge-hit">Хіт</span>{% endif %}
     </div>
   </a>
   <div class="card-tools">

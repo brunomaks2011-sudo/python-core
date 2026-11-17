@@ -1,6 +1,6 @@
 {% extends "base.html" %}{% load shop_tags %}
 {% block content %}
-<div class="container">
+<div class="container home">
   <section class="hero" aria-labelledby="hero-title">
     <div class="hero-inner">
       <div>
@@ -36,7 +36,7 @@
   </section>
 
   {% if series %}
-  <section class="section" data-reveal aria-labelledby="series-title">
+  <section class="section c-red" data-reveal aria-labelledby="series-title">
     <div class="section-head">
       <h2 id="series-title">Серії LEGO</h2>
       <a class="link" href="{% url 'catalog:category' 'nabory' %}">Усі набори<svg class="ic"><use href="#i-chev-right"/></svg></a>
@@ -53,7 +53,7 @@
   {% endif %}
 
   {% if new %}
-  <section class="section" data-reveal aria-labelledby="new-title">
+  <section class="section c-yellow" data-reveal aria-labelledby="new-title">
     <div class="section-head">
       <div><h2 id="new-title">Новинки</h2><p>Щойно з'явилися у продажу</p></div>
       <a class="link" href="{% url 'catalog:collection' 'novynky' %}">Усі новинки<svg class="ic"><use href="#i-chev-right"/></svg></a>
@@ -63,7 +63,7 @@
   {% endif %}
 
   {% if popular %}
-  <section class="section" data-reveal aria-labelledby="popular-title">
+  <section class="section c-blue" data-reveal aria-labelledby="popular-title">
     <div class="section-head">
       <h2 id="popular-title">Популярні товари</h2>
       <a class="link" href="{% url 'catalog:collection' 'populiarni' %}">Дивитися всі<svg class="ic"><use href="#i-chev-right"/></svg></a>
@@ -79,7 +79,7 @@
         <p>Шукайте за Design ID, Element ID або назвою, обирайте колір за номером BrickLink і купуйте рівно стільки, скільки потрібно.</p>
         <form class="pp-form" action="{% url 'catalog:part_finder' %}" method="get">
           <input name="q" placeholder="Номер або назва деталі" aria-label="Номер або назва деталі" enterkeyhint="search">
-          <button class="btn btn-lg btn-primary" type="submit"><span class="btn-label">Знайти</span></button>
+          <button class="btn btn-lg btn-yellow" type="submit"><span class="btn-label">Знайти</span></button>
         </form>
         <div class="pp-examples">
           <span>Наприклад</span>
@@ -104,7 +104,7 @@
   </section>
 
   {% if rare %}
-  <section class="section" data-reveal aria-labelledby="rare-title">
+  <section class="section c-azure" data-reveal aria-labelledby="rare-title">
     <div class="section-head">
       <div><h2 id="rare-title">Рідкісні та колекційні</h2><p>Набори, які вже не випускаються</p></div>
       <a class="link" href="{% url 'catalog:collection' 'ridkisni' %}">Усі рідкісні<svg class="ic"><use href="#i-chev-right"/></svg></a>
@@ -114,7 +114,7 @@
   {% endif %}
 
   {% if minifigs %}
-  <section class="section" data-reveal aria-labelledby="figs-title">
+  <section class="section c-orange" data-reveal aria-labelledby="figs-title">
     <div class="section-head">
       <h2 id="figs-title">Мініфігурки</h2>
       <a class="link" href="{% url 'catalog:category' 'minifihurky' %}">Усі мініфігурки<svg class="ic"><use href="#i-chev-right"/></svg></a>
@@ -124,7 +124,7 @@
   {% endif %}
 
   {% if bestsellers %}
-  <section class="section" data-reveal aria-labelledby="hits-title">
+  <section class="section c-green" data-reveal aria-labelledby="hits-title">
     <div class="section-head">
       <div><h2 id="hits-title">Рекомендуємо</h2><p>Те, що купують найчастіше</p></div>
       <a class="link" href="{% url 'catalog:collection' 'khity-prodazhu' %}">Усі хіти продажів<svg class="ic"><use href="#i-chev-right"/></svg></a>
@@ -134,7 +134,7 @@
   {% endif %}
 
   {% if part_categories %}
-  <section class="section" data-reveal aria-labelledby="cats-title">
+  <section class="section c-red" data-reveal aria-labelledby="cats-title">
     <div class="section-head">
       <h2 id="cats-title">Категорії деталей</h2>
       <a class="link" href="{% url 'catalog:category' 'detali' %}">Усі деталі<svg class="ic"><use href="#i-chev-right"/></svg></a>
@@ -158,7 +158,7 @@
   </section>
 
   {% if recent %}
-  <section class="section" data-reveal aria-labelledby="recent-title">
+  <section class="section c-yellow" data-reveal aria-labelledby="recent-title">
     <div class="section-head"><h2 id="recent-title">Ви нещодавно переглядали</h2></div>
     {% include "catalog/_rail.html" with items=recent %}
   </section>
