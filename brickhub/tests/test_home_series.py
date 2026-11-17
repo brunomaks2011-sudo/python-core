@@ -41,5 +41,5 @@ class HomeSeriesTests(TestCase):
         self.assertIn("brickheadz", self.order())
 
     def test_character_pictures_are_in_the_static_files(self):
-        for name in ("dc-batman", "brickheadz-emmet", "star-wars-vader"):
+        for name in ("dc-batman", "brickheadz-emmet", "star-wars-vader", "ninjago-kai"):
             self.assertTrue(finders.find(f"img/series/{name}.webp"), name)
