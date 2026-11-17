@@ -19,6 +19,12 @@ def uah(value):
 
 
 @register.filter
+def uah_amount(value):
+    """The amount without the ₴ sign: 1299 -> '1 299' (an old price beside the current one)."""
+    return format_uah(value, show_currency=False)
+
+
+@register.filter
 def plural(value, forms: str):
     """{{ n|plural:"деталь,деталі,деталей" }}"""
     one, few, many = (forms.split(",") + ["", "", ""])[:3]

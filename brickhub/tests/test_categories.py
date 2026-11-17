@@ -156,7 +156,7 @@ class MoreCategoriesTests(TestCase):
         listing = self.client.get(reverse("catalog:category", args=["aksesuary"]))
         self.assertContains(listing, "Storage test item")
         self.assertNotContains(listing, "Кількість деталей у наборі")
-        self.assertNotContains(listing, " дет.</span>")
+        self.assertNotContains(listing, "#i-piece")  # no piece count on an accessory card
 
 
 class AccessoryFormTests(TestCase):

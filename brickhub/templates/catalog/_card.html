@@ -3,11 +3,10 @@
   <a class="card-media{% if p.kind == 'part' %} is-part{% endif %}" href="{{ p.get_absolute_url }}" tabindex="-1" aria-hidden="true">
     {% product_img p "card" %}
     <div class="card-badges">
-      {% if p.discount_percent %}<span class="badge badge-red">−{{ p.discount_percent }}%</span>{% endif %}
       {% if p.is_new %}<span class="badge badge-yellow">Новинка</span>{% endif %}
       {% if p.is_rare %}<span class="badge badge-blue">Рідкісний</span>{% endif %}
       {% if p.condition == "used" %}<span class="badge badge-dark">Б/у</span>{% endif %}
-      {% if p.is_bestseller and not p.is_new and not p.discount_percent %}<span class="badge badge-outline">Хіт</span>{% endif %}
+      {% if p.is_bestseller and not p.is_new %}<span class="badge badge-outline">Хіт</span>{% endif %}
     </div>
   </a>
   <div class="card-tools">
@@ -35,19 +34,25 @@
       {% if p.kind == "part" %}
         <span class="swatch-inline"><span class="swatch{% if p.color.is_transparent %} is-trans{% endif %}" style="--c:{{ p.color.hex }}"></span>{{ p.color.display_name }}</span>
         <span class="num mono">{{ p.official_number }}</span>
-      {% elif p.kind == "set" %}
-        <span class="num">№ {{ p.official_number }}</span>{% if p.pieces %}<span>{{ p.pieces|thousands }} дет.</span>{% endif %}
-      {% elif p.kind == "minifig" %}
-        <span class="num mono">{{ p.official_number }}</span>
       {% else %}
-        {% if p.official_number %}<span class="num">Арт. {{ p.official_number }}</span>{% endif %}
+        {# age and pieces as on lego.com: a cake for the age, a brick for the pieces; only what the catalogue knows #}
+        {% if p.lego_set.age_min or p.kind == "set" and p.pieces or p.kind == "minifig" and p.minifigure.num_parts %}
+          <span class="card-facts">
+            {% if p.lego_set.age_min %}<span class="fact"><svg class="ic" aria-hidden="true"><use href="#i-age"/></svg><span class="sr-only">Вік </span>{{ p.lego_set.age_min }}+</span>{% endif %}
+            {% if p.kind == "set" and p.pieces %}<span class="fact"><svg class="ic" aria-hidden="true"><use href="#i-piece"/></svg><span class="sr-only">Деталей </span>{{ p.pieces|thousands }}</span>
+            {% elif p.kind == "minifig" and p.minifigure.num_parts %}<span class="fact"><svg class="ic" aria-hidden="true"><use href="#i-piece"/></svg><span class="sr-only">Деталей </span>{{ p.minifigure.num_parts }}</span>{% endif %}
+          </span>
+        {% endif %}
+        {% if p.kind == "set" %}<span class="num">№ {{ p.official_number }}</span>
+        {% elif p.kind == "minifig" %}<span class="num mono">{{ p.official_number }}</span>
+        {% elif p.official_number %}<span class="num">Арт. {{ p.official_number }}</span>{% endif %}
       {% endif %}
     </div>
     {% if p.reviews_count %}<div class="rating-line"><span class="stars">{{ p.rating_avg|stars }}</span>{{ p.reviews_count }}</div>{% endif %}
     <span class="stock {{ p.availability_state }}">{{ p.availability_label }}</span>
     <div class="card-foot">
       <div class="price{% if p.discount_percent %} is-sale{% endif %}">
-        {% if p.old_price and p.discount_percent %}<s>{{ p.old_price|uah }}</s>{% endif %}
+        {% if p.discount_percent %}<span class="price-was"><s>{{ p.old_price|uah_amount }}<span class="cur">&nbsp;₴</span></s><span class="sale-tag">−{{ p.discount_percent }}%</span></span>{% endif %}
         <b>{{ p.price|uah }}</b>{% if p.kind == "part" %}<span class="per">за шт.</span>{% endif %}
       </div>
       {% if p.in_stock %}

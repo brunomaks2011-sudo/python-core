@@ -34,9 +34,8 @@
     </div>
 
     <div class="pdx-info">
-      {% if p.is_new or p.is_rare or p.is_bestseller or p.discount_percent or p.condition == "used" %}
+      {% if p.is_new or p.is_rare or p.is_bestseller or p.condition == "used" %}
         <div class="pdx-flags">
-          {% if p.discount_percent %}<span class="pdx-flag is-sale">−{{ p.discount_percent }}%</span>{% endif %}
           {% if p.condition == "used" %}<span class="pdx-flag is-used">Б/у</span>{% endif %}
           {% if p.is_new %}<span class="pdx-flag">Новинка</span>{% endif %}
           {% if p.is_bestseller %}<span class="pdx-flag is-hit">Хіт продажів</span>{% endif %}
@@ -99,7 +98,7 @@
       {% endif %}
 
       <div class="pdx-price{% if p.discount_percent %} is-sale{% endif %}">
-        <b>{{ p.price|uah }}</b>{% if p.discount_percent %}<s>{{ p.old_price|uah }}</s>{% endif %}{% if p.kind == "part" %}<span>за 1 шт.</span>{% endif %}
+        <b>{{ p.price|uah }}</b>{% if p.discount_percent %}<s>{{ p.old_price|uah }}</s><span class="sale-tag">−{{ p.discount_percent }}%</span>{% endif %}{% if p.kind == "part" %}<span>за 1 шт.</span>{% endif %}
       </div>
       <p class="pdx-avail is-{{ p.availability_state }}">{{ p.availability_label }}</p>
       {% if p.completeness %}<div class="alert" style="margin-top:12px"><svg class="ic"><use href="#i-info"/></svg>{{ p.completeness }}</div>{% endif %}

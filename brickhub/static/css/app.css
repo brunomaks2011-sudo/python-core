@@ -70,7 +70,8 @@
   --font: "Manrope", system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
   --font-display: var(--font);
   --font-brand: "Unbounded", "Manrope", system-ui, sans-serif;
-  --brand-red: #d6101a;             /* the logo only */
+  --brand-red: #d6101a;             /* the logo, and a discount: */
+  --sale: var(--brand-red);         /* the −N% tag and the sale price, as on lego.com (5.3:1 with white) */
   --container: 1360px;
   --gutter: clamp(16px, 3vw, 40px);
   --header-h: 64px;
@@ -453,6 +454,10 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; a
 .card-title { font-weight: 600; font-size: 15px; line-height: 1.35; letter-spacing: -0.005em; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; min-height: 2.7em; }
 .card-meta { display: flex; flex-wrap: wrap; gap: 2px 10px; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
 .card-meta .num { color: var(--ink-2); font-weight: 500; }
+/* age and pieces, as on lego.com: a cake for the age, a brick for the pieces; they wrap together */
+.card-facts { display: inline-flex; align-items: center; gap: 10px; white-space: nowrap; }
+.card-facts .fact { display: inline-flex; align-items: center; gap: 4px; color: var(--ink-2); font-weight: 500; }
+.card-facts .ic { width: 16px; height: 16px; }
 .swatch-inline { display: inline-flex; align-items: center; gap: 6px; }
 .swatch { --s: 14px; width: var(--s); height: var(--s); border-radius: 4px; background: var(--c, #ccc); box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .14); flex: none; }
 .swatch.is-trans { background: linear-gradient(135deg, var(--c) 0 50%, color-mix(in srgb, var(--c) 45%, #fff) 50% 100%); opacity: .9; }
@@ -461,6 +466,13 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; a
 .price { display: flex; flex-direction: column; line-height: 1.15; }
 .price b { font-size: 17px; font-weight: 600; font-variant-numeric: tabular-nums; white-space: nowrap; letter-spacing: -0.01em; }
 .price s { color: var(--muted-2); font-size: 13px; font-variant-numeric: tabular-nums; }
+/* a discount: the old price with a red tag beside it, the new price in red */
+.price-was { display: flex; flex-wrap: wrap; align-items: center; gap: 2px 6px; margin-bottom: 2px; }
+.sale-tag {
+  display: inline-flex; align-items: center; height: 20px; padding: 0 6px; border-radius: 4px;
+  background: var(--sale); color: #fff; font-size: 12px; font-weight: 600; line-height: 1; white-space: nowrap; font-variant-numeric: tabular-nums;
+}
+.price.is-sale b, .pdx-price.is-sale b { color: var(--sale); }
 .price .per { font-size: 12px; color: var(--muted); font-weight: 500; }
 /* availability: a stud — full when in stock, a ring when running low, grey when gone */
 .stock { font-size: 12.5px; font-weight: 500; color: var(--ink-2); display: inline-flex; align-items: center; gap: 6px; }
@@ -492,6 +504,8 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; a
 .card.is-list .card-media { width: 172px; flex: none; margin: 6px; }
 .card.is-list .card-body { padding: 14px 18px; }
 .card.is-list .card-title { -webkit-line-clamp: 3; min-height: 0; font-size: 16px; }
+/* the heart and compare buttons sit in the top right corner: the series and the name stop short of them */
+.card.is-list :is(.card-kicker, .card-title) { margin-right: 40px; }
 
 /* cards arrive once, as the page loads: a short rise, a few at a time */
 @keyframes card-in { from { opacity: 0; transform: translateY(8px); } }
@@ -789,7 +803,6 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; a
 .pdx-info { min-width: 0; padding-top: 8px; }
 .pdx-flags { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
 .pdx-flag { display: inline-flex; align-items: center; height: 26px; padding: 0 10px; border-radius: 6px; background: var(--ink); color: #fff; font-size: 13px; font-weight: 600; }
-.pdx-flag.is-sale { background: #fff; color: var(--ink); box-shadow: inset 0 0 0 1px var(--ink); }
 .pdx-flag.is-used { background: var(--c-iron); }
 .pdx-flag.is-rare { background: var(--fog); color: var(--ink); }
 .pdx-flag.is-hit { background: #fff; color: var(--ink-2); box-shadow: inset 0 0 0 1px var(--line); }
@@ -803,6 +816,7 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; a
 .pdx-price b { font-size: 32px; font-weight: 600; letter-spacing: -0.025em; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .pdx-price s { font-size: 17px; color: var(--muted-2); font-variant-numeric: tabular-nums; }
 .pdx-price span { font-size: 14px; color: var(--muted); }
+.pdx-price .sale-tag { align-self: center; height: 26px; padding: 0 8px; font-size: 14px; color: #fff; }
 .pdx-avail { display: flex; align-items: center; gap: 8px; margin: 8px 0 0; font-size: 15px; font-weight: 500; color: var(--ink); }
 .pdx-avail::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--ink); flex: none; }
 .pdx-avail.is-low::before { background: transparent; box-shadow: inset 0 0 0 1.5px var(--ink); }
@@ -1231,6 +1245,14 @@ input[type="search"]::-webkit-search-cancel-button { -webkit-appearance: none; a
   .series-strip { grid-auto-columns: 24%; }
   .cat-tiles { grid-template-columns: repeat(4, minmax(0, 1fr)); }
   .hero-visual { aspect-ratio: 1.9; max-height: 420px; }
+}
+/* two cards across: the age and pieces get a line of their own, so neighbouring cards line up,
+   and the old price drops its ₴ so the discount tag still fits beside it on a 360px Android */
+@media (max-width: 599px) {
+  .card-facts { flex-basis: 100%; }
+  .price-was { gap: 2px 5px; }
+  .price-was .cur { display: none; }
+  .price-was .sale-tag { height: 18px; padding: 0 5px; font-size: 11px; }
 }
 @media (max-width: 420px) {
   .cat-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); }
