@@ -34,9 +34,9 @@ def home(request):
     rare = list(active.filter(is_rare=True).order_by("-is_featured", "-views_count", "-created_at")[:10])
     minifigs = list(active.filter(kind="minifig", condition="new").order_by("-is_featured", "-views_count",
                                                                           "-created_at")[:10])
-    # the main series, plus the shop's other series (DC, Jurassic World…) once they have something on sale;
+    # the main series, plus the shop's other series (DC, BrickHeadz, Jurassic World…) once they have something on sale;
     # the ones with the most products first, two rows of seven at most
-    series = list(Theme.objects.filter(Q(is_primary=True) | Q(slug__in=[s[0] for s in SERIES])).annotate(
+    series = list(Theme.objects.filter(Q(is_primary=True) | Q(slug__in=[s[0] for s in SERIES] + ["brickheadz"])).annotate(
         n1=Count("products", filter=Q(products__is_active=True), distinct=True),
         n2=Count("products_second", filter=Q(products_second__is_active=True), distinct=True)))
     for s in series:

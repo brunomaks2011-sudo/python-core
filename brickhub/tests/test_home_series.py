@@ -33,5 +33,13 @@ class HomeSeriesTests(TestCase):
         self.assertEqual(order[0], "dc")
         self.assertNotIn("jurassic-world", order)  # other extra series still wait for their first product
 
-    def test_batman_picture_is_in_the_static_files(self):
-        self.assertTrue(finders.find("img/series/dc-batman.webp"))
+    def test_brickheadz_joins_once_it_has_products(self):
+        from catalog.models import Theme
+        Theme.objects.create(name="BrickHeadz", slug="brickheadz", rebrickable_id=610)
+        self.assertNotIn("brickheadz", self.order())
+        set_product(number="40859-1", name="Superman and Batman", theme_slug="brickheadz")
+        self.assertIn("brickheadz", self.order())
+
+    def test_character_pictures_are_in_the_static_files(self):
+        for name in ("dc-batman", "brickheadz-emmet", "star-wars-vader"):
+            self.assertTrue(finders.find(f"img/series/{name}.webp"), name)
