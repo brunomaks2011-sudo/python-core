@@ -180,3 +180,15 @@ class ElementLookupTests(TestCase):
     def test_unknown_element_is_not_taken_for_a_design(self):
         d = self.ask(kind="part", q="9999999", by="element")
         self.assertFalse(d["found"])
+
+    def test_owner_can_move_an_element_to_the_right_colour(self):
+        from django.urls import reverse
+        from catalog.models import Element, Product
+        Element.objects.filter(element_id="6035734").update(color=self.colors["red"])  # wrong colour in the catalogue
+        self.client.force_login(self.staff)
+        r = self.client.post(reverse("panel:product_new"), {
+            "kind": "part", "condition": "new", "design_id": "30150", "element_id": "6035734",
+            "color": self.nougat.pk, "price": "5", "quantity": "1", "availability": "in_stock", "is_active": "on"})
+        self.assertNotContains(r, "вже належить", status_code=r.status_code)
+        self.assertEqual(Element.objects.get(element_id="6035734").color_id, self.nougat.pk)
+        self.assertTrue(Product.objects.filter(part__design_id="30150", color=self.nougat).exists())

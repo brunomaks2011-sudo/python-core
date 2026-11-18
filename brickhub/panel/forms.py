@@ -218,8 +218,9 @@ class ProductForm(forms.ModelForm):
                 self.add_error("color", "Для деталі обов'язково вкажіть колір")
             el = (data.get("element_id") or "").strip()
             if el and self.part and data.get("color"):
-                clash = Element.objects.filter(element_id=el).exclude(part__design_id=self.part.design_id,
-                                                                      color=data["color"]).first()
+                # the same part in another colour is the owner correcting the catalogue: saving moves the
+                # Element ID to the chosen colour; only another part is a real clash
+                clash = Element.objects.filter(element_id=el).exclude(part__design_id=self.part.design_id).first()
                 if clash:
                     self.add_error("element_id", f"Element ID {el} вже належить {clash.part.design_id} "
                                                  f"({clash.color.name})")
