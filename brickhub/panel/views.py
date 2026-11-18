@@ -581,6 +581,10 @@ def catalog_lookup(request):
                                      "lego_design_id": el.lego_design_id or el.part.lego_no,
                                      "bricklink_no": el.part.bricklink_shown,
                                      "separate": el.part.category_id in separate_part_category_ids()})
+            if request.GET.get("by") == "element":
+                # an unknown Element ID is not a new Design ID: leave the part and colour as they are
+                return JsonResponse({"found": False, "message": f"Element ID {q} немає в каталозі сайту — "
+                                                                "оберіть колір вручну"})
             info = new_part_info(q)
             note = {"bricklink": "нова деталь, назва й розділ з BrickLink",
                     "base": f"нова деталь, розділ за основною деталлю {info.get('base', '')}",

@@ -151,3 +151,32 @@ class CatalogueNumbersTests(TestCase):
         self.assertEqual(r.status_code, 302)
         product = Product.objects.get(part=self.brick)
         self.assertEqual((product.color, product.element_id), (self.colors["black"], "300526"))
+
+
+class ElementLookupTests(TestCase):
+    """An Element ID typed in the panel brings its own colour; an unknown one leaves the form alone."""
+
+    @classmethod
+    def setUpTestData(cls):
+        from accounts.models import User
+        from catalog.models import Color, Element, Part
+        from .factories import base_catalog
+        cls.colors = base_catalog()
+        cls.nougat = Color.objects.create(name="Medium Nougat", name_uk="Середня нуга", slug="medium-nougat",
+                                          rgb="AA7D55", bricklink_id=150, rebrickable_id=84)
+        part = Part.objects.create(design_id="30150", name="Box / Crate with Handholds")
+        Element.objects.create(element_id="6035734", part=part, color=cls.nougat)
+        cls.staff = User.objects.create_user("el@example.com", "Correct-horse-1", is_staff=True)
+
+    def ask(self, **params):
+        from django.urls import reverse
+        self.client.force_login(self.staff)
+        return self.client.get(reverse("panel:catalog_lookup"), params).json()
+
+    def test_element_gives_its_colour_even_with_another_colour_chosen(self):
+        d = self.ask(kind="part", q="6035734", by="element", color=self.colors["red"].pk)
+        self.assertEqual((d["design_id"], d["color_id"]), ("30150", self.nougat.pk))
+
+    def test_unknown_element_is_not_taken_for_a_design(self):
+        d = self.ask(kind="part", q="9999999", by="element")
+        self.assertFalse(d["found"])

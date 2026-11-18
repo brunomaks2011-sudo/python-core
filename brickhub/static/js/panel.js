@@ -156,9 +156,17 @@
     if (blField) blField.addEventListener("input", () => { delete blField.dataset.auto; });
     if (elInput) {
       // an Element ID typed by hand fills the Design ID, colour, name and section
-      elInput.addEventListener("input", () => { delete elInput.dataset.auto; });
+      // the colour and part follow as soon as a whole Element ID is typed, without leaving the field
+      let elTimer;
+      elInput.addEventListener("input", () => {
+        delete elInput.dataset.auto;
+        clearTimeout(elTimer);
+        const v = elInput.value.trim();
+        if (/^\d{6,8}$/.test(v)) elTimer = setTimeout(() => { elInput.dataset.looked = v; lookup("part", v); }, 450);
+      });
       elInput.addEventListener("change", () => {
-        if (!elInput.dataset.auto && elInput.value.trim()) lookup("part", elInput.value);
+        const v = elInput.value.trim();
+        if (!elInput.dataset.auto && v && elInput.dataset.looked !== v) lookup("part", v);
       });
     }
     if (colorInput) {
