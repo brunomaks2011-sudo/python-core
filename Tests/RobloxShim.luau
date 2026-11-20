@@ -11,6 +11,32 @@ local Shim = {}
 
 local cache: { [string]: any } = {}
 
+-- Minimal stand-in for Roblox's Random (Lune's roblox library lacks it).
+local RandomShim = {}
+RandomShim.__index = RandomShim
+function RandomShim.new(seed: number?)
+	local s = math.floor(seed or os.clock() * 1e6) % 2147483647
+	if s <= 0 then
+		s += 2147483646
+	end
+	return setmetatable({ s = s }, RandomShim)
+end
+function RandomShim:_next(): number
+	self.s = (self.s * 16807) % 2147483647
+	return self.s / 2147483647
+end
+function RandomShim:NextNumber(a: number?, b: number?): number
+	local r = self:_next()
+	if a and b then
+		return a + (b - a) * r
+	end
+	return r
+end
+function RandomShim:NextInteger(a: number, b: number): number
+	return a + math.floor(self:_next() * (b - a + 1))
+end
+Shim.Random = RandomShim
+
 local function isDir(p: string): boolean
 	return fs.isDir(p)
 end
@@ -65,7 +91,7 @@ local function makeEnv(modulePath: string)
 	env.UDim2 = roblox.UDim2
 	env.UDim = roblox.UDim
 	env.NumberRange = roblox.NumberRange
-	env.Random = roblox.Random
+	env.Random = RandomShim
 	env.Enum = roblox.Enum
 	env.Instance = roblox.Instance
 	env.task = task

@@ -14,9 +14,9 @@ end
 -- kind: hitscan | projectile | throw | tool
 -- falloff = {start(m), end(m), minMultiplier}
 -- ---------------------------------------------------------------------------
-local W = {}
+local W: { [string]: any } = {}
 
-local function gun(t)
+local function gun(t: { [string]: any }): any
 	t.range = m(t.range)
 	t.falloff = { m(t.falloff[1]), m(t.falloff[2]), t.falloff[3] }
 	t.kind = "hitscan"
@@ -49,11 +49,12 @@ W.binoculars = { name = "Laser Binoculars", kind = "tool", slot = 3, zoom = 6, s
 
 Defs.Weapons = W
 
+
 -- ---------------------------------------------------------------------------
 -- Infantry roles
 -- ---------------------------------------------------------------------------
 Defs.Roles = {
-	rifleman = { name = "Rifleman", icon = "R", desc = "Assault rifle and frag grenades. Takes and holds the flags.", loadout = { [1] = { "b_rifle", "pistol", nil, "grenade" }, [2] = { "r_rifle", "pistol", nil, "grenade" } }, speed = 1.0 },
+	rifleman = { name = "Rifleman", icon = "R", desc = "Assault rifle and frag grenades. Takes and holds the flags.", loadout = { [1] = { "b_rifle", "pistol", "", "grenade" }, [2] = { "r_rifle", "pistol", "", "grenade" } }, speed = 1.0 },
 	medic = { name = "Medic", icon = "M", desc = "Carbine and a field medkit. Heals and revives teammates.", loadout = { [1] = { "b_carbine", "pistol", "medkit", "grenade" }, [2] = { "r_carbine", "pistol", "medkit", "grenade" } }, speed = 1.0 },
 	engineer = { name = "Engineer", icon = "E", desc = "SMG, rocket launcher, repair torch and demolition charges. Kills armour, fixes vehicles.", loadout = { [1] = { "b_smg", "rpg", "repair", "c4" }, [2] = { "r_smg", "rpg", "repair", "c4" } }, speed = 0.97 },
 	support = { name = "Support", icon = "S", desc = "Light machine gun and an ammo pouch. Suppresses and resupplies.", loadout = { [1] = { "b_lmg", "pistol", "ammobox", "grenade" }, [2] = { "r_lmg", "pistol", "ammobox", "grenade" } }, speed = 0.92 },
@@ -66,14 +67,14 @@ Defs.RoleOrder = { "rifleman", "medic", "engineer", "support", "recon", "crew" }
 -- Vehicles. drive: tracked | wheeled | heli. Seats in order; seat 1 = driver.
 -- Model names refer to ReplicatedStorage.Assets.Models.Vehicles.*
 -- ---------------------------------------------------------------------------
-local function shell(t)
+local function shell(t: { [string]: any }): any
 	t.kind = t.kind or "shell"
 	t.speed = m(t.speed)
 	t.radius = m(t.radius or 0)
 	t.structRadius = m(t.structRadius or 0)
 	return t
 end
-local function mg(t)
+local function mg(t: { [string]: any }): any
 	t.kind = "hitscan"
 	t.range = m(t.range)
 	t.falloff = { m(80), m(t.range / S * 0.8), 0.7 }
@@ -81,7 +82,10 @@ local function mg(t)
 	return t
 end
 
-local V = {}
+local V: { [string]: any } = {}
+local function S(t: { [string]: any }): any
+	return t
+end
 V.mbt = {
 	category = "Main Battle Tank", names = { [1] = "BV-90 Warden", [2] = "RT-88 Vulkan" }, model = { [1] = "MBT_Blue", [2] = "MBT_Red" },
 	drive = "tracked", mass = 52000, hp = 1600, armor = 0.35, maxSpeed = m(17), reverseSpeed = m(6), accel = m(3.4), turnRate = 0.75,
@@ -92,8 +96,8 @@ V.mbt = {
 		mg({ name = "Coaxial MG", damage = 22, rpm = 700, spread = 0.004, range = 500, muzzle = "MuzzleCoax", sound = "mg", structDmg = 3 }),
 	},
 	seats = {
-		{ role = "driver", weapons = { 1, 2 }, camera = "gunner", hidden = true },
-		{ role = "gunner", name = "Commander MG", weapons = { mg({ name = "Heavy MG", damage = 34, rpm = 520, spread = 0.005, range = 600, muzzle = "MuzzleCupola", sound = "hmg", structDmg = 6 }) }, aimNode = "Cupola", camera = "mg" },
+		S({ role = "driver", weapons = { 1, 2 }, camera = "gunner", hidden = true }),
+		S({ role = "gunner", name = "Commander MG", weapons = { mg({ name = "Heavy MG", damage = 34, rpm = 520, spread = 0.005, range = 600, muzzle = "MuzzleCupola", sound = "hmg", structDmg = 6 }) }, aimNode = "Cupola", camera = "mg" }),
 	},
 	respawn = 90, canCapture = true, crush = true, engineSound = "engine_tank",
 }
@@ -106,7 +110,7 @@ V.ifv = {
 		shell({ name = "30mm Autocannon", damage = 55, vehicleDamage = 70, radius = 2.0, structDmg = 160, structRadius = 1.6, speed = 1000, gravityScale = 0.2, reload = 0.22, mag = 50, magReload = 5, muzzle = "Muzzle", sound = "autocannon" }),
 		shell({ name = "ATGM", kind = "missile", damage = 150, vehicleDamage = 700, radius = 3.5, structDmg = 900, structRadius = 3, speed = 160, gravityScale = 0, reload = 12, muzzle = "MuzzleATGM", sound = "rocket" }),
 	},
-	seats = { { role = "driver", weapons = { 1, 2 }, camera = "gunner", hidden = true }, { role = "passenger", hidden = true }, { role = "passenger", hidden = true }, { role = "passenger", hidden = true }, { role = "passenger", hidden = true } },
+	seats = { S({ role = "driver", weapons = { 1, 2 }, camera = "gunner", hidden = true }), S({ role = "passenger", hidden = true }), S({ role = "passenger", hidden = true }), S({ role = "passenger", hidden = true }), S({ role = "passenger", hidden = true }) },
 	respawn = 70, canCapture = true, crush = true, engineSound = "engine_tank",
 }
 V.apc = {
@@ -115,7 +119,7 @@ V.apc = {
 	size = Vector3.new(m(2.9), m(2.3), m(7.8)), clearance = m(0.5), suspension = m(0.5), wheelRadius = m(0.62),
 	turret = { yawSpeed = 1.6, pitchMin = -0.15, pitchMax = 1.0 },
 	weapons = { mg({ name = "14.5mm Heavy MG", damage = 40, vehicleDamage = 14, rpm = 560, spread = 0.004, range = 700, muzzle = "Muzzle", sound = "hmg", structDmg = 8 }) },
-	seats = { { role = "driver", camera = "driver", hidden = true }, { role = "gunner", weapons = { 1 }, camera = "gunner", hidden = true }, { role = "passenger", hidden = true }, { role = "passenger", hidden = true }, { role = "passenger", hidden = true }, { role = "passenger", hidden = true } },
+	seats = { S({ role = "driver", camera = "driver", hidden = true }), S({ role = "gunner", weapons = { 1 }, camera = "gunner", hidden = true }), S({ role = "passenger", hidden = true }), S({ role = "passenger", hidden = true }), S({ role = "passenger", hidden = true }), S({ role = "passenger", hidden = true }) },
 	respawn = 60, canCapture = true, engineSound = "engine_truck", lights = true,
 }
 V.jeep = {
@@ -124,7 +128,7 @@ V.jeep = {
 	size = Vector3.new(m(2.1), m(1.9), m(4.7)), clearance = m(0.4), suspension = m(0.32), wheelRadius = m(0.42),
 	turret = { yawSpeed = 3, pitchMin = -0.2, pitchMax = 0.6 },
 	weapons = { mg({ name = "12.7mm MG", damage = 34, rpm = 560, spread = 0.006, range = 600, muzzle = "Muzzle", sound = "hmg", structDmg = 6 }) },
-	seats = { { role = "driver", camera = "driver" }, { role = "gunner", weapons = { 1 }, camera = "mg" }, { role = "passenger" }, { role = "passenger" } },
+	seats = { S({ role = "driver", camera = "driver" }), S({ role = "gunner", weapons = { 1 }, camera = "mg" }), S({ role = "passenger" }), S({ role = "passenger" }) },
 	respawn = 30, canCapture = true, engineSound = "engine_car", lights = true,
 }
 V.truck = {
@@ -132,7 +136,7 @@ V.truck = {
 	drive = "wheeled", axles = 3, mass = 11000, hp = 450, armor = 0.95, maxSpeed = m(24), reverseSpeed = m(8), accel = m(4.0), turnRate = 0.6, maxSteer = 0.55,
 	size = Vector3.new(m(2.5), m(3.2), m(8.2)), clearance = m(0.45), suspension = m(0.4), wheelRadius = m(0.55),
 	weapons = {},
-	seats = { { role = "driver", camera = "driver" }, { role = "passenger" }, { role = "passenger" }, { role = "passenger" }, { role = "passenger" }, { role = "passenger" }, { role = "passenger" }, { role = "passenger" } },
+	seats = { S({ role = "driver", camera = "driver" }), S({ role = "passenger" }), S({ role = "passenger" }), S({ role = "passenger" }), S({ role = "passenger" }), S({ role = "passenger" }), S({ role = "passenger" }), S({ role = "passenger" }) },
 	respawn = 45, canCapture = true, engineSound = "engine_truck", lights = true, mobileSpawn = true,
 }
 V.supply_truck = {
@@ -140,7 +144,7 @@ V.supply_truck = {
 	drive = "wheeled", axles = 3, mass = 12000, hp = 420, armor = 0.95, maxSpeed = m(22), reverseSpeed = m(8), accel = m(3.6), turnRate = 0.6, maxSteer = 0.55,
 	size = Vector3.new(m(2.5), m(3.2), m(8.2)), clearance = m(0.45), suspension = m(0.4), wheelRadius = m(0.55),
 	weapons = {}, aura = { kind = "resupply", radius = m(16) },
-	seats = { { role = "driver", camera = "driver" }, { role = "passenger" } },
+	seats = { S({ role = "driver", camera = "driver" }), S({ role = "passenger" }) },
 	respawn = 60, canCapture = true, engineSound = "engine_truck", lights = true,
 }
 V.ambulance = {
@@ -148,7 +152,7 @@ V.ambulance = {
 	drive = "wheeled", axles = 2, mass = 5200, hp = 360, armor = 0.95, maxSpeed = m(27), reverseSpeed = m(9), accel = m(5.0), turnRate = 0.75, maxSteer = 0.58,
 	size = Vector3.new(m(2.3), m(2.8), m(6.0)), clearance = m(0.4), suspension = m(0.35), wheelRadius = m(0.48),
 	weapons = {}, aura = { kind = "heal", radius = m(14) },
-	seats = { { role = "driver", camera = "driver" }, { role = "passenger" }, { role = "passenger" } },
+	seats = { S({ role = "driver", camera = "driver" }), S({ role = "passenger" }), S({ role = "passenger" }) },
 	respawn = 60, canCapture = true, engineSound = "engine_car", lights = true, mobileSpawn = true,
 }
 V.mlrs = {
@@ -157,7 +161,7 @@ V.mlrs = {
 	size = Vector3.new(m(2.6), m(3.1), m(8.6)), clearance = m(0.45), suspension = m(0.4), wheelRadius = m(0.58),
 	turret = { yawSpeed = 0.5, pitchMin = 0.1, pitchMax = 0.95, indirect = true },
 	weapons = { shell({ name = "122mm Rocket Salvo", kind = "rocket_salvo", count = 12, interval = 0.28, damage = 180, vehicleDamage = 420, radius = 8, structDmg = 1500, structRadius = 6.5, speed = 220, gravityScale = 1, reload = 30, dispersion = m(22), muzzle = "Pod", sound = "mlrs_launch" }) },
-	seats = { { role = "driver", weapons = { 1 }, camera = "artillery" }, { role = "passenger" } },
+	seats = { S({ role = "driver", weapons = { 1 }, camera = "artillery" }), S({ role = "passenger" }) },
 	respawn = 120, canCapture = true, engineSound = "engine_truck", lights = true,
 }
 V.artillery = {
@@ -166,7 +170,7 @@ V.artillery = {
 	size = Vector3.new(m(3.4), m(3.0), m(8.4)), clearance = m(0.45), suspension = m(0.45),
 	turret = { yawSpeed = 0.4, pitchMin = 0.0, pitchMax = 1.05, indirect = true },
 	weapons = { shell({ name = "155mm Howitzer", damage = 300, vehicleDamage = 650, radius = 9, structDmg = 1800, structRadius = 7, speed = 420, gravityScale = 1, reload = 9, muzzle = "Muzzle", sound = "howitzer" }) },
-	seats = { { role = "driver", weapons = { 1 }, camera = "artillery", hidden = true } },
+	seats = { S({ role = "driver", weapons = { 1 }, camera = "artillery", hidden = true }) },
 	respawn = 120, canCapture = true, crush = true, engineSound = "engine_tank",
 }
 V.recovery = {
@@ -176,7 +180,7 @@ V.recovery = {
 	turret = { yawSpeed = 2, pitchMin = -0.2, pitchMax = 0.5 },
 	weapons = { mg({ name = "7.62mm MG", damage = 22, rpm = 650, spread = 0.006, range = 500, muzzle = "Muzzle", sound = "mg", structDmg = 3 }) },
 	aura = { kind = "repair", radius = m(14), rate = 45 },
-	seats = { { role = "driver", weapons = { 1 }, camera = "driver", hidden = true }, { role = "passenger", hidden = true } },
+	seats = { S({ role = "driver", weapons = { 1 }, camera = "driver", hidden = true }), S({ role = "passenger", hidden = true }) },
 	respawn = 75, canCapture = true, crush = true, engineSound = "engine_tank",
 }
 V.comms = {
@@ -184,7 +188,7 @@ V.comms = {
 	drive = "wheeled", axles = 3, mass = 12000, hp = 400, armor = 0.95, maxSpeed = m(23), reverseSpeed = m(8), accel = m(3.8), turnRate = 0.6, maxSteer = 0.55,
 	size = Vector3.new(m(2.5), m(3.3), m(8.0)), clearance = m(0.45), suspension = m(0.4), wheelRadius = m(0.55),
 	weapons = {}, aura = { kind = "radar", radius = m(220) },
-	seats = { { role = "driver", camera = "driver" }, { role = "passenger" } },
+	seats = { S({ role = "driver", camera = "driver" }), S({ role = "passenger" }) },
 	respawn = 60, canCapture = true, engineSound = "engine_truck", lights = true,
 }
 V.attack_heli = {
@@ -193,8 +197,8 @@ V.attack_heli = {
 	size = Vector3.new(m(3.2), m(4.2), m(16)), clearance = m(0.2),
 	weapons = { shell({ name = "70mm Rocket Pods", kind = "rocket", damage = 95, vehicleDamage = 280, radius = 4.5, structDmg = 700, structRadius = 3.5, speed = 300, gravityScale = 0.1, reload = 0.25, mag = 14, magReload = 10, muzzle = "Pod", sound = "rocket" }) },
 	seats = {
-		{ role = "driver", weapons = { 1 }, camera = "chase" },
-		{ role = "gunner", weapons = { shell({ name = "30mm Chain Gun", damage = 60, vehicleDamage = 55, radius = 2, structDmg = 120, structRadius = 1.5, speed = 900, gravityScale = 0.2, reload = 0.12, muzzle = "ChinGun", sound = "autocannon" }) }, aimNode = "ChinTurret", camera = "gunner" },
+		S({ role = "driver", weapons = { 1 }, camera = "chase" }),
+		S({ role = "gunner", weapons = { shell({ name = "30mm Chain Gun", damage = 60, vehicleDamage = 55, radius = 2, structDmg = 120, structRadius = 1.5, speed = 900, gravityScale = 0.2, reload = 0.12, muzzle = "ChinGun", sound = "autocannon" }) }, aimNode = "ChinTurret", camera = "gunner" }),
 	},
 	respawn = 150, canCapture = false, engineSound = "engine_heli",
 }
@@ -204,10 +208,10 @@ V.transport_heli = {
 	size = Vector3.new(m(3.6), m(4.6), m(18)), clearance = m(0.2),
 	weapons = {},
 	seats = {
-		{ role = "driver", camera = "chase" },
-		{ role = "gunner", weapons = { mg({ name = "Door Gun", damage = 26, rpm = 750, spread = 0.008, range = 500, muzzle = "DoorGunL", sound = "mg", structDmg = 3 }) }, aimNode = "DoorGunL", camera = "door" },
-		{ role = "gunner", weapons = { mg({ name = "Door Gun", damage = 26, rpm = 750, spread = 0.008, range = 500, muzzle = "DoorGunR", sound = "mg", structDmg = 3 }) }, aimNode = "DoorGunR", camera = "door" },
-		{ role = "passenger" }, { role = "passenger" }, { role = "passenger" }, { role = "passenger" },
+		S({ role = "driver", camera = "chase" }),
+		S({ role = "gunner", weapons = { mg({ name = "Door Gun", damage = 26, rpm = 750, spread = 0.008, range = 500, muzzle = "DoorGunL", sound = "mg", structDmg = 3 }) }, aimNode = "DoorGunL", camera = "door" }),
+		S({ role = "gunner", weapons = { mg({ name = "Door Gun", damage = 26, rpm = 750, spread = 0.008, range = 500, muzzle = "DoorGunR", sound = "mg", structDmg = 3 }) }, aimNode = "DoorGunR", camera = "door" }),
+		S({ role = "passenger" }), S({ role = "passenger" }), S({ role = "passenger" }), S({ role = "passenger" }),
 	},
 	respawn = 120, canCapture = false, engineSound = "engine_heli", mobileSpawn = true,
 }

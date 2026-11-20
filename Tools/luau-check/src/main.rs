@@ -20,6 +20,8 @@ fn main() {
     }
     let quiet_nil = args.iter().any(|a| a == "--quiet-nil");
     let req = Regex::new(r"\brequire\s*\(").unwrap();
+    // exported types of other modules are unknown in single-file mode: treat as any
+    let xtype = Regex::new(r"\b(SoldierRegistry|BuildingLayout|Rig|VehiclePhysics|Hits|DestructionService|VehicleService|CombatService|MapInfo|DominationMode|Util|Squad|Bot|Commander|Navigator)\.(Soldier|Piece|State|Input|Rigged|HitInfo|Stats|Vehicle|PieceRec|BuildingRec|Info|Projectile|Point|Event|Signal|Occupancy|PointDef|SpawnOption|Brain|Order)\b").unwrap();
     let mut total = 0usize;
     for file in args.iter().skip(1).filter(|a| !a.starts_with("--")) {
         let src = match fs::read_to_string(file) {
@@ -32,6 +34,7 @@ fn main() {
         // drop mode comments: the checker is strict-only
         let src = src.replace("--!nonstrict", "--").replace("--!nocheck", "--");
         let src = req.replace_all(&src, "(nil :: any)(").to_string();
+        let src = xtype.replace_all(&src, "any").to_string();
         let opts = CheckOptions { timeout: Some(Duration::from_secs(60)), module_name: Some(file), ..Default::default() };
         match checker.check_with_options(&src, opts) {
             Ok(res) => {
