@@ -1,0 +1,6 @@
+{
+  "git": {
+    "sha1": "8ce1ccf7646f98c4d200881162e58623a758986f"
+  },
+  "path_in_vcs": "crates/luau-analyze"
+}

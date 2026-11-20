@@ -1,0 +1,14 @@
+# build outputs
+/Tools/luau-check/target/
+/Build/*.rbxl.lock
+node_modules/
+__pycache__/
+*.blend1
+
+# downloaded type data (fetch with Tools/roblox-types/fetch.sh)
+/Tools/roblox-types/API-Dump.json
+/Tools/roblox-types/globalTypes.d.luau
+/Tools/roblox-types/globalTypes.patched.d.luau
+
+# generator intermediates (metres); the game uses Assets/Maps/DolynaValley
+/Assets/Maps/dolyna_valley/map.json

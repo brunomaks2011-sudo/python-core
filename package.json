@@ -1,0 +1,13 @@
+{
+  "name": "blue-vs-red-roblox",
+  "version": "0.2.0",
+  "description": "BLUE vs RED - Three Flags Domination. A Roblox combined-arms military game (Rojo project).",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "gen:map": "node Tools/gen_map.mjs",
+    "build": "rojo build default.project.json -o Build/BlueVsRed.rbxl",
+    "test": "lune run Tests/run",
+    "check": "bash Tools/check.sh"
+  }
+}

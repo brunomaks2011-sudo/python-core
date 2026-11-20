@@ -1,0 +1,153 @@
+{
+  "name": "BlueVsRed",
+  "globIgnorePaths": ["**/*.md", "**/*.blend", "**/*.fbx", "**/*.png", "**/*.jpg", "**/*.ogg", "**/*.wav", "**/*.mp3", "**/*.py"],
+  "tree": {
+    "$className": "DataModel",
+
+    "ReplicatedFirst": {
+      "$className": "ReplicatedFirst",
+      "Loading": { "$path": "Assets/Scripts/ReplicatedFirst" }
+    },
+
+    "ReplicatedStorage": {
+      "$className": "ReplicatedStorage",
+      "Shared": { "$path": "Assets/Scripts/Shared" },
+      "MapData": { "$path": "Assets/Maps/DolynaValley" },
+      "Assets": {
+        "$className": "Folder",
+        "Models": { "$path": "Assets/Models" },
+        "Effects": { "$path": "Assets/Effects" },
+        "Animations": { "$path": "Assets/Animations" },
+        "Audio": { "$path": "Assets/Audio" }
+      }
+    },
+
+    "ServerScriptService": {
+      "$className": "ServerScriptService",
+      "Server": { "$path": "Assets/Scripts/Server" }
+    },
+
+    "StarterPlayer": {
+      "$className": "StarterPlayer",
+      "$properties": {
+        "CharacterWalkSpeed": 16,
+        "CharacterUseJumpPower": false,
+        "CharacterJumpHeight": 3.5,
+        "CharacterMaxSlopeAngle": 55,
+        "LoadCharacterAppearance": false,
+        "AutoJumpEnabled": false,
+        "CameraMaxZoomDistance": 40,
+        "CameraMinZoomDistance": 0.5,
+        "EnableMouseLockOption": false,
+        "HealthDisplayDistance": 0,
+        "NameDisplayDistance": 0
+      },
+      "StarterPlayerScripts": {
+        "$className": "StarterPlayerScripts",
+        "Client": { "$path": "Assets/Scripts/Client" }
+      },
+      "StarterCharacterScripts": {
+        "$className": "StarterCharacterScripts"
+      }
+    },
+
+    "Players": {
+      "$className": "Players",
+      "$properties": {
+        "CharacterAutoLoads": false,
+        "RespawnTime": 6
+      }
+    },
+
+    "Teams": {
+      "$className": "Teams",
+      "Blue Army": {
+        "$className": "Team",
+        "$properties": { "TeamColor": { "BrickColor": 23 }, "AutoAssignable": false }
+      },
+      "Red Army": {
+        "$className": "Team",
+        "$properties": { "TeamColor": { "BrickColor": 21 }, "AutoAssignable": false }
+      },
+      "Deploying": {
+        "$className": "Team",
+        "$properties": { "TeamColor": { "BrickColor": 1 }, "AutoAssignable": true }
+      }
+    },
+
+    "Lighting": {
+      "$className": "Lighting",
+      "$properties": {
+        "Technology": "Future",
+        "Brightness": 3,
+        "ClockTime": 14.2,
+        "GeographicLatitude": 49,
+        "Ambient": [0.27, 0.28, 0.3],
+        "OutdoorAmbient": [0.47, 0.48, 0.5],
+        "EnvironmentDiffuseScale": 1,
+        "EnvironmentSpecularScale": 1,
+        "GlobalShadows": true,
+        "ShadowSoftness": 0.25,
+        "ExposureCompensation": 0.1
+      },
+      "Atmosphere": {
+        "$className": "Atmosphere",
+        "$properties": {
+          "Density": 0.32,
+          "Offset": 0.12,
+          "Color": [0.78, 0.8, 0.84],
+          "Decay": [0.5, 0.53, 0.58],
+          "Glare": 0.25,
+          "Haze": 1.4
+        }
+      },
+      "Sky": {
+        "$className": "Sky",
+        "$properties": { "SunAngularSize": 11, "MoonAngularSize": 9, "StarCount": 3000, "CelestialBodiesShown": true }
+      },
+      "Bloom": {
+        "$className": "BloomEffect",
+        "$properties": { "Intensity": 0.6, "Size": 28, "Threshold": 1.4 }
+      },
+      "ColorGrade": {
+        "$className": "ColorCorrectionEffect",
+        "$properties": { "Brightness": 0.0, "Contrast": 0.08, "Saturation": -0.12, "TintColor": [1.0, 0.985, 0.96] }
+      },
+      "SunRays": {
+        "$className": "SunRaysEffect",
+        "$properties": { "Intensity": 0.06, "Spread": 0.6 }
+      }
+    },
+
+    "Workspace": {
+      "$className": "Workspace",
+      "$properties": {
+        "Gravity": 50,
+        "StreamingEnabled": true,
+        "StreamingMinRadius": 384,
+        "StreamingTargetRadius": 2048,
+        "StreamOutBehavior": "Opportunistic"
+      },
+      "Terrain": {
+        "$className": "Terrain",
+        "$properties": {
+          "Decoration": true,
+          "WaterColor": [0.18, 0.26, 0.24],
+          "WaterTransparency": 0.55,
+          "WaterReflectance": 0.6,
+          "WaterWaveSize": 0.12,
+          "WaterWaveSpeed": 6
+        },
+        "Clouds": {
+          "$className": "Clouds",
+          "$properties": { "Cover": 0.62, "Density": 0.55, "Color": [0.92, 0.93, 0.95] }
+        }
+      }
+    },
+
+    "SoundService": {
+      "$className": "SoundService",
+      "$properties": { "DistanceFactor": 3.0, "RolloffScale": 1.0, "DopplerScale": 0.6, "AmbientReverb": "Plain" }
+    }
+  }
+}

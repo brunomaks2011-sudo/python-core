@@ -1,0 +1,25 @@
+{
+  "comment": "Building archetypes. Footprints are in 3 m modules (w along local X, d along local Z; the front faces local +Z). 'rows' = number of 3 m wall rows. 'slabs' = whether each row gets a floor slab (false for open halls). Read by the Blender kit/building generator and by Tools/gen_map.mjs.",
+  "module": 3.0,
+  "rowHeight": 3.0,
+  "wallThickness": 0.3,
+  "archetypes": {
+    "house_small":       { "w": 3,  "d": 3, "rows": 1, "slabs": true,  "roof": "gable", "style": "plaster",  "category": "house" },
+    "house_medium":      { "w": 4,  "d": 3, "rows": 2, "slabs": true,  "roof": "gable", "style": "plaster",  "category": "house" },
+    "house_long":        { "w": 5,  "d": 3, "rows": 1, "slabs": true,  "roof": "gable", "style": "plaster",  "category": "house" },
+    "barn":              { "w": 6,  "d": 4, "rows": 2, "slabs": false, "roof": "gable", "style": "wood",     "category": "farm", "bigDoor": true },
+    "shop":              { "w": 4,  "d": 4, "rows": 1, "slabs": true,  "roof": "flat",  "style": "plaster",  "category": "commercial", "shopfront": true },
+    "apartment_block":   { "w": 8,  "d": 4, "rows": 4, "slabs": true,  "roof": "flat",  "style": "panel",    "category": "apartment", "balconies": true, "interior": true },
+    "apartment_tall":    { "w": 10, "d": 4, "rows": 5, "slabs": true,  "roof": "flat",  "style": "panel",    "category": "apartment", "balconies": true, "interior": true },
+    "school":            { "w": 8,  "d": 4, "rows": 2, "slabs": true,  "roof": "gable", "style": "plaster",  "category": "civic", "interior": true },
+    "railway_station":   { "w": 8,  "d": 4, "rows": 2, "slabs": true,  "roof": "gable", "style": "plaster",  "category": "civic", "interior": true },
+    "factory_hall":      { "w": 12, "d": 8, "rows": 3, "slabs": false, "roof": "flat",  "style": "brick",    "category": "industrial", "bigDoor": true, "hall": true },
+    "warehouse":         { "w": 10, "d": 6, "rows": 2, "slabs": false, "roof": "flat",  "style": "metal",    "category": "industrial", "bigDoor": true, "hall": true },
+    "power_station":     { "w": 8,  "d": 6, "rows": 3, "slabs": false, "roof": "flat",  "style": "brick",    "category": "industrial", "hall": true },
+    "admin_building":    { "w": 6,  "d": 4, "rows": 3, "slabs": true,  "roof": "flat",  "style": "concrete", "category": "industrial", "interior": true },
+    "barracks":          { "w": 8,  "d": 3, "rows": 1, "slabs": true,  "roof": "gable", "style": "concrete", "category": "military" },
+    "command_building":  { "w": 6,  "d": 4, "rows": 2, "slabs": true,  "roof": "flat",  "style": "concrete", "category": "military", "interior": true },
+    "hangar":            { "w": 8,  "d": 5, "rows": 3, "slabs": false, "roof": "flat",  "style": "metal",    "category": "military", "openFront": true, "hall": true },
+    "gas_station_shop":  { "w": 3,  "d": 3, "rows": 1, "slabs": true,  "roof": "flat",  "style": "plaster",  "category": "commercial", "shopfront": true }
+  }
+}

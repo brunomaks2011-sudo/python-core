@@ -1,0 +1,12 @@
+[package]
+name = "luau-check"
+version = "0.1.0"
+edition = "2024"
+description = "Type-checks Roblox Luau sources against Roblox API definitions (single-file, strict)."
+
+[dependencies]
+luau-analyze = { path = "vendor/luau-analyze" }
+regex = "1"
+
+[profile.release]
+opt-level = 2
