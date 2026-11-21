@@ -2,7 +2,7 @@
 # Static checks for the Roblox Luau code:
 #   1. luau-check: Luau's type checker against the Roblox API definitions
 #   2. api_check.py: Instance.new class names / GetService names / Enum items vs the API dump
-#   3. selene lint (syntax + common mistakes)
+#   3. xref_check.py: every Module.member used across require() boundaries exists
 #   4. rojo build (project + model files are valid)
 set -uo pipefail
 cd "$(dirname "$0")/.."
@@ -23,6 +23,9 @@ echo "luau-check errors: $ERR"
 
 echo "== api_check"
 python3 Tools/api_check.py "${FILES[@]}" || ERR=$((ERR+1))
+
+echo "== xref_check"
+python3 Tools/xref_check.py | tail -n 40 || ERR=$((ERR+1))
 
 echo "== rojo build"
 mkdir -p Build

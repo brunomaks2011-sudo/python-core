@@ -1,49 +1,69 @@
 --!strict
--- Sound asset IDs. The game ships its own original sounds in Assets/Audio
--- (synthesised weapons, engines, explosions, ambience, music, and radio voice
--- lines). Roblox only plays uploaded audio, so upload that folder once
--- (Studio > Asset Manager > Bulk Import, or Tools/upload_audio.py with an
--- Open Cloud key) and paste the IDs here - Tools/upload_audio.py writes this
--- file automatically. Empty entries fall back to Roblox's built-in sounds where
--- one exists, otherwise they are silent.
+-- Uploaded sound sheet IDs.
+--
+-- All game audio is original (Tools/audio/build_audio.py synthesises it; the
+-- radio voice lines come from Tools/audio/gen_voice.py) and is packed into five
+-- sheets. Roblox only plays uploaded audio, so upload these five files once
+-- (Creator Dashboard > Development Items > Audio, or Studio > Asset Manager >
+-- Bulk Import) and paste each asset ID below - either "1234567890" or
+-- "rbxassetid://1234567890":
+--
+--   sfx        = Assets/Audio/SFX/sfx.ogg
+--   loops      = Assets/Audio/SFX/loops.ogg
+--   music      = Assets/Audio/Music/music.ogg
+--   voice_blue = Assets/Audio/Voice/voice_blue.ogg
+--   voice_red  = Assets/Audio/Voice/voice_red.ogg
+--
+-- Until then, the few clips that have a built-in Roblox equivalent use it and
+-- the rest are silent.
 
-local AudioIds = {
-	-- weapons
-	rifle = "", smg = "", lmg = "", sniper = "", pistol = "", mg = "", hmg = "", autocannon = "",
-	tank_gun = "", howitzer = "", rocket = "", rpg = "", mlrs_launch = "", grenade = "",
-	-- explosions / destruction
-	explosion = "", explosion_big = "", debris = "", glass = "", impact = "",
-	-- vehicles
-	engine_tank = "", engine_truck = "", engine_car = "", engine_heli = "",
-	-- ambience / weather
-	wind = "", rain = "", thunder = "", battle_ambience = "",
-	-- ui / radio / music
-	radio_click = "", ui_click = "", capture = "", music_menu = "", music_victory = "", music_defeat = "",
-	-- radio voice lines: voice_<team>_<line>, e.g. voice_1_captured_A
-	voice = {} :: { [string]: string },
-}
+local AudioSprites = require(script.Parent.AudioSprites)
 
--- Built-in Roblox client sounds used when nothing has been uploaded yet.
+local AudioIds = {}
+
+AudioIds.sheets = {
+	sfx = "",
+	loops = "",
+	music = "",
+	voice_blue = "",
+	voice_red = "",
+} :: { [string]: string }
+
+-- Built-in Roblox client sounds used while a sheet has no ID yet.
 AudioIds.fallback = {
 	explosion = "rbxasset://sounds/collide.wav",
 	explosion_big = "rbxasset://sounds/collide.wav",
+	tank_gun = "rbxasset://sounds/collide.wav",
+	howitzer = "rbxasset://sounds/collide.wav",
 	rocket = "rbxasset://sounds/Rocket shot.wav",
 	rpg = "rbxasset://sounds/Rocket shot.wav",
 	mlrs_launch = "rbxasset://sounds/Rocket shot.wav",
-	tank_gun = "rbxasset://sounds/collide.wav",
 	grenade = "rbxasset://sounds/swoosh.wav",
 	ui_click = "rbxasset://sounds/electronicpingshort.wav",
 	capture = "rbxasset://sounds/electronicpingshort.wav",
 	radio_click = "rbxasset://sounds/electronicpingshort.wav",
-}
+} :: { [string]: string }
 
-function AudioIds.get(name: string): string?
-	local id = (AudioIds :: any)[name]
-	if type(id) == "string" and id ~= "" then
-		return id
+-- A playable clip: `length` 0 means "the whole file".
+export type Clip = { id: string, start: number, length: number, loop: boolean }
+
+local function assetUri(id: string): string
+	return if string.find(id, "://", 1, true) then id else "rbxassetid://" .. id
+end
+
+function AudioIds.clip(name: string): Clip?
+	local region = AudioSprites.clips[name]
+	if region then
+		local id = AudioIds.sheets[region.sheet]
+		if id and id ~= "" then
+			return { id = assetUri(id), start = region.start, length = region.length, loop = region.loop }
+		end
 	end
 	local fb = AudioIds.fallback[name]
-	return fb
+	if fb then
+		return { id = fb, start = 0, length = 0, loop = false }
+	end
+	return nil
 end
 
 return AudioIds

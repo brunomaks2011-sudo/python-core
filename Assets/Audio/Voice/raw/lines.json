@@ -1,0 +1,26 @@
+{
+  "voices": {
+    "1": "JBFqnCBsd6RMkjVDRZzb",
+    "2": "nPczCjzI2devNBz1zQrb"
+  },
+  "model": "eleven_multilingual_v2",
+  "lines": {
+    "captured_A": "Alpha is ours. We hold the industrial complex.",
+    "lost_A": "We have lost Alpha. The enemy holds the industrial complex.",
+    "losing_A": "Alpha has been neutralized. Retake that flag.",
+    "contested_A": "Enemy troops at Alpha. Hold your ground.",
+    "captured_B": "Bravo is ours. We hold the village.",
+    "lost_B": "We have lost Bravo. The enemy holds the village.",
+    "losing_B": "Bravo has been neutralized. Retake that flag.",
+    "contested_B": "Enemy troops at Bravo. Hold your ground.",
+    "captured_C": "Charlie is ours. We hold the military base.",
+    "lost_C": "We have lost Charlie. The enemy holds the military base.",
+    "losing_C": "Charlie has been neutralized. Retake that flag.",
+    "contested_C": "Enemy troops at Charlie. Hold your ground.",
+    "victory": "All units, this is Command. The battle is won. Outstanding work.",
+    "defeat": "All units, this is Command. Fall back. The battle is lost.",
+    "artillery_out": "Rocket artillery is on the way. Keep your heads down.",
+    "artillery_incoming": "Incoming artillery! Get to cover!",
+    "sudden_death": "Sudden death. Both armies one second from victory. Take another flag to win."
+  }
+}

@@ -7,8 +7,9 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local StarterGui = game:GetService("StarterGui")
 local UserInputService = game:GetService("UserInputService")
 
-local Net = require(ReplicatedStorage.Shared.Net)
+local Defs = require(ReplicatedStorage.Shared.Defs)
 local MapInfo = require(ReplicatedStorage.Shared.MapInfo)
+local Net = require(ReplicatedStorage.Shared.Net)
 
 local Client = script.Parent
 local ClientState = require(Client.ClientState)
@@ -69,11 +70,13 @@ Weather.init()
 Weather.onThunder = AudioController.thunder
 SupportAirVisuals.init()
 WeaponController.onShot = function(id)
-	local Defs = require(ReplicatedStorage.Shared.Defs)
 	local w = Defs.Weapons[id]
 	if w then
 		AudioController.play(w.sound or "rifle", nil, 0.7)
 	end
+end
+Theme.onClick = function()
+	AudioController.play("ui_click", nil, 0.5)
 end
 
 -- corner minimap + full map (M)
@@ -103,9 +106,27 @@ local function openDeploy()
 	DeployScreen.open()
 end
 
-MainMenu.onPlay = openDeploy
+local function alive(): boolean
+	local char = player.Character
+	local hum = char and char:FindFirstChildOfClass("Humanoid")
+	return hum ~= nil and hum.Health > 0
+end
+
+-- PLAY: from the pause menu (P) while still alive, go straight back to the
+-- fight (the server refuses a second deployment); otherwise pick a spawn.
+MainMenu.onPlay = function()
+	if ClientState.deployed and alive() then
+		MainMenu.close()
+		ClientState.inMenu = false
+		inBattle(true)
+		AudioController.stopMusic()
+	else
+		openDeploy()
+	end
+end
 DeployScreen.onDeployed = function()
 	inBattle(true)
+	AudioController.stopMusic()
 	AudioController.play("radio_click", nil, 0.6)
 end
 VictoryScreen.onClosed = function()
@@ -193,6 +214,7 @@ UserInputService.InputBegan:Connect(function(input, processed)
 		inBattle(false)
 		MainMenu.open()
 		ClientState.inMenu = true
+		AudioController.music("music_menu")
 	end
 end)
 

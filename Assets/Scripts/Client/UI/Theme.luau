@@ -4,6 +4,9 @@
 
 local Theme = {}
 
+-- set by Main.client: plays the UI click sound for every themed button
+Theme.onClick = nil :: (() -> ())?
+
 Theme.Font = Enum.Font.GothamMedium
 Theme.FontBold = Enum.Font.GothamBold
 Theme.FontBlack = Enum.Font.GothamBlack
@@ -119,6 +122,11 @@ function Theme.button(parent: Instance?, name: string, text: string, size: UDim2
 		b.BackgroundColor3 = Theme.PanelLight
 		stroke.Transparency = 0.4
 		accentBar.Visible = false
+	end)
+	b.Activated:Connect(function()
+		if Theme.onClick then
+			Theme.onClick()
+		end
 	end)
 	return b
 end
