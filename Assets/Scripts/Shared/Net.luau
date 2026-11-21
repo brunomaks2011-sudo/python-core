@@ -122,9 +122,10 @@ function Net.matchState(): Folder
 	return ReplicatedStorage:WaitForChild("MatchState") :: Folder
 end
 
--- Simple per-player rate limiter for remotes.
+-- Simple per-player rate limiter for remotes (weak keys: players who leave
+-- are forgotten).
 function Net.rateLimiter(maxPerSecond: number)
-	local buckets: { [Player]: { t: number, n: number } } = {}
+	local buckets: { [Player]: { t: number, n: number } } = setmetatable({}, { __mode = "k" }) :: any
 	return function(player: Player): boolean
 		local now = os.clock()
 		local b = buckets[player]

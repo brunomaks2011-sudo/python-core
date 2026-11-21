@@ -12,10 +12,12 @@ local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 
+local AntiCheat = require(ReplicatedStorage.Shared.AntiCheat)
 local Constants = require(ReplicatedStorage.Shared.Constants)
 local Defs = require(ReplicatedStorage.Shared.Defs)
 local Hits = require(ReplicatedStorage.Shared.Hits)
 local Net = require(ReplicatedStorage.Shared.Net)
+local Util = require(ReplicatedStorage.Shared.Util)
 local SoldierRegistry = require(script.Parent.SoldierRegistry)
 local SpawnService = require(script.Parent.SpawnService)
 local DestructionService = require(script.Parent.DestructionService)
@@ -37,6 +39,18 @@ local hitmarker: RemoteEvent
 local damageTaken: RemoteEvent
 local rayParams = RaycastParams.new()
 rayParams.FilterType = Enum.RaycastFilterType.Exclude
+-- head -> muzzle line of sight (a shot may not start on the far side of a wall)
+local losParams = RaycastParams.new()
+losParams.FilterType = Enum.RaycastFilterType.Exclude
+
+-- Fire validation: shots refill like a token bucket at the weapon's rate of
+-- fire and at most BURST_TOKENS can be banked, so neither a stream nor a burst
+-- after idling beats the real rate of fire; a packet is read up to
+-- MAX_SHOTS_PER_PACKET entries.
+local BURST_TOKENS = 3
+local MAX_SHOTS_PER_PACKET = 16
+local MUZZLE_REACH = 10 -- studs between the server's head position and the shot origin
+local fireTokens: { [number]: { [string]: number } } = {}
 rayParams.IgnoreWater = true
 
 local GRAV = function(): number
@@ -313,12 +327,16 @@ function CombatService.bullet(shooter: Soldier?, weapon: { [string]: any }, orig
 		hitPos = result.Position
 		endPos = result.Position
 	end
-	-- trust the client's claimed target only if the server ray agrees within tolerance
+	-- Trust the client's claimed target (lag compensation) only if the claim is
+	-- consistent: the point lies on the ray that was fired, the claimed part is
+	-- still near that point on the server, and the server ray reaches about
+	-- that far.
 	if claimedHit and claimedPos and claimedHit.Parent then
-		local claimDist = (claimedPos - origin).Magnitude
 		local serverDist = if hitPos then (hitPos - origin).Magnitude else math.huge
 		local claimInfo = Hits.classify(claimedHit)
-		if claimDist <= range and (claimInfo.kind == "soldier" or claimInfo.kind == "vehicle") and claimDist <= serverDist + 6 then
+		local consistent = AntiCheat.claimConsistent(origin, dir, claimedPos, claimedHit.Position, claimedHit.Size.Magnitude,
+			claimedHit.AssemblyLinearVelocity.Magnitude, range, serverDist)
+		if consistent and (claimInfo.kind == "soldier" or claimInfo.kind == "vehicle") then
 			-- check nothing solid lies between the muzzle and the claimed point
 			local d = claimedPos - origin
 			local block = workspace:Raycast(origin, d * 0.97, rayParams)
@@ -398,6 +416,20 @@ local function equippedWeapon(s: Soldier): (string?, { [string]: any }?)
 	return id, Defs.Weapons[id]
 end
 
+local function muzzleClear(s: Soldier, head: Vector3, origin: Vector3): boolean
+	local d = origin - head
+	if d.Magnitude < 0.05 then
+		return true
+	end
+	losParams.FilterDescendantsInstances = { s.model :: Instance }
+	local hit = workspace:Raycast(head, d, losParams)
+	if not hit then
+		return true
+	end
+	local kind = Hits.classify(hit.Instance).kind
+	return kind == "soldier" or kind == "vehicle"
+end
+
 local function onFire(player: Player, req: any)
 	local s = SoldierRegistry.forPlayer(player)
 	if not s or not s.alive or s.vehicleId or type(req) ~= "table" or type(req.shots) ~= "table" then
@@ -411,36 +443,46 @@ local function onFire(player: Player, req: any)
 	if not ammo then
 		return
 	end
-	local now = os.clock()
-	local interval = 60 / (w.rpm or 600)
-	local last = s.lastShot[id] or 0
-	local allowed = math.floor((now - last) / interval + 0.5) + 2
 	local headPos = headPosition(s)
 	if not headPos then
 		return
 	end
-	local n = 0
+	local now = os.clock()
+	local interval = 60 / (w.rpm or 600)
+	local bucket = fireTokens[s.id]
+	if not bucket then
+		bucket = {}
+		fireTokens[s.id] = bucket
+	end
+	local tokens = AntiCheat.refillTokens(bucket[id], s.lastShot[id] or 0, now, interval, BURST_TOKENS)
+	local fired, examined = 0, 0
 	for _, shot in req.shots do
-		if n >= allowed or ammo.mag <= 0 then
+		examined += 1
+		if examined > MAX_SHOTS_PER_PACKET or tokens < 1 or ammo.mag <= 0 then
 			break
 		end
-		if typeof(shot) ~= "table" or typeof(shot.o) ~= "Vector3" or typeof(shot.d) ~= "Vector3" then
+		if type(shot) ~= "table" then
 			continue
 		end
-		local origin = shot.o :: Vector3
-		local dir = shot.d :: Vector3
-		if dir.Magnitude < 0.5 or (origin - headPos).Magnitude > 10 then
-			continue -- muzzle not where the server sees the soldier
+		local origin = Util.finiteVector(shot.o)
+		local dir = Util.finiteVector(shot.d)
+		if not origin or not dir or dir.Magnitude < 0.5 or (origin - headPos).Magnitude > MUZZLE_REACH then
+			continue -- malformed, or the muzzle is not where the server sees the soldier
 		end
-		n += 1
+		if not muzzleClear(s, headPos, origin) then
+			continue -- muzzle on the far side of a wall
+		end
+		tokens -= 1
+		fired += 1
 		ammo.mag -= 1
 		local claimed = if typeof(shot.h) == "Instance" and (shot.h :: Instance):IsA("BasePart") then shot.h :: BasePart else nil
-		local claimedPos = if typeof(shot.p) == "Vector3" then shot.p :: Vector3 else nil
+		local claimedPos = Util.finiteVector(shot.p)
 		local endPos = CombatService.bullet(s, w, origin, dir, { s.model :: Instance }, claimed, claimedPos)
 		EffectsBus.push({ k = "tracer", a = origin, b = endPos, w = w.sound, sid = s.id })
 	end
-	if n > 0 then
-		s.lastShot[id] = now
+	bucket[id] = tokens
+	s.lastShot[id] = now
+	if fired > 0 then
 		SpawnService.dropProtection(s)
 	end
 end
@@ -475,10 +517,11 @@ end
 
 local function onSwitch(player: Player, slot: any)
 	local s = SoldierRegistry.forPlayer(player)
-	if not s or not s.alive or type(slot) ~= "number" then
+	local n = Util.finiteNumber(slot)
+	if not s or not s.alive or not n then
 		return
 	end
-	slot = math.clamp(math.floor(slot), 1, 4)
+	slot = math.clamp(math.floor(n), 1, 4)
 	local id = s.loadout[slot]
 	if not id or id == "" then
 		return
@@ -493,10 +536,14 @@ end
 
 local function onThrow(player: Player, req: any)
 	local s = SoldierRegistry.forPlayer(player)
-	if not s or not s.alive or s.vehicleId or type(req) ~= "table" or typeof(req.d) ~= "Vector3" then
+	if not s or not s.alive or s.vehicleId or type(req) ~= "table" then
 		return
 	end
-	local slot = tonumber(req.slot) or 4
+	local throwDir = Util.finiteVector(req.d)
+	if not throwDir or throwDir.Magnitude < 0.5 then
+		return
+	end
+	local slot = Util.finiteNumber(req.slot) or 4
 	local id = s.loadout[slot]
 	local w = Defs.Weapons[id or ""]
 	if not w then
@@ -510,13 +557,13 @@ local function onThrow(player: Player, req: any)
 	if not head then
 		return
 	end
-	local dir = (req.d :: Vector3).Unit
+	local dir = throwDir.Unit
 	if w.kind == "throw" then
 		if ammo.mag <= 0 then
 			return
 		end
 		ammo.mag -= 1
-		local power = math.clamp(tonumber(req.power) or 1, 0.3, 1)
+		local power = math.clamp(Util.finiteNumber(req.power) or 1, 0.3, 1)
 		CombatService.launch(head + dir * 1.5, dir * w.speed * power + Vector3.new(0, w.speed * 0.18, 0), w, s, { s.model :: Instance })
 	elseif w.kind == "projectile" then
 		-- RPG
@@ -626,10 +673,10 @@ local function onTool(player: Player, req: any)
 			end
 		end
 	elseif id == "binoculars" then
-		if typeof(req.p) ~= "Vector3" then
+		local target = Util.finiteVector(req.p)
+		if not target then
 			return
 		end
-		local target = req.p :: Vector3
 		if (target - root.Position).Magnitude > (w.spotRange or 1800) then
 			return
 		end
@@ -660,10 +707,11 @@ end
 
 local function onStance(player: Player, stance: any)
 	local s = SoldierRegistry.forPlayer(player)
-	if not s or not s.alive or type(stance) ~= "number" then
+	local n = Util.finiteNumber(stance)
+	if not s or not s.alive or not n then
 		return
 	end
-	stance = math.clamp(math.floor(stance), 0, 2)
+	stance = math.clamp(math.floor(n), 0, 2)
 	s.stance = stance
 	if s.model then
 		s.model:SetAttribute("Stance", stance)
@@ -715,12 +763,12 @@ function CombatService.init()
 		end
 	end)
 	Net.event("Spot").OnServerEvent:Connect(function(player, pos)
-		if misc(player) and typeof(pos) == "Vector3" then
+		if misc(player) and Util.finiteVector(pos) then
 			onTool(player, { p = pos })
 		end
 	end)
 	Net.event("ArtilleryCall").OnServerEvent:Connect(function(player, pos)
-		if misc(player) and typeof(pos) == "Vector3" then
+		if misc(player) and Util.finiteVector(pos) then
 			onTool(player, { p = pos, artillery = true })
 		end
 	end)
@@ -734,6 +782,7 @@ function CombatService.reset()
 	table.clear(projectiles)
 	table.clear(charges)
 	table.clear(artilleryCooldown)
+	table.clear(fireTokens)
 end
 
 return CombatService

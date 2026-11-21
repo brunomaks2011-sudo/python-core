@@ -101,12 +101,9 @@ function InteractController.init()
 		end
 		if t.kind == "vehicle" then
 			interact:FireServer({ action = "enter", id = t.id })
-		elseif t.kind == "ladder" and t.to then
-			local char = player.Character
-			local root = char and char:FindFirstChild("HumanoidRootPart") :: BasePart?
-			if root then
-				root.CFrame = CFrame.new(t.to) * root.CFrame.Rotation
-			end
+		elseif t.kind == "ladder" then
+			-- the server moves the character (client-side teleports are pulled back)
+			interact:FireServer({ action = "ladder" })
 		end
 	end)
 end

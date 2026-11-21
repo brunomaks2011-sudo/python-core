@@ -210,4 +210,32 @@ function Util.str(inst: Instance, name: string, default: string): string
 	return if type(v) == "string" then v else default
 end
 
+-- ---------------------------------------------------------------------------
+-- Validation of values received from clients. NaN and inf pass `type` and
+-- `typeof` checks and defeat comparisons (NaN > x is false), so every number
+-- or vector from a remote goes through one of these before it is used.
+-- ---------------------------------------------------------------------------
+local BIG = 1e6
+
+function Util.finiteNumber(v: any): number?
+	if type(v) == "number" and v == v and v > -BIG and v < BIG then
+		return v
+	end
+	return nil
+end
+
+function Util.finiteVector(v: any, maxMagnitude: number?): Vector3?
+	if typeof(v) ~= "Vector3" then
+		return nil
+	end
+	local x, y, z = v.X, v.Y, v.Z
+	if x ~= x or y ~= y or z ~= z or math.abs(x) >= BIG or math.abs(y) >= BIG or math.abs(z) >= BIG then
+		return nil
+	end
+	if maxMagnitude and v.Magnitude > maxMagnitude then
+		return nil
+	end
+	return v
+end
+
 return Util

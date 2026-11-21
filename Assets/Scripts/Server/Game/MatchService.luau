@@ -233,10 +233,17 @@ function MatchService.init()
 		state:SetAttribute("P_" .. p.id .. "_Radius", p.radius)
 	end
 	matchEvent = Net.event("MatchEvent")
-	Net.func("GetScoreboard").OnServerInvoke = function()
+	local queryLimiter = Net.rateLimiter(4)
+	Net.func("GetScoreboard").OnServerInvoke = function(player: Player): any
+		if not queryLimiter(player) then
+			return nil
+		end
 		return SoldierRegistry.scoreboard()
 	end
-	Net.func("GetMatchSummary").OnServerInvoke = function()
+	Net.func("GetMatchSummary").OnServerInvoke = function(player: Player): any
+		if not queryLimiter(player) then
+			return nil
+		end
 		if mode.state == "ended" then
 			return summaryCache or MatchService.buildSummary()
 		end

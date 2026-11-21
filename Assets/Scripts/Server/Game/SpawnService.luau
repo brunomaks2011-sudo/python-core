@@ -10,6 +10,7 @@ local ReplicatedStorage = game:GetService("ReplicatedStorage")
 local RunService = game:GetService("RunService")
 local Teams = game:GetService("Teams")
 
+local AntiCheat = require(ReplicatedStorage.Shared.AntiCheat)
 local Constants = require(ReplicatedStorage.Shared.Constants)
 local Defs = require(ReplicatedStorage.Shared.Defs)
 local MapInfo = require(ReplicatedStorage.Shared.MapInfo)
@@ -314,6 +315,19 @@ function SpawnService.spawnSoldier(s: SoldierRegistry.Soldier, cf: CFrame): bool
 end
 
 -- Deploy request (validated).
+-- Human players may not stack one army: joining a team is refused while it
+-- already has two or more players more than the other one.
+function SpawnService.teamOpen(team: number, s: SoldierRegistry.Soldier?): boolean
+	local count = { [TEAM.BLUE] = 0, [TEAM.RED] = 0 }
+	for _, p in Players:GetPlayers() do
+		local ps = SoldierRegistry.forPlayer(p)
+		if ps and ps ~= s and count[ps.team] then
+			count[ps.team] += 1
+		end
+	end
+	return AntiCheat.teamOpen(count[team], count[Constants.enemyOf(team)])
+end
+
 function SpawnService.deploy(s: SoldierRegistry.Soldier, team: number, role: string, spawnId: string, vehicleKind: string?): (boolean, string?)
 	if team ~= TEAM.BLUE and team ~= TEAM.RED then
 		return false, "Invalid faction"
@@ -323,6 +337,9 @@ function SpawnService.deploy(s: SoldierRegistry.Soldier, team: number, role: str
 	end
 	if s.alive then
 		return false, "Already deployed"
+	end
+	if s.player and team ~= s.team and not SpawnService.teamOpen(team, s) then
+		return false, "Teams are unbalanced - join the other army"
 	end
 	if os.clock() < s.respawnAt then
 		return false, string.format("Redeploy in %d s", math.ceil(s.respawnAt - os.clock()))
@@ -380,9 +397,13 @@ function SpawnService.init()
 	soldiersFolder.Parent = workspace
 
 	local deployLimiter = Net.rateLimiter(3)
-	Net.func("GetDeployOptions").OnServerInvoke = function(player: Player, team: number?)
+	local optionsLimiter = Net.rateLimiter(4)
+	Net.func("GetDeployOptions").OnServerInvoke = function(player: Player, team: any): any
+		if not optionsLimiter(player) then
+			return nil
+		end
 		local s = SoldierRegistry.forPlayer(player)
-		local t = if type(team) == "number" then team else (s and s.team or 1)
+		local t = if team == TEAM.BLUE or team == TEAM.RED then team else (if s and s.team ~= 0 then s.team else TEAM.BLUE)
 		local vehicles = if SpawnService.vehicles then SpawnService.vehicles.deployVehicles(t) else {}
 		return { spawns = SpawnService.options(t), vehicles = vehicles, respawnIn = if s then math.max(0, s.respawnAt - os.clock()) else 0 }
 	end

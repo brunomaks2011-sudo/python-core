@@ -9,12 +9,14 @@ local Constants = require(ReplicatedStorage.Shared.Constants)
 local Defs = require(ReplicatedStorage.Shared.Defs)
 local MapInfo = require(ReplicatedStorage.Shared.MapInfo)
 local Net = require(ReplicatedStorage.Shared.Net)
+local Util = require(ReplicatedStorage.Shared.Util)
 local Rig = require(ReplicatedStorage.Shared.Rig)
 local VehiclePhysics = require(ReplicatedStorage.Shared.VehiclePhysics)
 local SoldierRegistry = require(script.Parent.SoldierRegistry)
 local CombatService = require(script.Parent.CombatService)
 local DestructionService = require(script.Parent.DestructionService)
 local EffectsBus = require(script.Parent.EffectsBus)
+local MovementGuard = require(script.Parent.MovementGuard)
 local MatchService = require(script.Parent.MatchService)
 local SpawnService = require(script.Parent.SpawnService)
 
@@ -408,6 +410,7 @@ function VehicleService.exit(s: Soldier, silent: boolean?)
 		local y = MapInfo.heightAt(pos.X, pos.Z)
 		s.root.CFrame = CFrame.new(pos.X, math.max(pos.Y, y) + 3.5, pos.Z) * v.root.CFrame.Rotation
 		s.root.AssemblyLinearVelocity = v.root.AssemblyLinearVelocity * 0.5
+		MovementGuard.reset(s)
 	end
 	if idx == 1 then
 		v.phys.engineOn = false
@@ -535,7 +538,11 @@ function VehicleService.fire(s: Soldier, v: Vehicle, weaponIndex: number, aimDir
 		local endPos = CombatService.bullet(s, w, origin, d, ignore)
 		EffectsBus.push({ k = "tracer", a = origin, b = endPos, w = w.sound, sid = s.id, v = v.id })
 	elseif w.kind == "rocket_salvo" then
+		local reach = w.range or 2600
 		local tgt = target or (origin + dir * 1500)
+		if (tgt - origin).Magnitude > reach then
+			tgt = origin + (tgt - origin).Unit * reach
+		end
 		v.cooldown[key] = now + (w.reload or 30)
 		task.spawn(function()
 			for k = 1, (w.count or 12) do
@@ -1022,9 +1029,11 @@ function VehicleService.init()
 		end
 		if req.action == "exit" then
 			VehicleService.exit(s, false)
-		elseif req.action == "seat" and type(req.index) == "number" then
+		elseif req.action == "seat" and Util.finiteNumber(req.index) then
 			VehicleService.switchSeat(s, math.floor(req.index))
-		elseif req.action == "enter" and type(req.id) == "number" then
+		elseif req.action == "ladder" then
+			MovementGuard.climb(s)
+		elseif req.action == "enter" and Util.finiteNumber(req.id) then
 			local v = vehicles[req.id]
 			if v and (v.root.Position - s.root.Position).Magnitude < v.def.size.Magnitude * 0.5 + 14 then
 				VehicleService.enter(s, v, nil)
@@ -1033,10 +1042,10 @@ function VehicleService.init()
 	end)
 	local aimLimiter = Net.rateLimiter(30)
 	Net.event("VehicleAim").OnServerEvent:Connect(function(player, yawArg, pitchArg, target)
-		if not aimLimiter(player) or type(yawArg) ~= "number" or type(pitchArg) ~= "number" then
+		local yaw, pitch = Util.finiteNumber(yawArg), Util.finiteNumber(pitchArg)
+		if not aimLimiter(player) or not yaw or not pitch then
 			return
 		end
-		local yaw, pitch = yawArg :: number, pitchArg :: number
 		local s = SoldierRegistry.forPlayer(player)
 		local v = s and vehicles[s.vehicleId or -1]
 		if not s or not v or not s.seatIndex then
@@ -1052,21 +1061,25 @@ function VehicleService.init()
 			a.yaw -= math.pi * 2
 		end
 		a.pitch = math.clamp(pitch, if tdef then tdef.pitchMin else -0.3, if tdef then tdef.pitchMax else 0.8)
-		a.target = if typeof(target) == "Vector3" then target else nil
+		a.target = Util.finiteVector(target)
 	end)
 	local fireLimiter = Net.rateLimiter(30)
 	Net.event("VehicleFire").OnServerEvent:Connect(function(player, weaponArg, dirArg, target)
-		if not fireLimiter(player) or type(weaponArg) ~= "number" or typeof(dirArg) ~= "Vector3" then
+		local weaponIndex, dir = Util.finiteNumber(weaponArg), Util.finiteVector(dirArg)
+		if not fireLimiter(player) or not weaponIndex or not dir then
 			return
 		end
-		local weaponIndex, dir = weaponArg :: number, dirArg :: Vector3
 		local s = SoldierRegistry.forPlayer(player)
 		local v = s and vehicles[s.vehicleId or -1]
 		if s and v then
-			VehicleService.fire(s, v, math.floor(weaponIndex), dir, if typeof(target) == "Vector3" then target else nil)
+			VehicleService.fire(s, v, math.floor(weaponIndex), dir, Util.finiteVector(target))
 		end
 	end)
+	local toggleLimiter = Net.rateLimiter(4)
 	Net.event("VehicleToggle").OnServerEvent:Connect(function(player, what)
+		if not toggleLimiter(player) then
+			return
+		end
 		local s = SoldierRegistry.forPlayer(player)
 		local v = s and vehicles[s.vehicleId or -1]
 		if not s or not v or s.seatIndex ~= 1 then

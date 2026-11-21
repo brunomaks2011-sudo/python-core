@@ -78,7 +78,7 @@ local WEATHERS = { "dynamic", "clear", "cloudy", "rain", "fog", "storm" }
 local function singleplayerPage()
 	clearPage("SINGLEPLAYER  -  CUSTOM BATTLE")
 	local body = Theme.frame(page, "Body", UDim2.new(1, 0, 1, -60), UDim2.new(0, 0, 0, 50), Theme.Bg, 1)
-	local note = Theme.label(body, "Note", "Fight alongside and against AI soldiers. Settings apply to this server (host only).", UDim2.new(1, 0, 0, 24), UDim2.new(0, 0, 0, 0), 14, Theme.TextDim, Theme.Font)
+	local note = Theme.label(body, "Note", "Fight alongside and against AI soldiers. Settings change this server when you are alone in it, own the private server, or created the place.", UDim2.new(1, 0, 0, 24), UDim2.new(0, 0, 0, 0), 14, Theme.TextDim, Theme.Font)
 	note.TextWrapped = true
 	stepper(body, 40, "AI SOLDIERS PER TEAM", function()
 		return tostring(singleSettings.bots)
@@ -324,7 +324,7 @@ local function mapPage()
 	d.TextWrapped = true
 	d.TextYAlignment = Enum.TextYAlignment.Top
 	Theme.label(card, "Mode", "MODE: THREE FLAGS - DOMINATION  (first to 1000 seconds)", UDim2.new(1, -20, 0, 22), UDim2.new(0, 14, 1, -32), 15, Theme.Text, Theme.FontBold)
-	Theme.label(body, "Conditions", "BATTLE CONDITIONS (host)", UDim2.new(1, 0, 0, 24), UDim2.new(0, 0, 0, 214), 16, Theme.TextDim, Theme.FontBold)
+	Theme.label(body, "Conditions", "BATTLE CONDITIONS (server owner)", UDim2.new(1, 0, 0, 24), UDim2.new(0, 0, 0, 214), 16, Theme.TextDim, Theme.FontBold)
 	local presets = {
 		{ name = "MORNING CLEAR", time = 7.5, weather = "clear" },
 		{ name = "OVERCAST NOON", time = 13, weather = "cloudy" },

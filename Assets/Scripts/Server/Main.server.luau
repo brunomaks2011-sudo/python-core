@@ -10,6 +10,7 @@ local RunService = game:GetService("RunService")
 local Lighting = game:GetService("Lighting")
 
 local Net = require(ReplicatedStorage.Shared.Net)
+local Util = require(ReplicatedStorage.Shared.Util)
 local MapInfo = require(ReplicatedStorage.Shared.MapInfo)
 local Constants = require(ReplicatedStorage.Shared.Constants)
 
@@ -20,6 +21,7 @@ local MatchService = require(Server.Game.MatchService)
 local SpawnService = require(Server.Game.SpawnService)
 local CombatService = require(Server.Game.CombatService)
 local VehicleService = require(Server.Game.VehicleService)
+local MovementGuard = require(Server.Game.MovementGuard)
 local RadarService = require(Server.Game.RadarService)
 local EnvironmentService = require(Server.Game.EnvironmentService)
 local SoldierRegistry = require(Server.Game.SoldierRegistry)
@@ -60,6 +62,8 @@ SpawnService.init()
 CombatService.init()
 VehicleService.init()
 SpawnService.vehicles = VehicleService
+MovementGuard.vehicles = VehicleService
+MovementGuard.init()
 RadarService.vehicles = VehicleService.all
 RadarService.init()
 EnvironmentService.init()
@@ -88,7 +92,10 @@ table.insert(MatchService.onRestart, function()
 	AIDirector.reset()
 end)
 
--- host settings (bots, difficulty, time of day, weather) -------------------------
+-- battle settings (bots, difficulty, time of day, weather) ------------------------
+-- Allowed in Studio, for a player alone in the server, for the owner (or first
+-- player) of a private server, and for the place's creator. Strangers in a
+-- public server cannot change the battle for everyone.
 local host: Player? = nil
 Players.PlayerAdded:Connect(function(p)
 	host = host or p
@@ -103,25 +110,39 @@ Players.PlayerRemoving:Connect(function(p)
 end)
 state:SetAttribute("BotsPerTeam", AIDirector.botsPerTeam)
 state:SetAttribute("Difficulty", 1)
+local function canChangeSettings(player: Player): boolean
+	if RunService:IsStudio() or #Players:GetPlayers() <= 1 then
+		return true
+	end
+	if game.PrivateServerId ~= "" then
+		return player.UserId == game.PrivateServerOwnerId or player == host
+	end
+	return game.CreatorType == Enum.CreatorType.User and player.UserId == game.CreatorId
+end
+local settingsLimiter = Net.rateLimiter(4)
 Net.event("ChangeSettings").OnServerEvent:Connect(function(player, payload)
 	if type(payload) ~= "table" then
 		return
 	end
-	if player ~= host and not RunService:IsStudio() then
+	if not settingsLimiter(player) or not canChangeSettings(player) then
 		return
 	end
 	local req = payload :: any
-	if type(req.bots) == "number" then
-		AIDirector.botsPerTeam = math.clamp(math.floor(req.bots), 0, Constants.BOTS_PER_TEAM_MAX)
+	local bots = Util.finiteNumber(req.bots)
+	if bots then
+		AIDirector.botsPerTeam = math.clamp(math.floor(bots), 0, Constants.BOTS_PER_TEAM_MAX)
 		state:SetAttribute("BotsPerTeam", AIDirector.botsPerTeam)
 		AIDirector.balance()
 	end
-	if type(req.difficulty) == "number" then
-		AIDirector.setDifficulty(req.difficulty)
-		state:SetAttribute("Difficulty", math.clamp(math.floor(req.difficulty), 0, 2))
+	local difficulty = Util.finiteNumber(req.difficulty)
+	if difficulty then
+		difficulty = math.clamp(math.floor(difficulty), 0, 2)
+		AIDirector.setDifficulty(difficulty)
+		state:SetAttribute("Difficulty", difficulty)
 	end
-	if type(req.time) == "number" then
-		EnvironmentService.setTime(req.time)
+	local clock = Util.finiteNumber(req.time)
+	if clock then
+		EnvironmentService.setTime(clock % 24)
 	end
 	if type(req.cycle) == "boolean" then
 		EnvironmentService.cycle = req.cycle
