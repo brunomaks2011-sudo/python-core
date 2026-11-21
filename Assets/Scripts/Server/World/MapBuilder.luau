@@ -532,6 +532,7 @@ local function buildProps(info: { [string]: any }): { [string]: Model }
 			end
 		elseif p.type == "flagpole_hq" and p.team then
 			MapBuilder.hqFlags[p.team] = m
+			m.ModelStreamingMode = Enum.ModelStreamingMode.Persistent
 		elseif p.type == "launch_platform" then
 			MapBuilder.launchPlatform = m
 		end
@@ -560,6 +561,8 @@ local function buildFlags(info: { [string]: any })
 		if m then
 			m.Name = "Flag_" .. pt.id
 			m:SetAttribute("PointId", pt.id)
+			-- always present on every client (StreamingEnabled), whatever the distance
+			m.ModelStreamingMode = Enum.ModelStreamingMode.Persistent
 			MapBuilder.flags[pt.id] = m
 			-- zone boundary markers (recoloured by the client by owner)
 			local markers = Instance.new("Model")

@@ -183,6 +183,8 @@ function VehicleService.spawn(kind: string, team: number, cf: CFrame, slotIndex:
 	root.CustomPhysicalProperties = PhysicalProperties.new(if def.drive == "heli" then 1.2 else 2.6, 0.6, 0.1)
 	local lift = if def.drive == "heli" then 0.5 else 1.5
 	model:PivotTo(cf + Vector3.new(0, lift, 0))
+	-- stream to clients as one unit so the animator always sees a complete rig
+	model.ModelStreamingMode = Enum.ModelStreamingMode.Atomic
 	model.Parent = folder
 	local phys = VehiclePhysics.setup(root, def)
 	local seats: { [number]: number? } = {}

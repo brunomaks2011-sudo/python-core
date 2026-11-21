@@ -10,6 +10,7 @@ local RunService = game:GetService("RunService")
 
 local Constants = require(ReplicatedStorage.Shared.Constants)
 local Net = require(ReplicatedStorage.Shared.Net)
+local RadarCodec = require(ReplicatedStorage.Shared.RadarCodec)
 local SoldierRegistry = require(script.Parent.SoldierRegistry)
 
 local RadarService = {}
@@ -34,8 +35,7 @@ function RadarService.init()
 			local r = s.root
 			if s.alive and r and r.Parent and (s.team == 1 or s.team == 2) then
 				local p = r.Position
-				local look = r.CFrame.LookVector
-				local entry = { q(p.X), q(p.Z), math.floor(math.atan2(-look.X, -look.Z) * 100) / 100, s.id, if s.vehicleId then 1 else 0 }
+				local entry = { q(p.X), q(p.Z), s.id, if s.vehicleId then 1 else 0 }
 				table.insert(packets[s.team].s, entry)
 				-- recently firing soldiers reveal themselves briefly
 				local fired = false
@@ -46,7 +46,7 @@ function RadarService.init()
 					end
 				end
 				if s.spottedUntil > now or fired then
-					table.insert(packets[Constants.enemyOf(s.team)].e, { q(p.X), q(p.Z), s.id })
+					table.insert(packets[Constants.enemyOf(s.team)].e, { q(p.X), q(p.Z) })
 				end
 			end
 		end
@@ -54,8 +54,7 @@ function RadarService.init()
 			for _, v in RadarService.vehicles() do
 				if v.alive and v.root.Parent then
 					local p = v.root.Position
-					local look = v.root.CFrame.LookVector
-					local entry = { q(p.X), q(p.Z), math.floor(math.atan2(-look.X, -look.Z) * 100) / 100, v.kind, v.id }
+					local entry = { q(p.X), q(p.Z) }
 					if v.team == 1 or v.team == 2 then
 						table.insert(packets[v.team].v, entry)
 						-- crewed enemy vehicles are visible to the other side when spotted or moving fast
@@ -67,10 +66,12 @@ function RadarService.init()
 				end
 			end
 		end
+		-- binary-packed: unreliable remotes drop payloads over ~1000 bytes
+		local encoded = { [1] = RadarCodec.encode(packets[1]), [2] = RadarCodec.encode(packets[2]) }
 		for _, player in Players:GetPlayers() do
 			local s = SoldierRegistry.forPlayer(player)
 			if s and (s.team == 1 or s.team == 2) then
-				remote:FireClient(player, packets[s.team])
+				remote:FireClient(player, encoded[s.team])
 			end
 		end
 	end)

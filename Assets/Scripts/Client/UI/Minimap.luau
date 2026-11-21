@@ -10,6 +10,7 @@ local RunService = game:GetService("RunService")
 
 local MapInfo = require(ReplicatedStorage.Shared.MapInfo)
 local Net = require(ReplicatedStorage.Shared.Net)
+local RadarCodec = require(ReplicatedStorage.Shared.RadarCodec)
 local Theme = require(script.Parent.Theme)
 local ClientState = require(script.Parent.Parent.ClientState)
 
@@ -262,7 +263,7 @@ function Minimap.update(self: any)
 	end
 	local myId = player:GetAttribute("SoldierId")
 	for _, s in radar.s do
-		if s[4] ~= myId and s[5] == 0 then
+		if s[3] ~= myId and s[4] == 0 then -- x, z, soldier id, in a vehicle
 			put(s[1], s[2], Theme.team(team), 6)
 		end
 	end
@@ -304,8 +305,9 @@ end
 function Minimap.init()
 	state = Net.matchState()
 	Net.unreliable("Radar").OnClientEvent:Connect(function(packet)
-		if type(packet) == "table" then
-			radar = packet
+		local decoded = RadarCodec.decode(packet)
+		if decoded then
+			radar = decoded
 		end
 	end)
 	local _ = RunService

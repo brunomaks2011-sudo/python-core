@@ -270,6 +270,7 @@ local function botModel(s: SoldierRegistry.Soldier): Model?
 			local a = Instance.new("Animator")
 			a.Parent = hum
 		end
+		rig.ModelStreamingMode = Enum.ModelStreamingMode.Atomic -- arrives whole on clients
 		botTemplate = rig
 	end
 	local model = (botTemplate :: Model):Clone()
