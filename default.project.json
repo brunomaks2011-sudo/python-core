@@ -30,6 +30,7 @@
     "StarterPlayer": {
       "$className": "StarterPlayer",
       "$properties": {
+        "GameSettingsAvatar": "R15",
         "CharacterWalkSpeed": 16,
         "CharacterUseJumpPower": false,
         "CharacterJumpHeight": 3.5,

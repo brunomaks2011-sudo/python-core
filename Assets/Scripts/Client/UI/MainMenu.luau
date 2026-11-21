@@ -320,7 +320,7 @@ local function mapPage()
 	Theme.corner(card, 6)
 	Theme.stroke(card, Theme.Gold, 2, 0.2)
 	Theme.label(card, "Name", string.upper(info.name), UDim2.new(1, -20, 0, 34), UDim2.new(0, 14, 0, 10), 26, Theme.Gold, Theme.FontBlack)
-	local d = Theme.label(card, "Desc", "A fictional Eastern European river valley, 2 x 2 km of playable ground: the Kirov Works industrial complex (A), Dolyna village (B) and Garrison 41 military base (C), joined by a highway, a railway and three bridges over the river. Forests, wheat and sunflower fields, farms, ruins and defensive positions.", UDim2.new(1, -28, 0, 110), UDim2.new(0, 14, 0, 48), 14, Theme.TextDim, Theme.Font)
+	local d = Theme.label(card, "Desc", "A fictional Eastern European river valley, 2 x 2 km of playable ground: the Ironvale Works industrial complex (A), Dolyna village (B) and Garrison 41 military base (C), joined by a highway, a railway and three bridges over the river. Forests, wheat and sunflower fields, farms, ruins and defensive positions.", UDim2.new(1, -28, 0, 110), UDim2.new(0, 14, 0, 48), 14, Theme.TextDim, Theme.Font)
 	d.TextWrapped = true
 	d.TextYAlignment = Enum.TextYAlignment.Top
 	Theme.label(card, "Mode", "MODE: THREE FLAGS - DOMINATION  (first to 1000 seconds)", UDim2.new(1, -20, 0, 22), UDim2.new(0, 14, 1, -32), 15, Theme.Text, Theme.FontBold)

@@ -102,7 +102,7 @@ export const RAIL = {
 
 // Areas
 export const ZONES = [
-  { id: 'industrial', name: 'Kirov Works (Industrial Complex)', rect: [-565, -208, -295, 48], flattenTo: null },
+  { id: 'industrial', name: 'Ironvale Works (Industrial Complex)', rect: [-565, -208, -295, 48], flattenTo: null },
   { id: 'base', name: 'Garrison 41 (Military Base)', rect: [348, -138, 572, 138], flattenTo: null },
   { id: 'village', name: 'Dolyna Village', circle: [0, 30, 185] },
   { id: 'hq_blue', name: 'FOB Anvil', circle: [-60, 632, 75] },

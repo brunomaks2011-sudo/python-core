@@ -55,7 +55,7 @@ Defs.Weapons = W
 -- ---------------------------------------------------------------------------
 Defs.Roles = {
 	rifleman = { name = "Rifleman", icon = "R", desc = "Assault rifle and frag grenades. Takes and holds the flags.", loadout = { [1] = { "b_rifle", "pistol", "", "grenade" }, [2] = { "r_rifle", "pistol", "", "grenade" } }, speed = 1.0 },
-	medic = { name = "Medic", icon = "M", desc = "Carbine and a field medkit. Heals and revives teammates.", loadout = { [1] = { "b_carbine", "pistol", "medkit", "grenade" }, [2] = { "r_carbine", "pistol", "medkit", "grenade" } }, speed = 1.0 },
+	medic = { name = "Medic", icon = "M", desc = "Carbine and a field medkit. Heals wounded teammates.", loadout = { [1] = { "b_carbine", "pistol", "medkit", "grenade" }, [2] = { "r_carbine", "pistol", "medkit", "grenade" } }, speed = 1.0 },
 	engineer = { name = "Engineer", icon = "E", desc = "SMG, rocket launcher, repair torch and demolition charges. Kills armour, fixes vehicles.", loadout = { [1] = { "b_smg", "rpg", "repair", "c4" }, [2] = { "r_smg", "rpg", "repair", "c4" } }, speed = 0.97 },
 	support = { name = "Support", icon = "S", desc = "Light machine gun and an ammo pouch. Suppresses and resupplies.", loadout = { [1] = { "b_lmg", "pistol", "ammobox", "grenade" }, [2] = { "r_lmg", "pistol", "ammobox", "grenade" } }, speed = 0.92 },
 	recon = { name = "Reconnaissance", icon = "K", desc = "Marksman rifle and laser binoculars. Spots enemies and calls rocket artillery.", loadout = { [1] = { "b_dmr", "pistol", "binoculars", "grenade" }, [2] = { "r_dmr", "pistol", "binoculars", "grenade" } }, speed = 1.03 },
