@@ -197,4 +197,17 @@ function Util.soldierName(rng: Random): string
 	return FIRST[rng:NextInteger(1, #FIRST)] .. " " .. LAST[rng:NextInteger(1, #LAST)]
 end
 
+-- ---------------------------------------------------------------------------
+-- Typed attribute reads (GetAttribute returns `any`; these never return nil)
+-- ---------------------------------------------------------------------------
+function Util.num(inst: Instance, name: string, default: number): number
+	local v = inst:GetAttribute(name)
+	return if type(v) == "number" then v else default
+end
+
+function Util.str(inst: Instance, name: string, default: string): string
+	local v = inst:GetAttribute(name)
+	return if type(v) == "string" then v else default
+end
+
 return Util

@@ -244,10 +244,11 @@ function SpawnService.handleDeath(s: SoldierRegistry.Soldier, character: Model)
 	end)
 end
 
--- Bot body: an R15 rig built from a HumanoidDescription (no avatar loading).
-local botDescription: HumanoidDescription? = nil
-local function botModel(s: SoldierRegistry.Soldier): Model
-	if not botDescription then
+-- Bot body: an R15 rig built once from a plain HumanoidDescription (no avatar
+-- assets) and cloned for every spawn, so bot respawns never yield.
+local botTemplate: Model? = nil
+local function botModel(s: SoldierRegistry.Soldier): Model?
+	if not botTemplate then
 		local d = Instance.new("HumanoidDescription")
 		d.HeightScale = 1
 		d.WidthScale = 1
@@ -255,15 +256,23 @@ local function botModel(s: SoldierRegistry.Soldier): Model
 		d.HeadScale = 1
 		d.BodyTypeScale = 0
 		d.ProportionScale = 0
-		botDescription = d
+		local ok, result = pcall(function()
+			return Players:CreateHumanoidModelFromDescriptionAsync(d, Enum.HumanoidRigType.R15)
+		end)
+		if not ok or typeof(result) ~= "Instance" then
+			warn("[SpawnService] could not build the bot rig: " .. tostring(result))
+			return nil
+		end
+		local rig = result :: Model
+		local hum = rig:FindFirstChildOfClass("Humanoid")
+		if hum and not hum:FindFirstChildOfClass("Animator") then
+			local a = Instance.new("Animator")
+			a.Parent = hum
+		end
+		botTemplate = rig
 	end
-	local model = Players:CreateHumanoidModelFromDescription(botDescription :: HumanoidDescription, Enum.HumanoidRigType.R15)
+	local model = (botTemplate :: Model):Clone()
 	model.Name = s.name
-	local hum = model:FindFirstChildOfClass("Humanoid")
-	if hum and not hum:FindFirstChildOfClass("Animator") then
-		local a = Instance.new("Animator")
-		a.Parent = hum
-	end
 	return model
 end
 
@@ -290,6 +299,9 @@ function SpawnService.spawnSoldier(s: SoldierRegistry.Soldier, cf: CFrame): bool
 			s.model:Destroy()
 		end
 		local model = botModel(s)
+		if not model then
+			return false
+		end
 		model:PivotTo(cf)
 		model.Parent = soldiersFolder
 		setupCharacter(s, model)
