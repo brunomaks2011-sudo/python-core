@@ -1,8 +1,8 @@
 --!strict
 -- BLUE vs RED - Three Flags Domination: server entry point.
+-- Team-vs-team PvP between real players (no AI combatants).
 -- Boot order: remotes -> map data -> terrain -> structures -> match systems ->
--- vehicles -> AI. Loading progress is published on MatchState for the
--- loading screen.
+-- vehicles. Loading progress is published on MatchState for the loading screen.
 
 local Players = game:GetService("Players")
 local ReplicatedStorage = game:GetService("ReplicatedStorage")
@@ -12,7 +12,6 @@ local Lighting = game:GetService("Lighting")
 local Net = require(ReplicatedStorage.Shared.Net)
 local Util = require(ReplicatedStorage.Shared.Util)
 local MapInfo = require(ReplicatedStorage.Shared.MapInfo)
-local Constants = require(ReplicatedStorage.Shared.Constants)
 
 local Server = script.Parent
 local EffectsBus = require(Server.Game.EffectsBus)
@@ -24,11 +23,8 @@ local VehicleService = require(Server.Game.VehicleService)
 local MovementGuard = require(Server.Game.MovementGuard)
 local RadarService = require(Server.Game.RadarService)
 local EnvironmentService = require(Server.Game.EnvironmentService)
-local SoldierRegistry = require(Server.Game.SoldierRegistry)
 local TerrainBuilder = require(Server.World.TerrainBuilder)
 local MapBuilder = require(Server.World.MapBuilder)
-local AIDirector = require(Server.AI.AIDirector)
-local SupportAir = require(Server.AI.SupportAir)
 
 Net.setupServer()
 local state = Net.matchState()
@@ -68,18 +64,6 @@ RadarService.vehicles = VehicleService.all
 RadarService.init()
 EnvironmentService.init()
 VehicleService.spawnAll()
-AIDirector.init()
-SupportAir.init()
-
--- bots that end up in vehicles need a driver controller for gunnery
-SpawnService.onSpawn = function(s)
-	if s.isBot and s.vehicleId then
-		local v = VehicleService.get(s.vehicleId)
-		if v then
-			AIDirector.trackVehicle(v)
-		end
-	end
-end
 
 -- match restart: rebuild destroyed structures, vehicles, soldiers
 table.insert(MatchService.onRestart, function()
@@ -89,10 +73,9 @@ table.insert(MatchService.onRestart, function()
 		progress(stage, p)
 	end)
 	VehicleService.resetAll()
-	AIDirector.reset()
 end)
 
--- battle settings (bots, difficulty, time of day, weather) ------------------------
+-- battle settings (time of day, weather) ------------------------------------------
 -- Allowed in Studio, for a player alone in the server, for the owner (or first
 -- player) of a private server, and for the place's creator. Strangers in a
 -- public server cannot change the battle for everyone.
@@ -108,8 +91,6 @@ Players.PlayerRemoving:Connect(function(p)
 		host = Players:GetPlayers()[1]
 	end
 end)
-state:SetAttribute("BotsPerTeam", AIDirector.botsPerTeam)
-state:SetAttribute("Difficulty", 1)
 local function canChangeSettings(player: Player): boolean
 	if RunService:IsStudio() or #Players:GetPlayers() <= 1 then
 		return true
@@ -128,18 +109,6 @@ Net.event("ChangeSettings").OnServerEvent:Connect(function(player, payload)
 		return
 	end
 	local req = payload :: any
-	local bots = Util.finiteNumber(req.bots)
-	if bots then
-		AIDirector.botsPerTeam = math.clamp(math.floor(bots), 0, Constants.BOTS_PER_TEAM_MAX)
-		state:SetAttribute("BotsPerTeam", AIDirector.botsPerTeam)
-		AIDirector.balance()
-	end
-	local difficulty = Util.finiteNumber(req.difficulty)
-	if difficulty then
-		difficulty = math.clamp(math.floor(difficulty), 0, 2)
-		AIDirector.setDifficulty(difficulty)
-		state:SetAttribute("Difficulty", difficulty)
-	end
 	local clock = Util.finiteNumber(req.time)
 	if clock then
 		EnvironmentService.setTime(clock % 24)
@@ -155,5 +124,5 @@ end)
 
 state:SetAttribute("Ready", true)
 progress("Ready", 1)
-print(string.format("[BlueVsRed] server ready in %.1f s - %d soldiers registered", os.clock() - t0, #SoldierRegistry.alive()))
+print(string.format("[BlueVsRed] server ready in %.1f s - %d players connected", os.clock() - t0, #Players:GetPlayers()))
 local _ = Lighting

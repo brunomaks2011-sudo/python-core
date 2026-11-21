@@ -1,6 +1,6 @@
 --!strict
--- Main menu: PLAY, MULTIPLAYER, SINGLEPLAYER, SETTINGS, VEHICLE GARAGE,
--- MAP SELECTION, EXIT. The live battlefield is visible behind it through a
+-- Main menu: PLAY, MULTIPLAYER, SETTINGS, VEHICLE GARAGE, MAP SELECTION, EXIT.
+-- (PvP only: there is no singleplayer mode against AI.) The live battlefield is visible behind it through a
 -- slow aerial camera.
 
 local Players = game:GetService("Players")
@@ -11,7 +11,6 @@ local SocialService = game:GetService("SocialService")
 local Constants = require(ReplicatedStorage.Shared.Constants)
 local Defs = require(ReplicatedStorage.Shared.Defs)
 local MapInfo = require(ReplicatedStorage.Shared.MapInfo)
-local Util = require(ReplicatedStorage.Shared.Util)
 local Net = require(ReplicatedStorage.Shared.Net)
 local Theme = require(script.Parent.Theme)
 local ClientState = require(script.Parent.Parent.ClientState)
@@ -70,56 +69,10 @@ end
 -- ---------------------------------------------------------------------------
 -- Pages
 -- ---------------------------------------------------------------------------
-local singleSettings = { bots = 16, difficulty = 2, time = 2, weather = 1, cycle = true }
--- clock time for the DAWN / NOON / DUSK / NIGHT choices
-local TIMES = { 6.2, 13, 18.6, 23.5 }
-local WEATHERS = { "dynamic", "clear", "cloudy", "rain", "fog", "storm" }
-
-local function singleplayerPage()
-	clearPage("SINGLEPLAYER  -  CUSTOM BATTLE")
-	local body = Theme.frame(page, "Body", UDim2.new(1, 0, 1, -60), UDim2.new(0, 0, 0, 50), Theme.Bg, 1)
-	local note = Theme.label(body, "Note", "Fight alongside and against AI soldiers. Settings change this server when you are alone in it, own the private server, or created the place.", UDim2.new(1, 0, 0, 24), UDim2.new(0, 0, 0, 0), 14, Theme.TextDim, Theme.Font)
-	note.TextWrapped = true
-	stepper(body, 40, "AI SOLDIERS PER TEAM", function()
-		return tostring(singleSettings.bots)
-	end, function()
-		singleSettings.bots = math.max(0, singleSettings.bots - 2)
-	end, function()
-		singleSettings.bots = math.min(Constants.BOTS_PER_TEAM_MAX, singleSettings.bots + 2)
-	end)
-	choice(body, 90, "DIFFICULTY", { "RECRUIT", "REGULAR", "VETERAN" }, singleSettings.difficulty, function(i)
-		singleSettings.difficulty = i
-	end)
-	choice(body, 136, "TIME OF DAY", { "DAWN", "NOON", "DUSK", "NIGHT" }, singleSettings.time, function(i)
-		singleSettings.time = i
-	end)
-	choice(body, 182, "WEATHER", { "DYNAMIC", "CLEAR", "CLOUDY", "RAIN" }, math.min(singleSettings.weather, 4), function(i)
-		singleSettings.weather = i
-	end)
-	choice(body, 228, "", { "FOG", "STORM" }, singleSettings.weather - 4, function(i)
-		singleSettings.weather = 4 + i
-	end)
-	choice(body, 274, "DAY/NIGHT CYCLE", { "ON", "OFF" }, if singleSettings.cycle then 1 else 2, function(i)
-		singleSettings.cycle = i == 1
-	end)
-	local start = Theme.button(body, "Start", "START BATTLE", UDim2.new(0, 260, 0, 54), UDim2.new(0, 0, 0, 340), Theme.Gold)
-	start.TextSize = 22
-	start.MouseButton1Click:Connect(function()
-		local w = WEATHERS[singleSettings.weather]
-		Net.event("ChangeSettings"):FireServer({
-			bots = singleSettings.bots, difficulty = singleSettings.difficulty - 1, time = TIMES[singleSettings.time],
-			cycle = singleSettings.cycle, weather = if w ~= "dynamic" then w else nil,
-		})
-		if MainMenu.onPlay then
-			MainMenu.onPlay()
-		end
-	end)
-end
-
 local function multiplayerPage()
 	clearPage("MULTIPLAYER")
 	local body = Theme.frame(page, "Body", UDim2.new(1, 0, 1, -60), UDim2.new(0, 0, 0, 50), Theme.Bg, 1)
-	local text = Theme.label(body, "Info", "Every Roblox server of BLUE vs RED is a live multiplayer battle on a dedicated, authoritative server: match timers, flag ownership, capture progress, destruction and respawns are decided by the server and synchronised to everyone. Empty slots are filled by AI soldiers.", UDim2.new(1, 0, 0, 80), UDim2.new(0, 0, 0, 0), 15, Theme.TextDim, Theme.Font)
+	local text = Theme.label(body, "Info", "Every Roblox server of BLUE vs RED is a live multiplayer battle on a dedicated, authoritative server: match timers, flag ownership, capture progress, destruction and respawns are decided by the server and synchronised to everyone. Two armies of real players: pick a side on the deployment screen.", UDim2.new(1, 0, 0, 80), UDim2.new(0, 0, 0, 0), 15, Theme.TextDim, Theme.Font)
 	text.TextWrapped = true
 	text.TextYAlignment = Enum.TextYAlignment.Top
 	Theme.label(body, "PlayersTitle", "PLAYERS ON THIS SERVER", UDim2.new(1, 0, 0, 24), UDim2.new(0, 0, 0, 90), 16, Theme.Text, Theme.FontBold)
@@ -134,7 +87,15 @@ local function multiplayerPage()
 		Theme.label(body, "P", string.format("%s   -   %s", p.DisplayName, Constants.TEAM_ARMY[t]), UDim2.new(1, 0, 0, 22), UDim2.new(0, 0, 0, y), 15, Theme.team(t), Theme.Font)
 		y += 24
 	end
-	Theme.label(body, "Bots", string.format("AI soldiers per team: %d", Util.num(state, "BotsPerTeam", 0)), UDim2.new(1, 0, 0, 22), UDim2.new(0, 0, 0, y + 6), 15, Theme.TextDim, Theme.Font)
+	local counts = { [1] = 0, [2] = 0 }
+	for _, p in Players:GetPlayers() do
+		for t = 1, 2 do
+			if p.Team and p.Team.Name == Constants.TEAM_OBJECT_NAME[t] then
+				counts[t] += 1
+			end
+		end
+	end
+	Theme.label(body, "Teams", string.format("%s: %d   |   %s: %d", Constants.TEAM_ARMY[1], counts[1], Constants.TEAM_ARMY[2], counts[2]), UDim2.new(1, 0, 0, 22), UDim2.new(0, 0, 0, y + 6), 15, Theme.TextDim, Theme.Font)
 	local invite = Theme.button(body, "Invite", "INVITE FRIENDS", UDim2.new(0, 240, 0, 46), UDim2.new(0, 0, 0, y + 44), Theme.Blue)
 	invite.MouseButton1Click:Connect(function()
 		local ok, can = pcall(function()
@@ -423,7 +384,6 @@ function MainMenu.init()
 			end
 		end },
 		{ label = "MULTIPLAYER", fn = multiplayerPage },
-		{ label = "SINGLEPLAYER", fn = singleplayerPage },
 		{ label = "SETTINGS", fn = settingsPage },
 		{ label = "VEHICLE GARAGE", fn = garagePage },
 		{ label = "MAP SELECTION", fn = mapPage },
@@ -448,7 +408,7 @@ function MainMenu.init()
 	local footer = Theme.label(shade, "Footer", "", UDim2.new(0, 700, 0, 20), UDim2.new(0, 60, 1, -40), 13, Theme.TextDim, Theme.Font)
 	RunService.Heartbeat:Connect(function()
 		if gui.Enabled then
-			footer.Text = string.format("%s  |  %d players  |  %d AI per team  |  Blender-built vehicles, buildings and soldiers", MapInfo.get().name, #Players:GetPlayers(), Util.num(state, "BotsPerTeam", 0))
+			footer.Text = string.format("%s  |  %d players  |  team vs team PvP", MapInfo.get().name, #Players:GetPlayers())
 		end
 	end)
 	gui.Parent = player:WaitForChild("PlayerGui")

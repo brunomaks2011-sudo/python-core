@@ -44,7 +44,6 @@ export type Vehicle = {
 	aimJoints: { [string]: { seat: number, mode: string } },
 	cooldown: { [string]: number },
 	mags: { [string]: number },
-	aiInput: VehiclePhysics.Input?,
 	lastAttacker: Soldier?,
 	name: string,
 	destroyedAt: number,
@@ -204,7 +203,7 @@ function VehicleService.spawn(kind: string, team: number, cf: CFrame, slotIndex:
 	local v: Vehicle = {
 		id = id, kind = kind, def = def, team = team, model = model, rig = rig, root = root, phys = phys, seats = seats,
 		hp = def.hp, alive = true, slot = nil, slotIndex = slotIndex or 0, idleSince = os.clock(), anchored = false,
-		aim = aim, aimJoints = aimJoints, cooldown = {}, mags = mags, aiInput = nil, lastAttacker = nil,
+		aim = aim, aimJoints = aimJoints, cooldown = {}, mags = mags, lastAttacker = nil,
 		name = Defs.vehicleName(kind, team), destroyedAt = 0,
 	}
 	vehicles[id] = v
@@ -416,7 +415,6 @@ function VehicleService.exit(s: Soldier, silent: boolean?)
 	end
 	if idx == 1 then
 		v.phys.engineOn = false
-		v.aiInput = nil
 	end
 	updateOwnership(v)
 	v.idleSince = os.clock()
@@ -696,9 +694,6 @@ function VehicleService.damage(id: number, amount: number, attacker: Soldier?, k
 		if s and s.player then
 			Net.event("DamageTaken"):FireClient(s.player, { amount = dmg, vehicle = true })
 		end
-		if s and s.brain and s.brain.onDamaged then
-			s.brain:onDamaged(attacker, nil)
-		end
 	end
 	if v.hp <= 0 then
 		destroyVehicle(v, attacker, weaponName)
@@ -866,7 +861,7 @@ function VehicleService.mobileSpawns(team: number): { { [string]: any } }
 end
 
 -- ---------------------------------------------------------------------------
--- Update loop: AI driving, idle anchoring, auras, slot respawns, speed sanity
+-- Update loop: idle anchoring, auras, slot respawns, speed sanity
 -- ---------------------------------------------------------------------------
 local auraAcc = 0
 local function step(dt: number)
@@ -876,11 +871,7 @@ local function step(dt: number)
 			continue
 		end
 		local driver = SoldierRegistry.get(v.seats[1])
-		if driver and not driver.player then
-			-- AI-driven: server simulates
-			VehiclePhysics.step(v.phys, v.aiInput, dt)
-			v.idleSince = now
-		elseif not driver then
+		if not driver then
 			if not v.anchored then
 				if v.def.drive == "heli" then
 					v.phys.engineOn = false
@@ -1095,23 +1086,6 @@ function VehicleService.init()
 	end)
 	RunService.Heartbeat:Connect(step)
 	local _ = Players
-end
-
--- AI hooks ------------------------------------------------------------------
-function VehicleService.setAIInput(v: Vehicle, input: VehiclePhysics.Input?)
-	v.aiInput = input
-	if input and (input.throttle ~= 0 or input.lift ~= 0) then
-		wake(v)
-		v.phys.engineOn = true
-	end
-end
-
-function VehicleService.setAim(v: Vehicle, seat: number, yaw: number, pitch: number)
-	local a = v.aim[seat]
-	if a then
-		a.yaw = yaw
-		a.pitch = pitch
-	end
 end
 
 return VehicleService

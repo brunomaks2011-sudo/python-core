@@ -226,12 +226,6 @@ function Defs.vehicleName(kind: string, team: number): string
 	return d.names[team] or d.names[1]
 end
 
--- Support aircraft flown by the AI (spotting only, unarmed).
-Defs.SupportAircraft = {
-	drone = { names = { [1] = "RQ-5 Skylark", [2] = "RO-2 Orlan-S" }, model = { [1] = "Drone_Blue", [2] = "Drone_Red" }, speed = m(32), altitude = m(140), spotRadius = m(160), hp = 120 },
-	observation = { names = { [1] = "O-3 Lookout", [2] = "RO-9 Yastreb" }, model = { [1] = "Observer_Blue", [2] = "Observer_Red" }, speed = m(48), altitude = m(320), spotRadius = m(230), hp = 300 },
-}
-
 -- ---------------------------------------------------------------------------
 -- Material durability for destructible pieces and props.
 -- ---------------------------------------------------------------------------

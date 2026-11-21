@@ -1,6 +1,6 @@
 --!strict
 -- Procedural poses layered on top of the stock R15 animations, for every
--- soldier near the camera (players and AI): weapon held at the shoulder,
+-- soldier near the camera: weapon held at the shoulder,
 -- crouch (knees bent, torso low) and prone (lying flat). Driven by the
 -- replicated "Stance" and "Equipped" character attributes, so every client
 -- sees the same thing.
@@ -99,19 +99,6 @@ function StanceAnimator.init()
 	end
 	Players.PlayerAdded:Connect(function(p)
 		p.CharacterAdded:Connect(watchCharacter)
-	end)
-	task.spawn(function()
-		local soldiers = workspace:WaitForChild("Soldiers")
-		for _, c in soldiers:GetChildren() do
-			if c:IsA("Model") then
-				task.spawn(watchCharacter, c)
-			end
-		end
-		soldiers.ChildAdded:Connect(function(c)
-			if c:IsA("Model") then
-				watchCharacter(c)
-			end
-		end)
 	end)
 	-- after animations have been applied this frame
 	RunService.Stepped:Connect(function()

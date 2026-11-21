@@ -1,4 +1,4 @@
--- Every vehicle, support aircraft and weapon definition in Defs must match the
+-- Every vehicle and weapon definition in Defs must match the
 -- Blender-built models in Assets/Models: both team variants exist, each has a
 -- top-level Pivot and Hitbox (Rig.assemble roots the vehicle on them), a seat
 -- for every crew position, every muzzle its weapons fire from (exactly once, as
@@ -145,19 +145,6 @@ T.test("helicopters have main and tail rotor joints", function()
 			T.truthy(i.groups.TailRotor, name .. ": no TailRotor joint")
 		end
 	end)
-end)
-
-T.test("support aircraft models exist with a propeller joint", function()
-	for kind, def in Defs.SupportAircraft do
-		for team = 1, 2 do
-			local m = load(def.model[team])
-			T.truthy(m ~= nil, kind .. ": missing model " .. tostring(def.model[team]))
-			if m then
-				T.truthy(hasChild(m, "Pivot"), def.model[team] .. " has no top-level Pivot")
-				T.truthy(info(m).groups.Prop, def.model[team] .. " has no Prop joint")
-			end
-		end
-	end
 end)
 
 T.test("hand weapon models exist", function()

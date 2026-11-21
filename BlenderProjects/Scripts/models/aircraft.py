@@ -1,7 +1,6 @@
-"""Aircraft: attack helicopters, transport helicopters, reconnaissance drones and
-unarmed observation planes for both armies.
+"""Aircraft: attack and transport helicopters for both armies (player-flown).
 Groups: "Rotor" (spins about up), "TailRotor" (spins about the right axis),
-"Prop" (spins about the forward axis), "ChinTurret"/"ChinTurret/Gun", door guns.
+"ChinTurret"/"ChinTurret/Gun", door guns.
 """
 import math
 
@@ -191,48 +190,4 @@ def transport_heli(team):
     return m
 
 
-def drone(team):
-    pal = FACTIONS[team]
-    red = team == 2
-    m = Model(f"Drone_{pal['key']}", "Aircraft", "drone", {"Team": team})
-    z = 0.4
-    m.cyl("Body", 1.8, 0.3, (0, 0, z), ALONG_Y, "Metal", pal["light"] if not red else pal["base"])
-    m.ball("Nose", 0.3, (0, 0.9, z), "Metal", pal["light"] if not red else pal["base"])
-    m.ball("Camera", 0.22, (0, 0.6, z - 0.15), "Glass", GLASS_DARK)
-    m.block("Wing", (3.4 if not red else 2.6, 0.38, 0.05), (0, 0.15, z + 0.12), mat="Metal", color=pal["light"] if not red else pal["base"])
-    for s in (-1, 1):
-        m.block(f"Tail{'R' if s > 0 else 'L'}", (0.6, 0.3, 0.04), (s * 0.25, -0.75, z + 0.2), (0, s * 40, 0), "Metal", pal["dark"])
-        m.block(f"WingStripe{'R' if s > 0 else 'L'}", (0.3, 0.38, 0.055), (s * 1.2, 0.15, z + 0.12), mat="SmoothPlastic", color=pal["mark"])
-    m.group("Prop", (0, -0.95, z))
-    m.cyl("PropHub", 0.1, 0.1, (0, -0.95, z), ALONG_Y, "Metal", GUNMETAL, group="Prop")
-    m.block("PropBlade", (0.75, 0.03, 0.08), (0, -0.98, z), mat="Metal", color=GUNMETAL, group="Prop")
-    m.hitbox("Hitbox", (2.0, 1.9, 0.4), (0, 0, z))
-    return m
-
-
-def observer(team):
-    pal = FACTIONS[team]
-    red = team == 2
-    m = Model(f"Observer_{pal['key']}", "Aircraft", "observation", {"Team": team})
-    body = pal["light"] if not red else pal["base"]
-    z = 1.3
-    m.block("Fuselage", (1.1, 3.2, 1.2), (0, 0.6, z), mat="Metal", color=body)
-    m.wedge("TailCone", (1.1, 3.6, 1.0), (0, -2.8, z + 0.1), (0, 0, 180), "Metal", body)
-    m.block("Engine", (1.0, 1.0, 0.9), (0, 2.6, z - 0.05), mat="Metal", color=pal["dark"])
-    m.block("Windows", (1.12, 1.4, 0.5), (0, 1.2, z + 0.4), mat="Glass", color=GLASS, transparency=0.3)
-    m.block("Wing", (10.5, 1.5, 0.12), (0, 1.0, z + 0.7), mat="Metal", color=body)
-    for s, tag in ((1, "R"), (-1, "L")):
-        m.block(f"Strut{tag}", (2.2, 0.1, 0.08), (s * 1.4, 1.0, z + 0.1), (0, s * -30, 0), "Metal", GUNMETAL)
-        m.block(f"WingMark{tag}", (0.9, 0.9, 0.13), (s * 4.0, 1.0, z + 0.7), mat="SmoothPlastic", color=pal["mark"])
-        gear_wheel(m, f"MainGear{tag}", (s * 0.9, 0.9, 0.25), d=0.45, w=0.15)
-    gear_wheel(m, "NoseGear", (0, 2.6, 0.25), d=0.4, w=0.14)
-    m.block("Fin", (0.08, 1.0, 1.3), (0, -4.3, z + 0.9), (-12, 0, 0), "Metal", body)
-    m.block("Stabilizer", (3.0, 0.8, 0.08), (0, -4.2, z + 0.3), mat="Metal", color=body)
-    m.group("Prop", (0, 3.15, z - 0.05))
-    m.cyl("Spinner", 0.25, 0.3, (0, 3.2, z - 0.05), ALONG_Y, "Metal", WHITE, group="Prop")
-    m.block("PropBlades", (1.9, 0.05, 0.15), (0, 3.25, z - 0.05), mat="Metal", color=GUNMETAL, group="Prop")
-    m.hitbox("Hitbox", (2.0, 7.5, 1.4), (0, -0.4, z))
-    return m
-
-
-BUILDERS = {"attack_heli": attack_heli, "transport_heli": transport_heli, "drone": drone, "observer": observer}
+BUILDERS = {"attack_heli": attack_heli, "transport_heli": transport_heli}

@@ -1,5 +1,5 @@
 --!strict
--- Deployment and respawning for players and AI bots.
+-- Deployment and respawning for players (PvP only: no AI combatants).
 -- Deploy screen choices: faction (BLUE/RED), infantry class, spawn location
 -- (HQ, an owned & uncontested control point, or a friendly mobile-spawn
 -- vehicle) and optionally a vehicle from the motor pool.
@@ -27,9 +27,6 @@ local SOLDIER = Constants.SOLDIER
 -- hooks wired by Main (avoid circular requires)
 SpawnService.vehicles = nil :: any -- VehicleService
 SpawnService.onDeath = nil :: ((SoldierRegistry.Soldier) -> ())?
-SpawnService.onSpawn = nil :: ((SoldierRegistry.Soldier) -> ())?
-
-local soldiersFolder: Folder
 
 local function teamObject(team: number): Team?
 	return Teams:FindFirstChild(Constants.TEAM_OBJECT_NAME[team]) :: Team?
@@ -198,12 +195,7 @@ local function setupCharacter(s: SoldierRegistry.Soldier, character: Model)
 	humanoid.Died:Connect(function()
 		SpawnService.handleDeath(s, character)
 	end)
-	if s.player then
-		SoldierRegistry.publish(s)
-	end
-	if SpawnService.onSpawn then
-		SpawnService.onSpawn(s)
-	end
+	SoldierRegistry.publish(s)
 end
 
 -- Ends spawn protection early (called when the soldier fires).
@@ -238,80 +230,30 @@ function SpawnService.handleDeath(s: SoldierRegistry.Soldier, character: Model)
 		SpawnService.onDeath(s)
 	end
 	-- leave the body for a while, then clean up
-	task.delay(if s.isBot then 12 else 8, function()
+	task.delay(8, function()
 		if character.Parent and not (s.alive and s.model == character) then
 			character:Destroy()
 		end
 	end)
 end
 
--- Bot body: an R15 rig built once from a plain HumanoidDescription (no avatar
--- assets) and cloned for every spawn, so bot respawns never yield.
-local botTemplate: Model? = nil
-local function botModel(s: SoldierRegistry.Soldier): Model?
-	if not botTemplate then
-		local d = Instance.new("HumanoidDescription")
-		d.HeightScale = 1
-		d.WidthScale = 1
-		d.DepthScale = 1
-		d.HeadScale = 1
-		d.BodyTypeScale = 0
-		d.ProportionScale = 0
-		local ok, result = pcall(function()
-			return Players:CreateHumanoidModelFromDescriptionAsync(d, Enum.HumanoidRigType.R15)
-		end)
-		if not ok or typeof(result) ~= "Instance" then
-			warn("[SpawnService] could not build the bot rig: " .. tostring(result))
-			return nil
-		end
-		local rig = result :: Model
-		local hum = rig:FindFirstChildOfClass("Humanoid")
-		if hum and not hum:FindFirstChildOfClass("Animator") then
-			local a = Instance.new("Animator")
-			a.Parent = hum
-		end
-		rig.ModelStreamingMode = Enum.ModelStreamingMode.Atomic -- arrives whole on clients
-		botTemplate = rig
-	end
-	local model = (botTemplate :: Model):Clone()
-	model.Name = s.name
-	return model
-end
-
--- Spawn (or respawn) a soldier at a CFrame. Works for players and bots.
+-- Spawn (or respawn) a player's soldier at a CFrame.
 function SpawnService.spawnSoldier(s: SoldierRegistry.Soldier, cf: CFrame): boolean
-	if s.player then
-		local player = s.player
-		player.Team = teamObject(s.team)
-		local ok, err = pcall(function()
-			player:LoadCharacter()
-		end)
-		if not ok then
-			warn("[Spawn] LoadCharacter failed: " .. tostring(err))
-			return false
-		end
-		local character = player.Character
-		if not character then
-			return false
-		end
-		setupCharacter(s, character)
-		character:PivotTo(cf)
-	else
-		if s.model and s.model.Parent then
-			s.model:Destroy()
-		end
-		local model = botModel(s)
-		if not model then
-			return false
-		end
-		model:PivotTo(cf)
-		model.Parent = soldiersFolder
-		setupCharacter(s, model)
-		local root = model:FindFirstChild("HumanoidRootPart") :: BasePart
-		pcall(function()
-			root:SetNetworkOwner(nil)
-		end)
+	local player = s.player
+	player.Team = teamObject(s.team)
+	local ok, err = pcall(function()
+		player:LoadCharacter()
+	end)
+	if not ok then
+		warn("[Spawn] LoadCharacter failed: " .. tostring(err))
+		return false
 	end
+	local character = player.Character
+	if not character then
+		return false
+	end
+	setupCharacter(s, character)
+	character:PivotTo(cf)
 	return true
 end
 
@@ -339,7 +281,7 @@ function SpawnService.deploy(s: SoldierRegistry.Soldier, team: number, role: str
 	if s.alive then
 		return false, "Already deployed"
 	end
-	if s.player and team ~= s.team and not SpawnService.teamOpen(team, s) then
+	if team ~= s.team and not SpawnService.teamOpen(team, s) then
 		return false, "Teams are unbalanced - join the other army"
 	end
 	if os.clock() < s.respawnAt then
@@ -393,10 +335,6 @@ end
 -- Init
 -- ---------------------------------------------------------------------------
 function SpawnService.init()
-	soldiersFolder = Instance.new("Folder")
-	soldiersFolder.Name = "Soldiers"
-	soldiersFolder.Parent = workspace
-
 	local deployLimiter = Net.rateLimiter(3)
 	local optionsLimiter = Net.rateLimiter(4)
 	Net.func("GetDeployOptions").OnServerInvoke = function(player: Player, team: any): any
@@ -425,7 +363,7 @@ function SpawnService.init()
 	end)
 
 	Players.PlayerAdded:Connect(function(player)
-		local s = SoldierRegistry.create(player.DisplayName, 0, "rifleman", player)
+		local s = SoldierRegistry.create(player, 0, "rifleman")
 		s.respawnAt = 0
 		SoldierRegistry.publish(s)
 		player.Team = Teams:FindFirstChild("Deploying") :: Team?
@@ -441,7 +379,7 @@ function SpawnService.init()
 	end)
 	for _, player in Players:GetPlayers() do
 		if not SoldierRegistry.forPlayer(player) then
-			local s = SoldierRegistry.create(player.DisplayName, 0, "rifleman", player)
+			local s = SoldierRegistry.create(player, 0, "rifleman")
 			SoldierRegistry.publish(s)
 		end
 	end

@@ -30,7 +30,6 @@ local VehicleAnimator = require(Client.Effects.VehicleAnimator)
 local FlagAnimator = require(Client.Effects.FlagAnimator)
 local StanceAnimator = require(Client.Effects.StanceAnimator)
 local Weather = require(Client.Effects.Weather)
-local SupportAirVisuals = require(Client.Effects.SupportAirVisuals)
 local AudioController = require(Client.Audio.AudioController)
 
 local player = Players.LocalPlayer
@@ -68,7 +67,6 @@ FlagAnimator.init()
 StanceAnimator.init()
 Weather.init()
 Weather.onThunder = AudioController.thunder
-SupportAirVisuals.init()
 WeaponController.onShot = function(id)
 	local w = Defs.Weapons[id]
 	if w then

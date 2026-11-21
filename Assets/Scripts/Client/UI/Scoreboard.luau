@@ -85,7 +85,7 @@ local function refresh()
 		local row = Theme.frame(list, "Row", UDim2.new(1, -6, 0, 24), UDim2.new(), if r.id == myId then Color3.fromRGB(70, 62, 30) else Theme.PanelLight, if r.id == myId then 0.1 else 0.5)
 		row.LayoutOrder = i
 		local vals = {
-			(if r.bot then "" else "> ") .. r.name .. (if r.alive then "" else "  (KIA)"),
+			(if r.id == myId then "> " else "") .. r.name .. (if r.alive then "" else "  (KIA)"),
 			(Defs.Roles[r.role] and Defs.Roles[r.role].name) or r.role,
 			tostring(r.kills), tostring(r.deaths), tostring(r.assists), tostring(r.captures), Util.formatTime(r.defend), tostring(r.score),
 		}

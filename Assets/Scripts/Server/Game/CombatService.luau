@@ -2,7 +2,7 @@
 -- Server-authoritative combat.
 --  * Hitscan: clients raycast locally for instant feedback and report shots;
 --    the server validates fire rate, ammo, muzzle position, range and line of
---    sight (re-raycast) before applying damage. Bots fire through the same code.
+--    sight (re-raycast) before applying damage.
 --  * Projectiles (tank shells, rockets, RPGs, grenades, C4, artillery) are
 --    simulated on the server with gravity and raycast stepping.
 --  * Explosions damage soldiers (with cover), vehicles and destructible structures.
@@ -127,9 +127,6 @@ function CombatService.damageSoldier(victim: Soldier, amount: number, attacker: 
 	end
 	if victim.player then
 		damageTaken:FireClient(victim.player, { amount = dealt, from = fromPos })
-	end
-	if victim.brain and victim.brain.onDamaged then
-		victim.brain:onDamaged(attacker, fromPos)
 	end
 	if hum.Health <= 0 then
 		CombatService.creditKill(victim, attacker, weaponName, hitPart == "Head")
@@ -312,7 +309,7 @@ local function stepProjectiles(dt: number)
 end
 
 -- ---------------------------------------------------------------------------
--- Hitscan (shared by players and bots)
+-- Hitscan (soldier rifles and vehicle machine guns)
 -- ---------------------------------------------------------------------------
 -- Resolves one bullet: what does it hit along origin->dir? Returns end point.
 function CombatService.bullet(shooter: Soldier?, weapon: { [string]: any }, origin: Vector3, dir: Vector3, ignore: { Instance }, claimedHit: BasePart?, claimedPos: Vector3?): Vector3
@@ -378,32 +375,6 @@ local function spreadDir(dir: Vector3, spread: number): Vector3
 	return (cf * CFrame.Angles(math.cos(a) * r, math.sin(a) * r, 0)).LookVector
 end
 CombatService.spreadDir = spreadDir
-
--- Bot / server-side shot with spread and tracer broadcast.
-function CombatService.serverFire(shooter: Soldier, weaponId: string, origin: Vector3, aim: Vector3, extraSpread: number): boolean
-	local w = Defs.Weapons[weaponId]
-	if not w or not shooter.alive then
-		return false
-	end
-	local ammo = shooter.ammo[weaponId]
-	if ammo and ammo.mag <= 0 then
-		return false
-	end
-	local now = os.clock()
-	local interval = 60 / (w.rpm or 600)
-	if now - (shooter.lastShot[weaponId] or 0) < interval * 0.95 then
-		return false
-	end
-	shooter.lastShot[weaponId] = now
-	if ammo then
-		ammo.mag -= 1
-	end
-	local dir = spreadDir(aim, (w.spread or 0.005) + extraSpread)
-	local endPos = CombatService.bullet(shooter, w, origin, dir, { shooter.model :: Instance })
-	EffectsBus.push({ k = "tracer", a = origin, b = endPos, w = w.sound, sid = shooter.id })
-	SpawnService.dropProtection(shooter)
-	return true
-end
 
 -- ---------------------------------------------------------------------------
 -- Player remotes

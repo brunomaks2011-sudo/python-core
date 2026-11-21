@@ -69,17 +69,4 @@ Constants.SOLDIER = table.freeze({
 	HIP_HEIGHT = { [0] = 2.0, [1] = 1.15, [2] = 0.25 },
 })
 
-Constants.ROLE = table.freeze({
-	RIFLEMAN = "rifleman",
-	MEDIC = "medic",
-	ENGINEER = "engineer",
-	SUPPORT = "support",
-	RECON = "recon",
-	CREW = "crew",
-})
-Constants.ROLES = table.freeze({ "rifleman", "medic", "engineer", "support", "recon", "crew" })
-
-Constants.BOTS_PER_TEAM_DEFAULT = 16
-Constants.BOTS_PER_TEAM_MAX = 32
-
 return table.freeze(Constants)

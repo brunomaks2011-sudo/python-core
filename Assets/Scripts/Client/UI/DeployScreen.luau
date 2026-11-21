@@ -287,7 +287,7 @@ function DeployScreen.init()
 					n += 1
 				end
 			end
-			card.info.Text = string.format("%d players + AI  |  %d flags held", n, held)
+			card.info.Text = string.format("%d players  |  %d flags held", n, held)
 		end
 		if acc > 1 then
 			acc = 0

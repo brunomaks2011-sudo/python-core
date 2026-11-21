@@ -49,7 +49,7 @@ T.test("rounds to whole studs and clamps to int16", function()
 end)
 
 T.test("a full battle fits the unreliable payload limit", function()
-	-- 32 bots + 20 players a side, every vehicle on the map, everyone spotted
+	-- 52 players a side, every vehicle on the map, everyone spotted
 	local b = RadarCodec.encode(packet(52, 30, 52, 30))
 	T.truthy(buffer.len(b) <= RadarCodec.MAX_BYTES, "encoded " .. buffer.len(b) .. " bytes")
 	local d = RadarCodec.decode(b)
